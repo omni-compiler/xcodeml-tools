@@ -550,6 +550,7 @@ DEB_VER_FILE = "/etc/debian_version"
 RH_REL_FILE = "/etc/redhat-release"
 BASE_TESTDIR = "tests/xcalablemp/"
 SUB_TESTDIRS = "others/Fortran/" "global-view/shadow-reflect/C/" \
+	"global-view/reduction/C" "global-view/reduction/F" \
 	$(am__append_4) $(am__append_5)
 DELETABLES = \
 	C-BackEnd/ant.properties \
