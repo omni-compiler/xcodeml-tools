@@ -4,6 +4,6 @@
 # $TSUKUBA_Copyright:
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
-LIBS=""
-LINKER="@OM_EXEC_F_LINKER@"
-. $OMNI_HOME/bin/omlinker "$@"
+
+X2L=${OMNI_HOME}/bin/C_Back
+. ${OMNI_HOME}/bin/omx2l "$@"
