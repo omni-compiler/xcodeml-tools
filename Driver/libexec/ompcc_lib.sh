@@ -1,4 +1,4 @@
-function xmp_print_help()
+function ompcc_print_help()
 {
 cat <<EOF
 usage: $1 <OPTIONS> <INPUTFILE> ...
@@ -6,6 +6,7 @@ usage: $1 <OPTIONS> <INPUTFILE> ...
 Compile Driver Options
 
    -o <file>         : place the output into <file>.
+   -I <dir>          : add the directory dir to the list of directories to be searched for header files.
    -c                : compile and assemble, but do not link.
    -E                : preprocess only; do not compile, assemble or link.
    -v,--verbose      : print processing status.
@@ -30,38 +31,16 @@ Process Options
   --Wn[option] : Add native compiler option.
   --Wl[option] : Add linker option.
 
-XcalableMP Options
+Omni OpenACC Options
 
-  -omp,--openmp       : enable OpenMP.
-  -xacc,--xcalableacc : enable XcalableACC.
-  --scalasca-all      : output results in scalasca format for all directives.
-  --scalasca          : output results in scalasca format for selected directives.
-  --tlog-all          : output results in tlog format for all directives.
-  --tlog              : output results in tlog format for selected directives.
+  -acc, --openacc : Enable OpenACC.
+  --no-ldg        : Disable use of read-only data cache.
 EOF
 }
 
-function xmp_error_exit()
+function ompcc_show_env()
 {
-    echo "$0: error: $1"
-    echo "compilation terminated."
-    exit 1
-}
-
-function xmp_print_version()
-{
-    VERSION_FILE="${OMNI_HOME}/etc/version"
-    if [ -f $VERSION_FILE ]; then
-	cat $VERSION_FILE
-	echo ""
-    else
-	xmp_error_exit "$VERSION_FILE not exist."
-    fi
-}
-
-function xmp_show_env()
-{
-    CONF_FILE=${OMNI_HOME}/etc/xmpcc.conf
+    CONF_FILE=${OMNI_HOME}/etc/ompcc.conf
     if [ -f $CONF_FILE ]; then
 	for val in `sed '/^[[:space:]]*$/d' ${CONF_FILE} | grep -v '^#' | awk -F= '{print $1}'`
 	do
@@ -70,11 +49,11 @@ function xmp_show_env()
 	    echo \"
 	done
     else
-	xmp_error_exit "$CONF_FILE not exist."
+	omni_error_exit "$CONF_FILE not exist."
     fi
 }
 
-function xmp_set_parameters()
+function ompcc_set_parameters()
 {
     local tmp_args=""
 
@@ -89,14 +68,14 @@ function xmp_set_parameters()
             -v|--verbose)
 		VERBOSE=true;;
 	    --version)
-		xmp_print_version
+		omni_print_version
 		exit 0;;
             -h|--help)
 		local scriptname=`basename $0`
-		xmp_print_help $scriptname
+		ompcc_print_help $scriptname
 		exit 0;;
 	    --show-env)
-		xmp_show_env
+		ompcc_show_env
 		exit 0;;
             --tmp)
 		OUTPUT_TEMPORAL=true;;
@@ -137,18 +116,15 @@ function xmp_set_parameters()
             --Wl*)
 		LINKER_ADD_OPT=${arg#--Wl}
 		;;
-	    --openmp|-omp)
-		ENABLE_OPENMP=true;;
-	    --xcalableacc|-xacc)
-		ENABLE_XACC=true;;
-	    --scalasca-all)
-		ENABLE_SCALASCA_ALL=true;;
-	    --scalasca)
-		ENABLE_SCALASCA=true;;
-	    --tlog-all)
-		ENABLE_TLOG_ALL=true;;
-	    --tlog)
-		ENABLE_TLOG=true;;
+	    -acc|--openacc)
+		if [ ${ENABLE_ACC} = "0" ]; then
+		    omni_error_exit "warning: $arg option is unavailable, rebuild the compiler with ./configure --enable-openacc"
+		fi
+		ENABLE_ACC=true
+		;;
+	    --no-ldg)
+		DISABLE_LDG=true
+		;;
             *)
 		if [ "$OUTPUT_FLAG" = true ]; then
 		    OUTPUT_FILE=$arg
@@ -160,7 +136,7 @@ function xmp_set_parameters()
     done
 
     if test $OUTPUT_TEMPORAL = true -a $DRY_RUN = true; then
-        xmp_error_exit "cannot use both --tmp and --dry options at the same time."
+        omni_error_exit "cannot use both --tmp and --dry options at the same time."
     fi
 
     for arg in $tmp_args; do
@@ -176,31 +152,3 @@ function xmp_set_parameters()
     done
 }
 
-function xmp_check_file_exist()
-{
-    ([ "$c_files" = "" ] && [ "$obj_files" = "" ]) && xmp_error_exit "no input files."
-}
-
-function xmp_exec()
-{
-    if [ $VERBOSE = true ] || [ $DRY_RUN = true ]; then
-	echo $@
-    fi
-
-    if [ $DRY_RUN = false ]; then
-	eval $@
-    fi
-
-    [ $? -ne 0 ] && { xmp_exec rm -rf $TEMP_DIR; exit 1; }
-}
-
-# ./hoge/fuga.c -> hoge_2f_fuga_2f_a
-function xmp_norm_file_name()
-{
-    local NORM_NAME=`echo $1 | sed 's/^\.\///'`      # ./hoge/fuga.c -> hoge/fuga.c
-    NORM_NAME=`echo $NORM_NAME | sed 's/\//_2f_/g'`  # hoge/fuga/a.c -> hoge_2f_fuga_2f_a.c        # "2f" is a hex number of '/'.
-    NORM_NAME=`echo $NORM_NAME | sed 's/\./_2e_/g'`  # "." -> "_2e_"
-    NORM_NAME=`basename $NORM_NAME .c`               # hoge_2f_fuga_2f_a.c -> hoge_2f_fuga_2f_a
-
-    echo $NORM_NAME
-}
