@@ -79,10 +79,9 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = C_Front$(EXEEXT)
-subdir = C-FrontEnd/src
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am c-parser.h \
-	c-parser.c c-lexer.c $(top_srcdir)/./buildutils/ylwrap
+bin_PROGRAMS = T_Module$(EXEEXT)
+subdir = F-FrontEnd/gnu_module
+DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -94,18 +93,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_C_Front_OBJECTS = c-parser.$(OBJEXT) c-lexer.$(OBJEXT) \
-	c-expr.$(OBJEXT) c-token.$(OBJEXT) c-exprcode.$(OBJEXT) \
-	c-dump.$(OBJEXT) c-comp.$(OBJEXT) c-reduce.$(OBJEXT) \
-	c-xcodeml.$(OBJEXT) c-const.$(OBJEXT) c-gcctype.$(OBJEXT) \
-	c-option.$(OBJEXT) c-type.$(OBJEXT) c-convert.$(OBJEXT) \
-	ccol-list.$(OBJEXT) ccol-hash.$(OBJEXT) c-main.$(OBJEXT) \
-	c-pragma.$(OBJEXT) c-omp-pragma.$(OBJEXT) \
-	c-xmp-pragma.$(OBJEXT) c-acc-pragma.$(OBJEXT) \
-	c-omp-xcodeml.$(OBJEXT) c-xmp-xcodeml.$(OBJEXT) \
-	c-acc-xcodeml.$(OBJEXT) c-ptree.$(OBJEXT)
-C_Front_OBJECTS = $(am_C_Front_OBJECTS)
-C_Front_LDADD = $(LDADD)
+am_T_Module_OBJECTS = export_module.$(OBJEXT) import_module.$(OBJEXT) \
+	safe-ctype.$(OBJEXT) trans_module.$(OBJEXT) xmalloc.$(OBJEXT)
+T_Module_OBJECTS = $(am_T_Module_OBJECTS)
+T_Module_DEPENDENCIES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -133,23 +124,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-@MAINTAINER_MODE_FALSE@am__skiplex = test -f $@ ||
-LEXCOMPILE = $(LEX) $(AM_LFLAGS) $(LFLAGS)
-AM_V_LEX = $(am__v_LEX_@AM_V@)
-am__v_LEX_ = $(am__v_LEX_@AM_DEFAULT_V@)
-am__v_LEX_0 = @echo "  LEX     " $@;
-am__v_LEX_1 = 
-YLWRAP = $(top_srcdir)/./buildutils/ylwrap
-@MAINTAINER_MODE_FALSE@am__skipyacc = test -f $@ ||
-am__yacc_c2h = sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
-		   -e s/c++$$/h++/ -e s/c$$/h/
-YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
-AM_V_YACC = $(am__v_YACC_@AM_V@)
-am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
-am__v_YACC_0 = @echo "  YACC    " $@;
-am__v_YACC_1 = 
-SOURCES = $(C_Front_SOURCES) $(EXTRA_C_Front_SOURCES)
-DIST_SOURCES = $(C_Front_SOURCES) $(EXTRA_C_Front_SOURCES)
+SOURCES = $(T_Module_SOURCES)
+DIST_SOURCES = $(T_Module_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -410,20 +386,18 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-C_Front_SOURCES = \
-	c-parser.y c-lexer.l c-expr.c c-token.c c-exprcode.c \
-	c-dump.c c-comp.c c-reduce.c c-xcodeml.c c-const.c \
-	c-gcctype.c c-option.c c-type.c c-convert.c \
-	ccol-list.c ccol-hash.c c-main.c \
-	c-pragma.c c-omp-pragma.c c-xmp-pragma.c c-acc-pragma.c \
-	c-omp-xcodeml.c c-xmp-xcodeml.c c-acc-xcodeml.c c-ptree.c
-
-EXTRA_C_Front_SOURCES = c-dbgmain.c
-AM_YFLAGS = -v -d
+T_Module_SOURCES = export_module.c import_module.c safe-ctype.c trans_module.c xmalloc.c
+INC = -I./include -I@MPFR_INCLUDE_DIR@ -I@GMP_INCLUDE_DIR@
+DOPT = -DIN_GCC_FRONTEND -DIN_GCC -DHAVE_CONFIG_H -D_ZLIB_
+WOPT = -W -Wall -Wwrite-strings -Wcast-qual -Wmissing-format-attribute -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings -w
+AM_CFLAGS = -O -fno-exceptions -fasynchronous-unwind-tables $(DOPT) $(WOPT) $(INC)
+T_Module_LDADD = -L@MPFR_LIB_DIR@ -L@GMP_LIB_DIR@ -lgmp -lmpfr -lz
+cur_dir = `pwd`
+HED = $(shell ls include/*.h)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .l .o .obj .y
+.SUFFIXES: .c .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -433,9 +407,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps C-FrontEnd/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps F-FrontEnd/gnu_module/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign --ignore-deps C-FrontEnd/src/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps F-FrontEnd/gnu_module/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -497,9 +471,9 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
-C_Front$(EXEEXT): $(C_Front_OBJECTS) $(C_Front_DEPENDENCIES) $(EXTRA_C_Front_DEPENDENCIES) 
-	@rm -f C_Front$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(C_Front_OBJECTS) $(C_Front_LDADD) $(LIBS)
+T_Module$(EXEEXT): $(T_Module_OBJECTS) $(T_Module_DEPENDENCIES) $(EXTRA_T_Module_DEPENDENCIES) 
+	@rm -f T_Module$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(T_Module_OBJECTS) $(T_Module_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -512,12 +486,6 @@ distclean-compile:
 
 .c.obj:
 	$(AM_V_CC)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.l.c:
-	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
-
-.y.c:
-	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -638,9 +606,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-rm -f c-lexer.c
-	-rm -f c-parser.c
-	-rm -f c-parser.h
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-local mostlyclean-am
@@ -656,7 +621,7 @@ dvi-am:
 
 html: html-am
 
-html-am: html-local
+html-am:
 
 info: info-am
 
@@ -713,8 +678,8 @@ uninstall-am: uninstall-binPROGRAMS
 .PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
 	clean-binPROGRAMS clean-generic clean-local cscopelist-am \
 	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-tags distdir dvi dvi-am html html-am html-local info \
-	info-am install install-am install-binPROGRAMS install-data \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
 	install-info-am install-man install-pdf install-pdf-am \
@@ -725,60 +690,22 @@ uninstall-am: uninstall-binPROGRAMS
 	uninstall-am uninstall-binPROGRAMS
 
 
-ccol.h: ccol-list.h ccol-hash.h
-ccol-list.c: ccol-list.h
-ccol-hash.c: ccol-hash.h
-c-expr.h: ccol.h c-exprcode.h c-error.h
-c-expr.c: c-cmn.h c-expr.h
-c-lexyacc.h: ccol.h
-c-parser.y: c-cmn.h c-lexyacc.h c-expr.h
-c-parser.h: c-parser.y
-c-lexer.l: c-cmn.h c-lexyacc.h c-expr.h c-token.h c-parser.h
-c-option.c: c-option.h
-c-gcctype.c: c-gcctype.h
-c-convert.c: c-expr.h
-c-const.c: c-expr.h c-const.h
-c-comp.c: c-expr.h c-comp.h
-c-option.c: c-expr.h c-option.h
-c-pragma.c: c-pragma.h c-omp.h c-xmp.h c-acc.h
-c-omp-pragma.c: c-pragma.h c-omp.h
-c-xmp-pragma.c: c-pragma.h c-xmp.h
-c-acc-pragma.c: c-pragma.h c-acc.h
-c-omp-pragma.c: c-pragma.h c-omp.h
-c-xmp-pragma.c: c-pragma.h c-xmp.h
-c-acc-pragma.c: c-pragma.h c-acc.h
-c-xcodeml.c: c-expr.h
-#AM_CFLAGS=-std=c99 -Wall $(DEBUG_FLAGS)
+all: $(OBJ)
+	test -f xmpmod || sed -e "s|@@XMP_PATH@@|$(cur_dir)|g" < utils/xmpmod.bs > xmpmod
+	chmod 755 xmpmod
 
-$(C_Front_SOURCES): c-exprcode.h
-
-c-exprcode.c c-exprcode.h: c-exprcode.pl c-exprcode.def
-	$(PERL5) c-exprcode.pl
-
-c-token.c c-token.h: c-token.pl c-parser.h
-	$(PERL5) c-token.pl
-
-c-lexer.c : c-lexer.l
-	$(LEX) -oc-lexer.c c-lexer.l
-
-debug: C_debugfront
-
-C_debugfront: $(C_Front_OBJECTS) c-dbgmain.o
-	$(LINK) $(C_Front_LDADD) $(LIBS) c-parser.o c-lexer.o c-expr.o \
-	c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o c-const.o \
-	c-gcctype.o c-option.o c-type.o c-convert.o ccol-list.o ccol-hash.o \
-	c-dbgmain.o c-pragma.o c-omp-pragma.o c-xmp-pragma.o c-acc-pragma.o \
-	c-xcodeml.o c-omp-xcodeml.o c-xmp-xcodeml.o c-acc-xcodeml.o
+#depend
+xmalloc.o       :xmalloc.c       ${HED}
+safe-ctype.o    :safe-ctype.c    ${HED}
+import_module.o :import_module.c ${HED}
+export_module.o :export_module.c ${HED}
+trans_module.o  :trans_module.c  ${HED}
 
 clean-local:
-	rm -f C_debugfront tags *.o *.log *.output c-lexer.c
-	rm -rf ../doc
+	$(RM) *.o 
 
-html-local:
-	if test ! -e "../doc"; then $(MKDIR_P) ../doc; fi
-	doxygen >/dev/null
-
-.NOTPARALLEL:
+cleanall:
+	$(RM) *.o $(bin_PROGRAMS) xmpmod
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
