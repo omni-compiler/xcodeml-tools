@@ -6,7 +6,8 @@
 *.so
 *.hex
 a.out
-Xcode.java
+
+libxmpf/include/Makefile
 
 # Top directory
 autom4te.cache
@@ -15,10 +16,10 @@ config.status
 /Makefile
 
 # Sub directories
-interfaces/Makefile
 
 C-BackEnd/Makefile
 C-BackEnd/build/
+
 C-FrontEnd/src/C_Front
 C-FrontEnd/src/Makefile
 C-FrontEnd/src/c-exprcode.c
@@ -38,23 +39,10 @@ Driver/atool/src/include/nata/Makefile
 Driver/atool/src/include/nata/nata_config.h
 Driver/atool/src/include/nata/nata_platform.h
 Driver/atool/src/lib/Makefile
-Driver/bin/ompcc
-Driver/bin/ompf90
-Driver/bin/omtranslate
-Driver/bin/xmpcc
-Driver/bin/xmpf90
 Driver/bin/F_Back
-Driver/bin/F_Trans
 Driver/bin/C_Back
-Driver/bin/C_Trans
-Driver/etc/ompcc.conf
-Driver/etc/ompf90.conf
+Driver/bin/Makefile
 Driver/etc/setup.conf
-Driver/etc/version
-Driver/etc/xmpcc.conf
-Driver/etc/xmpf90.conf
-Driver/src/Makefile
-Driver/src/om_replace_pragma
 
 F-BackEnd/Makefile
 F-BackEnd/build/
@@ -73,48 +61,5 @@ F-FrontEnd/src/F95-parser.c
 XcodeML-Common/Makefile
 XcodeML-Common/build/
 
-XcodeML-Exc-Tools/Makefile
-XcodeML-Exc-Tools/build/
-XcodeML-Exc-Tools/src/exc/util/MachineDepConst.java
-
 include/config.h
 include/stamp-h1
-
-libacc/include/Makefile
-libacc/src/Makefile
-
-libompc/src/Makefile
-libompc/src/ompc_lib._mutex_pthread_o
-libompc/src/ompc_lock._mutex_pthread_o
-libompc/src/ompc_runtime._mutex_pthread_o
-libompc/src/ompc_thread._mutex_pthread_o
-libompc/src/ompf_runtime._mutex_pthread_o
-libompc/src/ompf_thread._mutex_pthread_o
-libompc/src/target.tmpl
-libompc/src/timer._mutex_pthread_o
-
-libompf/src/Makefile
-
-libtlog/src_mpi/Makefile
-libtlog/src_mpi/bin/tlogview
-libtlog/src_threads/Makefile
-
-libxmp/include/Makefile
-libxmp/src/Makefile
-libxmp/src_threads/Makefile
-
-libxmpf/include/Makefile
-libxmpf/include/xmp_coarray_alloc.h
-libxmpf/include/xmp_coarray_get.h
-libxmpf/include/xmp_coarray_put.h
-libxmpf/include/xmp_coarray_reduction.h
-libxmpf/include/xmp_coarray_getsub.h
-libxmpf/src/Makefile
-libxmpf/src/include_work/
-
-# Other
-__omni_tmp__/
-*~
-.idea
-.gdbinit
-*.iml

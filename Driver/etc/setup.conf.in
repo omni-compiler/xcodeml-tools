@@ -1,43 +1,23 @@
 #!/bin/sh
 
-# $TSUKUBA_Release: Omni OpenMP Compiler 3 $
-# $TSUKUBA_Copyright:
-#  PLEASE DESCRIBE LICENSE AGREEMENT HERE
-#  $
-
-
-#
-
-
 defOmniHome="@OMNI_HOME@"
 OM_DRIVER_CONF_DIR="@OM_DRIVER_CONF_DIR@"
 
 me=`echo "${0}" | awk -F'/' '{ print $NF }'`
 
-
-#
-
-
 stderr() {
     echo ${1+"$@"} 1>&2
 }
-
 
 warning() {
     stderr ${me}: warning: ${1+"$@"}
 }
 
-
 error() {
     stderr ${me}: error: ${1+"$@"}
 }
 
-
-#
-
-
 isInDevTree=0
-
 
 genClassPath() {
     __ret=1
@@ -88,7 +68,6 @@ isValidOmniHome() {
     return ${__ret}
 }
 
-
 setOmniHome() {
     __ret=1
     if test -z "${OMNI_HOME}"; then
@@ -111,7 +90,6 @@ setOmniHome() {
     return ${__ret}
 }
 
-
 validateOmniHome() {
     __ret=1
     if test -z "${OMNI_HOME}"; then
@@ -129,20 +107,6 @@ validateOmniHome() {
     return ${__ret}
 }
 
-
-isValidConfDir() {
-    # __ret=1
-    # if test $# -eq 1 -a ! -z "${1}"; then
-    #     if test -f "${OM_DRIVER_CONF_DIR}/x2x.conf.xmp" -a \
-    #         -f "${OM_DRIVER_CONF_DIR}/x2x.conf.xmpf"; then
-    #         __ret=0
-    #     fi
-    # fi
-    # return ${__ret}
-    return 0
-}
-
-
 setConfDir() {
     __ret=1;
     if test -z "${OM_DRIVER_CONF_DIR}"; then
@@ -150,14 +114,12 @@ setConfDir() {
         __devTop="${OMNI_SOURCE_DIR}"
         if test ! -z "${__devTop}" -a -d "${__devTop}"; then
             OM_DRIVER_CONF_DIR="${__devTop}/Driver/etc"
-            isValidConfDir "${OM_DRIVER_CONF_DIR}"
             __ret=$?
             if test ${__ret} -eq 0; then
                 isInDevTree=1
             fi
         else
             OM_DRIVER_CONF_DIR="${OMNI_HOME}/etc"
-            isValidConfDir "${OM_DRIVER_CONF_DIR}"
             __ret=$?
         fi
         unset __devTop
@@ -172,7 +134,6 @@ validateConfDir() {
         setConfDir
         __ret=$?
     else
-        isValidConfDir "${OM_DRIVER_CONF_DIR}"
         __ret=$?
         if test ${__ret} -ne 0; then
             OM_DRIVER_CONF_DIR=''
@@ -182,10 +143,6 @@ validateConfDir() {
     fi
     return ${__ret}
 }
-
-
-#
-
 
 omniSetup() {
     validateOmniHome
@@ -207,7 +164,6 @@ omniSetup() {
     if test -z "${OMNI_JAVA}"; then
         OMNI_JAVA="java"
     fi
-
 
     if test $# -gt 0; then
         classPath=`genClassPath $@`
@@ -231,24 +187,17 @@ omniSetup() {
     if test ${isInDevTree} -eq 1; then
         _C_Front="${OMNI_SOURCE_DIR}/C-FrontEnd/src/C_Front"
         _F_Front="${OMNI_SOURCE_DIR}/F-FrontEnd/src/F_Front"
-        _omtranslate="sh ${OMNI_SOURCE_DIR}/Driver/bin/omtranslate"
-        _C_Trans="sh ${OMNI_SOURCE_DIR}/C-BackEnd/bin/C_Trans"
-        _F_Trans="sh ${OMNI_SOURCE_DIR}/F-BackEnd/bin/F_Trans"
         _C_Decomp="sh -x ${OMNI_SOURCE_DIR}/C-BackEnd/bin/C_Decomp"
         _F_Decomp="sh ${OMNI_SOURCE_DIR}/F-BackEnd/bin/F_Decomp"
     else
         _C_Front="${OMNI_HOME}/bin/src/C_Front"
         _F_Front="${OMNI_HOME}/bin/F_Front"
-        _omtranslate="${OMNI_HOME}/bin/omtranslate"
-        _C_Trans="${OMNI_HOME}/bin/C_Trans"
-        _F_Trans="${OMNI_HOME}/bin/F_Trans"
         _C_Decomp="${OMNI_HOME}/bin/C_Decomp"
         _F_Decomp="${OMNI_HOME}/bin/F_Decomp"
     fi
     unset isInDevTree
     return 0
 }
-
 
 hasOption() {
     __ret=0
