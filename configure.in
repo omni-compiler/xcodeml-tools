@@ -262,24 +262,6 @@ AC_SUBST(ATOOL)
 
 if test "${userCFLAGS}" != ""; then
     CFLAGS="${userCFLAGS}"
-elif test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    CFLAGS="-Kfast,openmp -Xg -noansi"
-elif test "$target" = "KNL-linux-gnu"; then
-    CFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_C"
-elif test "$target" = "KNC-linux-gnu"; then
-    CFLAGS="-fast -mp"
-elif test "$target" = "Cray-linux-gnu"; then
-    CFLAGS="-O2 -hgnu -h omp"
-elif test "$target" = "sxace-nec-superux"; then
-    # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
-    CFLAGS="-Chopt"
-elif test "$target" = "sx9-nec-superux"; then
-    CFLAGS="-Chopt -Popenmp"
-elif test "$target" = "powerpc-ibm-cnk"; then
-    INC_PATH="/usr/local/bg/include"
-    CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH -qsmp=omp"
-elif test "$target" = "powerpc-hitachi-aix"; then
-    CFLAGS="-q64 -qhot -qsimd=auto -O5 -qsmp=omp -maix64"
 elif test "$CC" = "gcc"; then
     CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith -fopenmp"
 elif test "$CC" = "icc"; then
