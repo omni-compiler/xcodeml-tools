@@ -9,13 +9,11 @@ AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 #--------------------------------------------------------------------
 # Save environmental variables set by user before AC_PROG_CC and so on.
 userCFLAGS=${CFLAGS}
-userMPI_CFLAGS=${MPI_CFLAGS}
 
 # Checks for programs.
 AC_PROG_CPP
 AC_PROG_CC
 AC_PROG_FC
-AC_PROG_CXX
 #AC_PROG_MAKE_SET
 AC_PROG_AWK
 AC_PROG_YACC
@@ -222,6 +220,7 @@ AC_SUBST(EXTENSION_FLAGS)
 #--------------------------------------------------------------------
 #  General
 #--------------------------------------------------------------------
+T_FJMODULE=$FALSE
 if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
     if test "x${domod2xmod}" = "xyes"; then
         T_FJMODULE=$TRUE
@@ -261,56 +260,32 @@ if test "x${doatool}" = "xyes"; then
 fi
 AC_SUBST(ATOOL)
 
-if test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
-    MPI_CFLAGS="-Kfast,openmp -Xg -noansi"
+if test "${userCFLAGS}" != ""; then
+    CFLAGS="${userCFLAGS}"
+elif test "$target" = "Kcomputer-linux-gnu" -o "$target" = "FX10-linux-gnu" -o "$target" = "FX100-linux-gnu"; then
+    CFLAGS="-Kfast,openmp -Xg -noansi"
 elif test "$target" = "KNL-linux-gnu"; then
-    MPI_CFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_C"
+    CFLAGS="-O2 -fp-model fast=2 -ipo -no-prec-div -xMIC-AVX512 $OPENMP_OPT_C"
 elif test "$target" = "KNC-linux-gnu"; then
-    MPI_CFLAGS="-fast -mp"
+    CFLAGS="-fast -mp"
 elif test "$target" = "Cray-linux-gnu"; then
-    MPI_CFLAGS="-O2 -hgnu -h omp"
+    CFLAGS="-O2 -hgnu -h omp"
 elif test "$target" = "sxace-nec-superux"; then
     # Don't use OpenMP option because of SX-ACE bug [Xmp-dev:5418].
-    MPI_CFLAGS="-Chopt"
+    CFLAGS="-Chopt"
 elif test "$target" = "sx9-nec-superux"; then
-    MPI_CFLAGS="-Chopt -Popenmp"
+    CFLAGS="-Chopt -Popenmp"
 elif test "$target" = "powerpc-ibm-cnk"; then
     INC_PATH="/usr/local/bg/include"
-    MPI_CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH -qsmp=omp"
+    CFLAGS="-O3 -qhot -qsimd=auto -q64 -qsource -qlist $INC_PATH -qsmp=omp"
 elif test "$target" = "powerpc-hitachi-aix"; then
-    MPI_CFLAGS="-q64 -qhot -qsimd=auto -O5 -qsmp=omp"
-else
-    AC_CHECK_PROG([MPI_CC], [mpiicc], [mpiicc])
-    AC_CHECK_PROG([MPI_CC], [mpicc], [mpicc])
-
-    chk=`${MPI_CC} --version | head -n1`
-    case $chk in
-       gcc* | Apple* | cc* | *mpc-gcc_620* )
-	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith -fopenmp"
-	    ;;
-	*ICC*)
-	    MPI_CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith -fopenmp"
-	    ;;
-	*)
-	    chk2=`$MPI_CC --version 2> /dev/null | head -n2 | tail -n1`
-	    case $chk2 in
-		pgcc*)
-		    MPI_CFLAGS="-fast -c99 -mp"
-		    ;;
-		*)
-		    echo "No supported C compiler was found."
-		    echo "This program supports following MPI compilers."
-		    echo " - GNU Compiler (mpicc)"
-		    echo " - Intel Compiler (mpiicc)"
-		    echo " - PGI Compiler (mpicc)"
-		    echo " - Fujitsu Compiler (mpifccpx)"
-		    echo " - Cray Compiler (cc)"
-		    echo " - NEC Compiler (sxmpic++)"
-		    echo " - IBM Compiler (mpixlcxx_r)"
-		    echo " - HITACHI Compiler (mpCC_r)"
-		    exit 1 ;;
-	    esac ;;
-    esac
+    CFLAGS="-q64 -qhot -qsimd=auto -O5 -qsmp=omp -maix64"
+elif test "$CC" = "gcc"; then
+    CFLAGS="-O2 -std=gnu99 -Wall -Wpointer-arith -fopenmp"
+elif test "$CC" = "icc"; then
+    CFLAGS="-O2 -qopenmp"
+elif test "$CC" = "pgcc"; then
+    CFLAGS="-fast -c99 -mp"
 fi
 
 AC_SUBST(LIBXML2_INCLUDE_DIR)
@@ -320,71 +295,37 @@ AC_SUBST(UCHARDET_INCLUDE_DIR)
 AC_SUBST(UCHARDET_LIB_DIR)
 
 #--------------------------------------------------------------------
-# Set user defined value.
-if test "${userMPI_CFLAGS}" != ""; then
-    MPI_CFLAGS="${userMPI_CFLAGS}"
-fi
-
-if test "${userCFLAGS}" != ""; then
-    CFLAGS="${userCFLAGS}"
-    echo ${userCFLAGS}
-    sleep 1
-else
-    if test "$target" = "powerpc-hitachi-aix"; then
-	CFLAGS="${CFLAGS} -maix64"
-    fi
-
-    if test "${userCFLAGS}" != ""; then
-      chk=`${CC} -V 2>&1 | head -n1`
-    elif test "$CRAY" = "$TRUE"; then
-      chk=`${CC} -V 2>&1 | head -n1`
-    else
-      chk=`${CC} --version | head -n1`
-    fi
-    case $chk in
-	gcc* | Apple* | *ICC*)
-	    CFLAGS="${CFLAGS} -std=gnu99 -Wall -Wpointer-arith"
-	    ;;
-        Cray* | cc*)
-            CFLAGS=""
-            ;;
-	*)
-	    chk2=`${CC} --version 2> /dev/null | head -n2 | tail -n1`
-	    case $chk2 in
-		pgcc*)
-		    CFLAGS="${CFLAGS} -c99"
-		    ;;
-		*)
-		    AC_MSG_ERROR([No supported C compiler was found.]);;
-	    esac ;;
-    esac
-fi
-
-AC_SUBST(MPI_CFLAGS)
-
-#--------------------------------------------------------------------
 # check --enable-mod2xmod
-if test "$domod2xmod" = "yes" -a "$KIND_MPI_FORTRAN" = "other"; then
+if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
+  KIND_FORTRAN=frtpx
+else
+  chk=`${FC} --version | head -n1`
+  case $chk in
+  "GNU Fortran"*)
+    KIND_FORTRAN=gfortran
+    ;;
+  *)
+    KIND_FORTRAN=other
+    ;;
+  esac
+fi
+			  
+if test "$domod2xmod" = "yes" -a "$KIND_FORTRAN" = "other"; then
     AC_MSG_ERROR("--enable-mod2xmod option can be used when Backend compiler is gfortran.")
 fi
 
-IS_MOD2XMOD=no
-if test "$domod2xmod" = "yes" -a \( "$KIND_MPI_FORTRAN" = "gfortran" -o "$KIND_MPI_FORTRAN" = "frtpx" \); then
-    IS_MOD2XMOD=yes
-fi
-
 MOD2XMOD=$FALSE
-if test "$IS_MOD2XMOD" = "yes"; then
+if test "$domod2xmod" = "yes" -a \( "$KIND_FORTRAN" = "gfortran" -o "$KIND_FORTRAN" = "frtpx" \); then
     MOD2XMOD=$TRUE
 fi
 
 NEED_MAKE_MOD2XMOD=$FALSE
-if test "$IS_MOD2XMOD" = "yes" -a "$KIND_MPI_FORTRAN" = "gfortran"; then
+if test "$MOD2XMOD" = $TRUE -a "$KIND_FORTRAN" = "gfortran"; then
     NEED_MAKE_MOD2XMOD=$TRUE
 fi
 
 AC_SUBST(MOD2XMOD)
-AC_SUBST(KIND_MPI_FORTRAN)
+AC_SUBST(KIND_FORTRAN)
 AC_SUBST(NEED_MAKE_MOD2XMOD)
 
 if test "$NEED_MAKE_MOD2XMOD" = $TRUE; then
@@ -1069,15 +1010,13 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
 
-AC_CONFIG_FILES(
-    Driver/atool/mk/vars.mk
-    Driver/atool/Makefile
-    Driver/atool/src/lib/Makefile
-    Driver/atool/src/include/nata/Makefile
-    Driver/atool/src/include/nata/nata_platform.h
-    Driver/atool/src/cmd/Makefile
-    Driver/atool/src/cmd/paths.h
-)
+AC_CONFIG_FILES(Driver/atool/mk/vars.mk)
+AC_CONFIG_FILES(Driver/atool/Makefile)
+AC_CONFIG_FILES(Driver/atool/src/lib/Makefile)
+AC_CONFIG_FILES(Driver/atool/src/include/nata/Makefile)
+AC_CONFIG_FILES(Driver/atool/src/include/nata/nata_platform.h)
+AC_CONFIG_FILES(Driver/atool/src/cmd/Makefile)
+AC_CONFIG_FILES(Driver/atool/src/cmd/paths.h)
 
 AC_CONFIG_COMMANDS([modify-config],
 	[(cd Driver/atool && ${BASH} ./mk/finalizeconfig ${OS_CPPFLAGS})],
@@ -1106,4 +1045,5 @@ AC_CONFIG_FILES(Driver/etc/setup.conf)
 AC_CONFIG_FILES(Driver/bin/C_Back)
 AC_CONFIG_FILES(Driver/bin/F_Back)
 AC_CONFIG_FILES(Makefile)
+
 AC_OUTPUT

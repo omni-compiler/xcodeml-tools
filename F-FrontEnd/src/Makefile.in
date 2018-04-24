@@ -27,12 +27,12 @@ CREATE_FILES = C-exprcode.h C-exprcode.c
 FALSE       = 1
 TRUE        = 0
 IS_MOD2XMOD = @MOD2XMOD@
-KIND_MPI_FORTRAN = @KIND_MPI_FORTRAN@
+KIND_FORTRAN = @KIND_FORTRAN@
 ifeq ($(IS_MOD2XMOD), $(TRUE))
-ifeq ($(KIND_MPI_FORTRAN), gfortran)
+ifeq ($(KIND_FORTRAN), gfortran)
     CFLAGS+=-D_FC_IS_GFORTRAN
 endif
-ifeq ($(KIND_MPI_FORTRAN), frtpx)
+ifeq ($(KIND_FORTRAN), frtpx)
     CFLAGS+=-D_FC_IS_FRTPX
 endif
 endif
