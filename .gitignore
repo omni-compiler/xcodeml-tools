@@ -8,6 +8,11 @@
 a.out
 
 libxmpf/include/Makefile
+libxmpf/include/xmp_coarray_alloc.h
+libxmpf/include/xmp_coarray_get.h
+libxmpf/include/xmp_coarray_getsub.h
+libxmpf/include/xmp_coarray_put.h
+libxmpf/include/xmp_coarray_reduction.h
 
 # Top directory
 autom4te.cache

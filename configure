@@ -688,6 +688,7 @@ ENABLE_UCHARDET
 LIBXML2_LIB_DIR
 LIBXML2_INCLUDE_DIR
 ATOOL
+TARGET
 T_FJMODULE
 EXTENSION_FLAGS
 MKDIR_P
@@ -7886,6 +7887,9 @@ if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu
     fi
 fi
 
+#--------------------------------------------------------------------
+TARGET=$target
+
 
 #--------------------------------------------------------------------
 # Check basic command
@@ -9989,6 +9993,8 @@ ac_config_files="$ac_config_files Driver/bin/C_Back"
 
 ac_config_files="$ac_config_files Driver/bin/F_Back"
 
+ac_config_files="$ac_config_files libxmpf/include/Makefile"
+
 ac_config_files="$ac_config_files Makefile"
 
 
@@ -10717,6 +10723,7 @@ do
     "Driver/etc/setup.conf") CONFIG_FILES="$CONFIG_FILES Driver/etc/setup.conf" ;;
     "Driver/bin/C_Back") CONFIG_FILES="$CONFIG_FILES Driver/bin/C_Back" ;;
     "Driver/bin/F_Back") CONFIG_FILES="$CONFIG_FILES Driver/bin/F_Back" ;;
+    "libxmpf/include/Makefile") CONFIG_FILES="$CONFIG_FILES libxmpf/include/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

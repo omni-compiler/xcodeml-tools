@@ -6,7 +6,7 @@ T_FJMODULE=@T_FJMODULE@
 T_FJMODULE_REMOTE=http://omni-compiler.org/T_FJModule/20170523
 T_FJMODULE_LOCAL=T_FJModule
 
-SUBDIRS=C-FrontEnd/src F-FrontEnd/src XcodeML-Common C-BackEnd F-BackEnd Driver/bin
+SUBDIRS=C-FrontEnd/src F-FrontEnd/src XcodeML-Common libxmpf/include C-BackEnd F-BackEnd Driver/bin
 
 FALSE=1
 TRUE=0
