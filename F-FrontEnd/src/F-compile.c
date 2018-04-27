@@ -455,7 +455,10 @@ compile_statement1(int st_no, expr x)
         /* differ CONTAIN from INTERFASE */
         && PARENT_STATE != ININTR
         && EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT
-        && EXPR_CODE(x) != F_INCLUDE_STATEMENT)
+        && EXPR_CODE(x) != F_INCLUDE_STATEMENT
+	/* PRAGMA and COMMENT are allowed */
+	&& EXPR_CODE(x) != F_PRAGMA_STATEMENT
+	&& EXPR_CODE(x) != F_COMMENT_LINE)
     {
         /* otherwise error */
         error("only function/subroutine statement are allowed "
@@ -5587,7 +5590,13 @@ solve_use_assoc_conflict(ID id, ID mid)
         MULTI_ID_LIST(id) = NULL;
         return;
     }
-
+    if (ID_CLASS(id) == CL_TAGNAME && !TYPE_IS_DECLARED(ID_TYPE(id)) &&
+	ID_CLASS(mid) == CL_TAGNAME){
+      replace_or_assign_type(&ID_TYPE(id), ID_TYPE(mid));
+      id->use_assoc = mid->use_assoc;
+      return;
+    }
+    
     if(!id->use_assoc) {
         // conflict between (sub)program, argument, or module
         /* NOTE:
