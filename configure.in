@@ -220,6 +220,7 @@ AC_SUBST(EXTENSION_FLAGS)
 #--------------------------------------------------------------------
 #  General
 #--------------------------------------------------------------------
+FPP_FLAGS="-E -cpp"
 T_FJMODULE=$FALSE
 if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu" -o "x${target}" = "xFX100-linux-gnu"; then
     if test "x${domod2xmod}" = "xyes"; then
@@ -227,6 +228,7 @@ if test "x${target}" = "xKcomputer-linux-gnu" -o "x${target}" = "xFX10-linux-gnu
     fi
 fi
 AC_SUBST(T_FJMODULE)
+AC_SUBST(FPP_FLAGS)
 #--------------------------------------------------------------------
 TARGET=$target
 AC_SUBST(TARGET)
