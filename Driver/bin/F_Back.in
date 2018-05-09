@@ -1,18 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-OM_DRIVER_CONF_DIR=@OM_DRIVER_CONF_DIR@
-setupConf="${OM_DRIVER_CONF_DIR}/setup.conf"
-if test ! -r "${setupConf}"; then
-    echo "can't read '${setupConf}'."
-    exit 1
-fi
+OMNI_HOME=@OMNI_HOME@
+OMNI_JAVA=@JAVA@
 
-. "${setupConf}"
+OMNI_JAR1="${OMNI_HOME}/share/om-f-back.jar"
+OMNI_JAR2="${OMNI_HOME}/share/om-common.jar"
+OMNI_JAVA_OPT="@JAVA_OPT@ -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f -fcoarray-no-use-statement"
 
-jars="om-f-back.jar om-common.jar"
-omniSetup ${jars}
-if test $? -ne 0; then
-    exit 1
-fi
-
-exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} xcodeml.f.util.omx2f -fcoarray-no-use-statement ${1+"$@"}
+exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} ${1+"$@"}

@@ -8,13 +8,11 @@ ETCDIR      = @OMNI_HOME@/etc/
 BINDIR      = @OMNI_HOME@/bin/
 
 bin_SCRIPTS  = ./F_Back ./C_Back
-etc_DATA     = ../etc/setup.conf
 
 all:
-install: $(bin_SCRIPTS) $(etc_DATA)
+install: $(bin_SCRIPTS) 
 	$(MKDIR_P) $(DESTDIR)$(BINDIR) $(DESTDIR)$(ETCDIR)
 	$(INSTALL) $(bin_SCRIPTS) $(DESTDIR)$(BINDIR)
-	$(INSTALL) $(etc_DATA) $(DESTDIR)$(ETCDIR)
 
 clean:
 	rm -f *.o
