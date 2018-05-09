@@ -47,7 +47,6 @@ Driver/atool/src/lib/Makefile
 Driver/bin/F_Back
 Driver/bin/C_Back
 Driver/bin/Makefile
-Driver/etc/setup.conf
 
 F-BackEnd/Makefile
 F-BackEnd/build/
