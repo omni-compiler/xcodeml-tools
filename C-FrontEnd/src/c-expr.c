@@ -4373,11 +4373,11 @@ exprListJoin_LM(CExpr *exprHead, CExpr *exprTail)
     
     bottom = 0;
     if(lineMarkers_stack_top > 0)
-        bottom = lineMarkers_stack[--lineMarkers_stack_top-1];
+        bottom = lineMarkers_stack[lineMarkers_stack_top-1];
     e = exprHead;
     for(i = bottom; i < lineMarkers_top ; i++)
         e = exprListJoin(e, lineMarkers[i]);
-    lineMarkers_top = bottom;
+    if (lineMarkers_top > bottom) lineMarkers_top = bottom;
     return exprListJoin(e,exprTail);
 }
 
@@ -4389,13 +4389,13 @@ exprList1_LM(CExprCodeEnum c, CExpr* e1)
     
     bottom = 0;
     if(lineMarkers_stack_top > 0)
-        bottom = lineMarkers_stack[--lineMarkers_stack_top-1];
+        bottom = lineMarkers_stack[lineMarkers_stack_top-1];
     e = NULL;
     for(i = bottom; i < lineMarkers_top ; i++){
         if(e == NULL) e =     exprList1(c, lineMarkers[i]);
         else e = exprListJoin(e, lineMarkers[i]);
     }
-    lineMarkers_top = bottom;
+    if (lineMarkers_top > bottom) lineMarkers_top = bottom;
     if(e == NULL) e = exprList1(c, e1);
     else e = exprListJoin(e, e1);
     return e;
