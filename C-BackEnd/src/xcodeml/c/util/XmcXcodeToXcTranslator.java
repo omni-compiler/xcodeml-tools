@@ -2916,6 +2916,11 @@ public class XmcXcodeToXcTranslator {
 	  arrayObj = new XcRefObj.MemberRef(ident);
 	  enterNodes(tc, arrayObj, getContent(arrayAddrNode));
 	}
+	else if (nodeName.equals("functionCall")){
+	  ident = _getIdentFunc(tc, arrayAddrNode);
+	  arrayObj = new XcFuncCallObj();
+	  enterNodes(tc, arrayObj, getContent(arrayAddrNode));
+	}
 	else {
 	  throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
 	}
