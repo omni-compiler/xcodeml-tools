@@ -1244,7 +1244,9 @@ lexLinemarker(const char *name, CDirectiveTypeEnum type, int *flag)
     while(isspace(*p) == 0) ++p; // directive or line number
     while(isspace(*p)) ++p;
     if (type == DT_LINEMARKER){
-      while(isspace(*p) == 0) ++p; // file name
+      p++; // '"'
+      while(*p != '"') ++p; // file name
+      p++; // '"'
       while(isspace(*p)) ++p;
     }
 
