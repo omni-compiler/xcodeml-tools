@@ -348,7 +348,7 @@ L\"(\\.|[^\\"])*\"      { count(); yylval.expr = lexAllocStringConst(CT_WIDE);  
 
 ^[ \t]*"#"[ \t]*[0-9]+([ \t]+[^\r\n]*)?\r?\n  { int flag; CExpr *ret;
                                                 flag = lexParseLineDirective(0);
-                                                ret = lexLinemarker("", DT_LINEMARKER, &flag); count();
+                                                ret = lexLinemarker("", DT_LINEMARKER, &flag);
                                                  if (flag){
                                                     putLineMarker(ret);
 						 }
