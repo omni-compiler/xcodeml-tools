@@ -2,6 +2,7 @@ module mod1
   integer, parameter :: r1 = selected_real_kind()
   integer, parameter :: sp = selected_real_kind(6, 37)
   integer, parameter :: dp = selected_real_kind(12,307)
+  integer, parameter :: wp = dp
 
   integer, parameter :: i1 = selected_int_kind(4);
   integer, parameter :: i2 = selected_int_kind(8);
@@ -27,6 +28,15 @@ contains
         print*,'arg is r1'
       type is(real(dp))
         print*,'arg is dp'
+    end select
+
+   select type(arg1)
+      type is(integer)
+        print*,'arg is integer'
+      type is(real(wp)) 
+        print*,'arg is wp'
+      type is(real(sp))
+        print*,'arg is sp'
     end select
   end subroutine sub1
 end module mod1
