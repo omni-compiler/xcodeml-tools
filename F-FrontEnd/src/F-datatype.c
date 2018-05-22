@@ -891,6 +891,93 @@ type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argument, in
             return FALSE;
         }
     }
+
+    if(EXPR_CODE(v1) == FUNCTION_CALL && EXPR_CODE(v2) == FUNCTION_CALL) {
+        char *name1 = NULL;
+        char *name2 = NULL;
+
+        SYMBOL s1 = EXPV_NAME(EXPR_ARG1(v1));
+        ID fId1 = find_ident(s1);
+        if(fId1 != NULL && PROC_CLASS(fId1) == P_INTRINSIC){
+            name1 = SYM_NAME(ID_SYM(fId1));
+        } else if(SYM_TYPE(s1) == S_INTR){
+            name1 = SYM_NAME(s1);
+        }
+
+        SYMBOL s2 = EXPV_NAME(EXPR_ARG1(v2));
+        ID fId2 = find_ident(s2);
+        if(fId2 != NULL && PROC_CLASS(fId2) == P_INTRINSIC){
+            name2 = SYM_NAME(ID_SYM(fId2));
+        } else if(SYM_TYPE(s2) == S_INTR){
+            name2 = SYM_NAME(s2);
+        }
+
+        if(strcmp(name1, name2) == 0) {
+            // Check the value of selected_real_kind
+            if(strcmp(name1, "selected_real_kind") == 0) {
+                if(!EXPR_HAS_ARG1(EXPR_ARG2(v1))
+                    && !EXPR_HAS_ARG1(EXPR_ARG2(v2)))
+                {
+                    // both selected_real_kind() have no arg.
+                    return TRUE;
+                } else if (!EXPR_HAS_ARG1(EXPR_ARG2(v1))
+                    || !EXPR_HAS_ARG1(EXPR_ARG2(v2)))
+                {
+                    // one of selected_real_kind() has no arg and one has.
+                    return FALSE;
+                } else {
+                    // both selected real kind have at least one args
+                    int nbArgs1 = EXPR_HAS_ARG3(EXPR_ARG2(v1)) ?
+                        3 : EXPR_HAS_ARG2(EXPR_ARG2(v1)) ? 2 : 1;
+                    int nbArgs2 = EXPR_HAS_ARG3(EXPR_ARG2(v2)) ?
+                        3 : EXPR_HAS_ARG2(EXPR_ARG2(v2)) ? 2 : 1;
+
+                    if(nbArgs1 != nbArgs2) {
+                        return FALSE;
+                    } else {
+                        // check args for compatibility
+                        if(nbArgs1 == 3
+                            && EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v1))) ==
+                            EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v2)))
+                            && EXPV_INT_VALUE(EXPR_ARG2(EXPR_ARG2(v1))) ==
+                            EXPV_INT_VALUE(EXPR_ARG2(EXPR_ARG2(v2)))
+                            && EXPV_INT_VALUE(EXPR_ARG3(EXPR_ARG2(v1))) ==
+                            EXPV_INT_VALUE(EXPR_ARG3(EXPR_ARG2(v2))))
+                        {
+                            return TRUE;
+                        } else if(nbArgs1 == 2
+                            && EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v1))) ==
+                            EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v2)))
+                            && EXPV_INT_VALUE(EXPR_ARG2(EXPR_ARG2(v1))) ==
+                            EXPV_INT_VALUE(EXPR_ARG2(EXPR_ARG2(v2))))
+                        {
+                            return TRUE;
+                        } else if(nbArgs1 == 1
+                            && EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v1))) ==
+                            EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v2))))
+                        {
+                            return TRUE;
+                        } else {
+                            return FALSE;
+                        }
+                    }
+                }
+            } else if(strcmp(name1, "selected_int_kind") == 0) {
+                // Check compatiblity of selected_int_kind(R)
+                if(EXPR_ARG2(v1) == NULL && EXPR_ARG2(v2) == NULL) {
+                    return TRUE;
+                } else if(EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v1))) ==
+                    EXPV_INT_VALUE(EXPR_ARG1(EXPR_ARG2(v2))))
+                {
+                    return TRUE;
+                } else {
+                    return FALSE;
+                }
+            }
+        } else {
+            return FALSE;
+        }
+    }
     /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
     return TRUE;
 }
