@@ -977,6 +977,14 @@ type_parameter_expv_equals(expv v1, expv v2, int is_strict, int for_argument, in
         } else {
             return FALSE;
         }
+    } else if(EXPR_CODE(v1) == F_VAR && EXPR_CODE(v2) == F_VAR) {
+        // Both kind are variables
+        if(EXPV_NAME(v1) != NULL && EXPV_NAME(v2) != NULL 
+            && strcmp(SYM_NAME(EXPV_NAME(v1)), SYM_NAME(EXPV_NAME(v2))) == 0) 
+        {
+            return TRUE;
+        }
+        return FALSE;
     }
     /* CANNOT RECOGNIZE THE VALUE OF EXPV, pass */
     return TRUE;
