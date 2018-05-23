@@ -2376,6 +2376,7 @@ outx_POINTS_AT(FILE *fp, int indent, CExprOfBinaryNode *pointsAt)
 /* } */
 
 extern unsigned int s_arrayToPointer;
+extern unsigned int s_useXMP;
 
 void
 outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
@@ -2407,8 +2408,8 @@ outx_ARRAY_REF(FILE *fp, int indent, CExprOfBinaryNode *aryRef)
       tmp_aryRef = EXPR_B(tmp_aryRef->e_nodes[0]);
     }
 
-    if (s_arrayToPointer || EXPR_CODE(tmp_aryRef) != EC_IDENT ||
-	EXPRS_TYPE(EXPR_SYMBOL(tmp_aryRef))->e_tdKind != TD_ARRAY){
+    if (!s_useXMP && (s_arrayToPointer || EXPR_CODE(tmp_aryRef) != EC_IDENT ||
+		      EXPRS_TYPE(EXPR_SYMBOL(tmp_aryRef))->e_tdKind != TD_ARRAY)){
 
       int pref = (pec != EC_ADDR_OF);
       int indent1 = pref ? indent: indent - 1;
