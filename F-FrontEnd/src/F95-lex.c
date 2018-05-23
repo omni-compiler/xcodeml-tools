@@ -620,7 +620,8 @@ yylex()
 
     if (expect_next_token_is_keyword == TRUE) {
         if (curToken == '(' || curToken == LET ||
-            is_keyword(curToken, keywords) == TRUE) {
+            is_keyword(curToken, keywords) == TRUE ||
+	    is_keyword(curToken, XMP_keywords) == TRUE) {
             expect_next_token_is_keyword = FALSE;
         }
     } else if (curToken == IDENTIFIER) {
