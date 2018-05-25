@@ -2918,6 +2918,12 @@ expv_reduce_kind(expv v)
         return ret; // already reduced
     }
 
+    // If the kind variable is used by indirection, the kind cannot be
+    // reduce then keep _var as is. Use case omni-compiler#546
+    if(EXPV_CODE(ret) == F_VAR && EXPV_CODE(v) == F_VAR) {    
+        return v;
+    }
+
     switch (EXPV_CODE(ret)) {
     case FUNCTION_CALL: {
         char *name = NULL;
