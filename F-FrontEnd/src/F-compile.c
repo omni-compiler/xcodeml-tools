@@ -6039,7 +6039,7 @@ get_generic_spec_symbol(int expr_code){
     } else if(expr_code == F95_EQOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
     } else if(expr_code == F95_NEOP) {
-        gen_spec = make_enode(IDENT, (void *)find_symbol(".neq."));
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".ne."));
     } else if(expr_code == F95_LTOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
     } else if(expr_code == F95_LEOP) {
