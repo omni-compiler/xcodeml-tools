@@ -50,7 +50,6 @@ Driver/bin/Makefile
 
 F-BackEnd/Makefile
 F-BackEnd/build/
-F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor_coarrayLibs.java
 
 F-FrontEnd/gnu_module/Makefile
 F-FrontEnd/gnu_module/T_Module

@@ -7427,7 +7427,8 @@ XfDecompileDomVisitor {
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
       //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
-      ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
+      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
+      ArrayList<String> libNames = _get_coarrayRuntimeLibNames();
 
       // check if the name is declared in module xmpf_coarray_decl
       for (String libName: libNames)
@@ -7480,85 +7481,23 @@ XfDecompileDomVisitor {
         exprModelSet = new HashSet<String>(Arrays.asList(exprModelsList));
     }
 
-    ArrayList<String> _get_coarrayRuntimeLibNames__OLD__() {
+    // obsolated
+    //    ArrayList<String> _get_coarrayRuntimeLibNames__OLD__() {
+    //    }
 
-      final String[] libNameArray = {
-        "xmpf_image_index",
-        "xmpf_cobound_generic",
-        "xmpf_cobound_nodim",
-        "xmpf_cobound_dim",
-        "xmpf_num_images",
-        "xmpf_this_image_generic",
-        "xmpf_coarray_hello",
-        "xmpf_sync_all_stat",
-        "xmpf_sync_memory",
-        "xmpf_sync_memory_nostat",
-        "xmpf_sync_memory_stat_wrap",
-        "xmpf_sync_images",
-        "xmpf_sync_image_nostat",
-        "xmpf_sync_images_nostat_wrap",
-        "xmpf_sync_allimages_nostat_wrap",
-        "xmpf_sync_image_stat_wrap",
-        "xmpf_sync_images_stat_wrap",
-        "xmpf_sync_allimages_stat_wrap",
-        "xmpf_critical",
-        "xmpf_end_critical",
-        "xmpf_error_stop",
-        "xmpf_atomic_define_generic",
-        "xmpf_atomic_ref_generic",
-        "xmpf_coarray_get_generic",
-        "xmpf_coarray_put_generic",
-        "xmpf_coarray_alloc_generic",
-        "xmpf_coarray_dealloc_generic",
-        "xmpf_co_broadcast_generic",
-        "xmpf_co_sum_generic",
-        "xmpf_co_max_generic",
-        "xmpf_co_min_generic"
-      };
+    // obsolated
+    //    ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
+    //
+    //      String[] nameArray = XfDecompileDomVisitor_coarrayLibs.EntryNameArray;
+    //      ArrayList<String> libNames =
+    //        new ArrayList<String>(Arrays.asList(nameArray));
+    //
+    //      return libNames;
+    //    }
 
-      final ArrayList<String> libNames =
-        new ArrayList<String>(Arrays.asList(libNameArray));
-
-      return libNames;
+    ArrayList<String> _get_coarrayRuntimeLibNames() {
+	return XmOption.getCoarrayLibNameList();
     }
-
-
-    ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
-
-      String[] nameArray = XfDecompileDomVisitor_coarrayLibs.EntryNameArray;
-      ArrayList<String> libNames =
-        new ArrayList<String>(Arrays.asList(nameArray));
-
-      /********************************
-      final String inFile = "./coarray_entry_names.txt";
-
-      final ArrayList<String> libNames = new ArrayList();
-
-      if (libNames.isEmpty()) {
-        try {
-          FileReader in = new FileReader(inFile);
-          BufferedReader reader = new BufferedReader(in);
-
-          String line;
-          while ((line = reader.readLine()) != null) {
-            if ("".equals(line))
-              continue;
-
-            char c = line.charAt(0);
-            if ('a' <= c && c <= 'z' || 'A' <= c && c <= 'Z')
-              libNames.add(line);
-          }
-        } catch (FileNotFoundException e) {
-          System.out.println(e);
-        } catch (IOException e) {
-          System.out.println(e);
-        }
-      }
-      *******************************/
-
-      return libNames;
-    }
-
 
     class CollectDeclaredNameVisitor {
         private Set<String> _names;
