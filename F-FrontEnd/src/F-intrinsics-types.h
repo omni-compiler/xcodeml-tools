@@ -267,8 +267,6 @@ typedef enum {
     INTR_SAME_TYPE_AS,
     INTR_MOVE_ALLOC,
 
-    INTR_NEW_LINE,
-
     /* F08 intrinsic subroutines */
     INTR_COMMAND_ARUGMENT_COUNT,
     INTR_GET_COMMAND,
