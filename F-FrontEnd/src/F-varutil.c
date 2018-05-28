@@ -459,7 +459,7 @@ getConstExprType(x)
 
     FOR_ITEMS_IN_LIST(lp, l) {
         v = LIST_ITEM(lp);
-        if (!(IS_NUMERIC_CONST_V(v))) {
+        if (!(IS_NUMERIC_CONST_V(v)) && EXPV_TYPE(v) != NULL) {
             return EXPV_TYPE(v);
         }
         ret = max_type(ret, EXPV_TYPE(v));
