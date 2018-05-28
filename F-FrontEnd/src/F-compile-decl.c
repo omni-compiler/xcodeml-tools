@@ -3047,7 +3047,13 @@ max_type(TYPE_DESC tp1, TYPE_DESC tp2)
     BASIC_DATA_TYPE t;
 
 /* FEAST add start */
-    if(!tp1 || !tp2) return NULL;
+    if(tp1 == NULL && tp2 == NULL) {
+        return NULL;
+    } else if(tp1 == NULL) {
+        return tp2;
+    } else if(tp2 == NULL) {
+        return tp1;
+    }
 /* FEAST add  end  */
     t = TYPE_BASIC_TYPE(tp2);
     switch(TYPE_BASIC_TYPE(tp1)) {
