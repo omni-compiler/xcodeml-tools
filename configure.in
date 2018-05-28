@@ -1028,7 +1028,6 @@ AC_CONFIG_FILES(F-BackEnd/Makefile)
 AC_CONFIG_FILES(Driver/bin/Makefile)
 AC_CONFIG_FILES(Driver/bin/C_Back)
 AC_CONFIG_FILES(Driver/bin/F_Back)
-AC_CONFIG_FILES(libxmpf/include/Makefile)
 AC_CONFIG_FILES(Makefile)
 
 AC_OUTPUT
