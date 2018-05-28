@@ -7991,7 +7991,7 @@ pointer_assignable(expr x,
             !IS_ARRAY_TYPE(vPteTyp) && 
             !TYPE_IS_ALLOCATABLE(vPteTyp)) 
         {
-            if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
+            if (x != NULL && EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
                                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
             } else {
