@@ -7987,9 +7987,12 @@ pointer_assignable(expr x,
     } else {
         // If derived type is TARGET, pointee doesn't need to be flagged as 
         // TARGET. xcodeml-tools#19
-        TYPE_DESC structType = vPointee != NULL ? 
+        TYPE_DESC structType = NULL;
+        if(EXPV_CODE(vPointee) == F95_MEMBER_REF) {
+            structType = vPointee != NULL ? 
             EXPV_LEFT(vPointee) != NULL ? EXPV_TYPE(EXPV_LEFT(vPointee)) : NULL
             : NULL;
+        }
         
         if (!TYPE_IS_TARGET(vPteTyp) &&
             !TYPE_IS_POINTER(vPteTyp) &&
