@@ -5768,7 +5768,7 @@ import_module_id(ID mid,
     }
 
     if(current_module_state != M_PRIVATE) {
-        TYPE_SET_PUBLIC(ID_TYPE(id)); // Imported id should be flagged public
+        TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
     }
 
     return;
