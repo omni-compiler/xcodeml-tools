@@ -2710,7 +2710,9 @@ end_declaration()
                 if (current_module_state == M_PUBLIC) {
                     TYPE_SET_PUBLIC(ip);
                 }
-                if (current_module_state == M_PRIVATE) {
+                if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
                     TYPE_SET_PRIVATE(ip);
                 }
             }
