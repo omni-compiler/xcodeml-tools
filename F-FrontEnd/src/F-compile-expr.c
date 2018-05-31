@@ -4,6 +4,7 @@
 
 #include "F-front.h"
 #include "F-second-pass.h"
+#include "F-second-pass.h"
 #include <math.h>
 
 static expv compile_data_args _ANSI_ARGS_((expr args));
@@ -331,6 +332,14 @@ are_dimension_and_shape_conformant(expr x,
     return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, for_argument, TRUE);
 }
 
+static void
+switch_id_to_proc(ID id)
+{
+    if(ID_CLASS(id) == CL_PROC)
+        return;
+    memset(&id->info.proc_info, 0, sizeof(id->info.proc_info));
+    ID_CLASS(id) = CL_PROC;
+}
 
 enum binary_expr_type {
     ARITB,
@@ -503,6 +512,12 @@ compile_expression(expr x)
 	      
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
+            }
+
+            if(!IS_ARRAY_TYPE(tp)) {
+                ID_IS_DECLARED(id) = FALSE;
+                switch_id_to_proc(id);
+                return compile_function_call(id, EXPR_ARG2(x));
             }
             return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
         }
