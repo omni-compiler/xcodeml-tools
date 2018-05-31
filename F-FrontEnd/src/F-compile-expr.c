@@ -1833,14 +1833,15 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
 
-    nDims = TYPE_N_DIM(tp);
-
-    if (!IS_ARRAY_TYPE(tp)){ //fatal("%s: not ARRAY_TYPE", __func__);
+    if (!IS_ARRAY_TYPE(tp)){
       error_at_id(id, "identifier '%s' is not of array type", ID_NAME(id));
       return NULL;
     }
-    if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
+    
+    nDims = TYPE_N_DIM(tp);
 
+    if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
+    
     /*
      * Firstly, check the # of subsctipts.
      */
