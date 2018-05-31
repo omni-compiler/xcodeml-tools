@@ -3,6 +3,7 @@ MODULE mo_sw_test
   PRIVATE
   PUBLIC :: init_will3_test
 
+  PUBLIC :: symmetric_u_velo
   CONTAINS
 
   SUBROUTINE init_will3_test ()
