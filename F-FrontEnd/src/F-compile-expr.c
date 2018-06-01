@@ -515,6 +515,7 @@ compile_expression(expr x)
             }
 
             if(!IS_ARRAY_TYPE(tp)) {
+                sp_check(id);
                 ID_IS_DECLARED(id) = FALSE;
                 switch_id_to_proc(id);
                 return compile_function_call(id, EXPR_ARG2(x));
