@@ -3300,12 +3300,13 @@ compile_implied_do_expression(expr x)
     do_var_sym = EXPR_SYM(var);
     
     /* check nested loop with the same variable */
-    FOR_CTLS(cp) {
-        if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
-            error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
-            break;
-        }
-    }
+    // #23 same induction variable can be used.
+    // FOR_CTLS(cp) {
+    //     if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
+    //         error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
+    //         break;
+    //     }
+    // }
 
     do_var = compile_lhs_expression(var);
     if (!expv_is_lvalue(do_var))
