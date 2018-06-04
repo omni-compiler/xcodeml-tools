@@ -514,7 +514,8 @@ compile_expression(expr x)
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
             }
 
-            if(!IS_ARRAY_TYPE(tp)) {
+            if(!IS_ARRAY_TYPE(tp) && !IS_FUNCTION_TYPE(tp)) {
+                // probably an undefined function passed as argument
                 sp_check(id);
                 ID_IS_DECLARED(id) = FALSE;
                 switch_id_to_proc(id);
