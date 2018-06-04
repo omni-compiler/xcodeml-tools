@@ -168,9 +168,17 @@ typedef enum {
     INTR_TINY,
 
     /* F90 bit inquiry functions. */
+    INTR_BGE,
+    INTR_BGT,
+    INTR_BLE,
+    INTR_BLT,
     INTR_BIT_SIZE,
     INTR_BTEST,
+    INTR_DSHIFTL,
+    INTR_DSHIFTR,
+    INTR_IALL,
     INTR_IAND,
+    INTR_IANY,
     INTR_IBCLR,
     INTR_IBITS,
     INTR_IBSET,
@@ -276,6 +284,14 @@ typedef enum {
     INTR_GET_ENVIRONMENT_VARIABLE,
     INTR_GAMMA,
     INTR_LOGGAMMA,
+
+    INTR_BESSEL_JO,
+    INTR_BESSEL_J1,
+    INTR_BESSEL_JN,
+    INTR_BESSEL_Y0,
+    INTR_BESSEL_Y1,
+    INTR_BESSEL_YN,
+    
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
@@ -417,7 +433,6 @@ typedef struct {
     INTR_OPS ops;
     INTR_NAME_TYPE nameType;
     const char *name;
-    int hasKind;
     INTR_DATA_TYPE argsType[10];
     INTR_DATA_TYPE returnType;
     int nArgs;
@@ -474,18 +489,21 @@ typedef struct {
 #define INTR_CLASS_S       INTRINSIC_CLASS_SUB
 #define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
 
+  const int mandatoryArgsFlag;
+  const char *argsName[10];
+  
 } intrinsic_entry;
 #define INTR_OP(ep)             ((ep)->ops)
 #define INTR_NAMETYPE(ep)       ((ep)->nameType)
 #define INTR_IS_GENERIC(ep)     (INTR_NAMETYPE(ep) == INTR_NAME_GENERIC)
 #define INTR_NAME(ep)           ((ep)->name)
 #define INTR_ARG_TYPE(ep)       ((ep)->argsType)
-#define INTR_KIND(ep)           ((ep)->hasKind)
-#define INTR_HAS_KIND_ARG(ep)   (INTR_KIND(ep) == 1)
 #define INTR_RETURN_TYPE(ep)    ((ep)->returnType)
 #define INTR_N_ARGS(ep)         ((ep)->nArgs)
 #define INTR_RETURN_TYPE_SAME_AS(ep)    ((ep)->retTypeSameAs)
 #define INTR_CLASS(ep)          ((ep)->intrinsicClass)
+#define INTR_MANDATORY_ARGS_FLAG(ep) ((ep)->mandatoryArgsFlag)
+#define INTR_ARG_NAME(ep)       ((ep)->argsName)
 
 #define INTR_IS_RETURN_TYPE_DYNAMIC(ep) \
     (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY || \
@@ -519,9 +537,21 @@ typedef struct {
  * NOTE:
  *
  *      If INTR_KIND(ep) == 1, INTR_RETURN_TYPE_SAME_AS(ep) must be
- *      -1.
+ *      -1, -3, -6, or -9.
  */
 
 extern intrinsic_entry intrinsic_table[];
+
+#define ARG0 0x0000001
+#define ARG1 0x0000002
+#define ARG2 0x0000004
+#define ARG3 0x0000008
+#define ARG4 0x0000010
+#define ARG5 0x0000020
+#define ARG6 0x0000040
+#define ARG7 0x0000080
+#define ARG8 0x0000100
+#define ARG9 0x0000200
+
 
 #endif /* _F_INTRINSICS_TYPES_H_ */
