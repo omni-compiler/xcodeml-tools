@@ -41,7 +41,7 @@ fi
 export OMNI_JAVA
 frontend="${work}/F-FrontEnd/src/F_Front"
 frontendOpt="-fintrinsic-xmodules-path ${OMNI_HOME}/F-FrontEnd/src/fincludes"
-backend="${work}/F-BackEnd/bin/F_Back"
+backend="${work}/Driver/bin/F_Back"
 backendOpt=""
 nativecomp="gfortran"
 nativecompOpt="-fcoarray=single"

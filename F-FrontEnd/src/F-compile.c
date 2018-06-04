@@ -7985,11 +7985,21 @@ pointer_assignable(expr x,
         }
 
     } else {
+        // If derived type is TARGET, pointee doesn't need to be flagged as 
+        // TARGET. xcodeml-tools#19
+        TYPE_DESC structType = NULL;
+        if(vPointee != NULL && EXPV_CODE(vPointee) == F95_MEMBER_REF) {
+            structType = vPointee != NULL ? 
+            EXPV_LEFT(vPointee) != NULL ? EXPV_TYPE(EXPV_LEFT(vPointee)) : NULL
+            : NULL;
+        }
+        
         if (!TYPE_IS_TARGET(vPteTyp) &&
             !TYPE_IS_POINTER(vPteTyp) &&
             !IS_PROCEDURE_TYPE(vPteTyp) &&
             !IS_ARRAY_TYPE(vPteTyp) && 
-            !TYPE_IS_ALLOCATABLE(vPteTyp)) 
+            !TYPE_IS_ALLOCATABLE(vPteTyp) &&
+            (structType != NULL && !TYPE_IS_TARGET(structType))) // #19
         {
             if (x != NULL && EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
