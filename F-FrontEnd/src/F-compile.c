@@ -2706,7 +2706,9 @@ end_declaration()
 
         /* public or private attribute is handled only in module. */
         if (CURRENT_PROC_CLASS == CL_MODULE) {
-            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip)) {
+            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip) 
+                && !TYPE_IS_INTRINSIC(tp)) 
+            {
                 if (current_module_state == M_PUBLIC) {
                     TYPE_SET_PUBLIC(ip);
                 }
