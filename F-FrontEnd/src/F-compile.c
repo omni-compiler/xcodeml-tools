@@ -2712,7 +2712,9 @@ end_declaration()
                 if (current_module_state == M_PUBLIC) {
                     TYPE_SET_PUBLIC(ip);
                 }
-                if (current_module_state == M_PRIVATE) {
+                if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
                     TYPE_SET_PRIVATE(ip);
                 }
             }
@@ -5770,7 +5772,7 @@ import_module_id(ID mid,
     }
 
     if(current_module_state != M_PRIVATE) {
-        TYPE_SET_PUBLIC(ID_TYPE(id)); // Imported id should be flagged public
+        TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
     }
 
     return;
@@ -6041,7 +6043,7 @@ get_generic_spec_symbol(int expr_code){
     } else if(expr_code == F95_EQOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
     } else if(expr_code == F95_NEOP) {
-        gen_spec = make_enode(IDENT, (void *)find_symbol(".neq."));
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".ne."));
     } else if(expr_code == F95_LTOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
     } else if(expr_code == F95_LEOP) {
