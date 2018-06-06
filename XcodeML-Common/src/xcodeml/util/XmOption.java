@@ -88,7 +88,7 @@ public class XmOption
     /** if supressing generation of USE statement for coarray runtime
      *  (TEMPORARY)
      */
-    private static boolean _coarrayNoUseStatement = false;  
+    private static boolean _coarrayUseStatement = false;  
 
     private XmOption()
     {
@@ -383,16 +383,16 @@ public class XmOption
     }
 
     /**
-     * Set/get suboption -fcoarray-no-use-statement (boolean)
+     * Set/get suboption -fcoarray-use-statement (boolean)
      */
-    public static void setCoarrayNoUseStatement(boolean coarrayNoUseStatement)
+    public static void setCoarrayUseStatement(boolean coarrayUseStatement)
     {
-        _coarrayNoUseStatement = coarrayNoUseStatement;
+        _coarrayUseStatement = coarrayUseStatement;
     }
 
-    public static boolean coarrayNoUseStatement()
+    public static boolean coarrayUseStatement()
     {
-        return _coarrayNoUseStatement;
+        return _coarrayUseStatement;
     }
 
 }
