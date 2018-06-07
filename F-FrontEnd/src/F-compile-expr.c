@@ -3284,8 +3284,7 @@ compile_implied_do_expression(expr x)
 {
     expv do_var, do_init, do_limit, do_incr, retv;
     expr var, init, limit, incr;
-    SYMBOL do_var_sym;
-    CTL cp;
+    //SYMBOL do_var_sym;
 
     expr loopSpec = EXPR_ARG1(x);
 
@@ -3297,7 +3296,7 @@ compile_implied_do_expression(expr x)
     if (EXPR_CODE(var) != IDENT) {
         fatal("compile_implied_do_expression: DO var is not IDENT");
     }
-    do_var_sym = EXPR_SYM(var);
+    //do_var_sym = EXPR_SYM(var);
     
     /* check nested loop with the same variable */
     // #23 same induction variable can be used.
