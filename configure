@@ -2913,6 +2913,22 @@ ac_config_headers="$ac_config_headers include/config.h Driver/atool/src/include/
 
 
 #--------------------------------------------------------------------
+# See http://unix.stackexchange.com/questions/101080/realpath-command-not-found
+realpath ()
+{
+    f=$@;
+    if test -d "$f"; then
+        base="";
+        dir="$f";
+    else
+        base="/$(basename "$f")";
+        dir=$(dirname "$f");
+    fi;
+    dir=$(cd "$dir" && /bin/pwd);
+    echo "$dir$base"
+}
+
+#--------------------------------------------------------------------
 # Save environmental variables set by user before AC_PROG_CC and so on.
 userCFLAGS=${CFLAGS}
 
@@ -8083,6 +8099,7 @@ fi
 if test "$PERL5" = ""; then
     as_fn_error $? "perl is not found." "$LINENO" 5
 else
+    PERL5=$(realpath `which $PERL5`)
     isPerlVersion5=no
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking Perl version is 5" >&5
 $as_echo_n "checking Perl version is 5... " >&6; }
@@ -8232,6 +8249,9 @@ if test $? -ne 0; then
     as_fn_error $? "JAR is not found." "$LINENO" 5
 fi
 
+JAVA=$(realpath `which $JAVA`)
+JAVAC=$(realpath `which $JAVAC`)
+JAR=$(realpath `which $JAR`)
 
 
 
