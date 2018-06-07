@@ -382,8 +382,7 @@ fi
 
 #--------------------------------------------------------------------
 # check Perl versoin is 5
-PERL5=""
-AC_PATH_PROGS(PERL5, perl)
+AC_CHECK_PROG(PERL5, [perl], [perl])
 
 if test "$PERL5" = ""; then
     AC_MSG_ERROR([perl is not found.])
