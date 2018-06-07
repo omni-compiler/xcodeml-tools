@@ -242,6 +242,9 @@ void compile_XMP_directive(expr x)
       if (x3){
 	if (EXPR_INT(EXPR_ARG1(x3)) == XMP_LOOP_PEEL_AND_WAIT)
 	  x3 = list3(LIST, EXPR_ARG1(x3), EXPR_ARG2(x3), XMP_compile_subscript_list(EXPR_ARG3(x3), XMP_LIST_WIDTH));
+	else if (EXPR_INT(EXPR_ARG1(x3)) == XMP_LOOP_MARGIN)
+	  x3 = list3(LIST, EXPR_ARG1(x3), XMP_compile_subscript_list(EXPR_ARG2(x3), XMP_LIST_WIDTH),
+		     XMP_compile_subscript_list(EXPR_ARG3(x3), XMP_LIST_WIDTH));
 	else
 	  x3 = list2(LIST, EXPR_ARG1(x3), XMP_compile_subscript_list(EXPR_ARG2(x3), XMP_LIST_WIDTH));
       }
