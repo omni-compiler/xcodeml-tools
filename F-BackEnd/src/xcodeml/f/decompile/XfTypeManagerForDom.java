@@ -536,6 +536,18 @@ class XfTypeManagerForDom {
                 continue;
             }
             if (matcher.match(node, findType(typeName))) {
+                if (name.equals("**") ||
+                    name.equals("*") ||
+                    name.equals("/") ||
+                    name.equals("+") ||
+                    name.equals("-") ||
+                    name.equals("//")) {
+                    name = "OPERATOR(" + name + ")";
+                } else if (name.equals("=")) {
+                    name = "ASSIGNMENT(" + name + ")";
+                } else if (name.startsWith(".") && name.endsWith(".")) {
+                    name = "OPERATOR(" + name + ")";
+                }
                 set.add(name);
             }
         }
