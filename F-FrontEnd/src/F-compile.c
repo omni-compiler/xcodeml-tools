@@ -2709,13 +2709,14 @@ end_declaration()
             if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip) 
                 && !TYPE_IS_INTRINSIC(tp)) 
             {
-                if(!(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) {
-                    if (current_module_state == M_PUBLIC) {
+                if (current_module_state == M_PUBLIC 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
                         TYPE_SET_PUBLIC(ip);
-                    }
-                    if (current_module_state == M_PRIVATE) {
+                } else if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
                         TYPE_SET_PRIVATE(ip);
-                    }
                 }
             }
         }
