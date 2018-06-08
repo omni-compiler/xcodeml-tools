@@ -5772,7 +5772,7 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
-    if(current_module_state != M_PRIVATE) {
+    if(current_module_state != M_PRIVATE && current_module_state != M_PUBLIC) {
         TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
     }
 
