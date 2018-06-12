@@ -114,6 +114,8 @@ typedef enum {
     INTR_SQRT,
     INTR_TAN,
     INTR_TANH,
+    INTR_HYPOT,
+    INTR_PRACING,
 
     /* Character functions. */
     INTR_CHAR,
@@ -187,6 +189,16 @@ typedef enum {
     INTR_ISHFT,
     INTR_ISHFTC,
     INTR_NOT,
+    INTR_MASKL,
+    INTR_MASKR,
+    INTR_MERGE_BITS,
+    INTR_POPCNT,
+    INTR_POPPAR,
+    INTR_SHIFTA,
+    INTR_SHIFTL,
+    INTR_SHIFTR,
+    INTR_STORAGE_SIZE,
+    INTR_TRAILZ,
 
     /* F90 transfer functions. */
     INTR_TRANSFER,
@@ -212,6 +224,7 @@ typedef enum {
     INTR_MINVAL,
     INTR_PRODUCT,
     INTR_SUM,
+    INTR_PARITY,
 
     /* F90 array inquiry functions. */
     INTR_ALLOCATED,
@@ -232,10 +245,12 @@ typedef enum {
     /* F90 array manipulation functions. */
     INTR_CSHIFT,
     INTR_TRANSPOSE,
+    INTR_NORM2,
 
     /* F90 array location functions. */
     INTR_MINLOC,
     INTR_MAXLOC,
+    INTR_FINDLOC,
 
     /* F90 pointer association status functions. */
     INTR_ASSOCIATED,
@@ -280,7 +295,8 @@ typedef enum {
     /* F08 intrinsic subroutines */
     INTR_COMMAND_ARUGMENT_COUNT,
     INTR_GET_COMMAND,
-    INTR_GET_COMMAND_ARUGMENT,
+    INTR_EXECUTE_COMMAND_LINE,
+    INTR_GET_COMMAND_ARGUMENT,
     INTR_GET_ENVIRONMENT_VARIABLE,
     INTR_GAMMA,
     INTR_LOGGAMMA,
@@ -542,6 +558,7 @@ typedef struct {
 
 extern intrinsic_entry intrinsic_table[];
 
+#define NONE 0x0000000
 #define ARG0 0x0000001
 #define ARG1 0x0000002
 #define ARG2 0x0000004

@@ -216,7 +216,7 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
 	  }
 	}
 
-	if (EXPV_KWOPT_NAME(a) && nIntrArgs > 1){ // argument keyword
+	if (EXPV_KWOPT_NAME(a) && nIntrArgs > 1 && INTR_ARG_NAME(ep)){ // argument keyword
 
 	  int j;
 	  for (j = 0; j < INTR_N_ARGS(ep); j++){
