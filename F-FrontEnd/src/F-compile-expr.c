@@ -1188,7 +1188,12 @@ compile_ident_expression(expr x)
             if(ID_IS_OFMODULE(id) == FALSE
                 && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
             {
-                return VAR_INIT_VALUE(id);
+                ret = VAR_INIT_VALUE(id);
+                // Keep the kind information of the type (xcodeml-tools#42)
+                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL) {
+                    TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
+                }
+                return ret;
             } else if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
                 // Only constant from external module can be replaced safely.
                 if(EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT
