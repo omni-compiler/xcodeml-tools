@@ -3676,7 +3676,7 @@ XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (!XmOption.coarrayNoUseStatement()) {
+            if (XmOption.coarrayUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
@@ -3751,7 +3751,7 @@ XfDecompileDomVisitor {
 
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (!XmOption.coarrayNoUseStatement()) {
+            if (XmOption.coarrayUseStatement()) {
                 writer.writeToken("use xmpf_coarray_decl");
                 writer.setupNewLine();
             }
@@ -4170,7 +4170,7 @@ XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (!XmOption.coarrayNoUseStatement()) {
+            if (XmOption.coarrayUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
