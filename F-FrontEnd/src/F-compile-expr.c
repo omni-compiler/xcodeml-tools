@@ -1188,7 +1188,12 @@ compile_ident_expression(expr x)
             if(ID_IS_OFMODULE(id) == FALSE
                 && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
             {
-                return VAR_INIT_VALUE(id);
+                ret = VAR_INIT_VALUE(id);
+                // Keep the kind information of the type (xcodeml-tools#42)
+                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL) {
+                    TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
+                }
+                return ret;
             } else if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
                 // Only constant from external module can be replaced safely.
                 if(EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT
@@ -3300,12 +3305,13 @@ compile_implied_do_expression(expr x)
     do_var_sym = EXPR_SYM(var);
     
     /* check nested loop with the same variable */
-    FOR_CTLS(cp) {
-        if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
-            error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
-            break;
-        }
-    }
+    // #23 same induction variable can be used.
+    // FOR_CTLS(cp) {
+    //     if(CTL_TYPE(cp) == CTL_DO && CTL_DO_VAR(cp) == do_var_sym) {
+    //         error("nested loops with variable '%s'", SYM_NAME(do_var_sym));
+    //         break;
+    //     }
+    // }
 
     do_var = compile_lhs_expression(var);
     if (!expv_is_lvalue(do_var))

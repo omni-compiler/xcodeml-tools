@@ -2706,11 +2706,15 @@ end_declaration()
 
         /* public or private attribute is handled only in module. */
         if (CURRENT_PROC_CLASS == CL_MODULE) {
-            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip)) {
+            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip) 
+                && !TYPE_IS_INTRINSIC(tp)) 
+            {
                 if (current_module_state == M_PUBLIC) {
                     TYPE_SET_PUBLIC(ip);
                 }
-                if (current_module_state == M_PRIVATE) {
+                if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
                     TYPE_SET_PRIVATE(ip);
                 }
             }
@@ -5768,7 +5772,7 @@ import_module_id(ID mid,
     }
 
     if(current_module_state != M_PRIVATE) {
-        TYPE_SET_PUBLIC(ID_TYPE(id)); // Imported id should be flagged public
+        TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
     }
 
     return;
@@ -6039,7 +6043,7 @@ get_generic_spec_symbol(int expr_code){
     } else if(expr_code == F95_EQOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
     } else if(expr_code == F95_NEOP) {
-        gen_spec = make_enode(IDENT, (void *)find_symbol(".neq."));
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".ne."));
     } else if(expr_code == F95_LTOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
     } else if(expr_code == F95_LEOP) {
@@ -7985,10 +7989,21 @@ pointer_assignable(expr x,
         }
 
     } else {
+        // If derived type is TARGET, pointee doesn't need to be flagged as 
+        // TARGET. xcodeml-tools#19
+        TYPE_DESC structType = NULL;
+        if(vPointee != NULL && EXPV_CODE(vPointee) == F95_MEMBER_REF) {
+            structType = vPointee != NULL ? 
+            EXPV_LEFT(vPointee) != NULL ? EXPV_TYPE(EXPV_LEFT(vPointee)) : NULL
+            : NULL;
+        }
+        
         if (!TYPE_IS_TARGET(vPteTyp) &&
             !TYPE_IS_POINTER(vPteTyp) &&
             !IS_PROCEDURE_TYPE(vPteTyp) &&
-            !IS_ARRAY_TYPE(vPteTyp)) {
+            !IS_ARRAY_TYPE(vPteTyp) && 
+            (structType != NULL && !TYPE_IS_TARGET(structType))) // #19
+        {
             if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
                                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
