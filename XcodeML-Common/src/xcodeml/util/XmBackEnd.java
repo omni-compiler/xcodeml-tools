@@ -103,7 +103,7 @@ public class XmBackEnd
         boolean addXml = false;
         int maxColumns = 0;
 
-        boolean coarray_noUseStmt = false;
+        boolean coarray_useStmt = false;
         for(int i = 0; i < args.length; ++i) {
             String arg = args[i];
             String narg = (i < args.length - 1) ? args[i + 1] : null;
@@ -131,8 +131,8 @@ public class XmBackEnd
                     } catch (NumberFormatException e) {
                         _error("invalid number after -w.");
                     }
-                } else if(arg.equals("-fcoarray-no-use-statement")) {       // TEMPORARY
-                    coarray_noUseStmt = true;
+                } else if(arg.equals("-fcoarray-use-statement")) {       // TEMPORARY
+                    coarray_useStmt = true;
                 } else if(arg.equals("--help") || arg.equals("-h")) {
                     _usage();
                     System.exit(1);
@@ -145,7 +145,7 @@ public class XmBackEnd
                 _error("Too many input files.");
             }
         }
-        XmOption.setCoarrayNoUseStatement(coarray_noUseStmt);
+        XmOption.setCoarrayUseStatement(coarray_useStmt);
 
         if(!_openInputFile())
             return 1;

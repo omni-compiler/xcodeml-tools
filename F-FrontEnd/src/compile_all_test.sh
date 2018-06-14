@@ -51,7 +51,7 @@ if test ${trans} -eq 1; then
     nativecompOpt="${nativicompOpt} -I${OMNI_HOME}/libxmpf/src/"
 else
     frontendOpt="${frontendOpt} -fno-xmp-coarray"
-    backendOpt="${backendOpt} -fcoarray-no-use-statement"
+#    backendOpt="${backendOpt} -fcoarray-no-use-statement"
 fi
 
 tmpdir=${work}/compile

@@ -5,6 +5,6 @@ OMNI_JAVA=@JAVA@
 
 OMNI_JAR1="${OMNI_HOME}/share/om-f-back.jar"
 OMNI_JAR2="${OMNI_HOME}/share/om-common.jar"
-OMNI_JAVA_OPT="@JAVA_OPT@ -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f -fcoarray-no-use-statement"
+OMNI_JAVA_OPT="@JAVA_OPT@ -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f"
 
 exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} ${1+"$@"}

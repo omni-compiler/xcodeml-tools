@@ -405,7 +405,7 @@ XfDecompileDomVisitor {
 
 
         if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
-            // do not output since the name is defined in module xmpf_coarray_decl
+            // do not output because it is defined in the xmpf_coarray_decl module.
             return;
         }
 
@@ -3697,7 +3697,7 @@ XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (!XmOption.coarrayNoUseStatement()) {
+            if (XmOption.coarrayUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
@@ -3772,7 +3772,7 @@ XfDecompileDomVisitor {
 
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (!XmOption.coarrayNoUseStatement()) {
+            if (XmOption.coarrayUseStatement()) {
                 writer.writeToken("use xmpf_coarray_decl");
                 writer.setupNewLine();
             }
@@ -4191,7 +4191,7 @@ XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (!XmOption.coarrayNoUseStatement()) {
+            if (XmOption.coarrayUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
@@ -7447,15 +7447,13 @@ XfDecompileDomVisitor {
      */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
-      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__OLD__();
-      //ArrayList<String> libNames = _get_coarrayRuntimeLibNames__NEW__();
-      ArrayList<String> libNames = _get_coarrayRuntimeLibNames();
+      ArrayList<String> libnames = XmOption.getCoarrayEntryNames();
 
       // check if the name is declared in module xmpf_coarray_decl
-      for (String libName: libNames)
-        if (libName.equals(name))
-          return true;
-
+      if (libnames.contains(name)) {
+	  //System.out.println("@@@ gaccha name="+name);
+	  return true;
+      }
       return false;
     }
 
@@ -7502,23 +7500,6 @@ XfDecompileDomVisitor {
         exprModelSet = new HashSet<String>(Arrays.asList(exprModelsList));
     }
 
-    // obsolated
-    //    ArrayList<String> _get_coarrayRuntimeLibNames__OLD__() {
-    //    }
-
-    // obsolated
-    //    ArrayList<String> _get_coarrayRuntimeLibNames__NEW__() {
-    //
-    //      String[] nameArray = XfDecompileDomVisitor_coarrayLibs.EntryNameArray;
-    //      ArrayList<String> libNames =
-    //        new ArrayList<String>(Arrays.asList(nameArray));
-    //
-    //      return libNames;
-    //    }
-
-    ArrayList<String> _get_coarrayRuntimeLibNames() {
-	return XmOption.getCoarrayLibNameList();
-    }
 
     class CollectDeclaredNameVisitor {
         private Set<String> _names;
