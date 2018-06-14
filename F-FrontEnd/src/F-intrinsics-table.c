@@ -567,15 +567,18 @@ intrinsic_entry intrinsic_table[] = {
   /* 14. Array reduction functions */
 
   //ALL (MASK [, DIM])
-  { INTR_ALL,         INTR_NAME_GENERIC,      "all",          {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
+  { INTR_ALL,         INTR_NAME_GENERIC,      "all",          {INTR_TYPE_LOGICAL_ARRAY},                     INTR_TYPE_LOGICAL,      1, -1, LANGSPEC_F90,    INTR_CLASS_T },
+  { INTR_ALL,         INTR_NAME_GENERIC,      "",             {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
                                                                                                                                      2, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0, { "mask", "dim" } },
 
   //ANY (MASK [, DIM])
-  { INTR_ANY,         INTR_NAME_GENERIC,      "any",          {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
+  { INTR_ANY,         INTR_NAME_GENERIC,      "any",          {INTR_TYPE_LOGICAL_ARRAY},                     INTR_TYPE_LOGICAL,      1, -1, LANGSPEC_F90,    INTR_CLASS_T },
+  { INTR_ANY,         INTR_NAME_GENERIC,      "",             {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
                                                                                                                                      2, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0, { "mask", "dim" } },
 
   // COUNT (MASK [, DIM])
-  { INTR_COUNT,       INTR_NAME_GENERIC,      "count",        {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_INT_DYNAMIC_ARRAY,
+  { INTR_COUNT,       INTR_NAME_GENERIC,      "count",        {INTR_TYPE_LOGICAL_ARRAY},                     INTR_TYPE_INT,          1, -1, LANGSPEC_F90,    INTR_CLASS_T },
+  { INTR_COUNT,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_INT_DYNAMIC_ARRAY,
                                                                                                                                      2, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0, { "mask", "dim" } },
 
   // MAXVAL (ARRAY [, MASK])
@@ -614,7 +617,8 @@ intrinsic_entry intrinsic_table[] = {
 							       INTR_TYPE_LOGICAL_ARRAY},                     INTR_TYPE_ALL_NUMERICS_DYNAMIC_ARRAY,
                                                                                                                                      3, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0|ARG1, { "array", "dim", "mask" } },
   // PARITY (MASK [, DIM])
-  { INTR_PARITY,      INTR_NAME_GENERIC,      "parity",       {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
+  { INTR_PARITY,      INTR_NAME_GENERIC,      "parity",       {INTR_TYPE_LOGICAL_ARRAY},                     INTR_TYPE_LOGICAL,      1, -1, LANGSPEC_F2008,  INTR_CLASS_T },
+  { INTR_PARITY,      INTR_NAME_GENERIC,      "",             {INTR_TYPE_LOGICAL_ARRAY, INTR_TYPE_INT},      INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
                                                                                                                                      2, -1, LANGSPEC_F2008,  INTR_CLASS_T, ARG0, { "mask", "dim" } },
     
 
@@ -627,7 +631,8 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_ALLOCATED,   INTR_NAME_GENERIC,      "",             {INTR_TYPE_ANY},                               INTR_TYPE_LOGICAL,      1, -6, LANGSPEC_F2003,  INTR_CLASS_I },
 
   // LBOUND (ARRAY [, DIM, KIND])
-  { INTR_LBOUND,      INTR_NAME_GENERIC,      "lbound",       {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT,
+  { INTR_LBOUND,      INTR_NAME_GENERIC,      "lbound",       {INTR_TYPE_ANY_ARRAY},                         INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90,    INTR_CLASS_I },
+  { INTR_LBOUND,      INTR_NAME_GENERIC,      "",             {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT,
 							       INTR_TYPE_INT},                               INTR_TYPE_INT,          3, -1, LANGSPEC_F90,    INTR_CLASS_I, ARG0, {"array", "dim", "kind"} },
 
   // SHAPE (SOURCE)
@@ -637,7 +642,8 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_SIZE,        INTR_NAME_GENERIC,      "size",         {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},          INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_I, ARG0 },
 
   // UBOUND (ARRAY [, DIM, KIND])
-  { INTR_UBOUND,      INTR_NAME_GENERIC,      "ubound",       {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT,
+  { INTR_UBOUND,      INTR_NAME_GENERIC,      "ubound",       {INTR_TYPE_ANY_ARRAY},                         INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90,    INTR_CLASS_I },
+  { INTR_UBOUND,      INTR_NAME_GENERIC,      "",             {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT,
 							       INTR_TYPE_INT},                               INTR_TYPE_INT,          3, -1, LANGSPEC_F90,    INTR_CLASS_I, ARG0, {"array", "dim", "kind"} },
 
 
