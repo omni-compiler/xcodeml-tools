@@ -30,10 +30,12 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "aimag",        {INTR_TYPE_COMPLEX},                           INTR_TYPE_REAL,         1, -5, LANGSPEC_F77,    INTR_CLASS_E },
   { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "",             {INTR_TYPE_DCOMPLEX},                          INTR_TYPE_DREAL,        1, -5, LANGSPEC_F77,    INTR_CLASS_E },
 																					                                
+#ifdef GNU_INTRINSIC_EXTENSION
   // DIMAG (Z)
   { INTR_DIMAG,       INTR_NAME_GENERIC,      "dimag",        {INTR_TYPE_DCOMPLEX},                          INTR_TYPE_DREAL,        1, -5, LANGSPEC_NONSTD, INTR_CLASS_E },
   { INTR_DIMAG,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_COMPLEX},                           INTR_TYPE_REAL,         1, -5, LANGSPEC_NONSTD, INTR_CLASS_E },
-																					                                
+#endif
+  
   // AINT (A  [, KIND])																			                                
   { INTR_AINT,        INTR_NAME_GENERIC,      "aint",         {INTR_TYPE_REAL,  INTR_TYPE_INT},              INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,    {"a", "kind"} },
   { INTR_AINT,        INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_DREAL,        2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,    {"a", "kind"} },
@@ -45,11 +47,14 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_ANINT,       INTR_NAME_SPECIFIC,     "dnint",        {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_DREAL,        2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,    {"a", "kind"} },
 																					                                
   // CMPLX (X [, Y][, KIND])																		                                
-  { INTR_CMPLX,       INTR_NAME_GENERIC,      "cmplx",        {INTR_TYPE_ALL_NUMERICS, INTR_TYPE_NUMERICS,								                                
-							       INTR_TYPE_INT},                               INTR_TYPE_COMPLEX,      3, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "y", "kind"} },
-  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "dcmplx",       {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS,									                                
-                                                               INTR_TYPE_INT},                               INTR_TYPE_DCOMPLEX,     3, -1, LANGSPEC_NONSTD, INTR_CLASS_E, ARG0, {"x", "y", "kind"} },
-
+  { INTR_CMPLX,       INTR_NAME_GENERIC,      "cmplx",        {INTR_TYPE_COMPLEX, INTR_TYPE_INT},            INTR_TYPE_COMPLEX,      2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "kind"} },
+  { INTR_CMPLX,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS,
+  							       INTR_TYPE_INT},                               INTR_TYPE_COMPLEX,      3, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "y", "kind"} },
+#ifdef GNU_INTRINSIC_EXTENSION
+  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "dcmplx",       {INTR_TYPE_COMPLEX},                           INTR_TYPE_DCOMPLEX,     1, -1, LANGSPEC_NONSTD, INTR_CLASS_E },
+  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "",             {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_DCOMPLEX,     2, -1, LANGSPEC_NONSTD, INTR_CLASS_E, ARG0, {"x", "y"} },
+#endif
+  
   // CONJG (Z)  ???
   { INTR_CONJG,       INTR_NAME_SPECIFIC,     "conjg",        {INTR_TYPE_COMPLEX},                           INTR_TYPE_COMPLEX,      1,  0, LANGSPEC_F77,    INTR_CLASS_E },
 
@@ -59,9 +64,11 @@ intrinsic_entry intrinsic_table[] = {
   // DBLE (A)
   { INTR_DBLE,        INTR_NAME_GENERIC,      "dble",         {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77,    INTR_CLASS_E },
 
+#ifdef GNU_INTRINSIC_EXTENSION
   // DREAL (A)
   { INTR_REAL,        INTR_NAME_GENERIC,      "dreal",        {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_DREAL,        1, -1, LANGSPEC_NONSTD, INTR_CLASS_E },
-
+#endif
+  
   // DIM (X, Y)
   { INTR_DIM,         INTR_NAME_GENERIC,      "dim",          {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_NUMERICS,     2,  0, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1, {"x", "y"} },
   { INTR_DIM,         INTR_NAME_SPECIFIC,     "idim",         {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_INT,          2,  0, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1, {"x", "y"} },
@@ -72,10 +79,10 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_DPROD,       INTR_NAME_SPECIFIC,     "",             {INTR_TYPE_REAL, INTR_TYPE_REAL},              INTR_TYPE_DREAL,        2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1, {"x", "y"} },
 
   // INT (A [, KIND])
-  { INTR_INT,         INTR_NAME_GENERIC,      "int",          {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_INT,         INTR_NAME_SPECIFIC_NA,  "",             {INTR_TYPE_REAL},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_INT,         INTR_NAME_SPECIFIC_NA,  "ifix",         {INTR_TYPE_REAL},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_INT,         INTR_NAME_SPECIFIC_NA,  "idint",        {INTR_TYPE_DREAL},                             INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_INT,         INTR_NAME_GENERIC,      "int",          {INTR_TYPE_ALL_NUMERICS, INTR_TYPE_INT},       INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_INT,         INTR_NAME_SPECIFIC_NA,  "",             {INTR_TYPE_REAL, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_INT,         INTR_NAME_SPECIFIC_NA,  "ifix",         {INTR_TYPE_REAL, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_INT,         INTR_NAME_SPECIFIC_NA,  "idint",        {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
   
   // MAX (A1, A2 [, A3, ...])
   { INTR_MAX,         INTR_NAME_GENERIC,      "max",          {INTR_TYPE_NUMERICS},                          INTR_TYPE_NUMERICS,    -1,  0, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1 },
@@ -218,11 +225,11 @@ intrinsic_entry intrinsic_table[] = {
   /* 4. Character functions */
 
   // CHAR (I [, KIND])
-  { INTR_CHAR,        INTR_NAME_GENERIC,      "char",         {INTR_TYPE_INT},                               INTR_TYPE_CHAR,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"i", "kind"} },
+  { INTR_CHAR,        INTR_NAME_GENERIC,      "char",         {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_CHAR,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"i", "kind"} },
   //  { INTR_CHAR,        INTR_NAME_SPECIFIC_NA,  "",             {INTR_TYPE_INT},                               INTR_TYPE_CHAR,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"i", "kind"} },
 
   // ICHAR (C [, KIND])
-  { INTR_ICHAR,       INTR_NAME_GENERIC,      "ichar",        {INTR_TYPE_CHAR},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"c", "kind"} },
+  { INTR_ICHAR,       INTR_NAME_GENERIC,      "ichar",        {INTR_TYPE_CHAR, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"c", "kind"} },
   //  { INTR_ICHAR,       INTR_NAME_SPECIFIC_NA,  "",             {INTR_TYPE_CHAR},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"c", "kind"} },
 
   // INDEX (STRING, SUBSTRING [, BACK, KIND])
@@ -320,9 +327,9 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_SELECTED_INT_KIND,
                       INTR_NAME_GENERIC, "selected_int_kind", {INTR_TYPE_INT},                               INTR_TYPE_INT,          1, -6, LANGSPEC_F90,    INTR_CLASS_T },
 
-  // SELECTED_REAL_KIND ([P, R])
+  // SELECTED_REAL_KIND ([P, R, RADIX])
   { INTR_SELECTED_REAL_KIND,
-                     INTR_NAME_GENERIC, "selected_real_kind", {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_INT,          2,  0, LANGSPEC_F90,    INTR_CLASS_T, 0,         {"p", "r"} },
+                     INTR_NAME_GENERIC, "selected_real_kind", {INTR_TYPE_INT, INTR_TYPE_INT, INTR_INT},      INTR_TYPE_INT,          3, -6, LANGSPEC_F90,    INTR_CLASS_T, NONE, {"p", "r", "radix"} },
 
   // SELECTED_CHAR_KIND (NAME)
   { INTR_SELECTED_CHAR_KIND,
@@ -639,7 +646,7 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_SHAPE,       INTR_NAME_GENERIC,      "shape",        {INTR_TYPE_ANY_ARRAY},                         INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90,    INTR_CLASS_I },
 
   // SIZE (ARRAY [, DIM])
-  { INTR_SIZE,        INTR_NAME_GENERIC,      "size",         {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},          INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_I, ARG0 },
+  { INTR_SIZE,        INTR_NAME_GENERIC,      "size",         {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},          INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_I, ARG0, {"array", "dim"} },
 
   // UBOUND (ARRAY [, DIM, KIND])
   { INTR_UBOUND,      INTR_NAME_GENERIC,      "ubound",       {INTR_TYPE_ANY_ARRAY},                         INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F90,    INTR_CLASS_I },
@@ -778,6 +785,7 @@ intrinsic_entry intrinsic_table[] = {
   // SYSTEM_CLOCK ([COUNT, COUNT_RATE, COUNT_MAX])
   { INTR_SYSTEM_CLOCK, INTR_NAME_GENERIC,     "system_clock", {INTR_TYPE_INT, INTR_TYPE_REAL,
 							       INTR_TYPE_INT},                               INTR_TYPE_NONE,         3, -6, LANGSPEC_F2003,  INTR_CLASS_S, NONE, {"count", "count_rate", "count_max"} },
+  { INTR_SYSTEM_CLOCK, INTR_NAME_GENERIC,     "",             {INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT}, INTR_TYPE_NONE,         3, -6, LANGSPEC_F2003,  INTR_CLASS_S, NONE, {"count", "count_rate", "count_max"} },
 
   /*
    * Fortran90 intrinsics
@@ -824,14 +832,22 @@ intrinsic_entry intrinsic_table[] = {
 
   { INTR_NUM_IMAGES,  INTR_NAME_GENERIC,      "num_images",   {INTR_TYPE_NONE},                              INTR_TYPE_INT,          0, -6, LANGSPEC_F2008,  INTR_CLASS_T },
 
+  // THIS IMAGE ( ) or THIS IMAGE (COARRAY [, DIM])
   { INTR_THIS_IMAGE,  INTR_NAME_GENERIC,      "this_image",   {INTR_TYPE_NONE},                              INTR_TYPE_INT,          0, -6, LANGSPEC_F2008,  INTR_CLASS_T },
+  { INTR_THIS_IMAGE,  INTR_NAME_GENERIC,      "",             {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_DYNAMIC_ARRAY,
+                                                                                                                                     1, -6, LANGSPEC_F2008 },
   { INTR_THIS_IMAGE,  INTR_NAME_GENERIC,      "",             {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT},        INTR_TYPE_INT,          2, -6, LANGSPEC_F2008,  INTR_CLASS_T, ARG0, {"coarray", "dim"} },
 
   { INTR_IMAGE_INDEX, INTR_NAME_GENERIC,      "image_index",  {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT_ARRAY},  INTR_TYPE_INT,          2, -6, LANGSPEC_F2008,  INTR_CLASS_T, ARG0|ARG1, {"coarray", "sub"} },
 
-  { INTR_LCOBOUND,    INTR_NAME_GENERIC,      "lcobound",     {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT},        INTR_TYPE_INT,          3, -6, LANGSPEC_F2008,  INTR_CLASS_I, ARG0, {"coarray", "dim", "kind"} },
-
-  { INTR_UCOBOUND,    INTR_NAME_GENERIC,      "ucobound",     {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT},        INTR_TYPE_INT,          3, -6, LANGSPEC_F2008,  INTR_CLASS_I, ARG0, {"coarray", "dim", "kind"} },
+  // LCOBOUND (COARRAY [, DIM, KIND])
+  { INTR_LCOBOUND,    INTR_NAME_GENERIC,      "lcobound",     {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F2008,  INTR_CLASS_I },
+  { INTR_LCOBOUND,    INTR_NAME_GENERIC,      "",             {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT,
+							       INTR_TYPE_INT},                               INTR_TYPE_INT,          3, -6, LANGSPEC_F2008,  INTR_CLASS_I, ARG0, {"coarray", "dim", "kind"} },
+  // UCOBOUND (COARRAY [, DIM, KIND])
+  { INTR_UCOBOUND,    INTR_NAME_GENERIC,      "ucobound",     {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F2008,  INTR_CLASS_I },
+  { INTR_UCOBOUND,    INTR_NAME_GENERIC,      "",             {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT,
+							       INTR_TYPE_INT},                               INTR_TYPE_INT,          3, -6, LANGSPEC_F2008,  INTR_CLASS_I, ARG0, {"coarray", "dim", "kind"} },
 
   { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,    "atomic_define",{INTR_TYPE_COARRAY_INT, INTR_TYPE_INT},        INTR_TYPE_NONE,         2,  0, LANGSPEC_F2008,  INTR_CLASS_A, ARG0|ARG1, {"atom", "value" } },
   { INTR_ATOMIC_DEFINE, INTR_NAME_GENERIC,    "",             {INTR_TYPE_COARRAY_LOGICAL, INTR_TYPE_LOGICAL},INTR_TYPE_NONE,         2,  0, LANGSPEC_F2008,  INTR_CLASS_A, ARG0|ARG1, {"atom", "value" } },
