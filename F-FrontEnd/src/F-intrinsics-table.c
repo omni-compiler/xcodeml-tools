@@ -30,11 +30,9 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "aimag",        {INTR_TYPE_COMPLEX},                           INTR_TYPE_REAL,         1, -5, LANGSPEC_F77,    INTR_CLASS_E },
   { INTR_AIMAG,       INTR_NAME_SPECIFIC,     "",             {INTR_TYPE_DCOMPLEX},                          INTR_TYPE_DREAL,        1, -5, LANGSPEC_F77,    INTR_CLASS_E },
 																					                                
-#ifdef GNU_INTRINSIC_EXTENSION
   // DIMAG (Z)
   { INTR_DIMAG,       INTR_NAME_GENERIC,      "dimag",        {INTR_TYPE_DCOMPLEX},                          INTR_TYPE_DREAL,        1, -5, LANGSPEC_NONSTD, INTR_CLASS_E },
   { INTR_DIMAG,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_COMPLEX},                           INTR_TYPE_REAL,         1, -5, LANGSPEC_NONSTD, INTR_CLASS_E },
-#endif
   
   // AINT (A  [, KIND])																			                                
   { INTR_AINT,        INTR_NAME_GENERIC,      "aint",         {INTR_TYPE_REAL,  INTR_TYPE_INT},              INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,    {"a", "kind"} },
@@ -47,13 +45,11 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_ANINT,       INTR_NAME_SPECIFIC,     "dnint",        {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_DREAL,        2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,    {"a", "kind"} },
 																					                                
   // CMPLX (X [, Y][, KIND])																		                                
-  { INTR_CMPLX,       INTR_NAME_GENERIC,      "cmplx",        {INTR_TYPE_COMPLEX, INTR_TYPE_INT},            INTR_TYPE_COMPLEX,      2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "kind"} },
+  { INTR_CMPLX,       INTR_NAME_GENERIC,      "cmplx",        {INTR_TYPE_COMPLEX, INTR_TYPE_INT},            INTR_TYPE_COMPLEX,      2, -5, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "kind"} },
   { INTR_CMPLX,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS,
-  							       INTR_TYPE_INT},                               INTR_TYPE_COMPLEX,      3, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "y", "kind"} },
-#ifdef GNU_INTRINSIC_EXTENSION
-  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "dcmplx",       {INTR_TYPE_COMPLEX},                           INTR_TYPE_DCOMPLEX,     1, -1, LANGSPEC_NONSTD, INTR_CLASS_E },
-  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "",             {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_DCOMPLEX,     2, -1, LANGSPEC_NONSTD, INTR_CLASS_E, ARG0, {"x", "y"} },
-#endif
+  							       INTR_TYPE_INT},                               INTR_TYPE_COMPLEX,      3, -5, LANGSPEC_F77,    INTR_CLASS_E, ARG0, {"x", "y", "kind"} },
+  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "dcmplx",       {INTR_TYPE_COMPLEX},                           INTR_TYPE_DCOMPLEX,     1, -5, LANGSPEC_NONSTD, INTR_CLASS_E },
+  { INTR_DCMPLX,      INTR_NAME_SPECIFIC,     "",             {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_DCOMPLEX,     2, -5, LANGSPEC_NONSTD, INTR_CLASS_E, ARG0, {"x", "y"} },
   
   // CONJG (Z)  ???
   { INTR_CONJG,       INTR_NAME_SPECIFIC,     "conjg",        {INTR_TYPE_COMPLEX},                           INTR_TYPE_COMPLEX,      1,  0, LANGSPEC_F77,    INTR_CLASS_E },
@@ -64,10 +60,8 @@ intrinsic_entry intrinsic_table[] = {
   // DBLE (A)
   { INTR_DBLE,        INTR_NAME_GENERIC,      "dble",         {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_DREAL,        1, -1, LANGSPEC_F77,    INTR_CLASS_E },
 
-#ifdef GNU_INTRINSIC_EXTENSION
   // DREAL (A)
   { INTR_REAL,        INTR_NAME_GENERIC,      "dreal",        {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_DREAL,        1, -1, LANGSPEC_NONSTD, INTR_CLASS_E },
-#endif
   
   // DIM (X, Y)
   { INTR_DIM,         INTR_NAME_GENERIC,      "dim",          {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_NUMERICS,     2,  0, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1, {"x", "y"} },
