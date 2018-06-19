@@ -104,16 +104,16 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_MOD,         INTR_NAME_SPECIFIC,     "dmod",         {INTR_TYPE_DREAL, INTR_TYPE_DREAL},            INTR_TYPE_DREAL,        2,  0, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1, {"a", "p"} },
 
   // NINT (A [, KIND])
-  { INTR_NINT,        INTR_NAME_GENERIC,      "nint",         {INTR_TYPE_REAL},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_NINT,        INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL},                             INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_NINT,        INTR_NAME_GENERIC,      "",             {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_NINT,        INTR_NAME_SPECIFIC,     "idnint",       {INTR_TYPE_DREAL},                             INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_NINT,        INTR_NAME_GENERIC,      "nint",         {INTR_TYPE_REAL, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_NINT,        INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_NINT,        INTR_NAME_GENERIC,      "",             {INTR_TYPE_ALL_NUMERICS, INTR_TYPE_INT},       INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_NINT,        INTR_NAME_SPECIFIC,     "idnint",       {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_INT,          2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
 
   // REAL (A [, KIND])
-  { INTR_REAL,        INTR_NAME_GENERIC,      "real",         {INTR_TYPE_ALL_NUMERICS},                      INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "float",        {INTR_TYPE_INT},                               INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "dfloat",       {INTR_TYPE_INT},                               INTR_TYPE_DREAL,        2, -1, LANGSPEC_NONSTD, INTR_CLASS_E, ARG0,      {"a", "kind"} },	/* non-standard */
-  { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "sngl",         {INTR_TYPE_DREAL},                             INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_REAL,        INTR_NAME_GENERIC,      "real",         {INTR_TYPE_ALL_NUMERICS, INTR_TYPE_INT},       INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "float",        {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "dfloat",       {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_DREAL,        2, -1, LANGSPEC_NONSTD, INTR_CLASS_E, ARG0,      {"a", "kind"} },	/* non-standard */
+  { INTR_REAL,        INTR_NAME_SPECIFIC_NA,  "sngl",         {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_REAL,         2, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
 
   // SIGN (A, B)
   { INTR_SIGN,        INTR_NAME_GENERIC,      "sign",         {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_NUMERICS,     2,  0, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1, {"a", "b"} },
@@ -253,7 +253,7 @@ intrinsic_entry intrinsic_table[] = {
   /* 5. Character inquiry function */
 
   // LEN (STRING [, KIND])
-  { INTR_LEN,         INTR_NAME_GENERIC,      "len",          {INTR_TYPE_CHAR},                              INTR_TYPE_INT,          2, -6, LANGSPEC_F77,    INTR_CLASS_I, ARG0,      {"string", "kind"} },
+  { INTR_LEN,         INTR_NAME_GENERIC,      "len",          {INTR_TYPE_CHAR, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -6, LANGSPEC_F77,    INTR_CLASS_I, ARG0,      {"string", "kind"} },
 
   /* 6. Fortran77 non-standard */
   { INTR_LOC,         INTR_NAME_GENERIC,      "loc",          {INTR_TYPE_ANY},                               INTR_TYPE_INT,          1, -9, LANGSPEC_NONSTD, INTR_CLASS_I },
@@ -268,12 +268,12 @@ intrinsic_entry intrinsic_table[] = {
   /* Entries of ceiling and floor for DREAL added (by Hitoshi Murai). */
 
   // CEILING (A  [, KIND])
-  { INTR_CEILING,     INTR_NAME_GENERIC,      "ceiling",      {INTR_TYPE_REAL},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_CEILING,     INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL},                             INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_CEILING,     INTR_NAME_GENERIC,      "ceiling",      {INTR_TYPE_REAL, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_CEILING,     INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
 
   // FLOOR (A  [, KIND])
-  { INTR_FLOOR,       INTR_NAME_GENERIC,      "floor",        {INTR_TYPE_REAL},                              INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
-  { INTR_FLOOR,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL},                             INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_FLOOR,       INTR_NAME_GENERIC,      "floor",        {INTR_TYPE_REAL, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
+  { INTR_FLOOR,       INTR_NAME_GENERIC,      "",             {INTR_TYPE_DREAL, INTR_TYPE_INT},              INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"a", "kind"} },
 
   // MODULO (A, P)
   { INTR_MODULO,         INTR_NAME_GENERIC,   "modulo",       {INTR_TYPE_NUMERICS, INTR_TYPE_NUMERICS},      INTR_TYPE_NUMERICS,     2,  0, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1, {"a", "p"} },
@@ -283,7 +283,7 @@ intrinsic_entry intrinsic_table[] = {
   /* 4. Character functions */
 
   // ACHAR (I [, KIND])
-  { INTR_ACHAR,       INTR_NAME_GENERIC,      "achar",        {INTR_TYPE_INT},                               INTR_TYPE_CHAR,         1, -1, LANGSPEC_F2003,  INTR_CLASS_E, ARG0,      {"i", "kind"} },
+  { INTR_ACHAR,       INTR_NAME_GENERIC,      "achar",        {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_CHAR,         2, -1, LANGSPEC_F2003,  INTR_CLASS_E, ARG0,      {"i", "kind"} },
 
   // ADJUSTL (STRING)
   { INTR_ADJUSTL,     INTR_NAME_GENERIC,      "adjustl",      {INTR_TYPE_CHAR},                              INTR_TYPE_CHAR,         1,  0, LANGSPEC_F90,    INTR_CLASS_E },
@@ -295,7 +295,7 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_IACHAR,      INTR_NAME_GENERIC,      "iachar",       {INTR_TYPE_CHAR},                              INTR_TYPE_INT,          1, -1, LANGSPEC_F90,    INTR_CLASS_E },
 
   // LEN_TRIM (STRING [, KIND])
-  { INTR_LEN_TRIM,    INTR_NAME_GENERIC,      "len_trim",     {INTR_TYPE_CHAR},                              INTR_TYPE_INT,          1, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"string", "kind"} },
+  { INTR_LEN_TRIM,    INTR_NAME_GENERIC,      "len_trim",     {INTR_TYPE_CHAR, INTR_TYPE_INT},               INTR_TYPE_INT,          2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"string", "kind"} },
 
   // REPEAT (STRING, NCOPIES)
   { INTR_REPEAT,  INTR_NAME_GENERIC,          "repeat",       {INTR_TYPE_CHAR, INTR_TYPE_INT},               INTR_TYPE_INT,          2,  0, LANGSPEC_F90,    INTR_CLASS_T, ARG0|ARG1, {"string", "ncopies"} },
@@ -309,7 +309,7 @@ intrinsic_entry intrinsic_table[] = {
 
   // VERIFY (STRING, SET [, BACK, KIND])
   { INTR_VERIFY,      INTR_NAME_GENERIC,      "verify",       {INTR_TYPE_CHAR, INTR_TYPE_CHAR,
-							       INTR_TYPE_LOGICAL, INTR_TYPE_INT},            INTR_TYPE_INT,          3, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1, {"string", "set", "back", "kind"} },
+							       INTR_TYPE_LOGICAL, INTR_TYPE_INT},            INTR_TYPE_INT,          4, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1, {"string", "set", "back", "kind"} },
 
 
   /* 6. Kind functions */
@@ -334,7 +334,7 @@ intrinsic_entry intrinsic_table[] = {
   /* 7. Logical function */
 
   // LOGICAL (L [, KIND])
-  { INTR_LOGICAL,     INTR_NAME_GENERIC,      "logical",      {INTR_TYPE_LOGICAL},                           INTR_TYPE_LOGICAL,      2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"l", "kind"} },
+  { INTR_LOGICAL,     INTR_NAME_GENERIC,      "logical",      {INTR_TYPE_LOGICAL, INTR_TYPE_INT},            INTR_TYPE_LOGICAL,      2, -1, LANGSPEC_F90,    INTR_CLASS_E, ARG0,      {"l", "kind"} },
 
 
 
