@@ -658,9 +658,9 @@ intrinsic_entry intrinsic_table[] = {
 							       INTR_TYPE_LOGICAL},                           INTR_TYPE_ANY,          3,  0, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1|ARG2, {"tsource", "fsource", "mask"} },
 
   // PACK (ARRAY, MASK [, VECTOR])
-  { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         {INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL,
-							       INTR_TYPE_ANY_ARRAY},                         INTR_TYPE_ANY_DYNAMIC_ARRAY,
-                                                                                                                                     3, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0|ARG1, {"array", "mask", "vector"} },
+  { INTR_PACK,        INTR_NAME_GENERIC,      "pack",         {INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL},                         INTR_TYPE_ANY_DYNAMIC_ARRAY, 2, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0|ARG1, {"array", "mask" } },
+  { INTR_PACK,        INTR_NAME_GENERIC,      "",             {INTR_TYPE_ANY_ARRAY, INTR_TYPE_LOGICAL, INTR_TYPE_ANY_ARRAY},                         INTR_TYPE_ANY_DYNAMIC_ARRAY, 3, -1, LANGSPEC_F90,    INTR_CLASS_T, ARG0|ARG1, {"array", "mask", "vector"} },
+  
 
   // SPREAD (SOURCE, DIM, NCOPIES)
   { INTR_SPREAD,      INTR_NAME_GENERIC,      "spread",       {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT,
