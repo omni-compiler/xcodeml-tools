@@ -457,7 +457,7 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_ISHFT,       INTR_NAME_GENERIC,      "ishft",        {INTR_TYPE_INT, INTR_TYPE_INT},                INTR_TYPE_INT,          2,  0, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1, {"i", "shift"} },
 
   // ISHFTC (I, SHIFT [, SIZE])
-  { INTR_ISHFTC,      INTR_NAME_GENERIC,      "ishitc",       {INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT}, INTR_TYPE_INT,          3,  0, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1, {"i", "shift", "size"} },
+  { INTR_ISHFTC,      INTR_NAME_GENERIC,      "ishftc",       {INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT}, INTR_TYPE_INT,          3,  0, LANGSPEC_F90,    INTR_CLASS_E, ARG0|ARG1, {"i", "shift", "size"} },
 
   // NOT (I)
   { INTR_NOT,         INTR_NAME_GENERIC,      "not",          {INTR_TYPE_INT},                               INTR_TYPE_INT,          1,  0, LANGSPEC_F90,    INTR_CLASS_E },
