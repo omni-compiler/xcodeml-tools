@@ -5774,7 +5774,7 @@ import_module_id(ID mid,
 
     if(ID_TYPE(id) != NULL) {
         TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
-    )
+    }
     return;
 }
 
