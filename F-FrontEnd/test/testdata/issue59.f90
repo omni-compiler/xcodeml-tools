@@ -2,6 +2,8 @@ MODULE mod1
   IMPLICIT NONE
   PRIVATE
 
+  INTEGER :: pi
+
   TYPE, BIND(c) :: t_rt
     INTEGER :: i
   END TYPE t_rt
