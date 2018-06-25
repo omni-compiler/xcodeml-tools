@@ -66,8 +66,8 @@ subroutine sub1()
   print *, dcmplx(x)
   print *, dcmplx(x, x)
   print *, dcmplx(z)
-  print *, dcmplx(z, x)
-  print *, dcmplx(z, i)
+!  print *, dcmplx(z, x)
+!  print *, dcmplx(z, i)
   
   x = dreal(z)
 
