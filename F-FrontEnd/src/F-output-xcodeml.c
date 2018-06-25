@@ -5121,7 +5121,7 @@ qsort_compare_id_by_line(const void *v1, const void *v2)
  * by_order: if true order by ID_ORDER value otherwise by ID_LINE
  */
 ID*
-genSortedIDs(ID ids, int *retnIDs, int by_oder)
+genSortedIDs(ID ids, int *retnIDs, int by_order)
 {
     ID id, *sortedIDs;
     int i = 0, nIDs = 0;
@@ -5139,7 +5139,7 @@ genSortedIDs(ID ids, int *retnIDs, int by_oder)
 
     FOREACH_ID(id, ids)
         sortedIDs[i++] = id;
-    if(by_oder) {
+    if(by_order) {
         qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id);
     } else {
         qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id_by_line);
