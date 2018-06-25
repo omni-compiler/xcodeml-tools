@@ -587,9 +587,9 @@ XfDecompileDomVisitor {
             writer.writeToken(")");
         } else if ("FstructType".equals(topTypeName)) {
             Node typeParamValues = typeList.findChildNode("typeParamValues");
-            String aliasStructTypeName =
-                    typeManager.getAliasTypeName(XmDomUtil.getAttr(topTypeChoice,
-                            "type"));
+            String aliasStructTypeName = typeManager.getAliasTypeName(
+                XmDomUtil.getAttr(topTypeChoice, "type"),
+                XmDomUtil.getAttr(topTypeChoice, "imported_id"));
             if (isDeclaration) {
                 if (isClass) {
                     writer.writeToken("CLASS");
@@ -5311,8 +5311,9 @@ XfDecompileDomVisitor {
             }
 
             String aliasStructTypeName =
-                typeManager.getAliasTypeName(XmDomUtil.getAttr(structTypeNode,
-                                                               "type"));
+                typeManager.getAliasTypeName(
+                    XmDomUtil.getAttr(structTypeNode, "type"),
+                    XmDomUtil.getAttr(structTypeNode, "imported_id"));
 
             XmfWriter writer = _context.getWriter();
             writer.writeToken(aliasStructTypeName);
@@ -5402,7 +5403,8 @@ XfDecompileDomVisitor {
 
             String parentTypeId = XmDomUtil.getAttr(structTypeNode, "extends");
             if (parentTypeId != null) {
-                String typeName = typeManager.getAliasTypeName(parentTypeId);
+                String typeName =
+                    typeManager.getAliasTypeName(parentTypeId, null);
                 writer.writeToken(",");
                 writer.writeToken("EXTENDS");
                 writer.writeToken("(");
