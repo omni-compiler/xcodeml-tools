@@ -2418,7 +2418,7 @@ XfDecompileDomVisitor {
                     writer.writeToken(type.fortranName());
                 } else {
                     XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
-                    _writeTopType(typeList, false);
+                    _writeTopType(typeList, false, false);
                 }
                 writer.writeToken(" ) ");
             }
