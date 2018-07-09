@@ -837,7 +837,6 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
-        outx_true(TYPE_IS_ASSUMED(tp),          "is_assumed");
 
         if (IS_STRUCT_TYPE(tp)) {
             /*
@@ -4554,10 +4553,10 @@ outx_arrayType(int l, TYPE_DESC tp)
 
 
 /**
- * output the type of CLASS(*) and TYPE(*)
+ * output the type of CLASS(*)
  */
 static void
-outx_unlimited_class_or_assumed_type(int l, TYPE_DESC tp)
+outx_unlimitedClass(int l, TYPE_DESC tp)
 {
     outx_typeAttrs(l, tp ,"FbasicType", TOPT_CLOSE);
 }
@@ -4866,8 +4865,8 @@ outx_type(int l, TYPE_DESC tp)
         outx_arrayType(l, tp);
 
     } else if(IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-        if (TYPE_IS_CLASS(tp) || TYPE_IS_ASSUMED(tp)) {
-            outx_unlimited_class_or_assumed_type(l, tp);
+        if (TYPE_IS_CLASS(tp)) {
+            outx_unlimitedClass(l, tp);
         } else {
             outx_structType(l, tp);
         }
