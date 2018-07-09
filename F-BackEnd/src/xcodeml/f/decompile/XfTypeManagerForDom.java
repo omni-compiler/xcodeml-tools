@@ -217,8 +217,7 @@ class XfTypeManagerForDom {
             AliasMap aliasMap = _getCurrentAliasMap();
             assert (aliasMap != null);
             aliasMap.put(typeName, symbolName);
-        } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass) &&
-                   !XfStorageClass.FNAMELIST_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
+        } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
             SymbolMap symbolMap = _getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, idNode);
@@ -411,6 +410,9 @@ class XfTypeManagerForDom {
                 String refType = XmDomUtil.getAttr(basicType, "ref");
 
                 if (XmDomUtil.getAttrBool(basicType, "is_class") && XfUtilForDom.isNullOrEmpty(refType))
+                    break;
+
+                if (XmDomUtil.getAttrBool(basicType, "is_assumed") && XfUtilForDom.isNullOrEmpty(refType))
                     break;
 
                 if (XmDomUtil.getAttrBool(basicType, "is_pointer") && XfUtilForDom.isNullOrEmpty(refType))

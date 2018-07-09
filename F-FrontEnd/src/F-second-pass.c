@@ -47,6 +47,33 @@ void remove_sp_list(SP_LIST *list)
     list->err_no = 0;
 }
 
+/* Check potential flagged undefined variable that have been switch to proc */
+void sp_check(ID id) {
+    SP_LIST *list = sp_list_head;
+    SP_LIST *prev = NULL;
+    while(list) {
+        SP_LIST *next = list->next;
+        //printf("item %s\n", ID_NAME(list->info.id));
+        if(list->err_no == SP_ERR_UNDEF_TYPE_VAR) {
+            // ID was flagged, now proc so error can be removed
+            if(strcmp(ID_NAME(id), ID_NAME(list->info.id)) == 0) {
+              if(list == sp_list_head) {
+                // Item is the head. Point head to next element.
+                list->next = NULL;
+                sp_list_head = next;
+                free((void*)list);
+              } else {
+                // Item is in middle of the list or tail
+                prev->next = next;
+                free((void*)list);
+              }
+            }
+        }
+        prev = list;
+        list = next;
+    }
+}
+
 void sp_link_id(ID id, int err_no, lineno_info *line)
 {
   SP_LIST *list;
