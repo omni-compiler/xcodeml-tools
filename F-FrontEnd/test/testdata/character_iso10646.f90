@@ -1,6 +1,7 @@
       SUBROUTINE create_date_string(string)
         INTRINSIC date_and_time,selected_char_kind
         INTEGER,PARAMETER :: ucs4 = selected_char_kind("ISO_10646")
+        !  Current restriction: all BOZ-literals are translated into integer constants.
         CHARACTER(1,UCS4),PARAMETER :: nen=CHAR(INT(Z'5e74'),UCS4), & !year
              gatsu=CHAR(INT(Z'6708'),UCS4), & !month
              nichi=CHAR(INT(Z'65e5'),UCS4) !day

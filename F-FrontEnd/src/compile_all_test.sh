@@ -72,6 +72,8 @@ ulimit -t 10
 
 echo > errors.txt
 
+status=0
+
 for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '*.f08' | sort | xargs` ; do
     b=`basename $f`
     errOut=${b}.out
@@ -110,12 +112,15 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
                                         echo "--- ok (with_expected_output): ${b}"
                                     else
                                         echo --- failed unexpected_result: ${b} | tee -a errors.txt
+					status=1
                                     fi
                                 else
                                     echo --- failed execution: ${b} | tee -a errors.txt
+				    status=1
                                 fi
                             else
                                 echo "--- failed link: ${b}" | tee -a errors.txt
+				status=1
                             fi
                         else
                             echo "--- ok : ${b}"
@@ -125,18 +130,22 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
                     fi
                 else
                     echo "--- failed native: ${b}" | tee -a errors.txt
+		    status=1
                 fi
             else
                 echo "--- ok(skip_native) : ${b}"
             fi
         else
             echo "--- failed backend: ${b}" | tee -a errors.txt
+	    status=1
         fi
     else
         echo "--- failed frontend: ${b}" | tee -a errors.txt
+	status=1
     fi
     if test ${verbose} -eq 1; then
         cat ${errOut}
     fi
 done
 
+exit ${status}

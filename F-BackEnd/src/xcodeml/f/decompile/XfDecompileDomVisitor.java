@@ -2464,7 +2464,7 @@ XfDecompileDomVisitor {
                 writer.writeToken(kind + "_");
             }
 
-	    writer.skipSeparator();
+	    //writer.skipSeparator();
             writer.writeLiteralString(XmDomUtil.getContentText(n));
         }
     }
@@ -4554,18 +4554,27 @@ XfDecompileDomVisitor {
 	    }
 
             // clause
-            Node clause = dir.getNextSibling();
-	    while (clause.getNodeType() != Node.ELEMENT_NODE) clause = clause.getNextSibling();
+            Node clauses = dir.getNextSibling();
+	    while (clauses.getNodeType() != Node.ELEMENT_NODE) clauses = clauses.getNextSibling();
 	    Node copyprivate_arg = null;
 
-            NodeList list0 = clause.getChildNodes();
+            NodeList list0 = clauses.getChildNodes();
             for (int i = 0; i < list0.getLength(); i++){
-            	Node childNode = list0.item(i);
-                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+            	Node clause = list0.item(i);
+                if (clause.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
 
-                String clauseName = XmDomUtil.getContentText(childNode);
+                String clauseName = XmDomUtil.getContentText(clause);
+		Node arg = clause.getFirstChild().getNextSibling();
+
+		if (clauseName.trim().equals("")){
+		  clause = clause.getFirstChild();
+		  while (clause.getNodeType() != Node.ELEMENT_NODE) clause = clause.getNextSibling();
+		  clauseName = XmDomUtil.getContentText(clause);
+		  arg = clause.getNextSibling();
+		}
+		
                 String operator = "";
                 if (clauseName.equals("DATA_DEFAULT"))               clauseName = "DEFAULT";
                 else if (clauseName.equals("DATA_PRIVATE"))          clauseName = "PRIVATE";
@@ -4586,7 +4595,7 @@ XfDecompileDomVisitor {
                 else if (clauseName.equals("DATA_REDUCTION_EQV"))   {clauseName = "REDUCTION"; operator = ".eqv.";}
                 else if (clauseName.equals("DATA_REDUCTION_NEQV"))  {clauseName = "REDUCTION"; operator = ".neqv.";}
 		else if (clauseName.equals("DATA_COPYPRIVATE"))     {clauseName = "COPYPRIVATE"; copyprivateFlag = true;
-		  copyprivate_arg = childNode.getFirstChild().getNextSibling();
+		  copyprivate_arg = clause.getFirstChild().getNextSibling();
 		  while (copyprivate_arg.getNodeType() != Node.ELEMENT_NODE){
 		    copyprivate_arg = copyprivate_arg.getNextSibling();
 		  }
@@ -4599,7 +4608,7 @@ XfDecompileDomVisitor {
                 if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
 		  writer.writeToken(clauseName);
 
-		  Node arg = childNode.getFirstChild().getNextSibling();
+		  //Node arg = clause.getFirstChild().getNextSibling();
 		  while (arg.getNodeType() != Node.ELEMENT_NODE) arg = arg.getNextSibling();
 
 		  if (arg != null){
@@ -4608,7 +4617,7 @@ XfDecompileDomVisitor {
 
 		    NodeList varList = arg.getChildNodes();
 		    int j = 0;
-		    while (varList.item(j).getNodeType() != Node.ELEMENT_NODE) j++;
+		    while (varList.item(j) != null && varList.item(j).getNodeType() != Node.ELEMENT_NODE) j++;
 
 		    if (clauseName.equals("SCHEDULE")){
 		      String sched = XmDomUtil.getContentText(varList.item(j));
@@ -4649,7 +4658,7 @@ XfDecompileDomVisitor {
             writer.setupNewLine();
 
             // body
-            Node body = clause.getNextSibling();
+            Node body = clauses.getNextSibling();
 	    while (body.getNodeType() != Node.ELEMENT_NODE) body = body.getNextSibling();
 
             writer.incrementIndentLevel();
