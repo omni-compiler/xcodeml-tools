@@ -1,6 +1,6 @@
   program main
 
-    real r = 0
+    real :: r = 0
 
 !$omp parallel do
     do i = 1, 10
