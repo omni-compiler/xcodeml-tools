@@ -6,7 +6,7 @@
     do i = 1, 10
 !$omp atomic
        r = r + 1
-!$omp barrier
+!!$omp barrier
     end do
 !$omp end parallel do
 
