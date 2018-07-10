@@ -534,20 +534,17 @@ XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
-        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
 
         if (!isDeclaration) {
             assert (!isClass);
             assert (!isProcedure);
-            assert (!isAssumed);
             isClass = false;
             isProcedure = false;
-            isAssumed = false;
         }
 
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName) && !isClass && !isAssumed && !isProcedure) {
+        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FbasicType".equals(topTypeName) &&
                 XmDomUtil.getAttr(topTypeChoice, "ref") == null &&
@@ -559,21 +556,12 @@ XfDecompileDomVisitor {
             writer.writeToken("(");
             writer.writeToken("*");
             writer.writeToken(")");
-        } else if ("FbasicType".equals(topTypeName) && isAssumed)
-        {
-            /*
-             * <FbasicType is_assumed="true"/> is `TYPE(*)`
-             */
-            writer.writeToken("TYPE");
-            writer.writeToken("(");
-            writer.writeToken("*");
-            writer.writeToken(")");
         } else if (isProcedure) {
             writer.writeToken("PROCEDURE");
             writer.writeToken("(");
-            if(XmDomUtil.getAttr(lowTypeChoice, "ref") != null) {
+            if (XmDomUtil.getAttr(lowTypeChoice, "ref") != null) {
                 String functionName = typeManager.findNameFromType(XmDomUtil.getAttr(topTypeChoice, "type"));
-                if(functionName != null) {
+                if (functionName != null) {
                     /*
                      * PROCEDURE(function_name) :: p
                      */
@@ -588,7 +576,7 @@ XfDecompileDomVisitor {
                     String returnTypeId = XmDomUtil.getAttr(topTypeChoice, "return_type");
                     XfType returnType = XfType.getTypeIdFromXcodemlTypeName(returnTypeId);
 
-                    if(returnType.isPrimitive()) {
+                    if (returnType.isPrimitive()) {
                         writer.writeToken(returnType.fortranName());
                     } else {
                         XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeId);
@@ -682,7 +670,6 @@ XfDecompileDomVisitor {
         }
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
-        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
         boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
 
@@ -712,7 +699,7 @@ XfDecompileDomVisitor {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
 
-            if (!isClass && !isAssumed && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
+            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
                 XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
                 assert refTypeId != null;
             }
@@ -4567,18 +4554,29 @@ XfDecompileDomVisitor {
 	    }
 
             // clause
-            Node clause = dir.getNextSibling();
-	    while (clause.getNodeType() != Node.ELEMENT_NODE) clause = clause.getNextSibling();
+            Node clauses = dir.getNextSibling();
+	    while (clauses.getNodeType() != Node.ELEMENT_NODE) clauses = clauses.getNextSibling();
 	    Node copyprivate_arg = null;
 
-            NodeList list0 = clause.getChildNodes();
+            NodeList list0 = clauses.getChildNodes();
             for (int i = 0; i < list0.getLength(); i++){
-            	Node childNode = list0.item(i);
-                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+            	Node clause = list0.item(i);
+                if (clause.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
 
-                String clauseName = XmDomUtil.getContentText(childNode);
+                String clauseName = XmDomUtil.getContentText(clause);
+		Node arg = clause.getFirstChild().getNextSibling();
+
+		if (clauseName.trim().equals("")){
+		  clause = clause.getFirstChild();
+		  while (clause.getNodeType() != Node.ELEMENT_NODE) clause = clause.getNextSibling();
+		  clauseName = XmDomUtil.getContentText(clause);
+		  arg = clause.getNextSibling();
+		}
+		
+		while (arg != null && arg.getNodeType() != Node.ELEMENT_NODE) arg = arg.getNextSibling();
+
                 String operator = "";
                 if (clauseName.equals("DATA_DEFAULT"))               clauseName = "DEFAULT";
                 else if (clauseName.equals("DATA_PRIVATE"))          clauseName = "PRIVATE";
@@ -4599,7 +4597,7 @@ XfDecompileDomVisitor {
                 else if (clauseName.equals("DATA_REDUCTION_EQV"))   {clauseName = "REDUCTION"; operator = ".eqv.";}
                 else if (clauseName.equals("DATA_REDUCTION_NEQV"))  {clauseName = "REDUCTION"; operator = ".neqv.";}
 		else if (clauseName.equals("DATA_COPYPRIVATE"))     {clauseName = "COPYPRIVATE"; copyprivateFlag = true;
-		  copyprivate_arg = childNode.getFirstChild().getNextSibling();
+		  copyprivate_arg = clause.getFirstChild().getNextSibling();
 		  while (copyprivate_arg.getNodeType() != Node.ELEMENT_NODE){
 		    copyprivate_arg = copyprivate_arg.getNextSibling();
 		  }
@@ -4609,10 +4607,29 @@ XfDecompileDomVisitor {
                 else if (clauseName.equals("DIR_NOWAIT"))           {clauseName = "NOWAIT";    nowaitFlag = true;}
                 else if (clauseName.equals("DIR_SCHEDULE"))          clauseName = "SCHEDULE";
 
-                if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
+
+		if (clauseName.equals("DEFAULT")){
+		  writer.writeToken(clauseName);
+		  writer.writeToken("(");
+		  String attr;
+		  if (arg.getNodeName().equals("list")){
+		    attr = XmDomUtil.getContentText(arg.getFirstChild());
+		  }
+		  else {
+		    attr = XmDomUtil.getContentText(arg);
+		  }
+		  if      (attr.equals("0") || attr.equals("DEFAULT_SHARED"))  attr = "SHARED";
+		  else if (attr.equals("1"))                                   attr = "";
+		  else if (attr.equals("2") || attr.equals("DEFAULT_PRIVATE")) attr = "PRIVATE";
+		  else if (attr.equals("DEFAULT_FIRSTPRIVATE"))                attr = "FIRSTPRIVATE";
+		  else if (attr.equals("DEFAULT_NONE"))                        attr = "NONE";
+		  writer.writeToken(attr);
+		  writer.writeToken(")");
+		}
+		else if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
 		  writer.writeToken(clauseName);
 
-		  Node arg = childNode.getFirstChild().getNextSibling();
+		  //Node arg = clause.getFirstChild().getNextSibling();
 		  while (arg.getNodeType() != Node.ELEMENT_NODE) arg = arg.getNextSibling();
 
 		  if (arg != null){
@@ -4621,25 +4638,28 @@ XfDecompileDomVisitor {
 
 		    NodeList varList = arg.getChildNodes();
 		    int j = 0;
-		    while (varList.item(j).getNodeType() != Node.ELEMENT_NODE) j++;
+		    while (varList.item(j) != null && varList.item(j).getNodeType() != Node.ELEMENT_NODE) j++;
 
 		    if (clauseName.equals("SCHEDULE")){
 		      String sched = XmDomUtil.getContentText(varList.item(j));
-		      if (sched.equals("0")) sched = "";
-		      else if (sched.equals("1")) sched = "STATIC";
-		      else if (sched.equals("2")) sched = "DYNAMIC";
-		      else if (sched.equals("3")) sched = "GUIDED";
-		      else if (sched.equals("4")) sched = "RUNTIME";
-		      else if (sched.equals("5")) sched = "AFFINITY";
+		      if      (sched.equals("0"))                                   sched = "";
+		      else if (sched.equals("1") || sched.equals("SCHED_STATIC"))   sched = "STATIC";
+		      else if (sched.equals("2") || sched.equals("SCHED_DYNAMIC"))  sched = "DYNAMIC";
+		      else if (sched.equals("3") || sched.equals("SCHED_GUIDED"))   sched = "GUIDED";
+		      else if (sched.equals("4") || sched.equals("SCHED_RUNTIME"))  sched = "RUNTIME";
+		      else if (sched.equals("5") || sched.equals("SCHED_AFFINITY")) sched = "AFFINITY";
 		      writer.writeToken(sched);
 		    }
-		    else if (clauseName.equals("DEFAULT")){
-		      String attr = XmDomUtil.getContentText(varList.item(j));
-		      if (attr.equals("0")) attr = "SHARED";
-		      else if (attr.equals("1")) attr = "";
-		      else if (attr.equals("2")) attr = "PRIVATE";
-		      writer.writeToken(attr);
-		    }
+		    // else if (clauseName.equals("DEFAULT")){
+		    //   String attr = XmDomUtil.getContentText(varList.item(j));
+		    //   System.out.println("attr = " + attr);
+		    //   if      (attr.equals("0") || attr.equals("DEFAULT_SHARED"))  attr = "SHARED";
+		    //   else if (attr.equals("1"))                                   attr = "";
+		    //   else if (attr.equals("2") || attr.equals("DEFAULT_PRIVATE")) attr = "PRIVATE";
+		    //   else if (attr.equals("DEFAULT_FIRSTPRIVATE"))                attr = "FIRSTPRIVATE";
+		    //   else if (attr.equals("DEFAULT_NONE"))                        attr = "NONE";
+		    //   writer.writeToken(attr);
+		    // }
 		    else {
 		      invokeEnter(varList.item(j));
 		    }
@@ -4662,19 +4682,30 @@ XfDecompileDomVisitor {
             writer.setupNewLine();
 
             // body
-            Node body = clause.getNextSibling();
+            Node body = clauses.getNextSibling();
 	    while (body.getNodeType() != Node.ELEMENT_NODE) body = body.getNextSibling();
 
             writer.incrementIndentLevel();
 
-            NodeList list2 = body.getChildNodes();
-            for (int i = 0; i < list2.getLength(); i++){
-                Node childNode = list2.item(i);
-                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
-                    continue;
-                }
-                invokeEnter(childNode);
-            }
+	    if (body.getNodeName().equals("list")){
+	    
+	      NodeList list2 = body.getChildNodes();
+	      for (int i = 0; i < list2.getLength(); i++){
+		Node childNode = list2.item(i);
+		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+		  continue;
+		}
+		// else if (childNode.getNodeName().equals("list")){
+		//   childNode = childNode.getFirstChild();
+		//   while (childNode.getNodeType() != Node.ELEMENT_NODE) childNode = childNode.getNextSibling();
+		// }
+		invokeEnter(childNode);
+	      }
+
+	    }
+	    else {
+	      invokeEnter(body);
+	    }
 
             writer.decrementIndentLevel();
 
@@ -5217,6 +5248,7 @@ XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
+	    writer.writeWhiteSpace();
             _invokeChildEnter(n);
             writer.setupNewLine();
         }
@@ -5241,7 +5273,7 @@ XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
-
+	    writer.writeWhiteSpace();
             _invokeChildEnter(n);
             writer.setupNewLine();
         }
