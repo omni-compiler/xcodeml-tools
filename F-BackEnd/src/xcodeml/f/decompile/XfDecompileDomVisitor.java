@@ -2464,7 +2464,7 @@ XfDecompileDomVisitor {
                 writer.writeToken(kind + "_");
             }
 
-	    //writer.skipSeparator();
+	    writer.skipSeparator();
             writer.writeLiteralString(XmDomUtil.getContentText(n));
         }
     }
@@ -5248,6 +5248,7 @@ XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
+	    writer.writeWhiteSpace();
             _invokeChildEnter(n);
             writer.setupNewLine();
         }
@@ -5272,7 +5273,7 @@ XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
-
+	    writer.writeWhiteSpace();
             _invokeChildEnter(n);
             writer.setupNewLine();
         }
