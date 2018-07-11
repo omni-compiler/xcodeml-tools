@@ -45,13 +45,13 @@ frontendOpt="-fintrinsic-xmodules-path ${OMNI_HOME}/F-FrontEnd/src/fincludes"
 backend="${work}/Driver/bin/F_Back"
 backendOpt=""
 nativecomp="gfortran-7"
-which $nativecomp /dev/null 2>&1
+which $nativecomp > /dev/null 2>&1
 if test $? -ne 0; then
   nativecomp="gfortran"
 fi
-which $nativecomp /dev/null 2>&1
+which $nativecomp > /dev/null 2>&1
 if test $? -ne 0; then
-  echo "Not find $nativecomp"
+  echo "Not found $nativecomp"
   exit 1
 fi
 nativecompOpt="-fcoarray=single"
