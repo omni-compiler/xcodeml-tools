@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 verbose=0
 trans=0
@@ -39,11 +39,21 @@ if test -z "${OMNI_JAVA}"; then
 	OMNI_JAVA=java
 fi
 export OMNI_JAVA
+
 frontend="${work}/F-FrontEnd/src/F_Front"
 frontendOpt="-fintrinsic-xmodules-path ${OMNI_HOME}/F-FrontEnd/src/fincludes"
 backend="${work}/Driver/bin/F_Back"
 backendOpt=""
-nativecomp="gfortran"
+nativecomp="gfortran-7"
+which $nativecomp /dev/null 2>&1
+if test $? -ne 0; then
+  nativecomp="gfortran"
+fi
+which $nativecomp /dev/null 2>&1
+if test $? -ne 0; then
+  echo "Not find $nativecomp"
+  exit 1
+fi
 nativecompOpt="-fcoarray=single"
 
 if test ${trans} -eq 1; then
@@ -73,7 +83,7 @@ ulimit -t 10
 echo > errors.txt
 
 status=0
-
+export LC_ALL=C
 for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '*.f08' | sort | xargs` ; do
     b=`basename $f`
     errOut=${b}.out
