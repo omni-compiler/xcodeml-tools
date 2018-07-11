@@ -94,7 +94,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
     ${frontend} ${frontendOpt} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} \
         -o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
-        ${backend} ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
+        ${backend} --test ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
         if test $? -eq 0; then
             if test ! -e "${skipNative}" ; then
                 ${nativecomp} ${nativecompOpt} -c ${decompiledSrc} -o ${binOut} >> ${errOut} 2>&1
