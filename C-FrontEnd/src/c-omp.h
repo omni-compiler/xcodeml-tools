@@ -96,7 +96,8 @@ enum OMP_pragma_clause {
     OMP_DECLARE_TARGET_TO=31,
     OMP_DATA_DECALRE_LINK=32,
     OMP_TARGET_DEVICE=33,
-    OMP_TARGET_LAYOUT=34,
+    OMP_TARGET_SHADOW=34,
+    OMP_TARGET_LAYOUT=35,
 };
 
 enum OMP_sched_clause {

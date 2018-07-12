@@ -67,6 +67,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       break;
 
   case OMP_TARGET_DEVICE:
+  case OMP_TARGET_SHADOW:
     {
       CCOL_DListNode *ite;
       EXPR_FOREACH(ite, arg){
@@ -162,6 +163,7 @@ char *ompClauseName(int c)
   case OMP_COLLAPSE:              return "COLLAPSE";
   case OMP_DECLARE_TARGET_TO:     return "DECLARE_TARGET_TO";
   case OMP_TARGET_DEVICE:         return "TARGET_DEVICE";
+  case OMP_TARGET_SHADOW:         return "TARGET_SHADOW";
   case OMP_TARGET_LAYOUT:         return "TARGET_LAYOUT";
     
   default:                        return "???OMP???";

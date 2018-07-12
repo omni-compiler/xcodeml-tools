@@ -273,16 +273,20 @@ int parse_OMP_pragma()
 CExpr *parse_range_expr()
 {
   CExpr *list = EMPTY_LIST, *v1, *v2;
-  
+
   pg_get_token();
   while(1){
     v1 = v2 = NULL;
     switch(pg_tok){
     case ')': goto err;
     case '(': goto err;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
     case '*':
       v1 = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
       pg_get_token();
+      goto next;
       break;
     default:
       v1 = pg_parse_expr();
@@ -468,6 +472,11 @@ static CExpr* parse_OMP_clauses()
       if(pg_tok != '(') goto syntax_err;
       if((v = parse_range_expr()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_DEVICE,v);
+    } else if(PG_IS_IDENT("shadow")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      if((v = parse_range_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_TARGET_SHADOW,v);
     } else if(PG_IS_IDENT("layout")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
