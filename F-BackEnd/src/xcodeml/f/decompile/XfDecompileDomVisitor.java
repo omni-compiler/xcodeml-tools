@@ -6008,6 +6008,13 @@ XfDecompileDomVisitor {
                 invokeEnter(XmDomUtil.getElement(n, "lowerBound"));
 
                 writer.writeToken(":");
+
+		Node step = XmDomUtil.getElement(n, "step");
+		if (step != null) {
+		  writer.writeToken(":");
+		  invokeEnter(step);
+		}
+		
                 return;
             }
 
