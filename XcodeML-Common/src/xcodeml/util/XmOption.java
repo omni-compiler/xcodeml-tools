@@ -1,8 +1,6 @@
 package xcodeml.util;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Arrays;
 import xcodeml.util.XmLanguage;
 
 /**
@@ -33,42 +31,6 @@ public class XmOption
 
     /** if compiling coarray is enabled */
     private static boolean _coarray = false;
-    //private static ArrayList<String> _coarrayLibNameList = new ArrayList<>();
-    private static ArrayList<String> _coarrayLibNameList =
-	new ArrayList<String>(Arrays.asList(
-        "xmpf_image_index",
-        "xmpf_cobound_generic",
-        "xmpf_cobound_nodim",
-        "xmpf_cobound_dim",
-        "xmpf_num_images",
-        "xmpf_this_image_generic",
-        "xmpf_coarray_hello",
-        "xmpf_sync_all_stat",
-        "xmpf_sync_memory",
-        "xmpf_sync_memory_nostat",
-        "xmpf_sync_memory_stat_wrap",
-        "xmpf_sync_images",
-        "xmpf_sync_image_nostat",
-        "xmpf_sync_images_nostat_wrap",
-        "xmpf_sync_allimages_nostat_wrap",
-        "xmpf_sync_image_stat_wrap",
-        "xmpf_sync_images_stat_wrap",
-        "xmpf_sync_allimages_stat_wrap",
-        "xmpf_critical",
-        "xmpf_end_critical",
-        "xmpf_error_stop",
-        "xmpf_atomic_define_generic",
-        "xmpf_atomic_ref_generic",
-        "xmpf_coarray_get_generic",
-        "xmpf_coarray_put_generic",
-        "xmpf_coarray_alloc_generic",
-        "xmpf_coarray_dealloc_generic",
-        "xmpf_co_broadcast_generic",
-        "xmpf_co_sum_generic",
-        "xmpf_co_max_generic",
-        "xmpf_co_min_generic",
-	"sizeof"
-					    ));
 
     /** if debug output is enabled */
     private static boolean _debugOutput = false;
@@ -88,7 +50,8 @@ public class XmOption
     /** if supressing generation of USE statement for coarray runtime
      *  (TEMPORARY)
      */
-    private static boolean _coarrayNoUseStatement = false;  
+    private static boolean _coarrayUseStatement = false;  
+    private static ArrayList<String> _coarrayEntryNames = new ArrayList<>();
 
     private XmOption()
     {
@@ -271,9 +234,9 @@ public class XmOption
      *
      * @param name added to the list of coarray runtime library
      */
-    public static void addCoarrayLibName(String name)
+    public static void addToCoarrayEntryNames(String name)
     {
-        _coarrayLibNameList.add(name);
+        _coarrayEntryNames.add(name);
     }
 
     /**
@@ -281,9 +244,9 @@ public class XmOption
      *
      * @return the list of coarray runtime library
      */
-    public static ArrayList<String> getCoarrayLibNameList()
+    public static ArrayList<String> getCoarrayEntryNames()
     {
-        return _coarrayLibNameList;
+        return _coarrayEntryNames;
     }
 
     /**
@@ -383,16 +346,16 @@ public class XmOption
     }
 
     /**
-     * Set/get suboption -fcoarray-no-use-statement (boolean)
+     * Set/get suboption -fcoarray-use-statement (boolean)
      */
-    public static void setCoarrayNoUseStatement(boolean coarrayNoUseStatement)
+    public static void setCoarrayUseStatement(boolean coarrayUseStatement)
     {
-        _coarrayNoUseStatement = coarrayNoUseStatement;
+        _coarrayUseStatement = coarrayUseStatement;
     }
 
-    public static boolean coarrayNoUseStatement()
+    public static boolean coarrayUseStatement()
     {
-        return _coarrayNoUseStatement;
+        return _coarrayUseStatement;
     }
 
 }

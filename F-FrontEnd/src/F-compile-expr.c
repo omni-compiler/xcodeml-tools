@@ -4,6 +4,7 @@
 
 #include "F-front.h"
 #include "F-second-pass.h"
+#include "F-second-pass.h"
 #include <math.h>
 
 static expv compile_data_args _ANSI_ARGS_((expr args));
@@ -331,6 +332,14 @@ are_dimension_and_shape_conformant(expr x,
     return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr, for_argument, TRUE);
 }
 
+static void
+switch_id_to_proc(ID id)
+{
+    if(ID_CLASS(id) == CL_PROC)
+        return;
+    memset(&id->info.proc_info, 0, sizeof(id->info.proc_info));
+    ID_CLASS(id) = CL_PROC;
+}
 
 enum binary_expr_type {
     ARITB,
@@ -503,6 +512,14 @@ compile_expression(expr x)
 	      
             if (ID_CLASS(id) == CL_TAGNAME) {
                 return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
+            }
+
+            if(!IS_ARRAY_TYPE(tp) && !IS_FUNCTION_TYPE(tp)) {
+                // probably an undefined function passed as argument
+                sp_check(id);
+                ID_IS_DECLARED(id) = FALSE;
+                switch_id_to_proc(id);
+                return compile_function_call(id, EXPR_ARG2(x));
             }
             return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
         }
@@ -1188,7 +1205,14 @@ compile_ident_expression(expr x)
             if(ID_IS_OFMODULE(id) == FALSE
                 && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
             {
-                return VAR_INIT_VALUE(id);
+                ret = VAR_INIT_VALUE(id);
+                // Keep the kind information of the type (xcodeml-tools#42)
+                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL
+                    && TYPE_KIND(EXPV_TYPE(ret)) == NULL) 
+                {
+                    TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
+                }
+                return ret;
             } else if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
                 // Only constant from external module can be replaced safely.
                 if(EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT
@@ -1833,14 +1857,15 @@ compile_array_ref(ID id, expv vary, expr args, int isLeft) {
         tp = FUNCTION_TYPE_RETURN_TYPE(tp);
     }
 
-    nDims = TYPE_N_DIM(tp);
-
-    if (!IS_ARRAY_TYPE(tp)){ //fatal("%s: not ARRAY_TYPE", __func__);
+    if (!IS_ARRAY_TYPE(tp)){
       error_at_id(id, "identifier '%s' is not of array type", ID_NAME(id));
       return NULL;
     }
-    if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
+    
+    nDims = TYPE_N_DIM(tp);
 
+    if (!TYPE_DIM_FIXED(tp)) fix_array_dimensions(tp);
+    
     /*
      * Firstly, check the # of subsctipts.
      */

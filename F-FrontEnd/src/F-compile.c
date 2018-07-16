@@ -2709,13 +2709,14 @@ end_declaration()
             if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip) 
                 && !TYPE_IS_INTRINSIC(tp)) 
             {
-                if (current_module_state == M_PUBLIC) {
-                    TYPE_SET_PUBLIC(ip);
-                }
-                if (current_module_state == M_PRIVATE 
+                if (current_module_state == M_PUBLIC 
                     && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
                 {
-                    TYPE_SET_PRIVATE(ip);
+                        TYPE_SET_PUBLIC(ip);
+                } else if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
+                        TYPE_SET_PRIVATE(ip);
                 }
             }
         }
@@ -5771,10 +5772,9 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
-    if(current_module_state != M_PRIVATE) {
+    if(ID_TYPE(id) != NULL) {
         TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
     }
-
     return;
 }
 
@@ -8002,9 +8002,10 @@ pointer_assignable(expr x,
             !TYPE_IS_POINTER(vPteTyp) &&
             !IS_PROCEDURE_TYPE(vPteTyp) &&
             !IS_ARRAY_TYPE(vPteTyp) && 
+            !TYPE_IS_ALLOCATABLE(vPteTyp) &&
             (structType != NULL && !TYPE_IS_TARGET(structType))) // #19
         {
-            if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
+            if (x != NULL && EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
                                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
             } else {
