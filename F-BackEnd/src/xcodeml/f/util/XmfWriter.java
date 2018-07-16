@@ -303,6 +303,14 @@ public class XmfWriter
         _writeCharacterArray(sb.toString().toCharArray());
     }
 
+    public void writeWhiteSpace()
+    {
+	_out.print(" ");
+        // StringBuilder sb = new StringBuilder();
+	// sb.append(' ');
+        // _writeCharacterArray(sb.toString().toCharArray());
+    }
+
     /**
      * Write in the designated string as literal string of Fortran.
      * @param s String to write

@@ -620,7 +620,8 @@ yylex()
 
     if (expect_next_token_is_keyword == TRUE) {
         if (curToken == '(' || curToken == LET ||
-            is_keyword(curToken, keywords) == TRUE) {
+            is_keyword(curToken, keywords) == TRUE ||
+	    is_keyword(curToken, XMP_keywords) == TRUE) {
             expect_next_token_is_keyword = FALSE;
         }
     } else if (curToken == IDENTIFIER) {
@@ -989,17 +990,32 @@ token()
 	    int save_p = paren_level;
 	    need_keyword = TRUE;
 	    t = token();
-	    if (t == KW_LEN) {
+
+	    switch (token_history_buf[token_history_count-1]){
+	    case CLASS:
+	    case KW_TYPE:
+	    case KW_CHARACTER:
+	    case KW_COMPLEX:
+	    case KW_DOUBLE:
+	    case KW_DCOMPLEX:
+	    case KW_INTEGER:
+	    case KW_LOGICAL:
+	    case KW_REAL:
+	      // it's a type specifier.
+	      if (t == KW_LEN) {
                 need_keyword = FALSE;
 		while(isspace(*bufptr)) bufptr++;  /* skip white space */
 		if (*bufptr++ == '=')
 		    return SET_LEN;
-	    } else if (t == KW_KIND) {
+	      } else if (t == KW_KIND) {
                 need_keyword = FALSE;
 		while(isspace(*bufptr)) bufptr++;  /* skip white space */
 		if (*bufptr++ == '=')
 		    return SET_KIND;
+	      }
+	      break;
 	    }
+
 	    need_keyword = save_n;
 	    bufptr = save;
 	    paren_level = save_p;
