@@ -19,8 +19,13 @@
 typedef int64_t     omllint_t;
 typedef long double omldouble_t;
 
-#define OMLL_DFMT "%lld"
-#define OMLL_XFMT "%llx"
+#if ADDR_IS_64 == 0
+    #define OMLL_DFMT "%lld"
+    #define OMLL_XFMT "%llx"
+#else
+    #define OMLL_DFMT "%ld"
+    #define OMLL_XFMT "%lx"
+#endif
 
 enum symbol_type {
     S_IDENT = 0,        /* default */
