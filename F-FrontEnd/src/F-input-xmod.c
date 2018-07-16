@@ -1051,12 +1051,15 @@ static int
 input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 {
     char * name;
+    const char * tagName;
     char * typeId = NULL;
     SYMBOL s;
     ID id;
     TYPE_DESC tp = NULL;
     expv arg;
     expv args;
+    int ret;
+    expv memberRef;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "functionCall"))
         return FALSE;
@@ -1067,8 +1070,21 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    if (!input_name_as_string(reader, &name))
+
+    tagName = xmlTextReaderConstName(reader);
+    if (strcmp(tagName, "name") == 0) {
+        ret = input_name_as_string(reader, &name);
+    } else if (strcmp(tagName, "FmemberRef") == 0) {
+        name = NULL;
+        ret = input_FmemberRef(reader, ht, &memberRef);
+    }
+
+    if (!ret) {
         return FALSE;
+    }
+
+    // if (!input_name_as_string(reader, &name))
+    //     return FALSE;
 
     args = list0(LIST);
 
@@ -1087,16 +1103,23 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
             return FALSE;
     }
 
-    s = find_symbol(name);
-    SYM_TYPE(s) = TYPE_IS_INTRINSIC(tp) ? S_INTR : S_IDENT;
-    id = new_ident_desc(s);
-    PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
+    // Function is defined by a name
+    if(name) {
+        s = find_symbol(name);
+        SYM_TYPE(s) = TYPE_IS_INTRINSIC(tp) ? S_INTR : S_IDENT;
+        id = new_ident_desc(s);
+        PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
 
-    if (TYPE_IS_INTRINSIC(tp)) {
-        *v = compile_intrinsic_call0(id, args, TRUE);
+        if (TYPE_IS_INTRINSIC(tp)) {
+            *v = compile_intrinsic_call0(id, args, TRUE);
+        } else {
+            ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
+            *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
+            EXPV_TYPE(*v) = getTypeDesc(ht, typeId);
+        }
     } else {
-        ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
-        *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
+        // Function is a type-bound procedure defined by a FmemberRef
+        *v = list2(FUNCTION_CALL, memberRef, args);
         EXPV_TYPE(*v) = getTypeDesc(ht, typeId);
     }
 

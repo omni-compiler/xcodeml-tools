@@ -47,13 +47,16 @@ initialize_intrinsic() {
         if (!(isValidString(INTR_NAME(ep)))) {
             continue;
         }
-        if (INTR_HAS_KIND_ARG(ep)) {
-            if (((INTR_OP(ep) != INTR_MINLOC) && 
-                 (INTR_OP(ep) != INTR_MAXLOC)) &&
-                INTR_RETURN_TYPE_SAME_AS(ep) != -1) {
-                fatal("%: Invalid intrinsic initialization.", __func__);
-            }
-        }
+        /* if (INTR_HAS_KIND_ARG(ep)) { */
+        /*     if (((INTR_OP(ep) != INTR_MINLOC) &&  */
+        /*          (INTR_OP(ep) != INTR_MAXLOC)) && */
+        /*         INTR_RETURN_TYPE_SAME_AS(ep) != -1 && */
+	/* 	INTR_RETURN_TYPE_SAME_AS(ep) != -3 && */
+	/* 	INTR_RETURN_TYPE_SAME_AS(ep) != -6 && */
+	/* 	INTR_RETURN_TYPE_SAME_AS(ep) != -9) { */
+        /*         fatal("%: Invalid intrinsic initialization.", __func__); */
+        /*     } */
+        /* } */
         sp = find_symbol((char *)INTR_NAME(ep));
         SYM_TYPE(sp) = S_INTR;
         SYM_VAL(sp) = i;
@@ -151,81 +154,187 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
            !(isValidString(INTR_NAME(ep)))));
          ep++) {
 
-        kindV = NULL;
-        typeNotMatch = 0;
-        isVarArgs = 0;
+      kindV = NULL;
+      typeNotMatch = 0;
+      nIntrArgs = INTR_N_ARGS(ep);
+      int mandatoryArgsFlag = INTR_MANDATORY_ARGS_FLAG(ep);
+      isVarArgs = (INTR_N_ARGS(ep) < 0);
 
-        /* Check a number of arguments. */
-        if (INTR_N_ARGS(ep) < 0 ||
-            INTR_N_ARGS(ep) == nArgs) {
-            /* varriable args or no kind arg. */
-            if (INTR_N_ARGS(ep) < 0) {
-                isVarArgs = 1;
-            }
-            nIntrArgs = nArgs;
-        } else if (INTR_HAS_KIND_ARG(ep) &&
-                   ((INTR_N_ARGS(ep) + 1) == nArgs)) {
-            /* could be intrinsic call with kind arg. */
+        /* /\* Check a number of arguments. *\/ */
+        /* if (INTR_N_ARGS(ep) < 0 || */
+        /*     INTR_N_ARGS(ep) == nArgs) { */
+        /*     /\* varriable args or no kind arg. *\/ */
+        /*     if (INTR_N_ARGS(ep) < 0) { */
+        /*         isVarArgs = 1; */
+        /*     } */
+        /*     nIntrArgs = nArgs; */
+        /* } else if (INTR_HAS_KIND_ARG(ep) && */
+        /*            ((INTR_N_ARGS(ep) + 1) == nArgs)) { */
+        /*     /\* could be intrinsic call with kind arg. *\/ */
 
-            expv lastV = expr_list_get_n(args, nArgs - 1);
-            if (lastV == NULL) {
-                return NULL;    /* error recovery */
-            }
-            if (EXPV_KW_IS_KIND(lastV)) {
-                goto gotKind;
-            }
-            tp = EXPV_TYPE(lastV);
-            if (!(isValidType(tp))) {
-                return NULL;    /* error recovery */
-            }
-            if (TYPE_BASIC_TYPE(tp) != TYPE_INT) {
-                /* kind arg must be integer type. */
-                continue;
-            }
+        /*     expv lastV = expr_list_get_n(args, nArgs - 1); */
+        /*     if (lastV == NULL) { */
+        /*         return NULL;    /\* error recovery *\/ */
+        /*     } */
+        /*     if (EXPV_KW_IS_KIND(lastV)) { */
+        /*         goto gotKind; */
+        /*     } */
+        /*     tp = EXPV_TYPE(lastV); */
+        /*     if (!(isValidType(tp))) { */
+        /*         return NULL;    /\* error recovery *\/ */
+        /*     } */
+        /*     if (TYPE_BASIC_TYPE(tp) != TYPE_INT) { */
+        /*         /\* kind arg must be integer type. *\/ */
+        /*         continue; */
+        /*     } */
 
-            gotKind:
-            nIntrArgs = INTR_N_ARGS(ep);
-            kindV = lastV;
-        } else {
-            continue;
-        }
+        /*     gotKind: */
+        /*     nIntrArgs = INTR_N_ARGS(ep); */
+        /*     kindV = lastV; */
+        /* } else { */
+        /*     continue; */
+        /* } */
+      
+      for (i = 0; i < nArgs; i++) {
 
-        /* The number of arguments matchs. Then check types. */
-        for (i = 0; i < nIntrArgs; i++) {
-            a = expr_list_get_n(args, i);
-            if (a == NULL) {
-                return NULL;    /* error recovery */
-            }
-            tp = EXPV_TYPE(a);
-            if (!(isValidType(tp))) {
-                //return NULL;    /* error recovery */
-                continue;
-            }
+	a = expr_list_get_n(args, i);
 
-            if (i == 1 &&
-                INTR_ARG_TYPE(ep)[i] == INTR_TYPE_PASSIGNABLE) {
+	if (a == NULL) {
+	  return NULL;    /* error recovery */
+	}
 
-                if (expv_is_pointer_assignable(NULL, expr_list_get_n(args, 0), a)) {
-                    break;
-                }
-            }
+	tp = EXPV_TYPE(a);
+	if (!(isValidType(tp))) {
+	  //return NULL;    /* error recovery */
+	  continue;
+	}
 
-            if (compare_intrinsic_arg_type(a, tp,
-                                           ((isVarArgs == 0) ?
-                                            INTR_ARG_TYPE(ep)[i] :
-                                            INTR_ARG_TYPE(ep)[0])) != 0) {
-                /* Type mismatch. */
-                typeNotMatch = 1;
-                break;
-            }
-        }
-        if (typeNotMatch == 1) {
-            continue;
-        } else {
-            found = 1;
-            break;
-        }
+	if (i == 1 &&
+	    INTR_ARG_TYPE(ep)[i] == INTR_TYPE_PASSIGNABLE) {
+	  if (expv_is_pointer_assignable(NULL, expr_list_get_n(args, 0), a)) {
+	    break;
+	  }
+	}
+
+	if (EXPV_KWOPT_NAME(a) && nIntrArgs > 1 && INTR_ARG_NAME(ep)){ // argument keyword
+
+	  int j;
+	  for (j = 0; j < INTR_N_ARGS(ep); j++){
+	    if (INTR_ARG_NAME(ep)[j]){
+	      if (strcmp(INTR_ARG_NAME(ep)[j], EXPV_KWOPT_NAME(a)) == 0){
+		/* if (compare_intrinsic_arg_type(a, tp, */
+		/* 			       ((isVarArgs == 0) ? */
+		/* 				INTR_ARG_TYPE(ep)[j] : */
+		/* 				INTR_ARG_TYPE(ep)[0])) == 0){ */
+		if (compare_intrinsic_arg_type(a, tp, INTR_ARG_TYPE(ep)[j]) == 0){
+		  mandatoryArgsFlag &= ~(1<<j);
+
+		  if (strcmp(INTR_ARG_NAME(ep)[j], "kind") == 0){
+		    kindV = a;
+		  }
+
+		  break; // matched
+		}
+		else {
+		  typeNotMatch = 1;
+		}
+	      }
+	    }
+	  }
+
+	  if (j == INTR_N_ARGS(ep)) typeNotMatch = 1; // not matched
+	}
+	else {
+	  if (compare_intrinsic_arg_type(a, tp,
+					 ((isVarArgs == 0) ?
+					  INTR_ARG_TYPE(ep)[i] :
+					  INTR_ARG_TYPE(ep)[0])) == 0) {
+	    // matched
+	    mandatoryArgsFlag &= ~(1<<i);
+
+	    if (INTR_ARG_NAME(ep) && INTR_ARG_NAME(ep)[i] &&
+		strcmp(INTR_ARG_NAME(ep)[i], "kind") == 0){
+	      kindV = a;
+	    }
+
+	  }
+	  else {
+	    /* Type mismatch. */
+	    typeNotMatch = 1;
+	    break;
+	  }
+	}
+
+      }
+	
+      if (typeNotMatch == 1 || mandatoryArgsFlag != 0){
+	continue;
+      }
+      else {
+	found = 1;
+	break;
+      }
+
     }
+      
+    /*   for (i = 0; i < nIntrArgs; i++) { */
+    /* 	a = expr_list_get_n(args, i); */
+    /* 	if (a == NULL) { */
+    /* 	  return NULL;    /\* error recovery *\/ */
+    /* 	} */
+    /* 	tp = EXPV_TYPE(a); */
+    /* 	if (!(isValidType(tp))) { */
+    /* 	  //return NULL;    /\* error recovery *\/ */
+    /* 	  continue; */
+    /* 	} */
+
+    /* 	if (i == 1 && */
+    /* 	    INTR_ARG_TYPE(ep)[i] == INTR_TYPE_PASSIGNABLE) { */
+
+    /* 	  if (expv_is_pointer_assignable(NULL, expr_list_get_n(args, 0), a)) { */
+    /* 	    break; */
+    /* 	  } */
+    /* 	} */
+
+    /* 	if (EXPV_KWOPT_NAME(a) && nIntrArgs > 1){ // argument keyword */
+
+    /* 	  int j; */
+    /* 	  for (j = 0; j < INTR_N_ARGS(ep); j++){ */
+    /* 	    if (INTR_ARG_NAME(ep)[j]){ */
+    /* 	      if (strcmp(INTR_ARG_NAME(ep)[j], EXPV_KWOPT_NAME(a)) == 0){ */
+    /* 		if (compare_intrinsic_arg_type(a, tp, */
+    /* 					       ((isVarArgs == 0) ? */
+    /* 						INTR_ARG_TYPE(ep)[j] : */
+    /* 						INTR_ARG_TYPE(ep)[0])) == 0){ */
+    /* 		  break; // matched */
+    /* 		} */
+    /* 		else { */
+    /* 		  typeNotMatch = 1; */
+    /* 		} */
+    /* 	      } */
+    /* 	    } */
+    /* 	  } */
+
+    /* 	  if (j == INTR_N_ARGS(ep)) typeNotMatch = 1; // not matched */
+    /* 	} */
+    /* 	else { */
+    /* 	  if (compare_intrinsic_arg_type(a, tp, */
+    /* 					 ((isVarArgs == 0) ? */
+    /* 					  INTR_ARG_TYPE(ep)[i] : */
+    /* 					  INTR_ARG_TYPE(ep)[0])) != 0) { */
+    /* 	    /\* Type mismatch. *\/ */
+    /* 	    typeNotMatch = 1; */
+    /* 	    break; */
+    /* 	  } */
+    /* 	} */
+    /*   } */
+    /*   if (typeNotMatch == 1) { */
+    /* 	continue; */
+    /*   } else { */
+    /* 	found = 1; */
+    /* 	break; */
+    /*   } */
+    /* } */
 
     if (found == 1) {
         /* Yes we found an intrinsic to use. */
@@ -947,15 +1056,15 @@ get_intrinsic_return_type(intrinsic_entry *ep, expv args, expv kindV) {
                         /* intrinsic arguments */
                         expv array, dim, ncopies;
 
-                        array = expr_list_get_n(args, 0);
+                        array = expr_list_get_n_or_named(args, 0, "array");
                         if (!(isValidTypedExpv(array))) {
                             return NULL;
                         }
-                        dim = expr_list_get_n(args, 1);
+                        dim = expr_list_get_n_or_named(args, 1, "dim");
                         if (!(isValidTypedExpv(dim))) {
                             return NULL;
                         }
-                        ncopies = expr_list_get_n(args, 2);
+                        ncopies = expr_list_get_n_or_named(args, 2, "ncopies");
                         if (!(isValidTypedExpv(ncopies))) {
                             return NULL;
                         }
