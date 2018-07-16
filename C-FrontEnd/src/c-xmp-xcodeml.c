@@ -127,6 +127,6 @@ char *xmpDirectiveName(int c)
   case XMP_REFLECT_INIT: return "REFLECT_INIT";
   case XMP_REFLECT_DO:   return "REFLECT_DO";
   case XMP_WAIT_ASYNC:   return "WAIT_ASYNC";
-  default:               return "OMP???";
+  default:               return "XMP???";
   }
 }

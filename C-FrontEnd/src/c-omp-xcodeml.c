@@ -129,6 +129,7 @@ char *ompDirectiveName(int c)
   case OMP_PARALLEL_FOR:      return "PARALLEL_FOR";
   case OMP_PARALLEL_SECTIONS: return "PARALLEL_SECTIONS";
   case OMP_DECLARE_TARGET:    return "DECLARE_TARGET";
+  case OMP_TARGET_ENTER_DATA: return "TARGET_ENTER_DATA";
   default:
     return "OMP???";
   }
@@ -165,7 +166,7 @@ char *ompClauseName(int c)
   case OMP_TARGET_DEVICE:         return "TARGET_DEVICE";
   case OMP_TARGET_SHADOW:         return "TARGET_SHADOW";
   case OMP_TARGET_LAYOUT:         return "TARGET_LAYOUT";
-    
+  case OMP_TARGET_DATA_MAP:       return "TARGET_DATA_MAP";
   default:                        return "???OMP???";
   }
 }

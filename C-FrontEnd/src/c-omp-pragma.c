@@ -222,7 +222,19 @@ int parse_OMP_pragma()
     pg_OMP_pragma = OMP_TARGET;
     pg_get_token();
     if(pg_tok == PG_IDENT){
-      if(PG_IS_IDENT("teams")){
+      if(PG_IS_IDENT("enter")){
+	pg_get_token();
+	if(pg_tok == PG_IDENT){
+          if(PG_IS_IDENT("data")){
+	    pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
+	    pg_get_token();
+	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+	    ret = PRAGMA_EXEC;
+            goto chk_end;
+	  }
+	}
+      }
+      else if(PG_IS_IDENT("teams")){
 	pg_OMP_pragma = OMP_TEAMS;
 	pg_get_token();
 	if(pg_tok == PG_IDENT){
@@ -360,6 +372,7 @@ static CExpr* parse_layout_expr()
   return NULL;
 }
 
+CExpr* parse_ACC_namelist(void);
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -463,6 +476,12 @@ static CExpr* parse_OMP_clauses()
       if(pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_COLLAPSE,v);
+    }
+    else if(PG_IS_IDENT("map")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_TARGET_DATA_MAP, v);
     } else if(PG_IS_IDENT("to")){
       pg_get_token();
       if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
