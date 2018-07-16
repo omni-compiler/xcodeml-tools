@@ -555,18 +555,12 @@ XfDecompileDomVisitor {
             /*
              * <FbasicType is_class="true"/> is `CLASS(*)`
              */
-            writer.writeToken("CLASS");
-            writer.writeToken("(");
-            writer.writeToken("*");
-            writer.writeToken(")");
+            writer.writeToken("CLASS(*)");
         } else if ("FbasicType".equals(topTypeName) && isAssumed) {
             /*
              * <FbasicType is_assumed="true"/> is `TYPE(*)`
              */
-            writer.writeToken("TYPE");
-            writer.writeToken("(");
-            writer.writeToken("*");
-            writer.writeToken(")");
+            writer.writeToken("TYPE(*)");
         } else if (isProcedure) {
             writer.writeToken("PROCEDURE");
             writer.writeToken("(");
