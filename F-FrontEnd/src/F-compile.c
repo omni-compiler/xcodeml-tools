@@ -455,7 +455,10 @@ compile_statement1(int st_no, expr x)
         /* differ CONTAIN from INTERFASE */
         && PARENT_STATE != ININTR
         && EXPR_CODE(x) != F95_MODULEPROCEDURE_STATEMENT
-        && EXPR_CODE(x) != F_INCLUDE_STATEMENT)
+        && EXPR_CODE(x) != F_INCLUDE_STATEMENT
+	/* PRAGMA and COMMENT are allowed */
+	&& EXPR_CODE(x) != F_PRAGMA_STATEMENT
+	&& EXPR_CODE(x) != F_COMMENT_LINE)
     {
         /* otherwise error */
         error("only function/subroutine statement are allowed "
@@ -2703,12 +2706,17 @@ end_declaration()
 
         /* public or private attribute is handled only in module. */
         if (CURRENT_PROC_CLASS == CL_MODULE) {
-            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip)) {
-                if (current_module_state == M_PUBLIC) {
-                    TYPE_SET_PUBLIC(ip);
-                }
-                if (current_module_state == M_PRIVATE) {
-                    TYPE_SET_PRIVATE(ip);
+            if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip) 
+                && !TYPE_IS_INTRINSIC(tp)) 
+            {
+                if (current_module_state == M_PUBLIC 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
+                        TYPE_SET_PUBLIC(ip);
+                } else if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
+                        TYPE_SET_PRIVATE(ip);
                 }
             }
         }
@@ -5587,7 +5595,13 @@ solve_use_assoc_conflict(ID id, ID mid)
         MULTI_ID_LIST(id) = NULL;
         return;
     }
-
+    if (ID_CLASS(id) == CL_TAGNAME && !TYPE_IS_DECLARED(ID_TYPE(id)) &&
+	ID_CLASS(mid) == CL_TAGNAME){
+      replace_or_assign_type(&ID_TYPE(id), ID_TYPE(mid));
+      id->use_assoc = mid->use_assoc;
+      return;
+    }
+    
     if(!id->use_assoc) {
         // conflict between (sub)program, argument, or module
         /* NOTE:
@@ -5764,6 +5778,9 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
+    if(ID_TYPE(id) != NULL) {
+        TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
+    }
     return;
 }
 
@@ -6032,7 +6049,7 @@ get_generic_spec_symbol(int expr_code){
     } else if(expr_code == F95_EQOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
     } else if(expr_code == F95_NEOP) {
-        gen_spec = make_enode(IDENT, (void *)find_symbol(".neq."));
+        gen_spec = make_enode(IDENT, (void *)find_symbol(".ne."));
     } else if(expr_code == F95_LTOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
     } else if(expr_code == F95_LEOP) {
@@ -7978,10 +7995,23 @@ pointer_assignable(expr x,
         }
 
     } else {
+        // If derived type is TARGET, pointee doesn't need to be flagged as 
+        // TARGET. xcodeml-tools#19
+        TYPE_DESC structType = NULL;
+        if(vPointee != NULL && EXPV_CODE(vPointee) == F95_MEMBER_REF) {
+            structType = vPointee != NULL ? 
+            EXPV_LEFT(vPointee) != NULL ? EXPV_TYPE(EXPV_LEFT(vPointee)) : NULL
+            : NULL;
+        }
+        
         if (!TYPE_IS_TARGET(vPteTyp) &&
             !TYPE_IS_POINTER(vPteTyp) &&
-            !IS_PROCEDURE_TYPE(vPteTyp)) {
-            if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
+            !IS_PROCEDURE_TYPE(vPteTyp) &&
+            !IS_ARRAY_TYPE(vPteTyp) && 
+            !TYPE_IS_ALLOCATABLE(vPteTyp) &&
+            (structType != NULL && !TYPE_IS_TARGET(structType))) // #19
+        {
+            if (x != NULL && EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
                                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
             } else {

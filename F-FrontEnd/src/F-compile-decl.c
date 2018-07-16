@@ -1062,6 +1062,9 @@ declare_function(ID id)
                     if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
                         ID_TYPE(id) = function_type(tp);
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                        if(!TYPE_IS_PROCEDURE(tp)) { // undefined procedure
+                            PROC_CLASS(id) = P_UNDEFINEDPROC;
+                        }
                     }
 
                     if (IS_TYPE_PUBLICORPRIVATE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)))) {
@@ -1108,6 +1111,15 @@ declare_function(ID id)
             error("identifier '%s' is used as a function", ID_NAME(id));
             return NULL;
         }
+    } else if(ID_CLASS(id) == CL_PROC 
+        && PROC_CLASS(id) == P_UNKNOWN && ID_TYPE(id) == NULL) 
+    {   
+        // Fix xcodeml-tools#14
+        TYPE_DESC tp = function_type(new_type_desc());
+        TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
+        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
+        ID_TYPE(id) = tp;
+        PROC_CLASS(id) = P_UNDEFINEDPROC;
     }
 
     if (ID_STORAGE(id) == STG_UNKNOWN) {
@@ -1118,6 +1130,7 @@ declare_function(ID id)
         return id;
     }
 
+    
     if (PROC_CLASS(id) != P_UNDEFINEDPROC) {
         ID_IS_DECLARED(id) = TRUE;
         if (ID_TYPE(id) == NULL) {
@@ -2309,11 +2322,17 @@ declare_id_type(ID id, TYPE_DESC tp)
             tpp = tp;
             while(TYPE_REF(tpp) != NULL && IS_ARRAY_TYPE(TYPE_REF(tpp)))
                 tpp = TYPE_REF(tpp);
-            if (TYPE_REF(tpp) != NULL && !type_is_soft_compatible(tq, TYPE_REF(tpp)))
-                goto no_compatible;
-            if (TYPE_REF(tpp) == NULL ||
-                type_is_specific_than(tq, TYPE_REF(tpp)))
-                TYPE_REF(tpp) = tq;
+            if (TYPE_REF(tpp) != NULL 
+                && !type_is_soft_compatible(tq, TYPE_REF(tpp))) 
+            {
+                if(type_is_specific_than(tq, TYPE_REF(tpp)) 
+                    || TYPE_BASIC_TYPE(TYPE_REF(tpp)) == TYPE_FUNCTION) 
+                {
+                    TYPE_REF(tpp) = tq;
+                } else {
+                    goto no_compatible;
+                }
+            }
         }
         *id_type = tp;
         return;
@@ -2898,6 +2917,12 @@ expv_reduce_kind(expv v)
         return ret; // already reduced
     }
 
+    // If the kind variable is used by indirection, the kind cannot be
+    // reduce then keep _var as is. Use case omni-compiler#546
+    if(EXPV_CODE(ret) == F_VAR && EXPV_CODE(v) == F_VAR) {    
+        return v;
+    }
+
     switch (EXPV_CODE(ret)) {
     case FUNCTION_CALL: {
         char *name = NULL;
@@ -3027,7 +3052,13 @@ max_type(TYPE_DESC tp1, TYPE_DESC tp2)
     BASIC_DATA_TYPE t;
 
 /* FEAST add start */
-    if(!tp1 || !tp2) return NULL;
+    if(tp1 == NULL && tp2 == NULL) {
+        return NULL;
+    } else if(tp1 == NULL) {
+        return tp2;
+    } else if(tp2 == NULL) {
+        return tp1;
+    }
 /* FEAST add  end  */
     t = TYPE_BASIC_TYPE(tp2);
     switch(TYPE_BASIC_TYPE(tp1)) {
