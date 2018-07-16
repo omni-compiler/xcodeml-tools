@@ -19,6 +19,7 @@ autom4te.cache
 config.log
 config.status
 /Makefile
+/compile
 
 # Sub directories
 
@@ -47,11 +48,9 @@ Driver/atool/src/lib/Makefile
 Driver/bin/F_Back
 Driver/bin/C_Back
 Driver/bin/Makefile
-Driver/etc/setup.conf
 
 F-BackEnd/Makefile
 F-BackEnd/build/
-F-BackEnd/src/xcodeml/f/decompile/XfDecompileDomVisitor_coarrayLibs.java
 
 F-FrontEnd/gnu_module/Makefile
 F-FrontEnd/gnu_module/T_Module

@@ -104,6 +104,7 @@ typedef struct type_descriptor
     int size;                  /* for TYPE_CHAR char length */
     int is_declared;           /* boolean for type has declared.
                                   (only used by struct type) */
+    int is_imported;           /* type was imported from xmod */
     int is_modified;           /* modified with VOLATILE or ASYNCHRONOUS */
     expv bind_name;            /* ISO BIND C name attribute */
 
@@ -437,6 +438,8 @@ extern TYPE_DESC basic_type_desc[];
 #define TYPE_ARRAY_ASSUME_KIND(tp) ((tp)->array_info.assume_kind)
 
 #define TYPE_IS_RESHAPED(tp)            ((tp)->is_reshaped_type)
+
+#define TYPE_IS_IMPORTED(tp) ((tp)->is_imported)
 
 #define TYPE_IS_ARRAY_ASSUMED_SIZE(tp) \
                 (TYPE_ARRAY_ASSUME_KIND(tp) == ASSUMED_SIZE)

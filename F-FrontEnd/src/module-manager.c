@@ -126,9 +126,13 @@ generate_current_module(SYMBOL mod_name, SYMBOL submod_name, ID ids, expv use_de
 
     /* add public id */
     FOREACH_ID(id, ids) {
-        if(AVAILABLE_ID(id) &&
-           (for_submodule || (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id)))))
+        if(AVAILABLE_ID(id) 
+            && (for_submodule || 
+                (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id))) 
+                || (ID_TYPE(id) && TYPE_IS_IMPORTED(ID_TYPE(id))))) 
+        {
             add_module_id(mod, id);
+        }    
     }
 
     /* make the list of module name which this module uses. */

@@ -1,12 +1,12 @@
 .PHONY: all clean install
 
-JAVAC        = @JAVAC@
-JAVAC_OPT    = @JAVAC_OPT@
-JAR          = @JAR@
+JAVAC     = @JAVAC@
+JAVAC_OPT = @JAVAC_OPT@
+JAR       = @JAR@
 JAR_OPT   = @JAR_OPT@
-JAVADIR      = @OMNI_HOME@/share/xcalablemp
-MKDIR_P      = @MKDIR_P@
-INSTALL      = @INSTALL@
+JAVADIR   = @OMNI_HOME@/share/
+MKDIR_P   = @MKDIR_P@
+INSTALL   = @INSTALL@
 INSTALL   = install
 OM_COMMON = build/om-common.jar
 SOURCE    = $(wildcard src/xcodeml/*/*.java)
