@@ -52,7 +52,7 @@
 
 static int parse_ACC_pragma(void);
 static CExpr* parse_ACC_clauses(void);
-static CExpr* parse_ACC_namelist(void);
+CExpr* parse_ACC_namelist(void);
 static CExpr* parse_ACC_reduction_namelist(int *r);
 static CExpr* parse_ACC_clause_arg(void);
 static CExpr* parse_ACC_C_subscript_list(void);
@@ -420,7 +420,7 @@ static CExpr* parse_ACC_clauses()
     return NULL;
 }
 
-static CExpr* parse_ACC_namelist()
+CExpr* parse_ACC_namelist()
 {
     CExpr* args;
     CExpr* v = NULL;

@@ -1768,35 +1768,49 @@ public class XmcXcodeToXcTranslator {
 	    addChild(parent, obj);
             
             // directive
-            Node dir = n.getFirstChild();
+            Node dir       = n.getFirstChild();
             String dirName = XmDomUtil.getContentText(dir).toLowerCase();
-            
-	    if (dirName.equals("parallel_for")) dirName = "parallel for";
 
+	    if (dirName.equals("parallel_for"))   dirName = "parallel for";
+            if (dirName.equals("declare_target")) dirName = "declare target";
+            
 	    obj.setLine("#pragma omp " + dirName);
 
             if (dirName.equals("barrier"))
-		return;
+              return;
 
             if (dirName.equals("threadprivate")){
-		obj.addToken("(");
+              obj.addToken("(");
             	
-            	NodeList varList = dir.getNextSibling().getChildNodes();
-		enterNodes(tc, obj, varList.item(0));
-		for (int j = 1; j < varList.getLength(); j++){
-		    Node var = varList.item(j);
-		    obj.addToken(",");
-		    enterNodes(tc, obj, var);
-		}
-        
-		obj.addToken(")");
-		
-		return;
+              NodeList varList = dir.getNextSibling().getChildNodes();
+              enterNodes(tc, obj, varList.item(0));
+              for (int j=1; j<varList.getLength(); j++){
+                Node var = varList.item(j);
+                obj.addToken(",");
+                enterNodes(tc, obj, var);
+              }
+              obj.addToken(")");
+              return;
             }
-            
-            // clause
-            Node clause = dir.getNextSibling();
 
+            if (dirName.equals("declare target")){
+              Node clause       = dir.getNextSibling().getFirstChild();
+              String clauseName = XmDomUtil.getContentText(clause).toLowerCase();
+              if (clauseName.equals("data_declare_to")) obj.addToken("to");
+              NodeList varList  = clause.getLastChild().getChildNodes();
+              obj.addToken("(");
+              enterNodes(tc, obj, varList.item(0));
+              for (int j=1; j<varList.getLength(); j++){
+                Node var = varList.item(j);
+                obj.addToken(",");
+                enterNodes(tc, obj, var);
+              }
+              obj.addToken(")");
+              return;
+            }
+
+            // clause
+            Node clause    = dir.getNextSibling();
             NodeList list0 = clause.getChildNodes();
             for (int i = 0; i < list0.getLength(); i++){          
             	Node childNode = list0.item(i);
@@ -1874,9 +1888,6 @@ public class XmcXcodeToXcTranslator {
                 
             // body
             Node body = clause.getNextSibling();
-
-	    //            writer.incrementIndentLevel();
-
             NodeList list2 = body.getChildNodes();
             for (int i = 0; i < list2.getLength(); i++){
                 Node childNode = list2.item(i);
@@ -1886,8 +1897,6 @@ public class XmcXcodeToXcTranslator {
 		enterNodes(tc, obj, childNode);
             }
 
-	    //            writer.decrementIndentLevel();
-            
         }
     }
     
@@ -2396,15 +2405,15 @@ public class XmcXcodeToXcTranslator {
 
     void enterNodes(TranslationContext tc, XcNode obj, boolean isAllowNull,
                     Node ... nodes) {
-        for (Node n : nodes) {
-            if (n == null) {
-                if (isAllowNull) {
-                    addChild(obj, XcNullExpr.createXcNullExpr());
-                }
-            } else {
-                trans(tc, n, obj);
-            }
+      for (Node n : nodes) {
+        if (n == null) {
+          if (isAllowNull) {
+            addChild(obj, XcNullExpr.createXcNullExpr());
+          }
+        } else {
+          trans(tc, n, obj);
         }
+      }
     }
 
     void enterNodesWithNull(TranslationContext tc, XcNode obj, Node ... nodes) {
