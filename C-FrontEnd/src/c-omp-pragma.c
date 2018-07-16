@@ -104,24 +104,24 @@ int parse_OMP_pragma()
 
   /* parallel block directive */
   if(PG_IS_IDENT("parallel")){
+    pg_get_token();
+    if(pg_tok == PG_IDENT){
+      if(PG_IS_IDENT("for")){	/* parallel for */
+	pg_OMP_pragma = OMP_PARALLEL_FOR;
 	pg_get_token();
-	if(pg_tok == PG_IDENT){
-	  if(PG_IS_IDENT("for")){	/* parallel for */
-	    pg_OMP_pragma = OMP_PARALLEL_FOR;
-	    pg_get_token();
-	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	    goto chk_end;
-	  }
-	  if(PG_IS_IDENT("sections")){	/* parallel for */
-	    pg_OMP_pragma = OMP_PARALLEL_SECTIONS;
-	    pg_get_token();
-	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	    goto chk_end;
-	  }
-	}
-	pg_OMP_pragma = OMP_PARALLEL;
 	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
 	goto chk_end;
+      }
+      if(PG_IS_IDENT("sections")){	/* parallel for */
+	pg_OMP_pragma = OMP_PARALLEL_SECTIONS;
+	pg_get_token();
+	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+	goto chk_end;
+      }
+    }
+    pg_OMP_pragma = OMP_PARALLEL;
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
   }
   
   if(PG_IS_IDENT("for")){
@@ -204,6 +204,75 @@ int parse_OMP_pragma()
       ret = PRAGMA_EXEC;
       goto chk_end;
   }
+
+  if(PG_IS_IDENT("declare")){
+    pg_get_token();
+    if(pg_tok == PG_IDENT){
+      if(PG_IS_IDENT("target")){
+	pg_OMP_pragma = OMP_DECLARE_TARGET;
+	pg_get_token();
+	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+	ret = PRAGMA_EXEC;
+	goto chk_end;
+      }
+    }
+  }
+  
+  if(PG_IS_IDENT("target")){
+    pg_OMP_pragma = OMP_TARGET;
+    pg_get_token();
+    if(pg_tok == PG_IDENT){
+      if(PG_IS_IDENT("enter")){
+	pg_get_token();
+	if(pg_tok == PG_IDENT){
+          if(PG_IS_IDENT("data")){
+	    pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
+	    pg_get_token();
+	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+	    ret = PRAGMA_EXEC;
+            goto chk_end;
+	  }
+	}
+      }
+      else if(PG_IS_IDENT("teams")){
+	pg_OMP_pragma = OMP_TEAMS;
+	pg_get_token();
+	if(pg_tok == PG_IDENT){
+	  if(PG_IS_IDENT("distribute")){
+	    pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE;
+	    pg_get_token();
+	    if(pg_tok == PG_IDENT){
+	      if(PG_IS_IDENT("parallel")){
+		pg_get_token();
+		if(pg_tok == PG_IDENT){
+		  if(PG_IS_IDENT("for")){
+		    pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP;
+		    pg_get_token();
+		    if(pg_tok == PG_IDENT){
+		      if(PG_IS_IDENT("simd")){
+			pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD;
+			pg_get_token();
+			if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+			goto chk_end;
+		      }
+		    }
+		    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+		    goto chk_end;
+		  }
+		}
+	      }
+	    }
+	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+	    goto chk_end;
+	  }
+	}
+	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+	goto chk_end;
+      }
+    }
+    goto chk_end;
+  }
+    
   addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
     return 0;
@@ -213,116 +282,235 @@ int parse_OMP_pragma()
     return ret;
 }
 
+CExpr *parse_range_expr()
+{
+  CExpr *list = EMPTY_LIST, *v1, *v2;
+
+  pg_get_token();
+  while(1){
+    v1 = v2 = NULL;
+    switch(pg_tok){
+    case ')': goto err;
+    case '(': goto err;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    case '*':
+      v1 = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+      pg_get_token();
+      goto next;
+      break;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok != ':'){
+      v2 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+      goto next;
+    }
+
+    pg_get_token();
+    if(pg_tok == ':')
+      goto err;
+    else
+      v2 = pg_parse_expr();
+
+  next:
+    if (v1 == NULL && v2 == NULL)
+      list = exprListAdd(list, NULL);
+    else
+      list = exprListAdd(list, (CExpr*)allocExprOfList2(EC_UNDEF,v1,v2));
+
+    if(pg_tok == ')'){
+      pg_get_token();
+      break;
+    }
+    
+    if(pg_tok == ',')  pg_get_token();
+    else goto err;
+  }
+
+  return list;
+ err:
+  addError(NULL, "Syntax error in device clause");
+  return NULL;
+}
+
+static CExpr* parse_layout_expr()
+{
+  CExpr *list = EMPTY_LIST, *v;
+  pg_get_token();
+  
+  while(1){
+    if(pg_tok == '*'){
+      pg_get_token();
+      v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "* @{ASTERISK}@", CT_UNDEF);
+    }
+    else if(PG_IS_IDENT("block")){
+      pg_get_token();
+      v = (CExpr *)allocExprOfStringConst(EC_STRING_CONST, "block", CT_UNDEF);
+    }
+    else goto err;
+
+    list = exprListAdd(list, v);
+
+    if(pg_tok == ')'){
+      pg_get_token();
+      break;
+    }
+    else if(pg_tok == ','){
+      pg_get_token();
+      continue;
+    }
+    else goto err;
+  }
+  
+  return list;
+
+ err:
+  addError(NULL, "syntax error in layout clause");
+  return NULL;
+}
+
+CExpr* parse_ACC_namelist(void);
 static CExpr* parse_OMP_clauses()
 {
-  CExpr *args,*v,*c;
+  CExpr *args=EMPTY_LIST, *v, *c;
   int r = 0;
 
-    args = EMPTY_LIST;
-
-    while(pg_tok == PG_IDENT){
-	if(PG_IS_IDENT("private")){
-	    pg_get_token();
-	    if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
-	    c = OMP_PG_LIST(OMP_DATA_PRIVATE,v);
-	} else if(PG_IS_IDENT("shared")){
-	    pg_get_token();
-	    if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
-	    c = OMP_PG_LIST(OMP_DATA_SHARED,v);
-	} else if(PG_IS_IDENT("firstprivate")){
-	    pg_get_token();
-	    if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
-	    c = OMP_PG_LIST(OMP_DATA_FIRSTPRIVATE,v);
-	} else if(PG_IS_IDENT("lastprivate")){
-	    pg_get_token();
-	    if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
-	    c = OMP_PG_LIST(OMP_DATA_LASTPRIVATE,v);
-	} else if(PG_IS_IDENT("copyin")){
-	    pg_get_token();
-	    if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
-	    c = OMP_PG_LIST(OMP_DATA_COPYIN,v);
-	} else if(PG_IS_IDENT("reduction")){
-	    pg_get_token();
-	    if((v = parse_OMP_reduction_namelist(&r)) == NULL) goto syntax_err;
-	    c = OMP_PG_LIST(r,v);
-	} else if(PG_IS_IDENT("default")){
-	    pg_get_token();
-	    if(pg_tok != '(') goto syntax_err;
-	    pg_get_token();
-	    if(pg_tok != PG_IDENT) goto syntax_err;
-	    if(PG_IS_IDENT("shared")) 
-		r = OMP_DEFAULT_SHARED;
-	    else if(PG_IS_IDENT("private")) 
-		r = OMP_DEFAULT_PRIVATE;
-	    else if(PG_IS_IDENT("none"))
-		r = OMP_DEFAULT_NONE;
-	    else goto syntax_err;
-	    pg_get_token();
-	    if(pg_tok != ')') goto syntax_err;
-	    pg_get_token();
-	    v = OMP_PG_LIST(r,EMPTY_LIST);
-	    c = OMP_PG_LIST(OMP_DATA_DEFAULT,v);
-	} else if(PG_IS_IDENT("if")){
-	    pg_get_token();
-	    if(pg_tok != '(') goto syntax_err;
-	    pg_get_token();
-	    if((v = pg_parse_expr()) == NULL) goto syntax_err;
-	    if(pg_tok != ')') goto syntax_err;
-	    pg_get_token();
-	    c = OMP_PG_LIST(OMP_DIR_IF,v);
-	} else if(PG_IS_IDENT("schedule")){
-	    pg_get_token();
-	    if(pg_tok != '(') goto syntax_err;
-	    pg_get_token();
-	    if(pg_tok != PG_IDENT) goto syntax_err;
-	    if(PG_IS_IDENT("static")) r = (int)OMP_SCHED_STATIC;
-	    else if(PG_IS_IDENT("dynamic")) r = (int)OMP_SCHED_DYNAMIC;
-	    else if(PG_IS_IDENT("guided")) r = (int)OMP_SCHED_GUIDED;
-	    else if(PG_IS_IDENT("runtime")) r = (int)OMP_SCHED_RUNTIME;
-	    else if(PG_IS_IDENT("affinity")) r = (int)OMP_SCHED_AFFINITY;
-	    else {
-		addError(NULL,"unknown schedule method '%s'",pg_tok_buf);
-	    }
-	    pg_get_token();
-
-	    if(pg_tok == ','){
-	      pg_get_token();
-	      if((v = pg_parse_expr()) == NULL) goto syntax_err;
-	      v = OMP_PG_LIST(r,v);
-	    } else v = OMP_PG_LIST(r,NULL);
-
-	    if(pg_tok != ')') goto syntax_err;
-	    pg_get_token();
-	    c = OMP_PG_LIST(OMP_DIR_SCHEDULE,v);
-	} else if(PG_IS_IDENT("ordered")){
-	    pg_get_token();
-	    c = OMP_PG_LIST(OMP_DIR_ORDERED,NULL);
-	} else if(PG_IS_IDENT("nowait")){
-	    pg_get_token();
-	    c = OMP_PG_LIST(OMP_DIR_NOWAIT,NULL);
-	} else if(PG_IS_IDENT("num_threads")){
-	    pg_get_token();
-	    if(pg_tok != '(') goto syntax_err;
-	    pg_get_token();
-	    if((v = pg_parse_expr()) == NULL) goto syntax_err;
-	    if(pg_tok != ')') goto syntax_err;
-	    pg_get_token();
-	    c = OMP_PG_LIST(OMP_DIR_NUM_THREADS,v);
-	} else if(PG_IS_IDENT("collapse")){
-  	    pg_get_token();
-	    if(pg_tok != '(') goto syntax_err;
-	    pg_get_token();
-	    if((v = pg_parse_expr()) == NULL) goto syntax_err;
-	    if(pg_tok != ')') goto syntax_err;
-	    pg_get_token();
-	    c = OMP_PG_LIST(OMP_COLLAPSE,v);
-	} else {
-	  addError(NULL,"unknown OMP directive clause '%s'",pg_tok_buf);
-	    goto syntax_err;
-	}
-	args = exprListAdd(args,c);
+  while(pg_tok == PG_IDENT){
+    if(PG_IS_IDENT("private")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DATA_PRIVATE,v);
+    } else if(PG_IS_IDENT("shared")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DATA_SHARED,v);
+    } else if(PG_IS_IDENT("firstprivate")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DATA_FIRSTPRIVATE,v);
+    } else if(PG_IS_IDENT("lastprivate")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DATA_LASTPRIVATE,v);
+    } else if(PG_IS_IDENT("copyin")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DATA_COPYIN,v);
+    } else if(PG_IS_IDENT("reduction")){
+      pg_get_token();
+      if((v = parse_OMP_reduction_namelist(&r)) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(r,v);
+    } else if(PG_IS_IDENT("default")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if(pg_tok != PG_IDENT) goto syntax_err;
+      if(PG_IS_IDENT("shared")) 
+	r = OMP_DEFAULT_SHARED;
+      else if(PG_IS_IDENT("private")) 
+	r = OMP_DEFAULT_PRIVATE;
+      else if(PG_IS_IDENT("none"))
+	r = OMP_DEFAULT_NONE;
+      else goto syntax_err;
+      pg_get_token();
+      if(pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      v = OMP_PG_LIST(r,EMPTY_LIST);
+      c = OMP_PG_LIST(OMP_DATA_DEFAULT,v);
+    } else if(PG_IS_IDENT("if")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if(pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIR_IF,v);
+    } else if(PG_IS_IDENT("schedule")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if(pg_tok != PG_IDENT) goto syntax_err;
+      if(PG_IS_IDENT("static"))        r = (int)OMP_SCHED_STATIC;
+      else if(PG_IS_IDENT("dynamic"))  r = (int)OMP_SCHED_DYNAMIC;
+      else if(PG_IS_IDENT("guided"))   r = (int)OMP_SCHED_GUIDED;
+      else if(PG_IS_IDENT("runtime"))  r = (int)OMP_SCHED_RUNTIME;
+      else if(PG_IS_IDENT("affinity")) r = (int)OMP_SCHED_AFFINITY;
+      else {
+	addError(NULL,"unknown schedule method '%s'",pg_tok_buf);
+      }
+      pg_get_token();
+      
+      if(pg_tok == ','){
+	pg_get_token();
+	if((v = pg_parse_expr()) == NULL) goto syntax_err;
+	v = OMP_PG_LIST(r,v);
+      }
+      else v = OMP_PG_LIST(r,NULL);
+      
+      if(pg_tok != ')') goto syntax_err;
+      
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIR_SCHEDULE,v);
+    } else if(PG_IS_IDENT("ordered")){
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIR_ORDERED,NULL);
+    } else if(PG_IS_IDENT("nowait")){
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIR_NOWAIT,NULL);
+    } else if(PG_IS_IDENT("num_threads")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if(pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIR_NUM_THREADS,v);
+    } else if(PG_IS_IDENT("collapse")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if(pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_COLLAPSE,v);
     }
-    return args;
+    else if(PG_IS_IDENT("map")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_TARGET_DATA_MAP, v);
+    } else if(PG_IS_IDENT("to")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DECLARE_TARGET_TO,v);
+    } else if(PG_IS_IDENT("device")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      if((v = parse_range_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_TARGET_DEVICE,v);
+    } else if(PG_IS_IDENT("shadow")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      if((v = parse_range_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_TARGET_SHADOW,v);
+    } else if(PG_IS_IDENT("layout")){
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      if((v = parse_layout_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_TARGET_LAYOUT,v);
+    }
+    else {
+      addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
+      goto syntax_err;
+    }
+    args = exprListAdd(args, c);
+  }
+
+  return args;
+    
  syntax_err:
     addError(NULL,"OMP: syntax error in OMP pragma clause");
     return NULL;
@@ -330,27 +518,28 @@ static CExpr* parse_OMP_clauses()
 
 static CExpr* parse_OMP_namelist()
 {
-    CExpr* args;
-
-    args = EMPTY_LIST;
+    CExpr* args = EMPTY_LIST;
     if(pg_tok != '(') {
       addError(NULL,"OMP: OMP directive clause requires name list");
-	return NULL;
+      return NULL;
     }
     pg_get_token();
+    
  next:
     if(pg_tok != PG_IDENT){
       addError(NULL,"OMP: empty name list in OMP directive clause");
 	return NULL;
     }
+
     args = exprListAdd(args, pg_tok_val);
     pg_get_token();
     if(pg_tok == ','){
-	pg_get_token();
-	goto next;
-    } else if(pg_tok == ')'){
-	pg_get_token();
-	return args;
+      pg_get_token();
+      goto next;
+    }
+    else if(pg_tok == ')'){
+      pg_get_token();
+      return args;
     } 
 
     addError(NULL,"OMP: syntax error in OMP pragma clause");
@@ -359,28 +548,26 @@ static CExpr* parse_OMP_namelist()
 
 static CExpr* parse_OMP_reduction_namelist(int *r)
 {
-  CExpr* args;
-
-  args = EMPTY_LIST;
+  CExpr* args = EMPTY_LIST;
     if(pg_tok != '('){
       addError(NULL,"OMP reduction clause requires name list");
 	return NULL;
     }
     pg_get_token();
     switch(pg_tok){
-    case '+': *r = OMP_DATA_REDUCTION_PLUS; break;
-    case '-': *r = OMP_DATA_REDUCTION_MINUS; break;
-    case '*': *r = OMP_DATA_REDUCTION_MUL; break;
-    case '&': *r = OMP_DATA_REDUCTION_BITAND; break;
-    case '|': *r = OMP_DATA_REDUCTION_BITOR; break;
-    case '^': *r = OMP_DATA_REDUCTION_BITXOR; break;
+    case '+': *r = OMP_DATA_REDUCTION_PLUS;         break;
+    case '-': *r = OMP_DATA_REDUCTION_MINUS;        break;
+    case '*': *r = OMP_DATA_REDUCTION_MUL;          break;
+    case '&': *r = OMP_DATA_REDUCTION_BITAND;       break;
+    case '|': *r = OMP_DATA_REDUCTION_BITOR;        break;
+    case '^': *r = OMP_DATA_REDUCTION_BITXOR;       break;
     case PG_ANDAND: *r = OMP_DATA_REDUCTION_LOGAND; break;
-    case PG_OROR: *r = OMP_DATA_REDUCTION_LOGOR; break;
+    case PG_OROR:   *r = OMP_DATA_REDUCTION_LOGOR;  break;
     case PG_IDENT:
-	if(PG_IS_IDENT("max")) { *r = OMP_DATA_REDUCTION_MAX; break; }
-	if(PG_IS_IDENT("min")) { *r = OMP_DATA_REDUCTION_MIN; break; }
+      if(PG_IS_IDENT("max")) { *r = OMP_DATA_REDUCTION_MAX; break; }
+      if(PG_IS_IDENT("min")) { *r = OMP_DATA_REDUCTION_MIN; break; }
     default:
-	return NULL;	/* syntax error */
+      return NULL;	/* syntax error */
     }
     pg_get_token();
     if(pg_tok != ':') return NULL;
@@ -503,6 +690,11 @@ expv compile_OMP_pragma(enum OMP_pragma pragma,expr x)
 	compile_OMP_name_list(c);
 	return elist3(EXPR_LINE(x),OMP_PRAGMA,EXPR_ARG1(x),c,NULL);
 
+    case OMP_DECLARE_TARGET:
+      c = EXPR_ARG2(x);
+      compile_OMP_name_list(c);
+      return elist3(EXPR_LINE(x),OMP_PRAGMA,EXPR_ARG1(x),c,NULL);
+      
     default:
 	fatal("compile_pragma_line: unknown pragma %d",pragma);
     }
@@ -560,7 +752,7 @@ static expv compile_OMP_SECTIONS_statement(expr x)
  * SINGLE   - private,firstprivate,nowait
  */
 static void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
-			  expv *pc,expv *dc)
+				      expv *pc,expv *dc)
 {
     list lp;
     expr c,v;
@@ -570,118 +762,116 @@ static void compile_OMP_pragma_clause(expr x, int pragma, int is_parallel,
     if(is_parallel) pclause = EMPTY_LIST;
     dclause = EMPTY_LIST;
     FOR_ITEMS_IN_LIST(lp,x){
-	c = LIST_ITEM(lp);
-	switch(EXPR_INT(EXPR_ARG1(c))){
-	case OMP_DATA_DEFAULT:	/* default(shared|none) */
-	    if(!is_parallel){
-		error_at_node(x,"'default' clause must be in PARALLEL");
-		break;
-	    }
-	    pclause = exprListAdd(pclause,c);
-	    break;
-	case OMP_DATA_SHARED:
-	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(!is_parallel){
-		error_at_node(x,"'shared' clause must be in PARALLEL");
-		break;
-	    }
-	    pclause = exprListAdd(pclause,c);
-	    break;
-	case OMP_DATA_COPYIN:
-	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(!is_parallel){
-		error_at_node(x,"'copyin' clause must be in PARALLEL");
-		break;
-	    }
-	    pclause = exprListAdd(pclause,c);
-	    break;
-	case OMP_DIR_IF:
-	    if(!is_parallel){
-		error_at_node(x,"'if' clause must be in PARALLEL");
-		break;
-	    }
-	    v = compile_expression(EXPR_ARG2(c));
-	    pclause = exprListAdd(pclause,
-				  list2(LIST,EXPR_ARG1(c),v));
-	    break;
-
-	case OMP_DATA_PRIVATE:
-	case OMP_DATA_FIRSTPRIVATE:
-	    /* all pragma can have these */
-	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(pragma == OMP_PARALLEL)
-	      pclause = exprListAdd(pclause,c);
-	    else     
-	      dclause = exprListAdd(dclause,c);
-	    break;
-
-	case OMP_DATA_LASTPRIVATE:
-	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(pragma != OMP_FOR && pragma != OMP_SECTIONS){
-		error_at_node(x,"'lastprivate' clause must be in FOR or SECTIONS");
-		break;
-	    }
-	    dclause = exprListAdd(dclause,c);
-	    break;
-
-	case OMP_DATA_REDUCTION_PLUS:
-	case OMP_DATA_REDUCTION_MINUS:
-	case OMP_DATA_REDUCTION_MUL:
-	case OMP_DATA_REDUCTION_BITAND:
-	case OMP_DATA_REDUCTION_BITOR:
-	case OMP_DATA_REDUCTION_BITXOR:
-	case OMP_DATA_REDUCTION_LOGAND:
-	case OMP_DATA_REDUCTION_LOGOR:
-	case OMP_DATA_REDUCTION_MIN:
-	case OMP_DATA_REDUCTION_MAX:
-	    compile_OMP_name_list(EXPR_ARG2(c));
-	    if(pragma == OMP_PARALLEL)
-	      pclause = exprListAdd(pclause,c);
-	    else if(pragma == OMP_FOR || pragma == OMP_SECTIONS)
-	      dclause = exprListAdd(dclause,c);
-	    else 
-	      error_at_node(x,"'reduction' clause must not be in SINGLE");
-	    break;
-
-	case OMP_DIR_ORDERED:
-	    if(pragma != OMP_FOR){
-		error_at_node(x,"'ordered' clause must be in FOR");
-		break;
-	    }
-	    dclause = exprListAdd(dclause,c);
-	    break;
-
-	case OMP_DIR_SCHEDULE:
-	    if(pragma != OMP_FOR){
-		error_at_node(x,"'schedule' clause must be in FOR");
-		break;
-	    }
-	    v = EXPR_ARG2(EXPR_ARG2(c));
-	    if(v != NULL && 
-	       EXPR_INT(EXPR_ARG1(EXPR_ARG2(c))) != (int)OMP_SCHED_AFFINITY){
-		v = compile_expression(v);
-		c = list2(LIST,EXPR_ARG1(c),
-			  list2(LIST,EXPR_ARG1(EXPR_ARG2(c)),v));
-	    }
-	    dclause = exprListAdd(dclause,c);
-	    break;
-
-	case OMP_DIR_NOWAIT:
-	    if(is_parallel){
-		error_at_node(x,"'nowait' clause must not be in PARALLEL");
-		break;
-	    }
-	    dclause = exprListAdd(dclause,c);
-	    break;
-
-	default:
-	    fatal("compile_OMP_paragma_clause");
+      c = LIST_ITEM(lp);
+      switch(EXPR_INT(EXPR_ARG1(c))){
+      case OMP_DATA_DEFAULT:	/* default(shared|none) */
+	if(!is_parallel){
+	  error_at_node(x,"'default' clause must be in PARALLEL");
+	  break;
 	}
+	pclause = exprListAdd(pclause,c);
+	break;
+      case OMP_DATA_SHARED:
+	compile_OMP_name_list(EXPR_ARG2(c));
+	if(!is_parallel){
+	  error_at_node(x,"'shared' clause must be in PARALLEL");
+	  break;
+	}
+	pclause = exprListAdd(pclause,c);
+	break;
+      case OMP_DATA_COPYIN:
+	compile_OMP_name_list(EXPR_ARG2(c));
+	if(!is_parallel){
+	  error_at_node(x,"'copyin' clause must be in PARALLEL");
+	  break;
+	}
+	pclause = exprListAdd(pclause,c);
+	break;
+      case OMP_DIR_IF:
+	if(!is_parallel){
+	  error_at_node(x,"'if' clause must be in PARALLEL");
+	  break;
+	}
+	v = compile_expression(EXPR_ARG2(c));
+	pclause = exprListAdd(pclause, list2(LIST,EXPR_ARG1(c),v));
+	break;
+      case OMP_DATA_PRIVATE:
+      case OMP_DATA_FIRSTPRIVATE:
+	/* all pragma can have these */
+	compile_OMP_name_list(EXPR_ARG2(c));
+	if(pragma == OMP_PARALLEL)
+	  pclause = exprListAdd(pclause,c);
+	else     
+	  dclause = exprListAdd(dclause,c);
+	break;
+	
+      case OMP_DATA_LASTPRIVATE:
+	compile_OMP_name_list(EXPR_ARG2(c));
+	if(pragma != OMP_FOR && pragma != OMP_SECTIONS){
+	  error_at_node(x,"'lastprivate' clause must be in FOR or SECTIONS");
+	  break;
+	}
+	dclause = exprListAdd(dclause,c);
+	break;
+	
+      case OMP_DATA_REDUCTION_PLUS:
+      case OMP_DATA_REDUCTION_MINUS:
+      case OMP_DATA_REDUCTION_MUL:
+      case OMP_DATA_REDUCTION_BITAND:
+      case OMP_DATA_REDUCTION_BITOR:
+      case OMP_DATA_REDUCTION_BITXOR:
+      case OMP_DATA_REDUCTION_LOGAND:
+      case OMP_DATA_REDUCTION_LOGOR:
+      case OMP_DATA_REDUCTION_MIN:
+      case OMP_DATA_REDUCTION_MAX:
+	compile_OMP_name_list(EXPR_ARG2(c));
+	if(pragma == OMP_PARALLEL)
+	  pclause = exprListAdd(pclause,c);
+	else if(pragma == OMP_FOR || pragma == OMP_SECTIONS)
+	  dclause = exprListAdd(dclause,c);
+	else 
+	  error_at_node(x,"'reduction' clause must not be in SINGLE");
+	break;
+	
+      case OMP_DIR_ORDERED:
+	if(pragma != OMP_FOR){
+	  error_at_node(x,"'ordered' clause must be in FOR");
+	  break;
+	}
+	dclause = exprListAdd(dclause,c);
+	break;
+	
+      case OMP_DIR_SCHEDULE:
+	if(pragma != OMP_FOR){
+	  error_at_node(x,"'schedule' clause must be in FOR");
+	  break;
+	}
+	v = EXPR_ARG2(EXPR_ARG2(c));
+	if(v != NULL && 
+	   EXPR_INT(EXPR_ARG1(EXPR_ARG2(c))) != (int)OMP_SCHED_AFFINITY){
+	  v = compile_expression(v);
+	  c = list2(LIST,EXPR_ARG1(c),
+		    list2(LIST,EXPR_ARG1(EXPR_ARG2(c)),v));
+	}
+	dclause = exprListAdd(dclause,c);
+	break;
+	
+      case OMP_DIR_NOWAIT:
+	if(is_parallel){
+	  error_at_node(x,"'nowait' clause must not be in PARALLEL");
+	  break;
+	}
+	dclause = exprListAdd(dclause,c);
+	break;
+	
+      default:
+	fatal("compile_OMP_paragma_clause");
+      }
     }
 
     /* combination with PARALLEL, don't have to wait */
     if(is_parallel && (pragma != OMP_PARALLEL))
-	dclause = exprListAdd(dclause, OMP_PG_LIST(OMP_DIR_NOWAIT, NULL));
+      dclause = exprListAdd(dclause, OMP_PG_LIST(OMP_DIR_NOWAIT, NULL));
 
     *pc = pclause;
     *dc = dclause;

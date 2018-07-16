@@ -1,5 +1,6 @@
 package xcodeml.util;
 
+import java.util.ArrayList;
 import xcodeml.util.XmLanguage;
 
 /**
@@ -49,7 +50,8 @@ public class XmOption
     /** if supressing generation of USE statement for coarray runtime
      *  (TEMPORARY)
      */
-    private static boolean _coarrayNoUseStatement = false;  
+    private static boolean _coarrayUseStatement = false;  
+    private static ArrayList<String> _coarrayEntryNames = new ArrayList<>();
 
     private XmOption()
     {
@@ -228,6 +230,26 @@ public class XmOption
     }
 
     /**
+     * Adds a name of coarray runtime library
+     *
+     * @param name added to the list of coarray runtime library
+     */
+    public static void addToCoarrayEntryNames(String name)
+    {
+        _coarrayEntryNames.add(name);
+    }
+
+    /**
+     * Gets the list of coarray runtime library
+     *
+     * @return the list of coarray runtime library
+     */
+    public static ArrayList<String> getCoarrayEntryNames()
+    {
+        return _coarrayEntryNames;
+    }
+
+    /**
      * Return true if debug output enabled.
      */
     public static boolean isDebugOutput()
@@ -324,16 +346,16 @@ public class XmOption
     }
 
     /**
-     * Set/get suboption -fcoarray-no-use-statement (boolean)
+     * Set/get suboption -fcoarray-use-statement (boolean)
      */
-    public static void setCoarrayNoUseStatement(boolean coarrayNoUseStatement)
+    public static void setCoarrayUseStatement(boolean coarrayUseStatement)
     {
-        _coarrayNoUseStatement = coarrayNoUseStatement;
+        _coarrayUseStatement = coarrayUseStatement;
     }
 
-    public static boolean coarrayNoUseStatement()
+    public static boolean coarrayUseStatement()
     {
-        return _coarrayNoUseStatement;
+        return _coarrayUseStatement;
     }
 
 }

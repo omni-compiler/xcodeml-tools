@@ -7,6 +7,22 @@ AC_CONFIG_SRCDIR([include/exc_platform.h])
 AC_CONFIG_HEADER([include/config.h Driver/atool/src/include/nata/nata_config.h])
 
 #--------------------------------------------------------------------
+# See http://unix.stackexchange.com/questions/101080/realpath-command-not-found
+realpath ()
+{
+    f=$@;
+    if test -d "$f"; then
+        base="";
+        dir="$f";
+    else
+        base="/$(basename "$f")";
+        dir=$(dirname "$f");
+    fi;
+    dir=$(cd "$dir" && /bin/pwd);
+    echo "$dir$base"
+}
+
+#--------------------------------------------------------------------
 # Save environmental variables set by user before AC_PROG_CC and so on.
 userCFLAGS=${CFLAGS}
 
@@ -384,12 +400,12 @@ fi
 
 #--------------------------------------------------------------------
 # check Perl versoin is 5
-PERL5=""
-AC_PATH_PROGS(PERL5, perl)
+AC_CHECK_PROG(PERL5, [perl], [perl])
 
 if test "$PERL5" = ""; then
     AC_MSG_ERROR([perl is not found.])
 else
+    PERL5=$(realpath `which $PERL5`)
     isPerlVersion5=no
     AC_MSG_CHECKING(Perl version is 5)
     pTmp=/tmp/.btoolPerlChk.$$
@@ -428,6 +444,9 @@ if test $? -ne 0; then
     AC_MSG_ERROR([JAR is not found.])
 fi
 
+JAVA=$(realpath `which $JAVA`)
+JAVAC=$(realpath `which $JAVAC`)
+JAR=$(realpath `which $JAR`)
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAR)
@@ -1028,10 +1047,8 @@ AC_CONFIG_FILES(F-FrontEnd/src/fincludes/iso_c_binding.f90)
 AC_CONFIG_FILES(F-FrontEnd/gnu_module/Makefile)
 AC_CONFIG_FILES(F-BackEnd/Makefile)
 AC_CONFIG_FILES(Driver/bin/Makefile)
-AC_CONFIG_FILES(Driver/etc/setup.conf)
 AC_CONFIG_FILES(Driver/bin/C_Back)
 AC_CONFIG_FILES(Driver/bin/F_Back)
-AC_CONFIG_FILES(libxmpf/include/Makefile)
 AC_CONFIG_FILES(Makefile)
 
 AC_OUTPUT

@@ -1,9 +1,3 @@
-/* 
- * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
- * $TSUKUBA_Copyright:
- *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
- *  $
- */
 /**
  * \file F-intrinsics-types.h
  */
@@ -11,12 +5,8 @@
 #ifndef _F_INTRINSICS_TYPES_H_
 #define _F_INTRINSICS_TYPES_H_
 
-
 typedef enum {
     INTR_TYPE_NONE = 0,
-
-
-
     INTR_TYPE_INT,
     INTR_TYPE_REAL,
     INTR_TYPE_DREAL,
@@ -26,15 +16,9 @@ typedef enum {
     INTR_TYPE_ALL_COMPLEX,
     INTR_TYPE_CHAR,
     INTR_TYPE_LOGICAL,
-
-
     INTR_TYPE_ANY,
-
     INTR_TYPE_NUMERICS,         /* INTR_TYPE_INT, INTR_TYPE_REAL or INTR_TYPE_DREAL. */
     INTR_TYPE_ALL_NUMERICS,     /* INTR_TYPE_INT, INTR_TYPE_REAL, INTR_TYPE_DREAL or INTR_TYPE_COMPLEX. */
-
-
-
     INTR_TYPE_INT_ARRAY,
     INTR_TYPE_REAL_ARRAY,
     INTR_TYPE_DREAL_ARRAY,
@@ -44,14 +28,10 @@ typedef enum {
     INTR_TYPE_ALL_COMPLEX_ARRAY,
     INTR_TYPE_CHAR_ARRAY,
     INTR_TYPE_LOGICAL_ARRAY,
-
     INTR_TYPE_ANY_ARRAY,
-
     INTR_TYPE_NUMERICS_ARRAY,
     INTR_TYPE_ALL_NUMERICS_ARRAY,
 
-
-
     /* for Array reduction functions. */
     INTR_TYPE_INT_DYNAMIC_ARRAY,
     INTR_TYPE_REAL_DYNAMIC_ARRAY,
@@ -62,14 +42,10 @@ typedef enum {
     INTR_TYPE_ALL_COMPLEX_DYNAMIC_ARRAY,
     INTR_TYPE_CHAR_DYNAMIC_ARRAY,
     INTR_TYPE_LOGICAL_DYNAMIC_ARRAY,
-
     INTR_TYPE_ANY_DYNAMIC_ARRAY,
-
     INTR_TYPE_NUMERICS_DYNAMIC_ARRAY,
     INTR_TYPE_ALL_NUMERICS_DYNAMIC_ARRAY,
 
-
-
     /* for coarray functions. */
     INTR_TYPE_COARRAY_ANY,
     INTR_TYPE_COARRAY_INT,
@@ -80,28 +56,22 @@ typedef enum {
     INTR_TYPE_SCALAR_COARRAY_REAL,
     INTR_TYPE_SCALAR_COARRAY_LOGICAL,
 
-
-
     /*
      * for ASSOCIATED().
      * Check if argument can be Pointer ASSIGNed to the previous argument
      */
     INTR_TYPE_PASSIGNABLE,
 
-
     /* Others. */
     INTR_TYPE_POINTER,
     INTR_TYPE_TARGET,
-
     INTR_TYPE_ANY_ARRAY_ALLOCATABLE,
     INTR_TYPE_ANY_OPTIONAL,
 
-
     /* For NULL(void) */
     INTR_TYPE_LHS
 
 } INTR_DATA_TYPE;
-
 
 typedef enum {
     INTR_UNKNOWN = 0,
@@ -144,6 +114,8 @@ typedef enum {
     INTR_SQRT,
     INTR_TAN,
     INTR_TANH,
+    INTR_HYPOT,
+    INTR_PRACING,
 
     /* Character functions. */
     INTR_CHAR,
@@ -184,7 +156,6 @@ typedef enum {
     INTR_SELECTED_CHAR_KIND,
 
     /* 7. Logical function */
-
     INTR_LOGICAL,
 
     /* F90 numeric inquiry functions. */
@@ -199,9 +170,17 @@ typedef enum {
     INTR_TINY,
 
     /* F90 bit inquiry functions. */
+    INTR_BGE,
+    INTR_BGT,
+    INTR_BLE,
+    INTR_BLT,
     INTR_BIT_SIZE,
     INTR_BTEST,
+    INTR_DSHIFTL,
+    INTR_DSHIFTR,
+    INTR_IALL,
     INTR_IAND,
+    INTR_IANY,
     INTR_IBCLR,
     INTR_IBITS,
     INTR_IBSET,
@@ -210,6 +189,16 @@ typedef enum {
     INTR_ISHFT,
     INTR_ISHFTC,
     INTR_NOT,
+    INTR_MASKL,
+    INTR_MASKR,
+    INTR_MERGE_BITS,
+    INTR_POPCNT,
+    INTR_POPPAR,
+    INTR_SHIFTA,
+    INTR_SHIFTL,
+    INTR_SHIFTR,
+    INTR_STORAGE_SIZE,
+    INTR_TRAILZ,
 
     /* F90 transfer functions. */
     INTR_TRANSFER,
@@ -235,6 +224,7 @@ typedef enum {
     INTR_MINVAL,
     INTR_PRODUCT,
     INTR_SUM,
+    INTR_PARITY,
 
     /* F90 array inquiry functions. */
     INTR_ALLOCATED,
@@ -255,10 +245,12 @@ typedef enum {
     /* F90 array manipulation functions. */
     INTR_CSHIFT,
     INTR_TRANSPOSE,
+    INTR_NORM2,
 
     /* F90 array location functions. */
     INTR_MINLOC,
     INTR_MAXLOC,
+    INTR_FINDLOC,
 
     /* F90 pointer association status functions. */
     INTR_ASSOCIATED,
@@ -298,14 +290,24 @@ typedef enum {
     INTR_SAME_TYPE_AS,
     INTR_MOVE_ALLOC,
 
+    INTR_NEW_LINE,
+
     /* F08 intrinsic subroutines */
     INTR_COMMAND_ARUGMENT_COUNT,
     INTR_GET_COMMAND,
-    INTR_GET_COMMAND_ARUGMENT,
+    INTR_EXECUTE_COMMAND_LINE,
+    INTR_GET_COMMAND_ARGUMENT,
     INTR_GET_ENVIRONMENT_VARIABLE,
     INTR_GAMMA,
     INTR_LOGGAMMA,
 
+    INTR_BESSEL_JO,
+    INTR_BESSEL_J1,
+    INTR_BESSEL_JN,
+    INTR_BESSEL_Y0,
+    INTR_BESSEL_Y1,
+    INTR_BESSEL_YN,
+    
     INTR_COARRAY_MALLOC_BYTES,       // hidden interface
     INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
     INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
@@ -407,7 +409,6 @@ typedef enum {
     INTR_ALL_NODE_NUM,
     INTR_WTIME,
     INTR_WTICK,
-
     INTR_ARRAY_NDIMS,
     INTR_ARRAY_LBOUND,
     INTR_ARRAY_UBOUND,
@@ -433,7 +434,6 @@ typedef enum {
     INTR_NODES_INDEX,
     INTR_NODES_SIZE,
     INTR_NODES_EQUIV,
-
     INTR_END
 
 } INTR_OPS;
@@ -445,12 +445,10 @@ typedef enum {
     INTR_NAME_SPECIFIC_NA
 } INTR_NAME_TYPE;
 
-
 typedef struct {
     INTR_OPS ops;
     INTR_NAME_TYPE nameType;
     const char *name;
-    int hasKind;
     INTR_DATA_TYPE argsType[10];
     INTR_DATA_TYPE returnType;
     int nArgs;
@@ -507,18 +505,21 @@ typedef struct {
 #define INTR_CLASS_S       INTRINSIC_CLASS_SUB
 #define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
 
+  const int mandatoryArgsFlag;
+  const char *argsName[10];
+  
 } intrinsic_entry;
 #define INTR_OP(ep)             ((ep)->ops)
 #define INTR_NAMETYPE(ep)       ((ep)->nameType)
 #define INTR_IS_GENERIC(ep)     (INTR_NAMETYPE(ep) == INTR_NAME_GENERIC)
 #define INTR_NAME(ep)           ((ep)->name)
 #define INTR_ARG_TYPE(ep)       ((ep)->argsType)
-#define INTR_KIND(ep)           ((ep)->hasKind)
-#define INTR_HAS_KIND_ARG(ep)   (INTR_KIND(ep) == 1)
 #define INTR_RETURN_TYPE(ep)    ((ep)->returnType)
 #define INTR_N_ARGS(ep)         ((ep)->nArgs)
 #define INTR_RETURN_TYPE_SAME_AS(ep)    ((ep)->retTypeSameAs)
 #define INTR_CLASS(ep)          ((ep)->intrinsicClass)
+#define INTR_MANDATORY_ARGS_FLAG(ep) ((ep)->mandatoryArgsFlag)
+#define INTR_ARG_NAME(ep)       ((ep)->argsName)
 
 #define INTR_IS_RETURN_TYPE_DYNAMIC(ep) \
     (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY || \
@@ -552,10 +553,22 @@ typedef struct {
  * NOTE:
  *
  *      If INTR_KIND(ep) == 1, INTR_RETURN_TYPE_SAME_AS(ep) must be
- *      -1.
+ *      -1, -3, -6, or -9.
  */
 
 extern intrinsic_entry intrinsic_table[];
+
+#define NONE 0x0000000
+#define ARG0 0x0000001
+#define ARG1 0x0000002
+#define ARG2 0x0000004
+#define ARG3 0x0000008
+#define ARG4 0x0000010
+#define ARG5 0x0000020
+#define ARG6 0x0000040
+#define ARG7 0x0000080
+#define ARG8 0x0000100
+#define ARG9 0x0000200
 
 
 #endif /* _F_INTRINSICS_TYPES_H_ */
