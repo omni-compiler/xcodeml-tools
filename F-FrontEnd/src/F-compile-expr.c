@@ -1205,7 +1205,10 @@ compile_ident_expression(expr x)
             if(ID_IS_OFMODULE(id) == FALSE
                 && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
             {
-                ret = VAR_INIT_VALUE(id);
+                // ISSUE #67
+                //ret = VAR_INIT_VALUE(id);
+                memcpy(&ret, &VAR_INIT_VALUE(id), sizeof(expr));
+                printf("RET = %p\n", &ret);
                 // Keep the kind information of the type (xcodeml-tools#42)
                 if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL
                     && TYPE_KIND(EXPV_TYPE(ret)) == NULL) 

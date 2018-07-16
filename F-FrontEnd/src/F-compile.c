@@ -6741,6 +6741,7 @@ compile_set_expr(expr x) {
         if (ret != NULL) {
             char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(x)));
             if (keyword != NULL && *keyword != '\0') {
+                printf("%p\n", &ret);
                 EXPV_KWOPT_NAME(ret) = (const char *)strdup(keyword);
             }
         }
