@@ -2797,9 +2797,9 @@ compile_IMPLICIT_decl(expr type,expr l)
     }
     if (EXPR_CODE (type) == IDENT ||
         EXPR_CODE (type) == F03_PARAMETERIZED_TYPE ||
+        EXPR_CODE (type) == F08_ASSUMED_TYPE ||
         EXPR_CODE (type) == F03_CLASS) {
         tp = compile_derived_type(type, FALSE);
-
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
