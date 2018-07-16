@@ -1,4 +1,4 @@
-/* 
+/*
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
@@ -184,7 +184,7 @@ class XfTypeManagerForDom {
 
     public void addSymbol(Node idNode)
     {
-      // get name Node
+        // get name Node
         Node nameNode = XmDomUtil.getElement(idNode, "name");
         if (nameNode == null) {
             // Ignore invalid symbol name.
@@ -217,7 +217,15 @@ class XfTypeManagerForDom {
             AliasMap aliasMap = _getCurrentAliasMap();
             assert (aliasMap != null);
             aliasMap.put(typeName, symbolName);
-        } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
+
+            // In case imported_id is present, add an entry as well
+            String importedTypeName = XmDomUtil.getAttr(idNode, "imported_id");
+            if (!XfUtilForDom.isNullOrEmpty(typeName)) {
+                aliasMap.put(importedTypeName, symbolName);
+            }
+        } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass) 
+            && !XfStorageClass.FNAMELIST_NAME.toXcodeString().equalsIgnoreCase(sclass)) 
+        {
             SymbolMap symbolMap = _getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, idNode);
@@ -361,9 +369,9 @@ class XfTypeManagerForDom {
      * @param typeId
      * @return When alias not found, return argument type name.
      */
-    public String getAliasTypeName(String typeId)
+    public String getAliasTypeName(String typeId, String importedId)
     {
-        if (XfUtilForDom.isNullOrEmpty(typeId) != false) {
+        if (XfUtilForDom.isNullOrEmpty(typeId)) {
             return null;
         }
 
@@ -376,9 +384,20 @@ class XfTypeManagerForDom {
             }
         }
 
+        // Try to find with imported_id
+        if(!XfUtilForDom.isNullOrEmpty(importedId)) {
+            importedId = importedId.trim();
+            for (AliasMap aliasMap : _aliasMapStack) {
+                String aliasName = aliasMap.get(importedId);
+                if (aliasName != null) {
+                    return aliasName;
+                }
+            }
+        }
+
         String inheritName = _reverseBasicRefMap.get(typeId);
         if (inheritName != null) {
-            return getAliasTypeName(inheritName);
+            return getAliasTypeName(inheritName, null);
         }
 
         throw new IllegalStateException("not found type name of '" + typeId + "'");
@@ -425,8 +444,8 @@ class XfTypeManagerForDom {
 
                 if (typeList.contains(typeChoice))
                     throw new XmException("FbasicType" +
-                                          XmDomUtil.getAttr(basicType, "type") +
-                                          "has cyclic definition");
+                        XmDomUtil.getAttr(basicType, "type") +
+                        "has cyclic definition");
 
             } else if ("FstructType".equals(name)) {
                 typeChoice = null;
