@@ -1207,7 +1207,9 @@ compile_ident_expression(expr x)
             {
                 ret = VAR_INIT_VALUE(id);
                 // Keep the kind information of the type (xcodeml-tools#42)
-                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL) {
+                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL
+                    && TYPE_KIND(EXPV_TYPE(ret)) == NULL) 
+                {
                     TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
                 }
                 return ret;

@@ -835,11 +835,11 @@ intrinsic_entry intrinsic_table[] = {
   { INTR_IMAGE_INDEX, INTR_NAME_GENERIC,      "image_index",  {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT_ARRAY},  INTR_TYPE_INT,          2, -6, LANGSPEC_F2008,  INTR_CLASS_T, ARG0|ARG1, {"coarray", "sub"} },
 
   // LCOBOUND (COARRAY [, DIM, KIND])
-  { INTR_LCOBOUND,    INTR_NAME_GENERIC,      "lcobound",     {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F2008,  INTR_CLASS_I },
+  { INTR_LCOBOUND,    INTR_NAME_GENERIC,      "lcobound",     {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_ARRAY,    1, -9, LANGSPEC_F2008,  INTR_CLASS_I },
   { INTR_LCOBOUND,    INTR_NAME_GENERIC,      "",             {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT,
 							       INTR_TYPE_INT},                               INTR_TYPE_INT,          3, -6, LANGSPEC_F2008,  INTR_CLASS_I, ARG0, {"coarray", "dim", "kind"} },
   // UCOBOUND (COARRAY [, DIM, KIND])
-  { INTR_UCOBOUND,    INTR_NAME_GENERIC,      "ucobound",     {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_ARRAY,    1, -3, LANGSPEC_F2008,  INTR_CLASS_I },
+  { INTR_UCOBOUND,    INTR_NAME_GENERIC,      "ucobound",     {INTR_TYPE_COARRAY_ANY},                       INTR_TYPE_INT_ARRAY,    1, -9, LANGSPEC_F2008,  INTR_CLASS_I },
   { INTR_UCOBOUND,    INTR_NAME_GENERIC,      "",             {INTR_TYPE_COARRAY_ANY, INTR_TYPE_INT,
 							       INTR_TYPE_INT},                               INTR_TYPE_INT,          3, -6, LANGSPEC_F2008,  INTR_CLASS_I, ARG0, {"coarray", "dim", "kind"} },
 

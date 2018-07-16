@@ -1,4 +1,4 @@
-.PHONY: all install clean distclean
+.PHONY: all install clean distclean test
 
 INSTALL=@INSTALL@
 BINDIR=@OMNI_HOME@/bin
@@ -25,6 +25,9 @@ all:
 	  $(MAKE) -C $$subdir ; \
 	  if test $$? -ne 0; then exit 1; fi ; \
 	done
+
+test: all
+	cd F-FrontEnd/src && bash ./compile_all_test.sh
 
 install:
 	@for subdir in $(SUBDIRS) ; do \

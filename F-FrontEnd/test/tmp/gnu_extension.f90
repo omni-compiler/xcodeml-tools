@@ -5,8 +5,10 @@ subroutine sub1()
   character(len=*), parameter :: file2 = 'test.dat  '//achar(0)
   character(len=30) :: date
   complex :: z
+  complex(8) :: z2
   real(8) :: x = 0.866_8
   real(8) :: y
+  real(4) :: tt
   external handler_print
   logical :: t = .true.
   logical :: f = .true.
@@ -69,7 +71,7 @@ subroutine sub1()
 !  print *, dcmplx(z, x)
 !  print *, dcmplx(z, i)
   
-  x = dreal(z)
+  x = dreal(z2)
 
   call dtime(tarray, result)
 ! TODO omni sub/func
@@ -88,8 +90,8 @@ subroutine sub1()
 ! TODO omni sub/func
 ! i = fget(date(1:1))
 
-  call fget(a, date(1:1))
-  call fget(a, date(1:1), i)
+!  call fget(a, date(1:1))
+!  call fget(a, date(1:1), i)
 ! TODO omni sub/func
 ! i = fget(a, date(1:1))
 
@@ -102,8 +104,8 @@ subroutine sub1()
 ! TODO omni func/sub
 ! i = fput('c')
 
-  call fput(10, 'c')
-  call fput(10, 'c', i)
+!  call fput(10, 'c')
+!  call fput(10, 'c', i)
 ! TODO omni func/sub
 ! i = fput(10, 'c')
 
@@ -212,7 +214,7 @@ subroutine sub1()
 
   print *, secnds (0.0) 
 
-  call second(x)
+  call second(tt)
 ! TODO omni func/sub
 !  x = second()
 
@@ -222,7 +224,7 @@ subroutine sub1()
 !  i = signal(10, 1)
 
   x = sind(x)
-  z = sind(z)
+!  z = sind(z)
 
   call sleep(5)
 
@@ -243,7 +245,7 @@ subroutine sub1()
 !  i = system('command', i)
 
   x = tand(x)
-  z = tand(z)
+!  z = tand(z)
 
   i = time()
   i = time8()
