@@ -1771,9 +1771,10 @@ public class XmcXcodeToXcTranslator {
             Node dir       = n.getFirstChild();
             String dirName = XmDomUtil.getContentText(dir).toLowerCase();
 
-	    if (dirName.equals("parallel_for"))   dirName = "parallel for";
-            if (dirName.equals("declare_target")) dirName = "declare target";
-            
+	    if (dirName.equals("parallel_for"))      dirName = "parallel for";
+            if (dirName.equals("declare_target"))    dirName = "declare target";
+	    if (dirName.equals("target_enter_data")) dirName = "target enter data";
+
 	    obj.setLine("#pragma omp " + dirName);
 
             if (dirName.equals("barrier"))
@@ -1843,6 +1844,7 @@ public class XmcXcodeToXcTranslator {
                 else if (clauseName.equals("dir_nowait"))            clauseName = "nowait";
                 else if (clauseName.equals("dir_schedule"))          clauseName = "schedule";
                 else if (clauseName.equals("dir_num_threads"))       clauseName = "num_threads";
+		else if (clauseName.equals("target_data_map"))       clauseName = "map";
             
 		obj.addToken(clauseName);
                 
@@ -1855,34 +1857,32 @@ public class XmcXcodeToXcTranslator {
                 String text = XmDomUtil.getContentText(arg);
                 if (clauseName.equals("if") || clauseName.equals("num_threads"))
                     obj.addToken(text);
-                else
-                {   // 'default' clause
-                    String kind = text.toLowerCase();
-                    if (kind.equals("default_shared")) kind = "shared";
+                else{   // 'default' clause
+		    String kind = text.toLowerCase();
+		    if (kind.equals("default_shared")) kind = "shared";
                     else if (kind.equals("default_none")) kind = "none";
                     obj.addToken(kind);
                 }
             }
             else {
-		      NodeList varList = arg.getChildNodes();
-
-		      String kind = XmDomUtil.getContentText(varList.item(0)).toLowerCase();
-		      
-		      if (kind.equals("sched_static")) obj.addToken("static");
-		      else if (kind.equals("sched_dynamic")) obj.addToken("static");
-		      else if (kind.equals("sched_guided")) obj.addToken("guided");
-		      else if (kind.equals("sched_auto")) obj.addToken("auto");
-		      else if (kind.equals("sched_runtime")) obj.addToken("runtime");
-		      else enterNodes(tc, obj, varList.item(0));
-
-		      for (int j = 1; j < varList.getLength(); j++){
-			Node var = varList.item(j);
-			obj.addToken(",");
-			enterNodes(tc, obj, var);
-		      }
-		    }
-
-		    obj.addToken(")");
+		NodeList varList = arg.getChildNodes();
+		String kind = XmDomUtil.getContentText(varList.item(0)).toLowerCase();
+		
+		if (kind.equals("sched_static")) obj.addToken("static");
+		else if (kind.equals("sched_dynamic")) obj.addToken("static");
+		else if (kind.equals("sched_guided")) obj.addToken("guided");
+		else if (kind.equals("sched_auto")) obj.addToken("auto");
+		else if (kind.equals("sched_runtime")) obj.addToken("runtime");
+		else enterNodes(tc, obj, varList.item(0));
+		
+		for (int j = 1; j < varList.getLength(); j++){
+		    Node var = varList.item(j);
+		    obj.addToken(",");
+		    enterNodes(tc, obj, var);
+		}
+	    }
+	    
+	    obj.addToken(")");
 		}
 	    }
                 
