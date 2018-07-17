@@ -217,7 +217,7 @@ char *argv[];
         } else if (strcmp(argv[0], "-o") == 0) {
             argc--;
             argv++;
-            if((argc == 0) || (argv[0] == NULL) || (argv[0] == '\0')) {
+            if((argc == 0) || (argv[0] == NULL) || (*argv[0] == '\0')) {
                 cmd_error_exit("output file name not specified.");
             }
             output_file_name = argv[0];
