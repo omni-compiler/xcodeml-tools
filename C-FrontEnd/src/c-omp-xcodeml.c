@@ -10,6 +10,7 @@
 void outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause);
 void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list);
 void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript);
+void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -105,8 +106,13 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
     outxPrint(fp,indent,"<list>\n");
     EXPR_FOREACH(ite, list) {
       CExpr *node = EXPR_L_DATA(ite);
-      outxPrint(fp,indent1,"<Var>%s</Var>\n",
-		((CExprOfSymbol *)node)->e_symName);
+      if(EXPR_CODE(node) == EC_ARRAY_REF){
+        out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+      }
+      else{
+        outxPrint(fp,indent1,"<Var>%s</Var>\n",
+                  ((CExprOfSymbol *)node)->e_symName);
+      }
     }
     outxPrint(fp,indent,"</list>\n");
 }

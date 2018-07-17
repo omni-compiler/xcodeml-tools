@@ -1059,7 +1059,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     TYPE_DESC tp = NULL;
     expv arg;
     expv args;
-    int ret;
+    int ret = -1;
     expv memberRef;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "functionCall"))
@@ -1072,7 +1072,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return FALSE;
 
 
-    tagName = xmlTextReaderConstName(reader);
+    tagName = (const char *)xmlTextReaderConstName(reader);
     if (strcmp(tagName, "name") == 0) {
         ret = input_name_as_string(reader, &name);
     } else if (strcmp(tagName, "FmemberRef") == 0) {
@@ -1112,7 +1112,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
 
         if (TYPE_IS_INTRINSIC(tp)) {
-            *v = compile_intrinsic_call(id, args);
+            *v = compile_intrinsic_call0(id, args, TRUE);
         } else {
             ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
             *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
