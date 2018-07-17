@@ -223,9 +223,7 @@ class XfTypeManagerForDom {
             if (!XfUtilForDom.isNullOrEmpty(typeName)) {
                 aliasMap.put(importedTypeName, symbolName);
             }
-        } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass) 
-            && !XfStorageClass.FNAMELIST_NAME.toXcodeString().equalsIgnoreCase(sclass)) 
-        {
+        } else if (!XfStorageClass.FCOMMON_NAME.toXcodeString().equalsIgnoreCase(sclass)) {
             SymbolMap symbolMap = _getCurrentSymbolMap();
             assert (symbolMap != null);
             symbolMap.put(symbolName, idNode);
