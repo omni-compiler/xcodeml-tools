@@ -1058,7 +1058,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     TYPE_DESC tp = NULL;
     expv arg;
     expv args;
-    int ret;
+    int ret = -1;
     expv memberRef;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "functionCall"))
@@ -1071,7 +1071,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return FALSE;
 
 
-    tagName = xmlTextReaderConstName(reader);
+    tagName = (const char *)xmlTextReaderConstName(reader);
     if (strcmp(tagName, "name") == 0) {
         ret = input_name_as_string(reader, &name);
     } else if (strcmp(tagName, "FmemberRef") == 0) {
