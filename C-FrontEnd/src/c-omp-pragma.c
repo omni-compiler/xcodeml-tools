@@ -372,7 +372,101 @@ static CExpr* parse_layout_expr()
   return NULL;
 }
 
-CExpr* parse_ACC_namelist(void);
+static CExpr* parse_OMP_C_subscript_list()
+{
+  CExpr* list = EMPTY_LIST, *v1, *v2;
+
+  if(pg_tok != '[') {
+    addError(NULL, "parse_OMP_C_subscript_list: first token= '['");
+  }
+  pg_get_token();
+
+  while(1){
+    v1 = v2 = NULL;
+    switch(pg_tok){
+    case ']':  goto err;
+    case ',':  goto err;
+      break;
+    case ':':
+      v1 = (CExpr*)allocExprOfNumberConst2(0, BT_INT);
+      break;
+    default:
+      v1 = pg_parse_expr();
+    }
+
+    if(pg_tok == ':') goto subarray;
+    list = exprListAdd(list, v1);
+    goto next;
+    
+  subarray:
+    pg_get_token();
+    if(pg_tok != ']'){
+      v2 = pg_parse_expr();
+    }
+    list = exprListAdd(list, (CExpr*)allocExprOfList2(EC_UNDEF,v1,v2));
+    
+  next:
+    if(pg_tok == ']'){
+      pg_get_token();
+    }
+    else goto err;
+    
+    if(pg_tok != '['){
+      break;
+    }
+    else{
+      pg_get_token();
+    }
+  }
+
+  return list;
+
+ err:
+  addError(NULL, "Syntax error in scripts of OpenMP directive");
+  return NULL;
+}
+
+static CExpr* parse_array_list()
+{
+  CExpr* args = EMPTY_LIST;
+
+  if(pg_tok != '('){
+    addError(NULL,"OMP: OpenMP directive clause requires name list");
+    return NULL;
+  }
+  pg_get_token();
+
+ next:
+  if(pg_tok != PG_IDENT){
+    addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
+    return NULL;
+  }
+
+  CExpr* v = pg_tok_val;
+  pg_get_token();
+  if(pg_tok != '['){
+    args = exprListAdd(args, v);
+  }
+  else{
+    CExpr *list     = parse_OMP_C_subscript_list();
+    CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+    args = exprListAdd(args, arrayRef);
+  }
+
+  if(pg_tok == ','){
+    pg_get_token();
+    goto next;
+  }
+  else if(pg_tok == ')'){
+    pg_get_token();
+    return args;
+  }
+
+  addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+  return NULL;
+}
+
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -480,7 +574,7 @@ static CExpr* parse_OMP_clauses()
     else if(PG_IS_IDENT("map")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
-      if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+      if((v = parse_array_list()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_DATA_MAP, v);
     } else if(PG_IS_IDENT("to")){
       pg_get_token();
