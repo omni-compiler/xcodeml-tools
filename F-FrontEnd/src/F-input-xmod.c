@@ -51,9 +51,9 @@ xmlSkipUntil(xmlTextReaderPtr reader, int type, const char * name, int depth)
         if (!xmlTextReaderRead(reader))
             return FALSE;
 
-            current_type = xmlTextReaderNodeType(reader);
-            current_name = (const char *) xmlTextReaderConstName(reader);
-            current_depth = xmlTextReaderDepth(reader);
+        current_type = xmlTextReaderNodeType(reader);
+        current_name = (const char *) xmlTextReaderConstName(reader);
+        current_depth = xmlTextReaderDepth(reader);
     } while (current_type != type ||
              strcmp(current_name, name) != 0 ||
              current_depth != depth);
