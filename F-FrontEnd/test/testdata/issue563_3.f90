@@ -20,7 +20,7 @@ CONTAINS
     CLASS(t_jsb_model), INTENT(inout) :: this
     CLASS(t_msg), POINTER :: msg
  
-    msg => t_msg('', this%Get_action('INTEGRATE'))
+    msg => t_msg('')
   END SUBROUTINE sub1
 
 END MODULE mod1
