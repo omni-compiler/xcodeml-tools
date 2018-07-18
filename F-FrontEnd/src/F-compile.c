@@ -2712,18 +2712,15 @@ end_declaration()
             if (ID_MAY_HAVE_ACCECIBILITY(ip) && !isAlreadyMarked(ip) 
                 && !TYPE_IS_INTRINSIC(tp)) 
             {
-                // Type with BIND(C) cannot have access specifier (R427 - #59)
-                //if(!(ID_TYPE(ip) && TYPE_HAS_BIND(ID_TYPE(ip)))) { 
-                    if (current_module_state == M_PUBLIC 
-                        && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
-                    {
-                        TYPE_SET_PUBLIC(ip);
-                    } else if (current_module_state == M_PRIVATE 
-                        && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
-                    {
-                        TYPE_SET_PRIVATE(ip);
-                    }
-                //}
+                if (current_module_state == M_PUBLIC 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
+                    TYPE_SET_PUBLIC(ip);
+                } else if (current_module_state == M_PRIVATE 
+                    && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                {
+                    TYPE_SET_PRIVATE(ip);
+                }
             }
         }
 
