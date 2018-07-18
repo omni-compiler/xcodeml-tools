@@ -430,6 +430,12 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed");
+    if (str != NULL) {
+        TYPE_SET_ASSUMED(*tp);
+        free(str);
+    }
+
     if (retTypeId != NULL)
         *retTypeId = typeId;    /* return typeId */
     else
@@ -1721,7 +1727,7 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
             TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
         } else if (IS_SUBR(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-        } else if (TYPE_IS_CLASS(tp)) {
+        } else if (TYPE_IS_CLASS(tp) || TYPE_IS_ASSUMED(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
         }
     }
