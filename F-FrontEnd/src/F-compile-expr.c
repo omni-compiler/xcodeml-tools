@@ -1207,7 +1207,9 @@ compile_ident_expression(expr x)
             {
                 ret = VAR_INIT_VALUE(id);
                 // Keep the kind information of the type (xcodeml-tools#42)
-                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL) {
+                if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL
+                    && TYPE_KIND(EXPV_TYPE(ret)) == NULL) 
+                {
                     TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
                 }
                 return ret;
@@ -3307,8 +3309,7 @@ compile_implied_do_expression(expr x)
 {
     expv do_var, do_init, do_limit, do_incr, retv;
     expr var, init, limit, incr;
-    SYMBOL do_var_sym;
-    CTL cp;
+    //SYMBOL do_var_sym;
 
     expr loopSpec = EXPR_ARG1(x);
 
@@ -3320,7 +3321,7 @@ compile_implied_do_expression(expr x)
     if (EXPR_CODE(var) != IDENT) {
         fatal("compile_implied_do_expression: DO var is not IDENT");
     }
-    do_var_sym = EXPR_SYM(var);
+    //do_var_sym = EXPR_SYM(var);
     
     /* check nested loop with the same variable */
     // #23 same induction variable can be used.

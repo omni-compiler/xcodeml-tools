@@ -3,7 +3,6 @@
 
 static int          column_count = 0;
 static char         buffer[MAXBUFFER];
-static const char   delim[] = "\n";
 static FILE *       outfd;
 
 static void outf_expression(XcodeMLNode * expr);

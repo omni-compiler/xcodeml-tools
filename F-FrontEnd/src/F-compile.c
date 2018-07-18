@@ -382,6 +382,7 @@ list_find_type_expr(const expr lst)
                 break;
             case IDENT:
             case F03_PARAMETERIZED_TYPE:
+            case F08_ASSUMED_TYPE:
             case F03_CLASS:
                 type_expr = x;
                 break;
@@ -715,9 +716,11 @@ compile_statement1(int st_no, expr x)
                 /* implicit none?  result in peek the data structture.  */
                 if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
-                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
-                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
-                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS) {
+                } else if (
+                    EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE
+                    || EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS
+                    || EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F08_ASSUMED_TYPE) 
+                {
                     compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
                 } else {
                     v = EXPR_ARG1(v);
@@ -2710,16 +2713,17 @@ end_declaration()
                 && !TYPE_IS_INTRINSIC(tp)) 
             {
                 // Type with BIND(C) cannot have access specifier (R427 - #59)
-                if(!(ID_TYPE(ip) && TYPE_HAS_BIND(ID_TYPE(ip)))) { 
-                    if (current_module_state == M_PUBLIC) {
+                //if(!(ID_TYPE(ip) && TYPE_HAS_BIND(ID_TYPE(ip)))) { 
+                    if (current_module_state == M_PUBLIC 
+                        && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
+                    {
                         TYPE_SET_PUBLIC(ip);
-                    }
-                    if (current_module_state == M_PRIVATE 
+                    } else if (current_module_state == M_PRIVATE 
                         && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
                     {
                         TYPE_SET_PRIVATE(ip);
                     }
-                }
+                //}
             }
         }
 
@@ -5774,10 +5778,9 @@ import_module_id(ID mid,
                 SYM_NAME(use_name));
     }
 
-    if(current_module_state != M_PRIVATE) {
+    if(ID_TYPE(id) != NULL) {
         TYPE_IS_IMPORTED(ID_TYPE(id)) = TRUE;
     }
-
     return;
 }
 
@@ -8005,9 +8008,10 @@ pointer_assignable(expr x,
             !TYPE_IS_POINTER(vPteTyp) &&
             !IS_PROCEDURE_TYPE(vPteTyp) &&
             !IS_ARRAY_TYPE(vPteTyp) && 
+            !TYPE_IS_ALLOCATABLE(vPteTyp) &&
             (structType != NULL && !TYPE_IS_TARGET(structType))) // #19
         {
-            if (EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
+            if (x != NULL && EXPR_CODE(EXPR_ARG2(x)) == IDENT) {
                 if (x) error_at_node(x, "'%s' is not a pointee.",
                                      SYM_NAME(EXPR_SYM(EXPR_ARG2(x))));
             } else {
