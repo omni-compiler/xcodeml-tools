@@ -534,17 +534,20 @@ XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
 
         if (!isDeclaration) {
             assert (!isClass);
             assert (!isProcedure);
+            assert (!isAssumed);
             isClass = false;
             isProcedure = false;
+            isAssumed = false;
         }
 
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
+        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure && !isAssumed) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FbasicType".equals(topTypeName) &&
                 XmDomUtil.getAttr(topTypeChoice, "ref") == null &&
@@ -552,10 +555,12 @@ XfDecompileDomVisitor {
             /*
              * <FbasicType is_class="true"/> is `CLASS(*)`
              */
-            writer.writeToken("CLASS");
-            writer.writeToken("(");
-            writer.writeToken("*");
-            writer.writeToken(")");
+            writer.writeToken("CLASS(*)");
+        } else if ("FbasicType".equals(topTypeName) && isAssumed) {
+            /*
+             * <FbasicType is_assumed="true"/> is `TYPE(*)`
+             */
+            writer.writeToken("TYPE(*)");
         } else if (isProcedure) {
             writer.writeToken("PROCEDURE");
             writer.writeToken("(");
@@ -670,6 +675,7 @@ XfDecompileDomVisitor {
         }
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
         boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
 
@@ -699,7 +705,7 @@ XfDecompileDomVisitor {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
 
-            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
+            if (!isClass && !isAssumed && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
                 XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
                 assert refTypeId != null;
             }

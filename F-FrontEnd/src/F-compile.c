@@ -382,6 +382,7 @@ list_find_type_expr(const expr lst)
                 break;
             case IDENT:
             case F03_PARAMETERIZED_TYPE:
+            case F08_ASSUMED_TYPE:
             case F03_CLASS:
                 type_expr = x;
                 break;
@@ -715,9 +716,11 @@ compile_statement1(int st_no, expr x)
                 /* implicit none?  result in peek the data structture.  */
                 if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F_TYPE_NODE) {
                     compile_IMPLICIT_decl(EXPR_ARG1(v), EXPR_ARG2(v));
-                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE) {
-                    compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
-                } else if (EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS) {
+                } else if (
+                    EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_PARAMETERIZED_TYPE
+                    || EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F03_CLASS
+                    || EXPR_CODE(EXPR_ARG1(EXPR_ARG1(v))) == F08_ASSUMED_TYPE) 
+                {
                     compile_IMPLICIT_decl(EXPR_ARG1(EXPR_ARG1(v)), EXPR_ARG2(v));
                 } else {
                     v = EXPR_ARG1(v);
@@ -5658,7 +5661,7 @@ import_module_id(ID mid,
                  TYPE_DESC *sthead, TYPE_DESC *sttail,
                  SYMBOL use_name, int need_wrap_type, int fromParentModule)
 {
-    ID existed_id, id;
+    ID existed_id, id, struct_id;
     EXT_ID ep, mep;
 
     if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
@@ -5751,6 +5754,12 @@ import_module_id(ID mid,
     if(ID_STORAGE(id) == STG_TAGNAME) {
         TYPE_TAGNAME(ID_TYPE(id)) = id;
         TYPE_SLINK_ADD(ID_TYPE(id), *sthead, *sttail);
+    } else if(ID_CLASS(id) == CL_MULTI) { // Multi id with struct
+        struct_id = multi_find_class(id, CL_TAGNAME);
+        if(struct_id != NULL) {
+            TYPE_TAGNAME(ID_TYPE(struct_id)) = struct_id;
+            TYPE_SLINK_ADD(ID_TYPE(struct_id), *sthead, *sttail);
+        }
     }
 
     ID_LINK_ADD(id, *head, *tail);
