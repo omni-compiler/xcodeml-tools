@@ -5445,29 +5445,8 @@ XfDecompileDomVisitor {
 
             XmfWriter writer = _context.getWriter();
 
-            /* Current workaround for gfortran. The compiler currently does not
-             * accept private/public/protected keyword alongside BIND(C).
-             * Therefore, it is now placed as a statement before the TYPE decl
-             * itself until gfortran supports it. */
             String bind = XmDomUtil.getAttr(structTypeNode, "bind");
             boolean has_bind = !XfUtilForDom.isNullOrEmpty(bind);
-            if(has_bind && _isUnderModuleDef()) {
-                String accessSpec = null;
-                if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
-                    accessSpec = "PRIVATE";
-                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
-                    accessSpec = "PUBLIC";
-                } else if (
-                    XmDomUtil.getAttrBool(structTypeNode, "is_protected"))
-                {
-                    accessSpec = "PROTECTED";
-                }
-
-                if(accessSpec != null) {
-                    writer.writeToken(accessSpec + " :: " + structTypeName);
-                    writer.setupNewLine();
-                }
-            }
 
             writer.writeToken("TYPE");
 
@@ -5486,9 +5465,14 @@ XfDecompileDomVisitor {
                 writer.writeToken(")");
             }
 
-            if (_isUnderModuleDef() && !has_bind) {
-                if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
-                    writer.writeToken(", PRIVATE");
+            if (_isUnderModuleDef()) {
+                /* Current workaround for gfortran. The compiler currently
+                 * does not accept private keyword alongside BIND(C).
+                 * Therefore, it is removed */
+                if (XmDomUtil.getAttrBool(structTypeNode, "is_private")
+                    && !has_bind)
+                {
+                  writer.writeToken(", PRIVATE");
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
