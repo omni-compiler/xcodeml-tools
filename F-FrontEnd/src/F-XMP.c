@@ -123,7 +123,11 @@ void compile_XMP_directive(expr x)
     case XMP_NODES: {
       check_INDCL();
       /* check arg: (nameNames, nodeSizeList, inherit) */
-      x1 = EXPR_ARG1(c); /* indent */
+      x1 = EXPR_ARG1(c); /* ident */
+
+      ID id = declare_ident(EXPR_GEN(x1), CL_VAR);
+      declare_id_type(id, BASIC_TYPE_DESC(TYPE_INT)); // dummy
+
       x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_NODES);
       //x3 = XMP_compile_ON_ref(EXPR_ARG3(c));
 
@@ -139,15 +143,23 @@ void compile_XMP_directive(expr x)
       output_statement(XMP_pragma_list(XMP_NODES,c,NULL));
       break;
     }
-    case XMP_TEMPLATE:
+    case XMP_TEMPLATE: {
       check_INDCL();
       /* check arg: (templateNameList, templateSpecList) */
       x1 = EXPR_ARG1(c); /* name list */
+
+      list lp;
+      FOR_ITEMS_IN_LIST(lp, x1){
+	expr xx = LIST_ITEM(lp);
+	ID id = declare_ident(EXPR_GEN(xx), CL_VAR);
+	declare_id_type(id, BASIC_TYPE_DESC(TYPE_INT)); // dummy
+      }
+      
       x2 = XMP_compile_subscript_list(EXPR_ARG2(c),XMP_LIST_TEMPLATE);
       c = list2(LIST,x1,x2);
       output_statement(XMP_pragma_list(XMP_TEMPLATE,c,NULL));
       break;
-
+    }
     case XMP_DISTRIBUTE:
       check_INDCL();
       /* check arg: (templateNameList, dist_fmt_list, nodes_ident) */
