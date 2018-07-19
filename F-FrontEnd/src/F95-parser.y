@@ -1316,8 +1316,6 @@ type_spec0:
         { $$ = list1(F03_CLASS, list2(F03_PARAMETERIZED_TYPE,$3,$5)); }
         | CLASS '(' '*' ')'
         { $$ = list1(F03_CLASS, NULL); }
-        | KW_TYPE '(' TYPE_KW '*' ')'
-        { $$ = list1(F08_ASSUMED_TYPE, NULL); }
         | type_spec1
         { $$ = $1; }
         ;
