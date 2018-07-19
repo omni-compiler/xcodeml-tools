@@ -55,7 +55,9 @@ static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
-
+#define OMP_DATA_MAP_TO    0
+#define OMP_DATA_MAP_LINK  1
+#define OMP_DATA_MAP_ALLOC 2
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
   CExprOfList *lp;
@@ -441,7 +443,20 @@ static CExpr* parse_array_list()
     addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
     return NULL;
   }
-
+  else{
+    if(PG_IS_IDENT("to")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("link"))
+      goto not_implemented;
+    else
+      goto err;
+  }
+  
+  if(pg_tok != ':')
+    goto err;
+  
+  pg_get_token();
   CExpr* v = pg_tok_val;
   pg_get_token();
   if(pg_tok != '['){
@@ -461,8 +476,13 @@ static CExpr* parse_array_list()
     pg_get_token();
     return args;
   }
-
+  
+ err:
   addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+  return NULL;
+
+ not_implemented:
+  addError(NULL,"OMP: Not implement yet");
   return NULL;
 }
 
