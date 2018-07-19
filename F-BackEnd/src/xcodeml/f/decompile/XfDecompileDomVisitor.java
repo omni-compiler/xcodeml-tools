@@ -5472,10 +5472,12 @@ XfDecompileDomVisitor {
                 if (XmDomUtil.getAttrBool(structTypeNode, "is_private")
                     && !has_bind)
                 {
-                  writer.writeToken(", PRIVATE");
+                    writer.writeToken(", PRIVATE");
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
-                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")
+                    && !has_bind)
+                {
                     writer.writeToken(", PROTECTED");
                 }
             }
