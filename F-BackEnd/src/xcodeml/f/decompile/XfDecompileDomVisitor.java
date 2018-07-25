@@ -5469,10 +5469,14 @@ XfDecompileDomVisitor {
                 /* Current workaround for gfortran. The compiler currently
                  * does not accept private keyword alongside BIND(C).
                  * Therefore, it is removed */
-                if (XmDomUtil.getAttrBool(structTypeNode, "is_private")
-                    && !has_bind)
-                {
-                    writer.writeToken(", PRIVATE");
+                if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
+                    if(!has_bind) {
+                        writer.writeToken(", PRIVATE");
+                    } else {
+                        System.err.println("warning: PRIVATE attribute removed "
+                            + "from TYPE " + structTypeName
+                            + " due to gfortran limitations.");
+                    }
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")
