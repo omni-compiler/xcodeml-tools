@@ -1016,6 +1016,27 @@ XfDecompileDomVisitor {
     }
 
     /**
+     * Return the correct symbol name for operator() and assignment()
+     * @param name Symbol name.
+     * @return Updated symbol name if needed.
+     */
+    private String _specialSymbolName(String name) {
+      if (name.equals("**") ||
+          name.equals("*") ||
+          name.equals("/") ||
+          name.equals("+") ||
+          name.equals("-") ||
+          name.equals("//") ||
+          (name.startsWith(".") && name.endsWith(".")))
+      {
+        return  "OPERATOR(" + name + ")";
+      } else if (name.equals("=")) {
+        return "ASSIGNMENT(" + name + ")";
+      }
+      return name;
+    }
+
+    /**
      * Make internal symbol from symbol name and type name.
      *
      * @param symbolName
@@ -7657,7 +7678,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(publicSymbol) || symbolsFromOtherModule.contains(publicSymbol)) {
                 writer.writeToken("PUBLIC");
                 writer.writeToken("::");
-                writer.writeToken(publicSymbol);
+                writer.writeToken(_specialSymbolName(publicSymbol));
                 writer.setupNewLine();
             }
         }
@@ -7671,7 +7692,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(privateSymbol) || symbolsFromOtherModule.contains(privateSymbol)) {
                 writer.writeToken("PRIVATE");
                 writer.writeToken("::");
-                writer.writeToken(privateSymbol);
+                writer.writeToken(_specialSymbolName(privateSymbol));
                 writer.setupNewLine();
             }
         }
