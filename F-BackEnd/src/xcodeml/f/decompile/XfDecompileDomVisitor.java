@@ -5465,6 +5465,10 @@ XfDecompileDomVisitor {
             typeManager.putAliasTypeName(typeId, structTypeName);
 
             XmfWriter writer = _context.getWriter();
+
+            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
+            boolean has_bind = !XfUtilForDom.isNullOrEmpty(bind);
+
             writer.writeToken("TYPE");
 
             if (XmDomUtil.getAttrBool(structTypeNode, "is_abstract")) {
@@ -5483,17 +5487,27 @@ XfDecompileDomVisitor {
             }
 
             if (_isUnderModuleDef()) {
+                /* Current workaround for gfortran. The compiler currently
+                 * does not accept private keyword alongside BIND(C).
+                 * Therefore, it is removed */
                 if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
-                    writer.writeToken(", PRIVATE");
+                    if(!has_bind) {
+                        writer.writeToken(", PRIVATE");
+                    } else {
+                        System.err.println("warning: PRIVATE attribute removed "
+                            + "from TYPE " + structTypeName
+                            + " due to gfortran limitations.");
+                    }
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
-                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")
+                    && !has_bind)
+                {
                     writer.writeToken(", PROTECTED");
                 }
             }
 
-            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+            if (has_bind) {
                 writer.writeToken(", ");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
             }
