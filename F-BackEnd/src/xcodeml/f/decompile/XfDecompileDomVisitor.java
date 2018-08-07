@@ -534,17 +534,20 @@ XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
 
         if (!isDeclaration) {
             assert (!isClass);
             assert (!isProcedure);
+            assert (!isAssumed);
             isClass = false;
             isProcedure = false;
+            isAssumed = false;
         }
 
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
+        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure && !isAssumed) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FbasicType".equals(topTypeName) &&
                 XmDomUtil.getAttr(topTypeChoice, "ref") == null &&
@@ -552,10 +555,12 @@ XfDecompileDomVisitor {
             /*
              * <FbasicType is_class="true"/> is `CLASS(*)`
              */
-            writer.writeToken("CLASS");
-            writer.writeToken("(");
-            writer.writeToken("*");
-            writer.writeToken(")");
+            writer.writeToken("CLASS(*)");
+        } else if ("FbasicType".equals(topTypeName) && isAssumed) {
+            /*
+             * <FbasicType is_assumed="true"/> is `TYPE(*)`
+             */
+            writer.writeToken("TYPE(*)");
         } else if (isProcedure) {
             writer.writeToken("PROCEDURE");
             writer.writeToken("(");
@@ -670,6 +675,7 @@ XfDecompileDomVisitor {
         }
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
         boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
 
@@ -699,7 +705,7 @@ XfDecompileDomVisitor {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
 
-            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
+            if (!isClass && !isAssumed && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
                 XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
                 assert refTypeId != null;
             }
@@ -1007,6 +1013,27 @@ XfDecompileDomVisitor {
            return true;
         else
             return false;
+    }
+
+    /**
+     * Return the correct symbol name for operator() and assignment()
+     * @param name Symbol name.
+     * @return Updated symbol name if needed.
+     */
+    private String _specialSymbolName(String name) {
+      if (name.equals("**") ||
+          name.equals("*") ||
+          name.equals("/") ||
+          name.equals("+") ||
+          name.equals("-") ||
+          name.equals("//") ||
+          (name.startsWith(".") && name.endsWith(".")))
+      {
+        return  "OPERATOR(" + name + ")";
+      } else if (name.equals("=")) {
+        return "ASSIGNMENT(" + name + ")";
+      }
+      return name;
     }
 
     /**
@@ -5438,6 +5465,10 @@ XfDecompileDomVisitor {
             typeManager.putAliasTypeName(typeId, structTypeName);
 
             XmfWriter writer = _context.getWriter();
+
+            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
+            boolean has_bind = !XfUtilForDom.isNullOrEmpty(bind);
+
             writer.writeToken("TYPE");
 
             if (XmDomUtil.getAttrBool(structTypeNode, "is_abstract")) {
@@ -5456,17 +5487,27 @@ XfDecompileDomVisitor {
             }
 
             if (_isUnderModuleDef()) {
+                /* Current workaround for gfortran. The compiler currently
+                 * does not accept private keyword alongside BIND(C).
+                 * Therefore, it is removed */
                 if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
-                    writer.writeToken(", PRIVATE");
+                    if(!has_bind) {
+                        writer.writeToken(", PRIVATE");
+                    } else {
+                        System.err.println("warning: PRIVATE attribute removed "
+                            + "from TYPE " + structTypeName
+                            + " due to gfortran limitations.");
+                    }
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
-                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")
+                    && !has_bind)
+                {
                     writer.writeToken(", PROTECTED");
                 }
             }
 
-            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+            if (has_bind) {
                 writer.writeToken(", ");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
             }
@@ -7637,7 +7678,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(publicSymbol) || symbolsFromOtherModule.contains(publicSymbol)) {
                 writer.writeToken("PUBLIC");
                 writer.writeToken("::");
-                writer.writeToken(publicSymbol);
+                writer.writeToken(_specialSymbolName(publicSymbol));
                 writer.setupNewLine();
             }
         }
@@ -7651,7 +7692,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(privateSymbol) || symbolsFromOtherModule.contains(privateSymbol)) {
                 writer.writeToken("PRIVATE");
                 writer.writeToken("::");
-                writer.writeToken(privateSymbol);
+                writer.writeToken(_specialSymbolName(privateSymbol));
                 writer.setupNewLine();
             }
         }

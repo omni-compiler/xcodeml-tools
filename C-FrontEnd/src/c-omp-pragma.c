@@ -55,7 +55,11 @@ static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
-
+#define OMP_DATA_MAP_TO    0
+#define OMP_DATA_MAP_LINK  1
+#define OMP_DATA_MAP_ALLOC 2
+#define OMP_CLAUSE_DEVICE  0
+#define OMP_CLAUSE_SHADOW  1
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
   CExprOfList *lp;
@@ -282,7 +286,7 @@ int parse_OMP_pragma()
     return ret;
 }
 
-CExpr *parse_range_expr()
+CExpr *parse_range_expr(int clause)
 {
   CExpr *list = EMPTY_LIST, *v1, *v2;
 
@@ -305,7 +309,10 @@ CExpr *parse_range_expr()
     }
 
     if(pg_tok != ':'){
-      v2 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+      if(clause == OMP_CLAUSE_DEVICE)
+	v2 = (CExpr*)allocExprOfNumberConst2(1, BT_INT);
+      else // (clause == OMP_CLAUSE_SHADOW)
+	v2 = v1;
       goto next;
     }
 
@@ -441,7 +448,20 @@ static CExpr* parse_array_list()
     addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
     return NULL;
   }
-
+  else{
+    if(PG_IS_IDENT("to")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("link"))
+      goto not_implemented;
+    else
+      goto err;
+  }
+  
+  if(pg_tok != ':')
+    goto err;
+  
+  pg_get_token();
   CExpr* v = pg_tok_val;
   pg_get_token();
   if(pg_tok != '['){
@@ -461,8 +481,13 @@ static CExpr* parse_array_list()
     pg_get_token();
     return args;
   }
-
+  
+ err:
   addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+  return NULL;
+
+ not_implemented:
+  addError(NULL,"OMP: Not implement yet");
   return NULL;
 }
 
@@ -583,12 +608,12 @@ static CExpr* parse_OMP_clauses()
     } else if(PG_IS_IDENT("device")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
-      if((v = parse_range_expr()) == NULL) goto syntax_err;
+      if((v = parse_range_expr(OMP_CLAUSE_DEVICE)) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_DEVICE,v);
     } else if(PG_IS_IDENT("shadow")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
-      if((v = parse_range_expr()) == NULL) goto syntax_err;
+      if((v = parse_range_expr(OMP_CLAUSE_SHADOW)) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_SHADOW,v);
     } else if(PG_IS_IDENT("layout")){
       pg_get_token();
