@@ -1016,6 +1016,27 @@ XfDecompileDomVisitor {
     }
 
     /**
+     * Return the correct symbol name for operator() and assignment()
+     * @param name Symbol name.
+     * @return Updated symbol name if needed.
+     */
+    private String _specialSymbolName(String name) {
+      if (name.equals("**") ||
+          name.equals("*") ||
+          name.equals("/") ||
+          name.equals("+") ||
+          name.equals("-") ||
+          name.equals("//") ||
+          (name.startsWith(".") && name.endsWith(".")))
+      {
+        return  "OPERATOR(" + name + ")";
+      } else if (name.equals("=")) {
+        return "ASSIGNMENT(" + name + ")";
+      }
+      return name;
+    }
+
+    /**
      * Make internal symbol from symbol name and type name.
      *
      * @param symbolName
@@ -5445,6 +5466,10 @@ XfDecompileDomVisitor {
             typeManager.putAliasTypeName(typeId, structTypeName);
 
             XmfWriter writer = _context.getWriter();
+
+            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
+            boolean has_bind = !XfUtilForDom.isNullOrEmpty(bind);
+
             writer.writeToken("TYPE");
 
             if (XmDomUtil.getAttrBool(structTypeNode, "is_abstract")) {
@@ -5464,17 +5489,27 @@ XfDecompileDomVisitor {
             }
 
             if (_isUnderModuleDef()) {
+                /* Current workaround for gfortran. The compiler currently
+                 * does not accept private keyword alongside BIND(C).
+                 * Therefore, it is removed */
                 if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
-                    writer.writeToken(", PRIVATE");
+                    if(!has_bind) {
+                        writer.writeToken(", PRIVATE");
+                    } else {
+                        System.err.println("warning: PRIVATE attribute removed "
+                            + "from TYPE " + structTypeName
+                            + " due to gfortran limitations.");
+                    }
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
-                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")
+                    && !has_bind)
+                {
                     writer.writeToken(", PROTECTED");
                 }
             }
 
-            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+            if (has_bind) {
                 writer.writeToken(", ");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
             }
@@ -7645,7 +7680,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(publicSymbol) || symbolsFromOtherModule.contains(publicSymbol)) {
                 writer.writeToken("PUBLIC");
                 writer.writeToken("::");
-                writer.writeToken(publicSymbol);
+                writer.writeToken(_specialSymbolName(publicSymbol));
                 writer.setupNewLine();
             }
         }
@@ -7659,7 +7694,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(privateSymbol) || symbolsFromOtherModule.contains(privateSymbol)) {
                 writer.writeToken("PRIVATE");
                 writer.writeToken("::");
-                writer.writeToken(privateSymbol);
+                writer.writeToken(_specialSymbolName(privateSymbol));
                 writer.setupNewLine();
             }
         }

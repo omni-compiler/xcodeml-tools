@@ -2715,11 +2715,11 @@ end_declaration()
                 if (current_module_state == M_PUBLIC 
                     && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
                 {
-                        TYPE_SET_PUBLIC(ip);
+                    TYPE_SET_PUBLIC(ip);
                 } else if (current_module_state == M_PRIVATE 
                     && !(ID_TYPE(ip) && TYPE_IS_IMPORTED(ID_TYPE(ip)))) 
                 {
-                        TYPE_SET_PRIVATE(ip);
+                    TYPE_SET_PRIVATE(ip);
                 }
             }
         }
