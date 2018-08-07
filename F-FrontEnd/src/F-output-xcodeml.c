@@ -5637,6 +5637,10 @@ outx_innerDefinitions(int l, EXT_ID extids, SYMBOL parentName, int asDefOrDecl)
     EXT_ID ep;
 
     FOREACH_EXT_ID(ep, extids) {
+        if (EXT_TAG(ep) == STG_PRAGMA){
+	    outx_pragmaStatement(l, ep->info.pragma_info.v);
+	    continue;
+	}
         if (EXT_TAG(ep) != STG_EXT)
             continue;
         if (EXT_PROC_IS_ENTRY(ep) == TRUE)
