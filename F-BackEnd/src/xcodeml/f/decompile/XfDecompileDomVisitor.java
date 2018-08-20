@@ -51,6 +51,8 @@ XfDecompileDomVisitor {
     static final int PRIO_DEFINED_UNARY = 12;
     static final int PRIO_HIGH = 13;
 
+    static boolean in_interface = false;
+  
     static public String nodeToString(Node n) {
         String ret = null;
         if (n != null) {
@@ -452,6 +454,70 @@ XfDecompileDomVisitor {
         writer.writeToken(symbol.getSymbolName());
     }
 
+    private void _writeOptionalDecl(XfSymbol symbol,
+                                    XfTypeManagerForDom.TypeList typeList) {
+        /*
+         * Outputs the declaration of an optional symbol.
+         *
+         * If external symbol refers SUBROUTINE, or the type which is not able to be determined,
+         * output will be:
+         *
+         *   POINTER :: f
+         *   OPTIONAL :: f
+         *
+         * otherwise:
+         *
+         *   REAL, POINTER, OPTIONAL :: f
+         */
+
+
+        if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
+            // do not output because it is defined in the xmpf_coarray_decl module.
+            return;
+        }
+
+        XmfWriter writer = _context.getWriter();
+
+        List<Node> attrList = new ArrayList<>();
+        attrList.addAll(typeList);
+
+        Node funcTypeNode = typeList.getFirst();
+
+        assert (XmDomUtil.getAttrBool(funcTypeNode, "is_optional"));
+
+        // boolean hasTypeSpecifier = false;
+
+        // String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
+        // XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
+        // if (type.isPrimitive()) {
+        //     if (type.hasFortranName()) {
+        //         writer.writeToken(type.fortranName());
+        //         hasTypeSpecifier = true;
+        //     }
+        // } else if (!type.hasXcodemlName()) {
+        //     XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeName);
+        //     attrList.addAll(returnTypeList);
+        //     hasTypeSpecifier = _writeTopType(returnTypeList, true, false);
+        // }
+
+        // if (!attrList.isEmpty()) {
+        //     if (hasTypeSpecifier) {
+        //         _writeBasicTypeAttr(attrList.toArray(new Node[0]));
+        //     } else {
+        //         _writeBasicTypeAttrStatements(symbol.getSymbolName(), attrList.toArray(new Node[0]));
+        //     }
+        // }
+
+        // if (hasTypeSpecifier) {
+        //     writer.writeToken(",");
+        // } else {
+        //     writer.setupNewLine();
+        // }
+
+	writer.writeToken("OPTIONAL");
+        writer.writeToken("::");
+        writer.writeToken(symbol.getSymbolName());
+    }
 
     private void _writeBasicType(Node basicTypeNode,
                                  XfTypeManagerForDom.TypeList typeList) {
@@ -678,15 +744,31 @@ XfDecompileDomVisitor {
         boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
         boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
-
+	boolean isOptional = XmDomUtil.getAttrBool(topTypeChoice, "is_optional");
+	boolean isSubroutine = (typeId == XfType.VOID);
+      
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
         if (!isProcedure && "FfunctionType".equals(topTypeName)) {
             if (!isExternal) {
-                _writeFunctionSymbol(symbol, topTypeChoice);
-                _writeDeclAttr(topTypeChoice, lowTypeChoice);
+	      _writeFunctionSymbol(symbol, topTypeChoice);
+	      _writeDeclAttr(topTypeChoice, lowTypeChoice);
+	      if (isOptional && !in_interface) {
+		writer.setupNewLine();
+		_writeOptionalDecl(symbol, typeList);
+	      }
+	      return true;
+		// if (!isOptional || !isSubroutine){
+		//   _writeFunctionSymbol(symbol, topTypeChoice);
+		//   _writeDeclAttr(topTypeChoice, lowTypeChoice);
+		//   return true;
+		// }
+		// else {
+		//   _writeOptionalDecl(symbol, typeList);
+		//   return true;
+		// }
             } else {
                 _writeExternalDecl(symbol, typeList);
                 return true;
@@ -3986,6 +4068,8 @@ XfDecompileDomVisitor {
         @Override public void enter(Node n) {
             _writeLineDirective(n);
 
+	    in_interface = true;
+	    
             XmfWriter writer = _context.getWriter();
 
             String interfaceName = XmDomUtil.getAttr(n, "name");
@@ -4049,6 +4133,26 @@ XfDecompileDomVisitor {
 
             writer.writeToken("END INTERFACE");
             writer.setupNewLine();
+
+	    in_interface = false;
+	    
+	    XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+
+	    // The OPTIONAL attribute should be exceptionally handled.
+	    ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
+            for (Iterator<Node> iter = childNodes.iterator(); iter.hasNext(); ) {
+	      Node funcDeclNode = iter.next();
+	      Node functionNameNode = XmDomUtil.getElement(funcDeclNode, "name");
+	      Node typeChoice = typeManager.findType(functionNameNode);
+	      boolean isOptional = XmDomUtil.getAttrBool(typeChoice, "is_optional");
+	      if (isOptional){
+		writer.writeToken("OPTIONAL");
+		writer.writeToken("::");
+                writer.writeToken(XmDomUtil.getContentText(functionNameNode));
+		writer.setupNewLine();
+	      }
+	    }
+
         }
     }
 
