@@ -4657,6 +4657,8 @@ outx_functionType(int l, TYPE_DESC tp)
             outx_true(TRUE, "is_external");
         }
 
+	outx_true(TYPE_IS_OPTIONAL(tp), "is_optional");
+	
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
         outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
@@ -5260,6 +5262,7 @@ emit_decl(int l, ID id)
             FUNCTION_TYPE_IS_INTERFACE(ID_TYPE(id)) &&
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             outx_function_as_interfaceDecl(l, PROC_EXT_ID(id));
+            //outx_varDecl(l, id);
             break;
         }
 
