@@ -5113,9 +5113,9 @@ qsort_compare_id(const void *v1, const void *v2)
 static int
 qsort_compare_id_by_line(const void *v1, const void *v2)
 {
-    int o1 = ID_LINE(*(ID*)v1) != NULL ? ID_LINE_NO(*(ID*)v1) : INT_MAX;
-    int o2 = ID_LINE(*(ID*)v2) != NULL ? ID_LINE_NO(*(ID*)v2) : INT_MAX;
-    return (o1 == o2) ? 0 : ((o1 < o2) ? -1 : 1);
+    int o1 = ID_LINE(*(ID*)v1) != NULL ? ID_LINE_NO(*(ID*)v1) : 0;
+    int o2 = ID_LINE(*(ID*)v2) != NULL ? ID_LINE_NO(*(ID*)v2) : 0;
+    return (o1 == o2) ? qsort_compare_id(v1, v2) : ((o1 < o2) ? -1 : 1);
 }
 
 /**
