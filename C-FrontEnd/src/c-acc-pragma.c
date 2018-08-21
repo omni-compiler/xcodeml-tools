@@ -422,20 +422,20 @@ static CExpr* parse_ACC_clauses()
 
 static CExpr* parse_ACC_namelist()
 {
-    CExpr* args;
+    CExpr* args = EMPTY_LIST;
     CExpr* v = NULL;
     CExpr* list = NULL;
 
-    args = EMPTY_LIST;
     if(pg_tok != '(') {
       addError(NULL,"ACC: ACC directive clause requires name list");
-	return NULL;
+      return NULL;
     }
     pg_get_token();
+    
  next:
     if(pg_tok != PG_IDENT){
       addError(NULL,"ACC: empty name list in ACC directive clause");
-	return NULL;
+      return NULL;
     }
 
     v = pg_tok_val;
@@ -443,18 +443,19 @@ static CExpr* parse_ACC_namelist()
 
     if(pg_tok != '['){
       args = exprListAdd(args, v);
-    }else{
+    }
+    else{
       list = parse_ACC_C_subscript_list();
       CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
       args = exprListAdd(args, (CExpr*)arrayRef);
     }
 
     if(pg_tok == ','){
-	pg_get_token();
-	goto next;
+      pg_get_token();
+      goto next;
     } else if(pg_tok == ')'){
-	pg_get_token();
-	return args;
+      pg_get_token();
+      return args;
     } 
 
     addError(NULL,"ACC: syntax error in ACC pragma clause");

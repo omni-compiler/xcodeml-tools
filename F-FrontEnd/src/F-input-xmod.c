@@ -51,9 +51,9 @@ xmlSkipUntil(xmlTextReaderPtr reader, int type, const char * name, int depth)
         if (!xmlTextReaderRead(reader))
             return FALSE;
 
-            current_type = xmlTextReaderNodeType(reader);
-            current_name = (const char *) xmlTextReaderConstName(reader);
-            current_depth = xmlTextReaderDepth(reader);
+        current_type = xmlTextReaderNodeType(reader);
+        current_name = (const char *) xmlTextReaderConstName(reader);
+        current_depth = xmlTextReaderDepth(reader);
     } while (current_type != type ||
              strcmp(current_name, name) != 0 ||
              current_depth != depth);
@@ -420,6 +420,12 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
     str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_contiguous");
     if (str != NULL) {
         TYPE_SET_CONTIGUOUS(*tp);
+        free(str);
+    }
+
+    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed");
+    if (str != NULL) {
+        TYPE_SET_ASSUMED(*tp);
         free(str);
     }
 
@@ -1051,12 +1057,15 @@ static int
 input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 {
     char * name;
+    const char * tagName;
     char * typeId = NULL;
     SYMBOL s;
     ID id;
     TYPE_DESC tp = NULL;
     expv arg;
     expv args;
+    int ret = -1;
+    expv memberRef;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "functionCall"))
         return FALSE;
@@ -1067,8 +1076,21 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    if (!input_name_as_string(reader, &name))
+
+    tagName = (const char *)xmlTextReaderConstName(reader);
+    if (strcmp(tagName, "name") == 0) {
+        ret = input_name_as_string(reader, &name);
+    } else if (strcmp(tagName, "FmemberRef") == 0) {
+        name = NULL;
+        ret = input_FmemberRef(reader, ht, &memberRef);
+    }
+
+    if (!ret) {
         return FALSE;
+    }
+
+    // if (!input_name_as_string(reader, &name))
+    //     return FALSE;
 
     args = list0(LIST);
 
@@ -1087,16 +1109,23 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
             return FALSE;
     }
 
-    s = find_symbol(name);
-    SYM_TYPE(s) = TYPE_IS_INTRINSIC(tp) ? S_INTR : S_IDENT;
-    id = new_ident_desc(s);
-    PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
+    // Function is defined by a name
+    if(name) {
+        s = find_symbol(name);
+        SYM_TYPE(s) = TYPE_IS_INTRINSIC(tp) ? S_INTR : S_IDENT;
+        id = new_ident_desc(s);
+        PROC_EXT_ID(id) = new_external_id_for_external_decl(s, tp);
 
-    if (TYPE_IS_INTRINSIC(tp)) {
-        *v = compile_intrinsic_call(id, args);
+        if (TYPE_IS_INTRINSIC(tp)) {
+            *v = compile_intrinsic_call0(id, args, TRUE);
+        } else {
+            ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
+            *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
+            EXPV_TYPE(*v) = getTypeDesc(ht, typeId);
+        }
     } else {
-        ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
-        *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
+        // Function is a type-bound procedure defined by a FmemberRef
+        *v = list2(FUNCTION_CALL, memberRef, args);
         EXPV_TYPE(*v) = getTypeDesc(ht, typeId);
     }
 
@@ -1691,7 +1720,7 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
             TYPE_BASIC_TYPE(tp) = TYPE_FUNCTION;
         } else if (IS_SUBR(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_SUBR;
-        } else if (TYPE_IS_CLASS(tp)) {
+        } else if (TYPE_IS_CLASS(tp) || TYPE_IS_ASSUMED(tp)) {
             TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
         }
     }

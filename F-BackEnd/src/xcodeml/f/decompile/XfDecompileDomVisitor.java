@@ -51,6 +51,8 @@ XfDecompileDomVisitor {
     static final int PRIO_DEFINED_UNARY = 12;
     static final int PRIO_HIGH = 13;
 
+    static boolean in_interface = false;
+  
     static public String nodeToString(Node n) {
         String ret = null;
         if (n != null) {
@@ -452,6 +454,70 @@ XfDecompileDomVisitor {
         writer.writeToken(symbol.getSymbolName());
     }
 
+    private void _writeOptionalDecl(XfSymbol symbol,
+                                    XfTypeManagerForDom.TypeList typeList) {
+        /*
+         * Outputs the declaration of an optional symbol.
+         *
+         * If external symbol refers SUBROUTINE, or the type which is not able to be determined,
+         * output will be:
+         *
+         *   POINTER :: f
+         *   OPTIONAL :: f
+         *
+         * otherwise:
+         *
+         *   REAL, POINTER, OPTIONAL :: f
+         */
+
+
+        if (_isNameDefinedWithUseStmt(symbol.getSymbolName())) {
+            // do not output because it is defined in the xmpf_coarray_decl module.
+            return;
+        }
+
+        XmfWriter writer = _context.getWriter();
+
+        List<Node> attrList = new ArrayList<>();
+        attrList.addAll(typeList);
+
+        Node funcTypeNode = typeList.getFirst();
+
+        assert (XmDomUtil.getAttrBool(funcTypeNode, "is_optional"));
+
+        // boolean hasTypeSpecifier = false;
+
+        // String returnTypeName = XmDomUtil.getAttr(funcTypeNode, "return_type");
+        // XfType type = XfType.getTypeIdFromXcodemlTypeName(returnTypeName);
+        // if (type.isPrimitive()) {
+        //     if (type.hasFortranName()) {
+        //         writer.writeToken(type.fortranName());
+        //         hasTypeSpecifier = true;
+        //     }
+        // } else if (!type.hasXcodemlName()) {
+        //     XfTypeManagerForDom.TypeList returnTypeList = getTypeList(returnTypeName);
+        //     attrList.addAll(returnTypeList);
+        //     hasTypeSpecifier = _writeTopType(returnTypeList, true, false);
+        // }
+
+        // if (!attrList.isEmpty()) {
+        //     if (hasTypeSpecifier) {
+        //         _writeBasicTypeAttr(attrList.toArray(new Node[0]));
+        //     } else {
+        //         _writeBasicTypeAttrStatements(symbol.getSymbolName(), attrList.toArray(new Node[0]));
+        //     }
+        // }
+
+        // if (hasTypeSpecifier) {
+        //     writer.writeToken(",");
+        // } else {
+        //     writer.setupNewLine();
+        // }
+
+	writer.writeToken("OPTIONAL");
+        writer.writeToken("::");
+        writer.writeToken(symbol.getSymbolName());
+    }
 
     private void _writeBasicType(Node basicTypeNode,
                                  XfTypeManagerForDom.TypeList typeList) {
@@ -534,17 +600,20 @@ XfDecompileDomVisitor {
         XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
 
         if (!isDeclaration) {
             assert (!isClass);
             assert (!isProcedure);
+            assert (!isAssumed);
             isClass = false;
             isProcedure = false;
+            isAssumed = false;
         }
 
         String topTypeName = topTypeChoice.getNodeName();
-        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure) {
+        if ("FbasicType".equals(topTypeName) && !isClass && !isProcedure && !isAssumed) {
             _writeBasicType(topTypeChoice, typeList);
         } else if ("FbasicType".equals(topTypeName) &&
                 XmDomUtil.getAttr(topTypeChoice, "ref") == null &&
@@ -552,10 +621,12 @@ XfDecompileDomVisitor {
             /*
              * <FbasicType is_class="true"/> is `CLASS(*)`
              */
-            writer.writeToken("CLASS");
-            writer.writeToken("(");
-            writer.writeToken("*");
-            writer.writeToken(")");
+            writer.writeToken("CLASS(*)");
+        } else if ("FbasicType".equals(topTypeName) && isAssumed) {
+            /*
+             * <FbasicType is_assumed="true"/> is `TYPE(*)`
+             */
+            writer.writeToken("TYPE(*)");
         } else if (isProcedure) {
             writer.writeToken("PROCEDURE");
             writer.writeToken("(");
@@ -670,17 +741,34 @@ XfDecompileDomVisitor {
         }
 
         boolean isClass = XmDomUtil.getAttrBool(lowTypeChoice, "is_class");
+        boolean isAssumed = XmDomUtil.getAttrBool(lowTypeChoice, "is_assumed");
         boolean isProcedure = XmDomUtil.getAttrBool(lowTypeChoice, "is_procedure");
         boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
-
+	boolean isOptional = XmDomUtil.getAttrBool(topTypeChoice, "is_optional");
+	boolean isSubroutine = (typeId == XfType.VOID);
+      
         // ================
         // Top type element
         // ================
         String topTypeName = topTypeChoice.getNodeName();
         if (!isProcedure && "FfunctionType".equals(topTypeName)) {
             if (!isExternal) {
-                _writeFunctionSymbol(symbol, topTypeChoice);
-                _writeDeclAttr(topTypeChoice, lowTypeChoice);
+	      _writeFunctionSymbol(symbol, topTypeChoice);
+	      _writeDeclAttr(topTypeChoice, lowTypeChoice);
+	      if (isOptional && !in_interface) {
+		writer.setupNewLine();
+		_writeOptionalDecl(symbol, typeList);
+	      }
+	      return true;
+		// if (!isOptional || !isSubroutine){
+		//   _writeFunctionSymbol(symbol, topTypeChoice);
+		//   _writeDeclAttr(topTypeChoice, lowTypeChoice);
+		//   return true;
+		// }
+		// else {
+		//   _writeOptionalDecl(symbol, typeList);
+		//   return true;
+		// }
             } else {
                 _writeExternalDecl(symbol, typeList);
                 return true;
@@ -699,7 +787,7 @@ XfDecompileDomVisitor {
             Node basicTypeNode = lowTypeChoice;
             String refName = XmDomUtil.getAttr(basicTypeNode, "ref");
 
-            if (!isClass && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
+            if (!isClass && !isAssumed && !isProcedure && XfUtilForDom.isNullOrEmpty(refName)) {
                 XfType refTypeId = XfType.getTypeIdFromXcodemlTypeName(refName);
                 assert refTypeId != null;
             }
@@ -1007,6 +1095,27 @@ XfDecompileDomVisitor {
            return true;
         else
             return false;
+    }
+
+    /**
+     * Return the correct symbol name for operator() and assignment()
+     * @param name Symbol name.
+     * @return Updated symbol name if needed.
+     */
+    private String _specialSymbolName(String name) {
+      if (name.equals("**") ||
+          name.equals("*") ||
+          name.equals("/") ||
+          name.equals("+") ||
+          name.equals("-") ||
+          name.equals("//") ||
+          (name.startsWith(".") && name.endsWith(".")))
+      {
+        return  "OPERATOR(" + name + ")";
+      } else if (name.equals("=")) {
+        return "ASSIGNMENT(" + name + ")";
+      }
+      return name;
     }
 
     /**
@@ -2418,7 +2527,7 @@ XfDecompileDomVisitor {
                     writer.writeToken(type.fortranName());
                 } else {
                     XfTypeManagerForDom.TypeList typeList = getTypeList(typeId);
-                    _writeTopType(typeList, false);
+                    _writeTopType(typeList, false, false);
                 }
                 writer.writeToken(" ) ");
             }
@@ -3959,6 +4068,8 @@ XfDecompileDomVisitor {
         @Override public void enter(Node n) {
             _writeLineDirective(n);
 
+	    in_interface = true;
+	    
             XmfWriter writer = _context.getWriter();
 
             String interfaceName = XmDomUtil.getAttr(n, "name");
@@ -4022,6 +4133,26 @@ XfDecompileDomVisitor {
 
             writer.writeToken("END INTERFACE");
             writer.setupNewLine();
+
+	    in_interface = false;
+	    
+	    XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
+
+	    // The OPTIONAL attribute should be exceptionally handled.
+	    ArrayList<Node> childNodes = XmDomUtil.collectChildNodes(n);
+            for (Iterator<Node> iter = childNodes.iterator(); iter.hasNext(); ) {
+	      Node funcDeclNode = iter.next();
+	      Node functionNameNode = XmDomUtil.getElement(funcDeclNode, "name");
+	      Node typeChoice = typeManager.findType(functionNameNode);
+	      boolean isOptional = XmDomUtil.getAttrBool(typeChoice, "is_optional");
+	      if (isOptional){
+		writer.writeToken("OPTIONAL");
+		writer.writeToken("::");
+                writer.writeToken(XmDomUtil.getContentText(functionNameNode));
+		writer.setupNewLine();
+	      }
+	    }
+
         }
     }
 
@@ -4554,18 +4685,29 @@ XfDecompileDomVisitor {
 	    }
 
             // clause
-            Node clause = dir.getNextSibling();
-	    while (clause.getNodeType() != Node.ELEMENT_NODE) clause = clause.getNextSibling();
+            Node clauses = dir.getNextSibling();
+	    while (clauses.getNodeType() != Node.ELEMENT_NODE) clauses = clauses.getNextSibling();
 	    Node copyprivate_arg = null;
 
-            NodeList list0 = clause.getChildNodes();
+            NodeList list0 = clauses.getChildNodes();
             for (int i = 0; i < list0.getLength(); i++){
-            	Node childNode = list0.item(i);
-                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+            	Node clause = list0.item(i);
+                if (clause.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
 
-                String clauseName = XmDomUtil.getContentText(childNode);
+                String clauseName = XmDomUtil.getContentText(clause);
+		Node arg = clause.getFirstChild().getNextSibling();
+
+		if (clauseName.trim().equals("")){
+		  clause = clause.getFirstChild();
+		  while (clause.getNodeType() != Node.ELEMENT_NODE) clause = clause.getNextSibling();
+		  clauseName = XmDomUtil.getContentText(clause);
+		  arg = clause.getNextSibling();
+		}
+		
+		while (arg != null && arg.getNodeType() != Node.ELEMENT_NODE) arg = arg.getNextSibling();
+
                 String operator = "";
                 if (clauseName.equals("DATA_DEFAULT"))               clauseName = "DEFAULT";
                 else if (clauseName.equals("DATA_PRIVATE"))          clauseName = "PRIVATE";
@@ -4586,7 +4728,7 @@ XfDecompileDomVisitor {
                 else if (clauseName.equals("DATA_REDUCTION_EQV"))   {clauseName = "REDUCTION"; operator = ".eqv.";}
                 else if (clauseName.equals("DATA_REDUCTION_NEQV"))  {clauseName = "REDUCTION"; operator = ".neqv.";}
 		else if (clauseName.equals("DATA_COPYPRIVATE"))     {clauseName = "COPYPRIVATE"; copyprivateFlag = true;
-		  copyprivate_arg = childNode.getFirstChild().getNextSibling();
+		  copyprivate_arg = clause.getFirstChild().getNextSibling();
 		  while (copyprivate_arg.getNodeType() != Node.ELEMENT_NODE){
 		    copyprivate_arg = copyprivate_arg.getNextSibling();
 		  }
@@ -4596,10 +4738,29 @@ XfDecompileDomVisitor {
                 else if (clauseName.equals("DIR_NOWAIT"))           {clauseName = "NOWAIT";    nowaitFlag = true;}
                 else if (clauseName.equals("DIR_SCHEDULE"))          clauseName = "SCHEDULE";
 
-                if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
+
+		if (clauseName.equals("DEFAULT")){
+		  writer.writeToken(clauseName);
+		  writer.writeToken("(");
+		  String attr;
+		  if (arg.getNodeName().equals("list")){
+		    attr = XmDomUtil.getContentText(arg.getFirstChild());
+		  }
+		  else {
+		    attr = XmDomUtil.getContentText(arg);
+		  }
+		  if      (attr.equals("0") || attr.equals("DEFAULT_SHARED"))  attr = "SHARED";
+		  else if (attr.equals("1"))                                   attr = "";
+		  else if (attr.equals("2") || attr.equals("DEFAULT_PRIVATE")) attr = "PRIVATE";
+		  else if (attr.equals("DEFAULT_FIRSTPRIVATE"))                attr = "FIRSTPRIVATE";
+		  else if (attr.equals("DEFAULT_NONE"))                        attr = "NONE";
+		  writer.writeToken(attr);
+		  writer.writeToken(")");
+		}
+		else if (!clauseName.equals("NOWAIT") && !clauseName.equals("COPYPRIVATE")){
 		  writer.writeToken(clauseName);
 
-		  Node arg = childNode.getFirstChild().getNextSibling();
+		  //Node arg = clause.getFirstChild().getNextSibling();
 		  while (arg.getNodeType() != Node.ELEMENT_NODE) arg = arg.getNextSibling();
 
 		  if (arg != null){
@@ -4608,25 +4769,28 @@ XfDecompileDomVisitor {
 
 		    NodeList varList = arg.getChildNodes();
 		    int j = 0;
-		    while (varList.item(j).getNodeType() != Node.ELEMENT_NODE) j++;
+		    while (varList.item(j) != null && varList.item(j).getNodeType() != Node.ELEMENT_NODE) j++;
 
 		    if (clauseName.equals("SCHEDULE")){
 		      String sched = XmDomUtil.getContentText(varList.item(j));
-		      if (sched.equals("0")) sched = "";
-		      else if (sched.equals("1")) sched = "STATIC";
-		      else if (sched.equals("2")) sched = "DYNAMIC";
-		      else if (sched.equals("3")) sched = "GUIDED";
-		      else if (sched.equals("4")) sched = "RUNTIME";
-		      else if (sched.equals("5")) sched = "AFFINITY";
+		      if      (sched.equals("0"))                                   sched = "";
+		      else if (sched.equals("1") || sched.equals("SCHED_STATIC"))   sched = "STATIC";
+		      else if (sched.equals("2") || sched.equals("SCHED_DYNAMIC"))  sched = "DYNAMIC";
+		      else if (sched.equals("3") || sched.equals("SCHED_GUIDED"))   sched = "GUIDED";
+		      else if (sched.equals("4") || sched.equals("SCHED_RUNTIME"))  sched = "RUNTIME";
+		      else if (sched.equals("5") || sched.equals("SCHED_AFFINITY")) sched = "AFFINITY";
 		      writer.writeToken(sched);
 		    }
-		    else if (clauseName.equals("DEFAULT")){
-		      String attr = XmDomUtil.getContentText(varList.item(j));
-		      if (attr.equals("0")) attr = "SHARED";
-		      else if (attr.equals("1")) attr = "";
-		      else if (attr.equals("2")) attr = "PRIVATE";
-		      writer.writeToken(attr);
-		    }
+		    // else if (clauseName.equals("DEFAULT")){
+		    //   String attr = XmDomUtil.getContentText(varList.item(j));
+		    //   System.out.println("attr = " + attr);
+		    //   if      (attr.equals("0") || attr.equals("DEFAULT_SHARED"))  attr = "SHARED";
+		    //   else if (attr.equals("1"))                                   attr = "";
+		    //   else if (attr.equals("2") || attr.equals("DEFAULT_PRIVATE")) attr = "PRIVATE";
+		    //   else if (attr.equals("DEFAULT_FIRSTPRIVATE"))                attr = "FIRSTPRIVATE";
+		    //   else if (attr.equals("DEFAULT_NONE"))                        attr = "NONE";
+		    //   writer.writeToken(attr);
+		    // }
 		    else {
 		      invokeEnter(varList.item(j));
 		    }
@@ -4649,19 +4813,30 @@ XfDecompileDomVisitor {
             writer.setupNewLine();
 
             // body
-            Node body = clause.getNextSibling();
+            Node body = clauses.getNextSibling();
 	    while (body.getNodeType() != Node.ELEMENT_NODE) body = body.getNextSibling();
 
             writer.incrementIndentLevel();
 
-            NodeList list2 = body.getChildNodes();
-            for (int i = 0; i < list2.getLength(); i++){
-                Node childNode = list2.item(i);
-                if (childNode.getNodeType() != Node.ELEMENT_NODE) {
-                    continue;
-                }
-                invokeEnter(childNode);
-            }
+	    if (body.getNodeName().equals("list")){
+	    
+	      NodeList list2 = body.getChildNodes();
+	      for (int i = 0; i < list2.getLength(); i++){
+		Node childNode = list2.item(i);
+		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
+		  continue;
+		}
+		// else if (childNode.getNodeName().equals("list")){
+		//   childNode = childNode.getFirstChild();
+		//   while (childNode.getNodeType() != Node.ELEMENT_NODE) childNode = childNode.getNextSibling();
+		// }
+		invokeEnter(childNode);
+	      }
+
+	    }
+	    else {
+	      invokeEnter(body);
+	    }
 
             writer.decrementIndentLevel();
 
@@ -5204,6 +5379,7 @@ XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
+	    writer.writeWhiteSpace();
             _invokeChildEnter(n);
             writer.setupNewLine();
         }
@@ -5228,7 +5404,7 @@ XfDecompileDomVisitor {
             } else if (XfUtilForDom.isNullOrEmpty(message) == false) {
                 writer.writeLiteralString(message);
             }
-
+	    writer.writeWhiteSpace();
             _invokeChildEnter(n);
             writer.setupNewLine();
         }
@@ -5393,6 +5569,10 @@ XfDecompileDomVisitor {
             typeManager.putAliasTypeName(typeId, structTypeName);
 
             XmfWriter writer = _context.getWriter();
+
+            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
+            boolean has_bind = !XfUtilForDom.isNullOrEmpty(bind);
+
             writer.writeToken("TYPE");
 
             if (XmDomUtil.getAttrBool(structTypeNode, "is_abstract")) {
@@ -5411,17 +5591,27 @@ XfDecompileDomVisitor {
             }
 
             if (_isUnderModuleDef()) {
+                /* Current workaround for gfortran. The compiler currently
+                 * does not accept private keyword alongside BIND(C).
+                 * Therefore, it is removed */
                 if (XmDomUtil.getAttrBool(structTypeNode, "is_private")) {
-                    writer.writeToken(", PRIVATE");
+                    if(!has_bind) {
+                        writer.writeToken(", PRIVATE");
+                    } else {
+                        System.err.println("warning: PRIVATE attribute removed "
+                            + "from TYPE " + structTypeName
+                            + " due to gfortran limitations.");
+                    }
                 } else if (XmDomUtil.getAttrBool(structTypeNode, "is_public")) {
                     writer.writeToken(", PUBLIC");
-                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")) {
+                } else if (XmDomUtil.getAttrBool(structTypeNode, "is_protected")
+                    && !has_bind)
+                {
                     writer.writeToken(", PROTECTED");
                 }
             }
 
-            String bind = XmDomUtil.getAttr(structTypeNode, "bind");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false) {
+            if (has_bind) {
                 writer.writeToken(", ");
                 writer.writeToken("BIND( " + bind.toUpperCase() + " )");
             }
@@ -5963,6 +6153,13 @@ XfDecompileDomVisitor {
                 invokeEnter(XmDomUtil.getElement(n, "lowerBound"));
 
                 writer.writeToken(":");
+
+		Node step = XmDomUtil.getElement(n, "step");
+		if (step != null) {
+		  writer.writeToken(":");
+		  invokeEnter(step);
+		}
+		
                 return;
             }
 
@@ -7585,7 +7782,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(publicSymbol) || symbolsFromOtherModule.contains(publicSymbol)) {
                 writer.writeToken("PUBLIC");
                 writer.writeToken("::");
-                writer.writeToken(publicSymbol);
+                writer.writeToken(_specialSymbolName(publicSymbol));
                 writer.setupNewLine();
             }
         }
@@ -7599,7 +7796,7 @@ XfDecompileDomVisitor {
             if (!declaredSymbols.contains(privateSymbol) || symbolsFromOtherModule.contains(privateSymbol)) {
                 writer.writeToken("PRIVATE");
                 writer.writeToken("::");
-                writer.writeToken(privateSymbol);
+                writer.writeToken(_specialSymbolName(privateSymbol));
                 writer.setupNewLine();
             }
         }
