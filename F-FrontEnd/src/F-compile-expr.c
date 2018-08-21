@@ -1205,6 +1205,11 @@ compile_ident_expression(expr x)
             if(ID_IS_OFMODULE(id) == FALSE
                 && EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) 
             {
+	      TYPE_DESC tp0 = ID_TYPE(id);
+	      TYPE_DESC tp1 = EXPV_TYPE(VAR_INIT_VALUE(id));
+	      if (tp0 == NULL || (TYPE_BASIC_TYPE(tp0) == TYPE_BASIC_TYPE(tp1) &&
+				  TYPE_KIND(tp0) == TYPE_KIND(tp1))){
+	      
                 ret = VAR_INIT_VALUE(id);
                 // Keep the kind information of the type (xcodeml-tools#42)
                 if(ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL
@@ -1213,6 +1218,8 @@ compile_ident_expression(expr x)
                     TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
                 }
                 return ret;
+		
+	      }
             } else if(EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
                 // Only constant from external module can be replaced safely.
                 if(EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT
