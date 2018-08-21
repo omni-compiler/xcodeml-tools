@@ -6738,14 +6738,19 @@ compile_scene_range_expression_list(expr scene_range_expression_list)
 expv
 compile_set_expr(expr x) {
     expv ret = NULL;
+    expv copy; 
 
     if (EXPR_CODE(x) == F_SET_EXPR) {
         ret = compile_expression(EXPR_ARG2(x));
         if (ret != NULL) {
             char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(x)));
-            if (keyword != NULL && *keyword != '\0') {
-                printf("%p\n", &ret);
-                EXPV_KWOPT_NAME(ret) = (const char *)strdup(keyword);
+            if (keyword != NULL && *keyword != '\0') {   
+                /* allocate a copy of the expv element as it might be shared 
+                   and not all instance must be assigned the named-arg value */         
+                copy = XMALLOC(expv, sizeof(*copy));
+                *copy = *ret;
+                EXPV_KWOPT_NAME(copy) = (const char *) strdup(keyword);
+                return copy;
             }
         }
     } else {
