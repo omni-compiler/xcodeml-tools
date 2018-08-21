@@ -1059,7 +1059,8 @@ declare_function(ID id)
                     }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
-                    if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
+		    if (!IS_SUBR(tp) &&
+			(!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL))) {
                         ID_TYPE(id) = function_type(tp);
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                         if(!TYPE_IS_PROCEDURE(tp)) { // undefined procedure
@@ -1088,7 +1089,10 @@ declare_function(ID id)
             }
 #endif
             if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
+	      //ID_TYPE(id) = function_type(ID_TYPE(id));
+	      TYPE_DESC tp = function_type(ID_TYPE(id));
+	      TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+	      ID_TYPE(id) = tp;
             }
             PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
