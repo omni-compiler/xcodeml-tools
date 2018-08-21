@@ -838,6 +838,7 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
             outx_print(" extends=\"%s\"", getTypeID(TYPE_PARENT_TYPE(tp)));
         }
         outx_true(TYPE_IS_CLASS(tp),            "is_class");
+        outx_true(TYPE_IS_ASSUMED(tp),          "is_assumed");
 
         if (IS_STRUCT_TYPE(tp)) {
             /*
@@ -4554,10 +4555,10 @@ outx_arrayType(int l, TYPE_DESC tp)
 
 
 /**
- * output the type of CLASS(*)
+ * output the type of CLASS(*) and TYPE(*)
  */
 static void
-outx_unlimitedClass(int l, TYPE_DESC tp)
+outx_unlimited_class_or_assumed_type(int l, TYPE_DESC tp)
 {
     outx_typeAttrs(l, tp ,"FbasicType", TOPT_CLOSE);
 }
@@ -4657,6 +4658,8 @@ outx_functionType(int l, TYPE_DESC tp)
             outx_true(TRUE, "is_external");
         }
 
+	outx_true(TYPE_IS_OPTIONAL(tp), "is_optional");
+	
         outx_true(TYPE_IS_PUBLIC(tp), "is_public");
         outx_true(TYPE_IS_PRIVATE(tp), "is_private");
         outx_true(TYPE_IS_PROTECTED(tp), "is_protected");
@@ -4866,8 +4869,8 @@ outx_type(int l, TYPE_DESC tp)
         outx_arrayType(l, tp);
 
     } else if(IS_STRUCT_TYPE(tp) && TYPE_REF(tp) == NULL) {
-        if (TYPE_IS_CLASS(tp)) {
-            outx_unlimitedClass(l, tp);
+        if (TYPE_IS_CLASS(tp) || TYPE_IS_ASSUMED(tp)) {
+            outx_unlimited_class_or_assumed_type(l, tp);
         } else {
             outx_structType(l, tp);
         }
@@ -5271,6 +5274,7 @@ emit_decl(int l, ID id)
             FUNCTION_TYPE_IS_INTERFACE(ID_TYPE(id)) &&
             CRT_FUNCEP != PROC_EXT_ID(id)) {
             outx_function_as_interfaceDecl(l, PROC_EXT_ID(id));
+            //outx_varDecl(l, id);
             break;
         }
 
@@ -5401,6 +5405,10 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
 
             if (hasResultVar == TRUE && functionName != NULL &&
                 strcasecmp(functionName, SYM_NAME(ID_SYM(id))) == 0) {
+                continue;
+            }
+
+            if(ID_IS_OFMODULE(id) == TRUE && ID_MODULE_NAME(id) != modname){
                 continue;
             }
 
@@ -5632,6 +5640,10 @@ outx_innerDefinitions(int l, EXT_ID extids, SYMBOL parentName, int asDefOrDecl)
     EXT_ID ep;
 
     FOREACH_EXT_ID(ep, extids) {
+        if (EXT_TAG(ep) == STG_PRAGMA){
+	    outx_pragmaStatement(l, ep->info.pragma_info.v);
+	    continue;
+	}
         if (EXT_TAG(ep) != STG_EXT)
             continue;
         if (EXT_PROC_IS_ENTRY(ep) == TRUE)

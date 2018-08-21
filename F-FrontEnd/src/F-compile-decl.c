@@ -1059,7 +1059,8 @@ declare_function(ID id)
                     }
                     PROC_CLASS(id) = P_UNDEFINEDPROC;
                 } else {
-                    if (!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL)) {
+		    if (!IS_SUBR(tp) &&
+			(!TYPE_IS_PROCEDURE(tp) || (TYPE_IS_PROCEDURE(tp) && TYPE_REF(tp) != NULL))) {
                         ID_TYPE(id) = function_type(tp);
                         TYPE_UNSET_SAVE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
                         if(!TYPE_IS_PROCEDURE(tp)) { // undefined procedure
@@ -1088,7 +1089,10 @@ declare_function(ID id)
             }
 #endif
             if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-                ID_TYPE(id) = function_type(ID_TYPE(id));
+	      //ID_TYPE(id) = function_type(ID_TYPE(id));
+	      TYPE_DESC tp = function_type(ID_TYPE(id));
+	      TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+	      ID_TYPE(id) = tp;
             }
             PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
@@ -2414,6 +2418,16 @@ compile_derived_type(expr x, int allow_predecl)
         }
 
         is_class = TRUE;
+    } else if (EXPR_CODE(x) == F08_ASSUMED_TYPE) {
+        x = EXPR_ARG1(x);
+        if (x == NULL) {
+            /*
+             * for `TYPE(*)`
+             */
+            tp = struct_type(NULL);
+            TYPE_SET_ASSUMED(tp);
+            return tp;
+        }
     }
 
     if (EXPR_CODE(x) == IDENT) {
@@ -2758,11 +2772,11 @@ compile_type(expr x, int allow_predecl)
 {
     if (x == NULL) {
         return NULL;
-    } else if (EXPR_CODE(x) == IDENT ||
-        EXPR_CODE(x) == F03_PARAMETERIZED_TYPE ||
-        EXPR_CODE(x) == F03_CLASS) {
+    } else if (EXPR_CODE(x) == IDENT 
+        || EXPR_CODE(x) == F03_PARAMETERIZED_TYPE 
+        || EXPR_CODE(x) == F03_CLASS || EXPR_CODE(x) == F08_ASSUMED_TYPE) 
+    {
         return compile_derived_type(x, allow_predecl);
-
     } else {
         return compile_basic_type(x);
     }
@@ -2787,9 +2801,9 @@ compile_IMPLICIT_decl(expr type,expr l)
     }
     if (EXPR_CODE (type) == IDENT ||
         EXPR_CODE (type) == F03_PARAMETERIZED_TYPE ||
+        EXPR_CODE (type) == F08_ASSUMED_TYPE ||
         EXPR_CODE (type) == F03_CLASS) {
         tp = compile_derived_type(type, FALSE);
-
     } else {
         ty = EXPR_ARG1 (type);
         if (EXPR_CODE (ty) != F_TYPE_NODE) {
@@ -3770,7 +3784,7 @@ compile_type_decl(expr typeExpr, TYPE_DESC baseTp,
          * Create new TYPE_DESC, ALWAYS.  Since we need it. Otherwise
          * identifier-origin attribute are corrupted.
          */
-        if (!TYPE_IS_CLASS(tp)) {
+        if (!TYPE_IS_CLASS(tp) && !TYPE_IS_ASSUMED(tp)) {
             tp = wrap_type(tp);
         }
 

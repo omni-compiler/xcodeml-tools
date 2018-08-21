@@ -13,3 +13,4 @@ README
     $ F_Front a.f90 -o a.xml
     $ F_Back  a.xml
 
+[![Build Status](https://travis-ci.org/omni-compiler/xcodeml-tools.svg?branch=master)](https://travis-ci.org/omni-compiler/xcodeml-tools)
