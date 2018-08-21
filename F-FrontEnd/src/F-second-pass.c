@@ -705,43 +705,5 @@ int second_pass()
     }
   }
 
-  sp_check_module_procedure();
-
   return second_pass_clean();
-}
-
-void sp_check_module_procedure()
-{
-  EXT_ID ep;
-  EXT_ID eep;
-  EXT_ID eeep;
-  SYMBOL parentName;
-  EXT_ID extids;
-  FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
-    FOREACH_EXT_ID(eep, EXT_PROC_INTERFACES(ep)) {
-      parentName = EXT_SYM(eep);
-      extids = EXT_PROC_INTR_DEF_EXT_IDS(eep);
-      FOREACH_EXT_ID(eeep, extids) {
-        if (parentName != NULL) {
-          gen_proc_t gp = find_generic_procedure(SYM_NAME(parentName));
-          if (gp != NULL) {
-            HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
-            if (tPtr != NULL) {
-                HashEntry *hPtr;
-                HashSearch sCtx;
-                mod_proc_t mp;
-                FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
-                    mp = (mod_proc_t)GetHashValue(hPtr);
-                    if(MOD_PROC_TYPE(mp) == NULL) {
-                      error("Procedure '%s' in generic interface '%s' is neither function nor subroutine", SYM_NAME(parentName), MOD_PROC_NAME(mp));
-                    }   
-                }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  
 }
