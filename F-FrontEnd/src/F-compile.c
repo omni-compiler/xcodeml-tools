@@ -7426,6 +7426,7 @@ compile_CALL_subroutine_statement(expr x)
         }
         TYPE_SET_IMPLICIT(tp);
         TYPE_SET_USED_EXPLICIT(tp);
+	TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
         ID_TYPE(id) = tp;
 
         if(PROC_EXT_ID(id)) {
