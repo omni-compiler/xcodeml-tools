@@ -5,6 +5,7 @@
 #include "F-front.h"
 #include "F-output-xcodeml.h"
 #include "module-manager.h"
+#include <limits.h>
 
 #define CHAR_BUF_SIZE 65536
 
@@ -5109,16 +5110,24 @@ qsort_compare_id(const void *v1, const void *v2)
 {
     int o1 = ID_ORDER(*(ID*)v1);
     int o2 = ID_ORDER(*(ID*)v2);
-
     return (o1 == o2) ? 0 : ((o1 < o2) ? -1 : 1);
 }
 
+static int
+qsort_compare_id_by_line(const void *v1, const void *v2)
+{
+    int o1 = ID_LINE(*(ID*)v1) != NULL ? ID_LINE_NO(*(ID*)v1) : 0;
+    int o2 = ID_LINE(*(ID*)v2) != NULL ? ID_LINE_NO(*(ID*)v2) : 0;
+    return (o1 == o2) ? qsort_compare_id(v1, v2) : ((o1 < o2) ? -1 : 1);
+}
 
 /**
  * sort id by order value
+ *
+ * by_order: if true order by ID_ORDER value otherwise by ID_LINE
  */
 ID*
-genSortedIDs(ID ids, int *retnIDs)
+genSortedIDs(ID ids, int *retnIDs, int by_order)
 {
     ID id, *sortedIDs;
     int i = 0, nIDs = 0;
@@ -5136,8 +5145,11 @@ genSortedIDs(ID ids, int *retnIDs)
 
     FOREACH_ID(id, ids)
         sortedIDs[i++] = id;
-
-    qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id);
+    if(by_order) {
+        qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id);
+    } else {
+        qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id_by_line);
+    }
     *retnIDs = nIDs;
 
     return sortedIDs;
@@ -5315,7 +5327,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
     int i, nIDs;
     SYMBOL modname = NULL;
 
-    ids = genSortedIDs(id_list, &nIDs);
+    ids = genSortedIDs(id_list, &nIDs, TRUE);
 
     if (ids) {
         /*
@@ -5384,6 +5396,9 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
             }
 
         }
+
+        // order by line_no
+        ids = genSortedIDs(id_list, &nIDs, FALSE);
 
         /*
          * varDecl except structDecl, namelistDecl
