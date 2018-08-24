@@ -494,13 +494,17 @@ getXmlEscapedStr(const char *s)
         case '\'': xstrcat(&px, "&apos;"); break;
         /* \002 used as quote in F95-lexer.c */
         case '\002':  xstrcat(&px, "&quot;"); break;
-        case '\r': xstrcat(&px, "\\r"); break;
-        case '\n': xstrcat(&px, "\\n"); break;
-        case '\t': xstrcat(&px, "\\t"); break;
+        case '\a': xstrcat(&px, "\\a"); break; // alert
+        case '\f': xstrcat(&px, "\\f"); break; // formfeed
+        case '\r': xstrcat(&px, "\\r"); break; // carriage return
+        case '\n': xstrcat(&px, "\\n"); break; // new line
+        case '\t': xstrcat(&px, "\\t"); break; // horizontal tab
+        case '\b': xstrcat(&px, "\\b"); break; // backspace
+        case '\v': xstrcat(&px, "\\v"); break; // vertical tab
         default:
             if((c >= 0 && c <= 0x1F) || c == 0x7F) {
                 char buf[16];
-                sprintf(buf, "&#x%x;", (unsigned int)(c & 0xFF));
+                sprintf(buf, "&#%x;", (unsigned int)(c & 0xFF));
                 xstrcat(&px, buf);
             } else {
                 *px++ = c;
