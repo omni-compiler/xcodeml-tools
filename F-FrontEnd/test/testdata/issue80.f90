@@ -8,7 +8,3 @@ module mod1
   end subroutine sub1
 end module mod1
 
-
-
-
-
