@@ -2454,8 +2454,7 @@ compile_derived_type(expr x, int allow_predecl)
                 return NULL;
             }
         } else {
-            error_at_node(x, "type %s not found",
-                          SYM_NAME(sym));
+            error_at_node(x, "type %s not found", SYM_NAME(sym));
             return NULL;
         }
     } else if (EXPR_CODE(x) == IDENT &&
