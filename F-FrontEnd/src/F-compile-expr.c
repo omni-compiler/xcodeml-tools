@@ -2991,17 +2991,6 @@ compile_struct_constructor_with_components(const ID struct_id,
         is_first_arg = FALSE;
     }
 
-    /*
-     * check all members are initialized
-     */
-    FOREACH_ID(ip, members) {
-        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && (
-                !VAR_INIT_VALUE(ip) &&
-                !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) {
-            error("member %s is not initialized", ID_NAME(ip));
-        }
-    }
-
     if (TYPE_REF(stp)) {
         tp = stp;
     } else {
