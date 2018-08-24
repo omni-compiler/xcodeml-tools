@@ -2883,17 +2883,18 @@ compile_struct_constructor_with_components(const ID struct_id,
     FOR_ITEMS_IN_LIST(lp, args) {
         expr arg = LIST_ITEM(lp);
         expv v = compile_expression(arg);
-        assert(EXPV_TYPE(v) != NULL);
 
-        if (type_is_parent_type(EXPV_TYPE(v), this)) {
+        if (TYPE_BASIC_TYPE(EXPV_TYPE(v)) == TYPE_STRUCT 
+            && type_is_parent_type(EXPV_TYPE(v), this)) 
+        {
             TYPE_DESC stp = get_bottom_ref_type(EXPV_TYPE(v));
             if ((EXPV_CODE(arg) != F_SET_EXPR && is_first_arg) ||
                 (EXPV_CODE(arg) == F_SET_EXPR && ID_SYM(TYPE_TAGNAME(stp)) == EXPR_SYM(EXPR_ARG1(arg)))) {
-                for (;stp != NULL; stp = TYPE_PARENT(stp)?TYPE_PARENT_TYPE(stp):NULL) {
+                for (;stp != NULL; stp = TYPE_PARENT(stp) ? TYPE_PARENT_TYPE(stp) : NULL) {
                     ID pmem;
                     FOREACH_MEMBER(pmem, stp) {
                         if (find_ident_head(ID_SYM(pmem), used) != NULL) {
-                            error("member'%s' is already specified", ID_NAME(pmem));
+                            error("member '%s' is already specified", ID_NAME(pmem));
                             return NULL;
                         }
                         if ((match = find_ident_head(ID_SYM(pmem), members)) == NULL) {
@@ -2989,6 +2990,18 @@ compile_struct_constructor_with_components(const ID struct_id,
         list_put_last(components, v);
 
         is_first_arg = FALSE;
+    }
+
+    /*
+     * check all members are initialized
+     */
+    FOREACH_ID(ip, members) {
+        if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC && (
+                !VAR_INIT_VALUE(ip) &&
+                !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) 
+        {
+            error("member %s is not initialized", ID_NAME(ip));
+        }
     }
 
     if (TYPE_REF(stp)) {
