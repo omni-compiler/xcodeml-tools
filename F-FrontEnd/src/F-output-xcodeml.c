@@ -5160,6 +5160,46 @@ genSortedIDs(ID ids, int *retnIDs, int by_order)
 }
 
 
+static int
+qsort_compare_ep_by_line(const void *v1, const void *v2)
+{
+  int o1 = GET_EXT_LINE(*(EXT_ID*)v1) != NULL ? GET_EXT_LINE(*(EXT_ID*)v1)->ln_no : 0;
+  int o2 = GET_EXT_LINE(*(EXT_ID*)v2) != NULL ? GET_EXT_LINE(*(EXT_ID*)v2)->ln_no : 0;
+  return (o1 == o2) ? 0 : ((o1 < o2) ? -1 : 1);
+}
+
+
+/**
+ * sort ep by ID_LINE
+ */
+EXT_ID*
+genSortedEPs(int *retnEPs)
+{
+    EXT_ID ep, *sortedEPs;
+    int i = 0, nEPs = 0;
+
+    if (EXTERNAL_SYMBOLS == NULL)
+      return NULL;
+
+    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS)
+      ++nEPs;
+
+    if (nEPs == 0)
+        return NULL;
+
+    sortedEPs = (EXT_ID *)malloc(nEPs * sizeof(EXT_ID));
+
+    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS)
+      sortedEPs[i++] = ep;
+
+    qsort((void*)sortedEPs, nEPs, sizeof(EXT_ID), qsort_compare_ep_by_line);
+    
+    *retnEPs = nEPs;
+
+    return sortedEPs;
+}
+
+
 #define IS_NO_PROC_OR_DECLARED_PROC(id) \
     ((ID_CLASS(id) != CL_PROC || \
       (PROC_CLASS(id) == P_EXTERNAL && \
@@ -6090,10 +6130,15 @@ static void
 outx_globalDeclarations(int l)
 {
     const int l1 = l + 1;
-    EXT_ID ep;
+    EXT_ID ep, *eps;
+    int nEPs;
 
+    eps = genSortedEPs(&nEPs);
+    
     outx_tag(l, "globalDeclarations");
-    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
+    //FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
+    for (int i = 0; i < nEPs; i++){
+        ep = eps[i];
         switch(EXT_TAG(ep)) {
         case STG_COMMON:
             outx_blockDataDefinition(l1, ep);
