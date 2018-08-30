@@ -157,9 +157,9 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
       kindV = NULL;
       typeNotMatch = 0;
       nIntrArgs = INTR_N_ARGS(ep);
+      
       int mandatoryArgsFlag = INTR_MANDATORY_ARGS_FLAG(ep);
       isVarArgs = (INTR_N_ARGS(ep) < 0);
-
         /* /\* Check a number of arguments. *\/ */
         /* if (INTR_N_ARGS(ep) < 0 || */
         /*     INTR_N_ARGS(ep) == nArgs) { */
@@ -251,12 +251,11 @@ compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch) {
 					  INTR_ARG_TYPE(ep)[0])) == 0) {
 	    // matched
 	    mandatoryArgsFlag &= ~(1<<i);
-
-	    if (INTR_ARG_NAME(ep) && INTR_ARG_NAME(ep)[i] &&
-		strcmp(INTR_ARG_NAME(ep)[i], "kind") == 0){
-	      kindV = a;
+	    if (isVarArgs == 0 && INTR_ARG_NAME(ep) && INTR_ARG_NAME(ep)[i] &&
+            strcmp(INTR_ARG_NAME(ep)[i], "kind") == 0)
+        {
+	        kindV = a;
 	    }
-
 	  }
 	  else {
 	    /* Type mismatch. */

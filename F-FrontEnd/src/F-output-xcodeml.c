@@ -5,6 +5,7 @@
 #include "F-front.h"
 #include "F-output-xcodeml.h"
 #include "module-manager.h"
+#include <limits.h>
 
 #define CHAR_BUF_SIZE 65536
 
@@ -493,13 +494,17 @@ getXmlEscapedStr(const char *s)
         case '\'': xstrcat(&px, "&apos;"); break;
         /* \002 used as quote in F95-lexer.c */
         case '\002':  xstrcat(&px, "&quot;"); break;
-        case '\r': xstrcat(&px, "\\r"); break;
-        case '\n': xstrcat(&px, "\\n"); break;
-        case '\t': xstrcat(&px, "\\t"); break;
+        case '\a': xstrcat(&px, "\\a"); break; // alert
+        case '\f': xstrcat(&px, "\\f"); break; // formfeed
+        case '\r': xstrcat(&px, "\\r"); break; // carriage return
+        case '\n': xstrcat(&px, "\\n"); break; // new line
+        case '\t': xstrcat(&px, "\\t"); break; // horizontal tab
+        case '\b': xstrcat(&px, "\\b"); break; // backspace
+        case '\v': xstrcat(&px, "\\v"); break; // vertical tab
         default:
             if((c >= 0 && c <= 0x1F) || c == 0x7F) {
                 char buf[16];
-                sprintf(buf, "&#x%x;", (unsigned int)(c & 0xFF));
+                sprintf(buf, "&#%x;", (unsigned int)(c & 0xFF));
                 xstrcat(&px, buf);
             } else {
                 *px++ = c;
@@ -801,6 +806,9 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
         outx_printi(l,"<%s type=\"%s\"", tag, "FnumericAll");
     } else {
         outx_printi(l,"<%s type=\"%s\"", tag, getTypeID(tp));
+    }
+    if(IS_STRUCT_TYPE(tp) && tp->imported_id) {
+        outx_print(" imported_id=\"%s\"", tp->imported_id);
     }
 
     if((options & TOPT_TYPEONLY) == 0) {
@@ -5106,16 +5114,24 @@ qsort_compare_id(const void *v1, const void *v2)
 {
     int o1 = ID_ORDER(*(ID*)v1);
     int o2 = ID_ORDER(*(ID*)v2);
-
     return (o1 == o2) ? 0 : ((o1 < o2) ? -1 : 1);
 }
 
+static int
+qsort_compare_id_by_line(const void *v1, const void *v2)
+{
+    int o1 = ID_LINE(*(ID*)v1) != NULL ? ID_LINE_NO(*(ID*)v1) : 0;
+    int o2 = ID_LINE(*(ID*)v2) != NULL ? ID_LINE_NO(*(ID*)v2) : 0;
+    return (o1 == o2) ? qsort_compare_id(v1, v2) : ((o1 < o2) ? -1 : 1);
+}
 
 /**
  * sort id by order value
+ *
+ * by_order: if true order by ID_ORDER value otherwise by ID_LINE
  */
 ID*
-genSortedIDs(ID ids, int *retnIDs)
+genSortedIDs(ID ids, int *retnIDs, int by_order)
 {
     ID id, *sortedIDs;
     int i = 0, nIDs = 0;
@@ -5133,11 +5149,54 @@ genSortedIDs(ID ids, int *retnIDs)
 
     FOREACH_ID(id, ids)
         sortedIDs[i++] = id;
-
-    qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id);
+    if(by_order) {
+        qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id);
+    } else {
+        qsort((void*)sortedIDs, nIDs, sizeof(ID), qsort_compare_id_by_line);
+    }
     *retnIDs = nIDs;
 
     return sortedIDs;
+}
+
+
+static int
+qsort_compare_ep_by_line(const void *v1, const void *v2)
+{
+  int o1 = GET_EXT_LINE(*(EXT_ID*)v1) != NULL ? GET_EXT_LINE(*(EXT_ID*)v1)->ln_no : 0;
+  int o2 = GET_EXT_LINE(*(EXT_ID*)v2) != NULL ? GET_EXT_LINE(*(EXT_ID*)v2)->ln_no : 0;
+  return (o1 == o2) ? 0 : ((o1 < o2) ? -1 : 1);
+}
+
+
+/**
+ * sort ep by ID_LINE
+ */
+EXT_ID*
+genSortedEPs(int *retnEPs)
+{
+    EXT_ID ep, *sortedEPs;
+    int i = 0, nEPs = 0;
+
+    if (EXTERNAL_SYMBOLS == NULL)
+      return NULL;
+
+    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS)
+      ++nEPs;
+
+    if (nEPs == 0)
+        return NULL;
+
+    sortedEPs = (EXT_ID *)malloc(nEPs * sizeof(EXT_ID));
+
+    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS)
+      sortedEPs[i++] = ep;
+
+    qsort((void*)sortedEPs, nEPs, sizeof(EXT_ID), qsort_compare_ep_by_line);
+    
+    *retnEPs = nEPs;
+
+    return sortedEPs;
 }
 
 
@@ -5312,7 +5371,7 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
     int i, nIDs;
     SYMBOL modname = NULL;
 
-    ids = genSortedIDs(id_list, &nIDs);
+    ids = genSortedIDs(id_list, &nIDs, TRUE);
 
     if (ids) {
         /*
@@ -5381,6 +5440,9 @@ outx_id_declarations(int l, ID id_list, int hasResultVar, const char * functionN
             }
 
         }
+
+        // order by line_no
+        ids = genSortedIDs(id_list, &nIDs, FALSE);
 
         /*
          * varDecl except structDecl, namelistDecl
@@ -6068,10 +6130,15 @@ static void
 outx_globalDeclarations(int l)
 {
     const int l1 = l + 1;
-    EXT_ID ep;
+    EXT_ID ep, *eps;
+    int nEPs;
 
+    eps = genSortedEPs(&nEPs);
+    
     outx_tag(l, "globalDeclarations");
-    FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
+    //FOREACH_EXT_ID(ep, EXTERNAL_SYMBOLS) {
+    for (int i = 0; i < nEPs; i++){
+        ep = eps[i];
         switch(EXT_TAG(ep)) {
         case STG_COMMON:
             outx_blockDataDefinition(l1, ep);

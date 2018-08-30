@@ -5661,7 +5661,7 @@ import_module_id(ID mid,
                  TYPE_DESC *sthead, TYPE_DESC *sttail,
                  SYMBOL use_name, int need_wrap_type, int fromParentModule)
 {
-    ID existed_id, id;
+    ID existed_id, id, struct_id;
     EXT_ID ep, mep;
 
     if ((existed_id = find_ident_head(use_name?:ID_SYM(mid), *head)) != NULL) {
@@ -5754,6 +5754,12 @@ import_module_id(ID mid,
     if(ID_STORAGE(id) == STG_TAGNAME) {
         TYPE_TAGNAME(ID_TYPE(id)) = id;
         TYPE_SLINK_ADD(ID_TYPE(id), *sthead, *sttail);
+    } else if(ID_CLASS(id) == CL_MULTI) { // Multi id with struct
+        struct_id = multi_find_class(id, CL_TAGNAME);
+        if(struct_id != NULL) {
+            TYPE_TAGNAME(ID_TYPE(struct_id)) = struct_id;
+            TYPE_SLINK_ADD(ID_TYPE(struct_id), *sthead, *sttail);
+        }
     }
 
     ID_LINK_ADD(id, *head, *tail);
@@ -6738,13 +6744,19 @@ compile_scene_range_expression_list(expr scene_range_expression_list)
 expv
 compile_set_expr(expr x) {
     expv ret = NULL;
+    expv copy; 
 
     if (EXPR_CODE(x) == F_SET_EXPR) {
         ret = compile_expression(EXPR_ARG2(x));
         if (ret != NULL) {
             char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(x)));
-            if (keyword != NULL && *keyword != '\0') {
-                EXPV_KWOPT_NAME(ret) = (const char *)strdup(keyword);
+            if (keyword != NULL && *keyword != '\0') {   
+                /* allocate a copy of the expv element as it might be shared 
+                   and not all instance must be assigned the named-arg value */         
+                copy = XMALLOC(expv, sizeof(*copy));
+                *copy = *ret;
+                EXPV_KWOPT_NAME(copy) = (const char *) strdup(keyword);
+                return copy;
             }
         }
     } else {
