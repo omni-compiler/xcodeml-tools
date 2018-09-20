@@ -109,6 +109,8 @@ void out_ACC_name_list(FILE *fp,int indent, CExprOfList *list)
 	// outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
 	if(EXPR_CODE(node) == EC_ARRAY_REF){
 	  out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+	}else if (EXPR_CODE(node) == EC_POINTS_AT){
+	  outxContext(fp, indent1, node);
 	}else{
 	outxPrint(fp,indent1,"<Var>%s</Var>\n",
 		  ((CExprOfSymbol *)node)->e_symName);

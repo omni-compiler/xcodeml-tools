@@ -2150,7 +2150,8 @@ compile1(CExpr *expr, CExpr *parent)
                 }
             }
 
-            if(IS_ACC_PRAGMA_CODE(code)) compile_acc_pragma(expr, parent);
+	    // used also for XMP
+            if (IS_ACC_PRAGMA_CODE(code) || IS_XMP_PRAGMA_CODE(code)) compile_acc_pragma(expr, parent);
         }
     }
 

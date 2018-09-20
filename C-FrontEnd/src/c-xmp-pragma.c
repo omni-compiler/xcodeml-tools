@@ -8,6 +8,7 @@
 #include "c-const.h"
 #include "c-option.h"
 #include "c-xmp.h"
+#include "c-comp.h"
 
 extern char* lexSkipSharp(char *);
 
@@ -1532,8 +1533,14 @@ CExpr *parse_name_list()
 	while(pg_tok == PG_IDENT){
 	  CExpr *v = pg_tok_val;
 	  pg_get_token();
-	  if(pg_tok != '[')
+	  if(pg_tok != '['){
+	    if (pg_tok == '.'){
+	      pg_get_token();
+	      v = exprBinary(EC_MEMBER_REF, v, pg_tok_val);
+	      pg_get_token();
+	    }
 	    list = exprListAdd(list, v);
+	  }
 	  else
 	    list = exprListAdd(list, XMP_LIST2(v, parse_XMP_C_subscript_list()));
 

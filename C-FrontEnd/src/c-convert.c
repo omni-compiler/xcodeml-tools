@@ -322,7 +322,7 @@ moveDeclSymbolFromParent(CSymbolTable *symTab,
     if(EXPR_ISNULL(initDecls)) {
         //tagged type definition
         CExprOfTypeDesc *td = EXPR_T(decl->e_nodes[0]);
-        moveTaggedTypeSymbol(td, symTab, parentSymTab);
+        //moveTaggedTypeSymbol(td, symTab, parentSymTab);
     } else {
         EXPR_FOREACH(ite, initDecls) {
             CExpr *initDecl = EXPR_L_DATA(ite);
@@ -330,7 +330,7 @@ moveDeclSymbolFromParent(CSymbolTable *symTab,
             CExprOfTypeDesc *td = declr ? EXPR_T(declr->e_nodes[0]) : NULL;
             CExprOfSymbol *sym = declr ? EXPR_SYMBOL(declr->e_nodes[1]) : NULL;
             moveSymbol(sym, STB_IDENT, symTab, parentSymTab);
-            moveTaggedTypeSymbol(td, symTab, parentSymTab);
+            //moveTaggedTypeSymbol(td, symTab, parentSymTab);
         }
     }
 }

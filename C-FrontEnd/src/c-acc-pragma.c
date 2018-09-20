@@ -442,6 +442,11 @@ static CExpr* parse_ACC_namelist()
     pg_get_token();
 
     if(pg_tok != '['){
+      if (pg_tok == '.'){
+	pg_get_token();
+	v = exprBinary(EC_MEMBER_REF, v, pg_tok_val);
+	pg_get_token();
+      }
       args = exprListAdd(args, v);
     }
     else{
