@@ -1,15 +1,14 @@
 PREPROCESSOR=gcc -E
 C_FRONT = ../../C-FrontEnd/src/C_Front
-C_Back  = ../../Driver/bin/C_Back
 TESTS   = $(wildcard *.c)
-OUTPUT  = $(TESTS:.c=.x)
+OUTPUT  = $(TESTS:.c=.i)
 
 .PHONY: clean all default
 all default: $(OUTPUT)
-.SUFFIXES: .x .c
+.SUFFIXES: .i .c
 
-.c.x:
-	$(PREPROCESSOR) $< | $(C_FRONT) | sh $(C_Back) > $@
+.c.i:
+	$(PREPROCESSOR) $< | $(C_FRONT) > $@
 
 clean:
 	rm -f $(OUTPUT)
