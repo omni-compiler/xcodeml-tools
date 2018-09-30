@@ -28,6 +28,7 @@ all:
 
 test: all
 	cd F-FrontEnd/src && bash ./compile_all_test.sh
+	cd test/C99; make clean; make
 
 install:
 	@for subdir in $(SUBDIRS) ; do \
