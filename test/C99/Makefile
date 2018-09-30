@@ -1,4 +1,4 @@
-PREPROCESSOR=gcc -E
+PREPROCESSOR=$(CC) -E
 C_FRONT = ../../C-FrontEnd/src/C_Front
 TESTS   = $(wildcard *.c)
 OUTPUT  = $(TESTS:.c=.i)
