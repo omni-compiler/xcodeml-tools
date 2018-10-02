@@ -13,6 +13,8 @@ int main(int argc, char *argv[])
 	   argv[i]       // 引数の中身
 	   );
   }
+
+  printf("SUCCESS\n");
   return 0;      // 常に正常終了
 }
 // ここはコメント領域 

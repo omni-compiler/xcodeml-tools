@@ -23,4 +23,4 @@
 #include <fenv.h>
 #include <stdint.h>
 
-int main(){return 0;}
+int main(){ printf("SUCCESS\n"); return 0;}

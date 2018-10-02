@@ -476,6 +476,16 @@ convs_forStmt(CExpr *forStmt, CSymbolTable *symTab, int *converted)
 }
 
 
+PRIVATE_STATIC CExpr*
+convs_ifStmt(CExpr *ifStmt, CSymbolTable *symTab, int *converted)
+{
+    if(EXPR_ISCONVERTED(ifStmt)) return NULL;
+    EXPR_ISCONVERTED(ifStmt) = 1;
+    *converted = CONVS_REPLACE;
+    return exprList1(EC_COMP_STMT, ifStmt);
+}
+
+
 /**
  * \brief
  * sub function of moveAllSymbolToParent()
@@ -1250,6 +1260,9 @@ convertSyntax0(CConvsModeEnum mode, CExpr *expr, CSymbolTable *symTab)
             case EC_FOR_STMT:
                 newExpr = convs_forStmt(expr, symTab, &converted);
                 break;
+	    case EC_IF_STMT:
+               newExpr = convs_ifStmt(expr, symTab, &converted);
+               break;
             case EC_INIT:
             case EC_INITIALIZERS:
                 newExpr = convs_initalizersOrInit(expr, symTab, &converted, 0);

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #define ERRMES_FILEREAD  20
 #define ERRMES_FILEWRITE 21
 const char *errmessage[] = {
@@ -16,4 +17,4 @@ struct largestruct {
   .cy = 480,
 };
 
-int main(){ return 0;}
+int main(){ printf("SUCCESS\n"); return 0;}

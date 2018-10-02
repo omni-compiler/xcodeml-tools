@@ -13,6 +13,6 @@ int main()
   //OK。3 に展開が保証される。
 
   printf("%ld %d\n", l, i);
-  
+  printf("SUCCESS\n");
   return 0;
 }

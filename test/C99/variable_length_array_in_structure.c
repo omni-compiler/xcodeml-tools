@@ -12,6 +12,7 @@ int main()
   int num = 10;
   info_t *info = malloc(sizeof(info_t) + sizeof(int) * (num));
   info->num = num;
-  
+
+  printf("SUCCESS\n");
   return 0;
 }

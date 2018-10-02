@@ -15,6 +15,6 @@ void foo(int i)
 int main()
 {
   foo(2);
-  
+  printf("SUCCESS\n");
   return 0;
 }

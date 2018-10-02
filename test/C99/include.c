@@ -4,5 +4,6 @@
 #include <tgmath.h>
 #include <fenv.h>
 #include <stdint.h>
+#include <stdio.h>
 
-int main(){ return 0;}
+int main(){ printf("SUCCESS\n"); return 0;}

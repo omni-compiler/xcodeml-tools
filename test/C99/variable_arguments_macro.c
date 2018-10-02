@@ -23,6 +23,6 @@ int main()
   //ok
   adbg();
   //もちろん省略もできる
-
+  printf("SUCCESS\n");
   return 0;
 }

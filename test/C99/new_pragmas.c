@@ -1,3 +1,4 @@
+#include <stdio.h>
 int main()
 {
 #pragma STDC FP_CONTRACT ON
@@ -11,6 +12,7 @@ int main()
 #pragma STDC CX_LIMITED_RANGE ON
  {
  }
- 
+
+ printf("SUCCESS\n");
  return 0;
 }

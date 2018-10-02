@@ -1,3 +1,4 @@
+#include <stdio.h>
 typedef struct { int x, y; } point_t;
 void PutPixel(const point_t *p){}
 void func(int a[]){}
@@ -10,5 +11,7 @@ int main()
   PutPixel(&(point_t){pos_x, pos_y});
 
   func((int[ ]){1, 2, 3, 4});
+
+  printf("SUCCESS\n");
   return 0;
 }

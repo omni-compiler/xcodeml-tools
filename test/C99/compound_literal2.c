@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 enum {a, b};
 int g(void)
@@ -10,6 +11,11 @@ int g(void)
 
 int main()
 {
-  printf("%d\n", g());
+  if(g() == 1)
+    printf("SUCCESS\n");
+  else{
+    printf("ERROR\n");
+    exit(1);
+  }
   return 0;
 }

@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 void aa(int n, int m)
 {
   int ar1[n][8][m];
@@ -6,4 +8,13 @@ void aa(int n, int m)
   
   //  par1 = ar1; // (1)エラー: 8 != 3
   par2 = ar1; // (2)OK: ただし n == 8, m == n + 1 の時以外は未定義の挙動
+}
+
+int main()
+{
+  int n = 8;
+  int m = 9;
+  aa(n, m);
+  printf("SUCCESS\n");
+  return 0;
 }
