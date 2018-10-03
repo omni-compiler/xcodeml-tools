@@ -6212,13 +6212,19 @@ compile_INTERFACE_statement(expr x)
                 ID_STORAGE(iid) = STG_EXT;
                 ID_CLASS(iid) = CL_PROC;
             } else if(ID_IS_OFMODULE(iid)) {
-                if(!IS_GENERIC_PROCEDURE_TYPE(ID_TYPE((iid))))
+
+                // #83: Same generic name is allowed 
+                if(!IS_GENERIC_PROCEDURE_TYPE(ID_TYPE((iid))) 
+                    && !IS_PROCEDURE_TYPE(ID_TYPE((iid)))) 
+                {
                     error_at_node(x,
                                   "'%s' is already defined"
-                                  " as a generic procedure in module '%s'",
-                                  SYM_NAME(s), iid->use_assoc->module_name);
-                else
+                                  " in module '%s'",
+                                  SYM_NAME(s), 
+                                  SYM_NAME(iid->use_assoc->module_name));
+                } else {
                     use_associated_ep = PROC_EXT_ID(iid);
+                }
             }
             break;
         case F95_ASSIGNOP: {
