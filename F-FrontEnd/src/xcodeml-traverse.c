@@ -50,13 +50,14 @@ struct module_list *module_list_tail = NULL;
         }                                                                      \
     }
 
-static void add_symbol(XcodeMLNode *nameNode) {
+static void add_symbol(XcodeMLNode *nameNode)
+{
     if (nameNode == NULL)
         return;
 
     XcodeMLList *lp, *l = (XcodeMLList *)malloc(sizeof(XcodeMLList));
     XcodeMLNode *valNode = NULL;
-    FOR_ITEMS_IN_XCODEML_LIST(lp, nameNode) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, nameNode) {
         if (XCODEML_TYPE(XCODEML_LIST_NODE(lp)) == XcodeML_Value) {
             valNode = XCODEML_LIST_NODE(lp);
             break;
@@ -74,7 +75,8 @@ static void add_symbol(XcodeMLNode *nameNode) {
     current_symbol_stack->id_list = l;
 }
 
-void push_symbol_stack(XcodeMLNode *decls) {
+void push_symbol_stack(XcodeMLNode *decls)
+{
     symbol_stack *st = (symbol_stack *)malloc(sizeof(symbol_stack));
     memset(st, 0, sizeof(*st));
     if (current_symbol_stack != NULL)
@@ -83,7 +85,7 @@ void push_symbol_stack(XcodeMLNode *decls) {
 
     XcodeMLList *lp, *lp1;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, decls) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, decls) {
         XcodeMLNode *n = XCODEML_LIST_NODE(lp);
         if (n == NULL)
             continue;
@@ -93,7 +95,7 @@ void push_symbol_stack(XcodeMLNode *decls) {
         if (strcmp(tag, "varDecl") == 0) {
             add_symbol(GET_NAME(n));
         } else if (strcmp(tag, "FinterfaceDecl") == 0) {
-            FOR_ITEMS_IN_XCODEML_LIST(lp1, n) {
+            FOR_ITEMS_IN_XCODEML_LIST (lp1, n) {
                 XcodeMLNode *n1 = XCODEML_LIST_NODE(lp1);
                 if (strcmp(XCODEML_NAME(n1), "FfunctionDecl") == 0) {
                     add_symbol(GET_NAME(n1));
@@ -103,7 +105,8 @@ void push_symbol_stack(XcodeMLNode *decls) {
     }
 }
 
-void pop_symbol_stack() {
+void pop_symbol_stack()
+{
     if (current_symbol_stack == NULL)
         return;
 
@@ -121,7 +124,8 @@ void pop_symbol_stack() {
     current_symbol_stack = next;
 }
 
-int xcodeml_has_symbol(const char *symbol) {
+int xcodeml_has_symbol(const char *symbol)
+{
     XcodeMLList *lp;
     if (current_symbol_stack == NULL)
         return FALSE;
@@ -146,7 +150,8 @@ int xcodeml_has_symbol(const char *symbol) {
  * module.
  * @return returns 0 if fail to read XcodeML, otherwise returns 1.
  */
-int use_module(const char *module_filename, const char *fortran_filename) {
+int use_module(const char *module_filename, const char *fortran_filename)
+{
     XcodeMLNode *xcodeProgram = NULL;
     struct module_list *lp;
     FILE *outFd;
@@ -192,7 +197,8 @@ int use_module(const char *module_filename, const char *fortran_filename) {
  * @param outFd the file discripter wrriten the declarations inside the module.
  * @return returns 1 if fail to read XcodeML, otherwise returns 0.
  */
-int use_module_to(const char *module_filename, FILE *outFd) {
+int use_module_to(const char *module_filename, FILE *outFd)
+{
     XcodeMLNode *xcodeProgram;
     symbol_filter *filter;
 
@@ -211,7 +217,8 @@ int use_module_to(const char *module_filename, FILE *outFd) {
     return 1;
 }
 
-int enter_XcodeProgram(XcodeMLNode *xcodeProgram) {
+int enter_XcodeProgram(XcodeMLNode *xcodeProgram)
+{
     XcodeMLNode *typeTable;
     XcodeMLNode *globalDeclaration;
     XcodeMLNode *module;
@@ -231,14 +238,15 @@ int enter_XcodeProgram(XcodeMLNode *xcodeProgram) {
     return TRUE;
 }
 
-int enter_typeTable(XcodeMLNode *typeTable) {
+int enter_typeTable(XcodeMLNode *typeTable)
+{
     XcodeMLList *lp;
 
     if (typeTable == NULL || (XCODEML_TYPE(typeTable) != XcodeML_Element))
         return FALSE;
 
     typetable_init();
-    FOR_ITEMS_IN_XCODEML_LIST(lp, typeTable) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, typeTable) {
         XcodeMLNode *t = XCODEML_LIST_NODE(lp);
         if (t == typeTable)
             continue;
@@ -250,7 +258,8 @@ int enter_typeTable(XcodeMLNode *typeTable) {
     return TRUE;
 }
 
-int enter_module(XcodeMLNode *module) {
+int enter_module(XcodeMLNode *module)
+{
     XcodeMLNode *symbols, *declarations;
     is_inner_module = TRUE;
 
@@ -271,13 +280,14 @@ int enter_module(XcodeMLNode *module) {
     return TRUE;
 }
 
-int enter_symbols(XcodeMLNode *symbols) {
+int enter_symbols(XcodeMLNode *symbols)
+{
     XcodeMLList *lp;
 
     if (symbols == NULL)
         return FALSE;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, symbols) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, symbols) {
         XcodeMLNode *x;
         char *name, *type, *sclass;
 
@@ -310,18 +320,20 @@ int enter_symbols(XcodeMLNode *symbols) {
     return TRUE;
 }
 
-int enter_declarations(XcodeMLNode *declarations) {
+int enter_declarations(XcodeMLNode *declarations)
+{
     enter_declarations_wsymbol(declarations, NULL);
     return TRUE;
 }
 
-int enter_declarations_wsymbol(XcodeMLNode *declarations, char *symbol) {
+int enter_declarations_wsymbol(XcodeMLNode *declarations, char *symbol)
+{
     XcodeMLList *lp;
 
     if (declarations == NULL)
         return FALSE;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, declarations) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, declarations) {
         XcodeMLNode *x;
         x = XCODEML_LIST_NODE(lp);
 
@@ -363,13 +375,14 @@ int enter_declarations_wsymbol(XcodeMLNode *declarations, char *symbol) {
     return TRUE;
 }
 
-int enter_contains(XcodeMLNode *containsStmt) {
+int enter_contains(XcodeMLNode *containsStmt)
+{
     XcodeMLList *lp;
 
     if (containsStmt == NULL)
         return FALSE;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, containsStmt) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, containsStmt) {
         XcodeMLNode *x;
         x = XCODEML_LIST_NODE(lp);
 
@@ -384,13 +397,14 @@ int enter_contains(XcodeMLNode *containsStmt) {
     return TRUE;
 }
 
-static int clear_contains(XcodeMLNode *containsStmt) {
+static int clear_contains(XcodeMLNode *containsStmt)
+{
     XcodeMLList *lp;
 
     if (containsStmt == NULL)
         return FALSE;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, containsStmt) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, containsStmt) {
         XcodeMLNode *x;
         x = XCODEML_LIST_NODE(lp);
 
@@ -405,7 +419,8 @@ static int clear_contains(XcodeMLNode *containsStmt) {
     return TRUE;
 }
 
-void outf_filter_use(symbol_filter *filter) {
+void outf_filter_use(symbol_filter *filter)
+{
     symbol_filterElem *filterElem;
     const char *use;
     int i = 0;
@@ -433,7 +448,8 @@ void outf_filter_use(symbol_filter *filter) {
     }
 }
 
-int enter_useDecl(XcodeMLNode *useDecl) {
+int enter_useDecl(XcodeMLNode *useDecl)
+{
     XcodeMLNode *nameAttr;
     XcodeMLList *lp;
     char *moduleName;
@@ -451,7 +467,7 @@ int enter_useDecl(XcodeMLNode *useDecl) {
         outf_token(", ONLY: ");
         outf_filter_use(filter);
     } else {
-        FOR_ITEMS_IN_XCODEML_LIST(lp, useDecl) {
+        FOR_ITEMS_IN_XCODEML_LIST (lp, useDecl) {
             XcodeMLNode *x = XCODEML_LIST_NODE(lp);
             char *local, *use;
 
@@ -483,7 +499,8 @@ int enter_useDecl(XcodeMLNode *useDecl) {
     return TRUE;
 }
 
-int enter_useOnlyDecl(XcodeMLNode *useOnlyDecl) {
+int enter_useOnlyDecl(XcodeMLNode *useOnlyDecl)
+{
     XcodeMLNode *nameAttr;
     XcodeMLList *lp;
     char *moduleName;
@@ -498,7 +515,7 @@ int enter_useOnlyDecl(XcodeMLNode *useOnlyDecl) {
     outf_token(moduleName);
     outf_token(", ONLY: ");
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, useOnlyDecl) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, useOnlyDecl) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
         char *local, *use;
 
@@ -529,7 +546,8 @@ int enter_useOnlyDecl(XcodeMLNode *useOnlyDecl) {
     return TRUE;
 }
 
-int enter_varDecl(XcodeMLNode *varDecl) {
+int enter_varDecl(XcodeMLNode *varDecl)
+{
     XcodeMLNode *name;
     XcodeMLNode *value;
     char *type_signature, *symbol, *orgSymbol;
@@ -559,7 +577,8 @@ int enter_varDecl(XcodeMLNode *varDecl) {
     return ret;
 }
 
-int enter_structDecl(XcodeMLNode *structDecl) {
+int enter_structDecl(XcodeMLNode *structDecl)
+{
     XcodeMLNode *name;
     char *symbol, *type_sig;
 
@@ -577,7 +596,8 @@ int enter_structDecl(XcodeMLNode *structDecl) {
     return TRUE;
 }
 
-int enter_taggedType(char *type_sig, char *tagname) {
+int enter_taggedType(char *type_sig, char *tagname)
+{
     xentry *xe = NULL;
     XcodeMLNode *structType, *symbol;
     XcodeMLList *lp;
@@ -597,7 +617,7 @@ int enter_taggedType(char *type_sig, char *tagname) {
     if (GET_IS_SEQUENCE(structType))
         outf_tokenln("SEQUENCE");
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, symbol) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, symbol) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
 
         if (XCODEML_TYPE(x) != XcodeML_Element)
@@ -616,7 +636,8 @@ int enter_taggedType(char *type_sig, char *tagname) {
     return TRUE;
 }
 
-int enter_interfaceDecl(XcodeMLNode *intfDecl) {
+int enter_interfaceDecl(XcodeMLNode *intfDecl)
+{
     char *name;
     char interface_spec[MAXBUFFER];
     int name_flag = 0;
@@ -646,18 +667,17 @@ int enter_interfaceDecl(XcodeMLNode *intfDecl) {
     }
     outf_flush();
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, intfDecl) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, intfDecl) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
         if (x == intfDecl)
             continue;
 
         if (strcmp(XCODEML_NAME(x), "FfunctionDecl") == 0) {
             enter_functionDecl(x);
-
         } else if (strcmp(XCODEML_NAME(x), "FmoduleProcedureDecl") == 0) {
             XcodeMLList *llp;
 
-            FOR_ITEMS_IN_XCODEML_LIST(llp, x) {
+            FOR_ITEMS_IN_XCODEML_LIST (llp, x) {
                 XcodeMLNode *funcDef, *xx = XCODEML_LIST_NODE(llp);
                 char *funcName;
 
@@ -690,7 +710,8 @@ int enter_interfaceDecl(XcodeMLNode *intfDecl) {
     return TRUE;
 }
 
-int enter_functionDecl(XcodeMLNode *funcDecl) {
+int enter_functionDecl(XcodeMLNode *funcDecl)
+{
     char *funcName;
     char *type_sig;
     char *ref = NULL;
@@ -761,7 +782,8 @@ int enter_functionDecl(XcodeMLNode *funcDecl) {
     return TRUE;
 }
 
-int enter_functionDefinition(XcodeMLNode *funcDef) {
+int enter_functionDefinition(XcodeMLNode *funcDef)
+{
 #if 0
     is_inner_module = FALSE;
     if(XCODEML_IS_OUTPUTED(funcDef) == FALSE) {
@@ -802,10 +824,11 @@ int enter_functionDefinition(XcodeMLNode *funcDef) {
     return TRUE;
 }
 
-int enter_params(XcodeMLNode *params) {
+int enter_params(XcodeMLNode *params)
+{
     XcodeMLList *lp;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, params) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, params) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
         char *name;
 

@@ -40,7 +40,8 @@ static char *FormatVariableNameToStatusLineStr(name) char *name;
 
 static SYMBOL nml = (struct symbol[]){{NULL, "nml", 0, 0}};
 
-static expv compile_io_arguments(enum expr_code code, expr args) {
+static expv compile_io_arguments(enum expr_code code, expr args)
+{
     list lp;
     expr arg;
     expv varg, vargs;
@@ -52,7 +53,7 @@ static expv compile_io_arguments(enum expr_code code, expr args) {
         return vargs;
     }
 
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         arg = LIST_ITEM(lp);
 
         if (arg == NULL) {
@@ -73,10 +74,8 @@ static expv compile_io_arguments(enum expr_code code, expr args) {
 
             if (rval && (EXPR_CODE(rval) == IDENT)) {
                 vval = rval;
-
             } else if (rval == NULL) {
                 vval = NULL;
-
             } else {
                 vval = expv_reduce(compile_expression(rval), FALSE);
 
@@ -87,7 +86,6 @@ static expv compile_io_arguments(enum expr_code code, expr args) {
 
             if (strcmp("unit", SYM_NAME(EXPR_SYM(vkey))) == 0) {
                 unit_arg = vval;
-
             } else if (strcmp("iostat", SYM_NAME(EXPR_SYM(vkey))) == 0 ||
                        strcmp("size", SYM_NAME(EXPR_SYM(vkey))) == 0 ||
                        strcmp("iomsg", SYM_NAME(EXPR_SYM(vkey))) == 0) {
@@ -127,7 +125,7 @@ static expv compile_io_arguments(enum expr_code code, expr args) {
     }
 
     if (unit_arg == NULL) {
-        FOR_ITEMS_IN_LIST(lp, vargs) {
+        FOR_ITEMS_IN_LIST (lp, vargs) {
             if (LIST_ITEM(lp) && EXPR_CODE(LIST_ITEM(lp)) != F_SET_EXPR) {
                 unit_arg = LIST_ITEM(lp);
                 break;
@@ -176,26 +174,27 @@ expr x;
 
     if (FORMAT_STR(fId) == NULL) {
         switch (EXPR_CODE(EXPR_ARG1(x))) {
-        case STRING_CONSTANT: {
-            int len = strlen(EXPR_STR(EXPR_ARG1(x)));
-            FORMAT_STR(fId) = expv_str_term(STRING_CONSTANT, type_char(len),
-                                            strdup(EXPR_STR(EXPR_ARG1(x))));
-            break;
-        }
-        default: {
-            error("invalid format.");
-            break;
-        }
+            case STRING_CONSTANT: {
+                int len = strlen(EXPR_STR(EXPR_ARG1(x)));
+                FORMAT_STR(fId) = expv_str_term(STRING_CONSTANT, type_char(len),
+                                                strdup(EXPR_STR(EXPR_ARG1(x))));
+                break;
+            }
+            default: {
+                error("invalid format.");
+                break;
+            }
         }
     }
     output_statement(list1(F_FORMAT_DECL, FORMAT_STR(fId)));
     return;
 }
 
-void FinalizeFormat() {
+void FinalizeFormat()
+{
     ID id;
 
-    FOREACH_ID(id, LOCAL_SYMBOLS) {
+    FOREACH_ID (id, LOCAL_SYMBOLS) {
         if (ID_CLASS(id) == CL_FORMAT) {
             if (FORMAT_STR(id) == NULL) {
                 error("missing statement number %s (format).",
@@ -218,7 +217,7 @@ void compile_IO_statement(x) expr x;
     }
 
     expv v2 = list0(LIST);
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)) {
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(x)) {
         x2 = LIST_ITEM(lp);
         if (x2 == NULL)
             list_put_last(v2, NULL);
@@ -227,7 +226,7 @@ void compile_IO_statement(x) expr x;
     }
 
     if (EXPR_CODE(x) == F_READ_STATEMENT) {
-        FOR_ITEMS_IN_LIST(lp, v2) {
+        FOR_ITEMS_IN_LIST (lp, v2) {
             if (TYPE_IS_PROTECTED(EXPV_TYPE(LIST_ITEM(lp)))) {
                 error("an input item is PROTECTED");
                 break;
@@ -236,20 +235,22 @@ void compile_IO_statement(x) expr x;
     }
 
     switch (EXPR_CODE(x)) {
-    case F_PRINT_STATEMENT: {
-        v = expv_cons(F_PRINT_STATEMENT, NULL, callArgs, v2);
-        break;
-    }
-    case F_WRITE_STATEMENT: {
-        v = expv_cons(F_WRITE_STATEMENT, NULL, callArgs, v2);
-        break;
-    }
-    case F_READ_STATEMENT:
-    case F_READ1_STATEMENT: {
-        v = expv_cons(F_READ_STATEMENT, NULL, callArgs, v2);
-        break;
-    }
-    default: { fatal("no IO statement."); }
+        case F_PRINT_STATEMENT: {
+            v = expv_cons(F_PRINT_STATEMENT, NULL, callArgs, v2);
+            break;
+        }
+        case F_WRITE_STATEMENT: {
+            v = expv_cons(F_WRITE_STATEMENT, NULL, callArgs, v2);
+            break;
+        }
+        case F_READ_STATEMENT:
+        case F_READ1_STATEMENT: {
+            v = expv_cons(F_READ_STATEMENT, NULL, callArgs, v2);
+            break;
+        }
+        default: {
+            fatal("no IO statement.");
+        }
     }
     output_statement(v);
     return;
@@ -291,7 +292,8 @@ void compile_CLOSE_statement(x) expr x;
  * ENDFILE
  * REWIND
  */
-void compile_FPOS_statement(expr x) {
+void compile_FPOS_statement(expr x)
+{
     expr v = NULL, callArgs;
 
     if (EXPV_CODE(EXPR_ARG1(x)) != LIST) {
@@ -303,19 +305,21 @@ void compile_FPOS_statement(expr x) {
     }
 
     switch (EXPR_CODE(x)) {
-    case F_BACKSPACE_STATEMENT: {
-        v = expv_cons(F_BACKSPACE_STATEMENT, NULL, callArgs, NULL);
-        break;
-    }
-    case F_REWIND_STATEMENT: {
-        v = expv_cons(F_REWIND_STATEMENT, NULL, callArgs, NULL);
-        break;
-    }
-    case F_ENDFILE_STATEMENT: {
-        v = expv_cons(F_ENDFILE_STATEMENT, NULL, callArgs, NULL);
-        break;
-    }
-    default: { fatal("unknown file positioning statement."); }
+        case F_BACKSPACE_STATEMENT: {
+            v = expv_cons(F_BACKSPACE_STATEMENT, NULL, callArgs, NULL);
+            break;
+        }
+        case F_REWIND_STATEMENT: {
+            v = expv_cons(F_REWIND_STATEMENT, NULL, callArgs, NULL);
+            break;
+        }
+        case F_ENDFILE_STATEMENT: {
+            v = expv_cons(F_ENDFILE_STATEMENT, NULL, callArgs, NULL);
+            break;
+        }
+        default: {
+            fatal("unknown file positioning statement.");
+        }
     }
 
     output_statement(v);
@@ -335,7 +339,7 @@ void compile_INQUIRE_statement(x) expr x;
     callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
 
     outputList = list0(LIST);
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(x)) {
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(x)) {
         expv x2 = LIST_ITEM(lp);
         if (x2 == NULL)
             list_put_last(outputList, NULL);
@@ -358,7 +362,7 @@ void compile_NAMELIST_decl(x) expr x;
     expr idList;
     expr nlVX;
 
-    FOR_ITEMS_IN_LIST(lp, x) {
+    FOR_ITEMS_IN_LIST (lp, x) {
         nlName = EXPR_ARG1(LIST_ITEM(lp));
         idList = EXPR_ARG2(LIST_ITEM(lp));
 
@@ -384,7 +388,7 @@ void compile_NAMELIST_decl(x) expr x;
             }
         }
 
-        FOR_ITEMS_IN_LIST(lq, idList) {
+        FOR_ITEMS_IN_LIST (lq, idList) {
             nlVX = LIST_ITEM(lq);
             if (EXPR_CODE(nlVX) != IDENT) {
                 error("invalid type in namelist.");
@@ -395,7 +399,8 @@ void compile_NAMELIST_decl(x) expr x;
     }
 }
 
-void compile_WAIT_statement(expr x) {
+void compile_WAIT_statement(expr x)
+{
     expr v, callArgs;
 
     if (EXPV_CODE(EXPR_ARG1(x)) != LIST) {
@@ -408,7 +413,8 @@ void compile_WAIT_statement(expr x) {
     return;
 }
 
-void compile_FLUSH_statement(expr x) {
+void compile_FLUSH_statement(expr x)
+{
     expv v, callArgs;
 
     if (EXPV_CODE(EXPR_ARG1(x)) != LIST) {

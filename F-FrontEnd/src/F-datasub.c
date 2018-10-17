@@ -13,12 +13,14 @@ typedef struct {
 static variableEntry *varTbl = NULL;
 static int nVarTbl = 0;
 
-static int varComp(const void *v1, const void *v2) {
+static int varComp(const void *v1, const void *v2)
+{
     return strcmp(((variableEntry *)v1)->varName,
                   ((variableEntry *)v2)->varName);
 }
 
-static void InitializeVariableTable() {
+static void InitializeVariableTable()
+{
     if (nVarTbl > 0 && varTbl != NULL) {
         int i;
         for (i = 0; i < nVarTbl; i++) {
@@ -30,7 +32,8 @@ static void InitializeVariableTable() {
     nVarTbl = 0;
 }
 
-static void AddVariable(char *var) {
+static void AddVariable(char *var)
+{
     if (varTbl == NULL) {
         varTbl = (variableEntry *)malloc(sizeof(variableEntry) * 1);
         varTbl[0].varName = strdup(var);
@@ -60,7 +63,8 @@ static void AddVariable(char *var) {
     }
 }
 
-static void SetVariableValue(char *var, omllint_t val) {
+static void SetVariableValue(char *var, omllint_t val)
+{
     variableEntry key;
     variableEntry *t;
 
@@ -76,7 +80,8 @@ static void SetVariableValue(char *var, omllint_t val) {
     }
 }
 
-static omllint_t GetVariableValue(char *var) {
+static omllint_t GetVariableValue(char *var)
+{
     variableEntry key;
     variableEntry *t;
 
@@ -96,7 +101,8 @@ static omllint_t GetVariableValue(char *var) {
     return 0;
 }
 
-static expv findIdent(expv spec, expv new) {
+static expv findIdent(expv spec, expv new)
+{
     list lp;
     expv v;
 
@@ -104,7 +110,7 @@ static expv findIdent(expv spec, expv new) {
         new = list0(LIST);
     }
 
-    FOR_ITEMS_IN_LIST(lp, spec) {
+    FOR_ITEMS_IN_LIST (lp, spec) {
         v = LIST_ITEM(lp);
         if (v == NULL) {
             continue;
@@ -112,97 +118,100 @@ static expv findIdent(expv spec, expv new) {
 
         switch (EXPR_CODE(v)) {
 
-        case IDENT: {
-            list lq;
-            expv vv;
-            int found = FALSE;
-            FOR_ITEMS_IN_LIST(lq, new) {
-                vv = LIST_ITEM(lq);
-                if (EXPR_SYM(vv) == EXPR_SYM(v)) {
-                    found = TRUE;
-                    break;
+            case IDENT: {
+                list lq;
+                expv vv;
+                int found = FALSE;
+                FOR_ITEMS_IN_LIST (lq, new) {
+                    vv = LIST_ITEM(lq);
+                    if (EXPR_SYM(vv) == EXPR_SYM(v)) {
+                        found = TRUE;
+                        break;
+                    }
                 }
+                if (found == FALSE) {
+                    new = list_put_last(new, v);
+                }
+                break;
             }
-            if (found == FALSE) {
-                new = list_put_last(new, v);
-            }
-            break;
-        }
 
-        default: {
-            if (EXPR_CODE_IS_TERMINAL(EXPR_CODE(v)) != TRUE) {
-                new = findIdent(v, new);
+            default: {
+                if (EXPR_CODE_IS_TERMINAL(EXPR_CODE(v)) != TRUE) {
+                    new = findIdent(v, new);
+                }
+                break;
             }
-            break;
-        }
         }
     }
 
     return new;
 }
 
-omllint_t getExprValue(expv v) {
+omllint_t getExprValue(expv v)
+{
     omllint_t ret = 0;
 
     switch (EXPR_CODE(v)) {
 
-    case IDENT: {
-        ret = GetVariableValue(SYM_NAME(EXPR_SYM(v)));
-        break;
-    }
+        case IDENT: {
+            ret = GetVariableValue(SYM_NAME(EXPR_SYM(v)));
+            break;
+        }
 
-    case INT_CONSTANT: {
-        ret = EXPV_INT_VALUE(v);
-        break;
-    }
+        case INT_CONSTANT: {
+            ret = EXPV_INT_VALUE(v);
+            break;
+        }
 
-    case F_UNARY_MINUS_EXPR:
-    case UNARY_MINUS_EXPR: {
-        ret = -getExprValue(v);
-        break;
-    }
+        case F_UNARY_MINUS_EXPR:
+        case UNARY_MINUS_EXPR: {
+            ret = -getExprValue(v);
+            break;
+        }
 
-    case F_PLUS_EXPR:
-    case PLUS_EXPR: {
-        ret = getExprValue(EXPR_ARG1(v)) + getExprValue(EXPR_ARG2(v));
-        break;
-    }
+        case F_PLUS_EXPR:
+        case PLUS_EXPR: {
+            ret = getExprValue(EXPR_ARG1(v)) + getExprValue(EXPR_ARG2(v));
+            break;
+        }
 
-    case F_MINUS_EXPR:
-    case MINUS_EXPR: {
-        ret = getExprValue(EXPR_ARG1(v)) - getExprValue(EXPR_ARG2(v));
-        break;
-    }
+        case F_MINUS_EXPR:
+        case MINUS_EXPR: {
+            ret = getExprValue(EXPR_ARG1(v)) - getExprValue(EXPR_ARG2(v));
+            break;
+        }
 
-    case F_MUL_EXPR:
-    case MUL_EXPR: {
-        ret = getExprValue(EXPR_ARG1(v)) * getExprValue(EXPR_ARG2(v));
-        break;
-    }
+        case F_MUL_EXPR:
+        case MUL_EXPR: {
+            ret = getExprValue(EXPR_ARG1(v)) * getExprValue(EXPR_ARG2(v));
+            break;
+        }
 
-    case F_DIV_EXPR:
-    case DIV_EXPR: {
-        ret = getExprValue(EXPR_ARG1(v)) / getExprValue(EXPR_ARG2(v));
-        break;
-    }
+        case F_DIV_EXPR:
+        case DIV_EXPR: {
+            ret = getExprValue(EXPR_ARG1(v)) / getExprValue(EXPR_ARG2(v));
+            break;
+        }
 
-    case F_POWER_EXPR:
-    case POWER_EXPR: {
-        ret = power_ii(getExprValue(EXPR_ARG1(v)), getExprValue(EXPR_ARG2(v)));
-        break;
-    }
+        case F_POWER_EXPR:
+        case POWER_EXPR: {
+            ret = power_ii(getExprValue(EXPR_ARG1(v)),
+                           getExprValue(EXPR_ARG2(v)));
+            break;
+        }
 
-    default: {
-        error("only integer expression is allowed in implied DO in DATA "
-              "statement.");
-        return 0;
-    }
+        default: {
+            error("only integer expression is allowed in implied DO in DATA "
+                  "statement.");
+            return 0;
+        }
     }
 
     return ret;
 }
 
-static int InterpretImpliedDo(expv doSpec, expv new) {
+static int InterpretImpliedDo(expv doSpec, expv new)
+{
     expv loopVar;
     char *varName;
 
@@ -248,36 +257,37 @@ static int InterpretImpliedDo(expv doSpec, expv new) {
     for (; thisLoop <= loopEnd;
          thisLoop += loopIncr, SetVariableValue(varName, thisLoop)) {
 
-        FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(doSpec)) {
+        FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(doSpec)) {
             v = LIST_ITEM(lp);
 
             switch (EXPR_CODE(v)) {
-            case F_IMPLIED_DO: {
-                if (InterpretImpliedDo(v, new) == FALSE) {
+                case F_IMPLIED_DO: {
+                    if (InterpretImpliedDo(v, new) == FALSE) {
+                        return FALSE;
+                    }
+                    break;
+                }
+
+                case F_ARRAY_REF: {
+                    expv aRefV;
+                    SYMBOL sym;
+                    expv idxV = list0(LIST);
+                    FOR_ITEMS_IN_LIST (lq, EXPR_ARG2(v)) {
+                        expv x = LIST_ITEM(lq);
+                        omllint_t idx = getExprValue(x);
+                        idxV = list_put_last(
+                            idxV, expv_int_term(INT_CONSTANT, type_INT, idx));
+                    }
+                    sym = find_symbol(SYM_NAME(EXPR_SYM(EXPR_ARG1(v))));
+                    aRefV = list2(F_ARRAY_REF, make_enode(IDENT, sym), idxV);
+                    new = list_put_last(new, aRefV);
+                    break;
+                }
+
+                default:
+                    error("invalid expression in implied DO in DATA "
+                          "statement.");
                     return FALSE;
-                }
-                break;
-            }
-
-            case F_ARRAY_REF: {
-                expv aRefV;
-                SYMBOL sym;
-                expv idxV = list0(LIST);
-                FOR_ITEMS_IN_LIST(lq, EXPR_ARG2(v)) {
-                    expv x = LIST_ITEM(lq);
-                    omllint_t idx = getExprValue(x);
-                    idxV = list_put_last(
-                        idxV, expv_int_term(INT_CONSTANT, type_INT, idx));
-                }
-                sym = find_symbol(SYM_NAME(EXPR_SYM(EXPR_ARG1(v))));
-                aRefV = list2(F_ARRAY_REF, make_enode(IDENT, sym), idxV);
-                new = list_put_last(new, aRefV);
-                break;
-            }
-
-            default:
-                error("invalid expression in implied DO in DATA statement.");
-                return FALSE;
             }
         }
     }
@@ -285,7 +295,8 @@ static int InterpretImpliedDo(expv doSpec, expv new) {
     return TRUE;
 }
 
-expv ExpandImpliedDoInDATA(expv spec, expv new) {
+expv ExpandImpliedDoInDATA(expv spec, expv new)
+{
     list lp;
     expv v;
     expv idents = findIdent(spec, (expv)NULL);
@@ -295,7 +306,7 @@ expv ExpandImpliedDoInDATA(expv spec, expv new) {
     }
 
     InitializeVariableTable();
-    FOR_ITEMS_IN_LIST(lp, idents) {
+    FOR_ITEMS_IN_LIST (lp, idents) {
         v = LIST_ITEM(lp);
         AddVariable(SYM_NAME(EXPR_SYM(v)));
     }

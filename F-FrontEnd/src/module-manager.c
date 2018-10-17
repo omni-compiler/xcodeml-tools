@@ -17,7 +17,8 @@ struct module_manager {
 
 static struct module *find_module(const SYMBOL module_name,
                                   const SYMBOL submodule_name,
-                                  int for_submodule) {
+                                  int for_submodule)
+{
     struct module *mp;
     assert(module_name != NULL);
     /* submodule_name may be NULL */
@@ -31,7 +32,8 @@ static struct module *find_module(const SYMBOL module_name,
     return NULL;
 }
 
-static void add_module(struct module *mod) {
+static void add_module(struct module *mod)
+{
     if (find_module(MODULE_NAME(mod), SUBMODULE_NAME(mod),
                     MODULE_IS_FOR_SUBMODULE(mod)) != NULL) {
         return;
@@ -46,7 +48,8 @@ static void add_module(struct module *mod) {
     MODULE_MANAGER.tail->next = NULL;
 }
 
-static void add_module_id(struct module *mod, ID id) {
+static void add_module_id(struct module *mod, ID id)
+{
     // NOTE: 'mid' stand for module id.
     TYPE_DESC tp;
     ID mid = XMALLOC(ID, sizeof(*mid));
@@ -97,7 +100,8 @@ static void add_module_id(struct module *mod, ID id) {
 
 struct module *generate_current_module(SYMBOL mod_name, SYMBOL submod_name,
                                        ID ids, expv use_decls,
-                                       int for_submodule) {
+                                       int for_submodule)
+{
     ID id;
     list lp;
     struct depend_module *dep;
@@ -112,7 +116,7 @@ struct module *generate_current_module(SYMBOL mod_name, SYMBOL submod_name,
     MODULE_IS_FOR_SUBMODULE(mod) = for_submodule;
 
     /* add public id */
-    FOREACH_ID(id, ids) {
+    FOREACH_ID (id, ids) {
         if (AVAILABLE_ID(id) &&
             (for_submodule || (ID_TYPE(id) && !TYPE_IS_PRIVATE(ID_TYPE(id))) ||
              (ID_TYPE(id) && TYPE_IS_IMPORTED(ID_TYPE(id))))) {
@@ -121,7 +125,7 @@ struct module *generate_current_module(SYMBOL mod_name, SYMBOL submod_name,
     }
 
     /* make the list of module name which this module uses. */
-    FOR_ITEMS_IN_LIST(lp, use_decls) {
+    FOR_ITEMS_IN_LIST (lp, use_decls) {
         dep = XMALLOC(struct depend_module *, sizeof(struct depend_module));
         MOD_DEP_NAME(dep) = EXPR_SYM(LIST_ITEM(lp));
         if (MODULE_DEPEND_LAST(mod) == NULL) {
@@ -145,7 +149,8 @@ struct module *generate_current_module(SYMBOL mod_name, SYMBOL submod_name,
 
 static void intermediate_file_name(char *filename, size_t len,
                                    const struct module *mod,
-                                   const char *extension) {
+                                   const char *extension)
+{
     char tmp[FILE_NAME_LEN];
     extern char *modincludeDirv;
     if (modincludeDirv) {
@@ -163,18 +168,21 @@ static void intermediate_file_name(char *filename, size_t len,
     strncat(filename, tmp, len - strnlen(filename, len) - 1);
 }
 
-void xmod_file_name(char *filename, size_t len, const struct module *mod) {
+void xmod_file_name(char *filename, size_t len, const struct module *mod)
+{
     intermediate_file_name(filename, len, mod, "xmod");
 }
 
-void xsmod_file_name(char *filename, size_t len, const struct module *mod) {
+void xsmod_file_name(char *filename, size_t len, const struct module *mod)
+{
     intermediate_file_name(filename, len, mod, "xsmod");
 }
 
 /**
  * export public identifiers
  */
-int export_xmod(struct module *mod) {
+int export_xmod(struct module *mod)
+{
     char filename[FILE_NAME_LEN] = {0};
     xmod_file_name(filename, sizeof(filename), mod);
     if (mod != NULL) {
@@ -187,7 +195,8 @@ int export_xmod(struct module *mod) {
 /**
  * export public/private identifiers
  */
-int export_xsmod(struct module *mod) {
+int export_xsmod(struct module *mod)
+{
     char filename[FILE_NAME_LEN] = {0};
     xsmod_file_name(filename, sizeof(filename), mod);
     if (mod != NULL) {
@@ -200,7 +209,8 @@ int export_xsmod(struct module *mod) {
 /**
  * export public identifiers to module-manager.
  */
-int export_module(SYMBOL sym, ID ids, expv use_decls) {
+int export_module(SYMBOL sym, ID ids, expv use_decls)
+{
     int ret = FALSE;
     int has_submodule = FALSE;
     ID id;
@@ -220,7 +230,7 @@ int export_module(SYMBOL sym, ID ids, expv use_decls) {
      *  the module is closed and has no submodules.
      *  So don't make xsmod.
      */
-    FOREACH_ID(id, ids) {
+    FOREACH_ID (id, ids) {
         if (ID_TYPE(id) && TYPE_IS_MODULE(ID_TYPE(id))) {
             has_submodule = TRUE;
         }
@@ -242,7 +252,8 @@ int export_module(SYMBOL sym, ID ids, expv use_decls) {
  * export public identifiers to module-manager.
  */
 int export_submodule(SYMBOL submod_name, SYMBOL mod_name, ID ids,
-                     expv use_decls) {
+                     expv use_decls)
+{
     struct module *mod;
     mod = generate_current_module(mod_name, submod_name, ids, use_decls, TRUE);
     if (mod) {
@@ -254,8 +265,8 @@ int export_submodule(SYMBOL submod_name, SYMBOL mod_name, ID ids,
 
 static int import_intermediate_file(const SYMBOL name,
                                     const SYMBOL submodule_name,
-                                    struct module **pmod,
-                                    int as_for_submodule) {
+                                    struct module **pmod, int as_for_submodule)
+{
     struct module *mod;
     extern int flag_do_module_cache;
     const char *extension;
@@ -284,7 +295,8 @@ static int import_intermediate_file(const SYMBOL name,
 /**
  * import public identifiers from module-manager.
  */
-int import_module(const SYMBOL name, struct module **pmod) {
+int import_module(const SYMBOL name, struct module **pmod)
+{
     return import_intermediate_file(name, NULL, pmod, FALSE);
 }
 
@@ -292,11 +304,13 @@ int import_module(const SYMBOL name, struct module **pmod) {
  * import public identifiers from module-manager as submodule.
  */
 int import_submodule(const SYMBOL module_name, const SYMBOL submodule_name,
-                     struct module **pmod) {
+                     struct module **pmod)
+{
     return import_intermediate_file(module_name, submodule_name, pmod, TRUE);
 }
 
-void include_module_file(FILE *fp, SYMBOL mod_name) {
+void include_module_file(FILE *fp, SYMBOL mod_name)
+{
     struct module *mod;
     FILE *mod_fp;
     int ch;

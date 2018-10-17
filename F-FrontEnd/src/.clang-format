@@ -21,10 +21,10 @@ AlwaysBreakTemplateDeclarations: MultiLine
 BinPackArguments: true
 BinPackParameters: true
 BraceWrapping:   
-  AfterClass:      false
+  AfterClass:      true
   AfterControlStatement: false
   AfterEnum:       false
-  AfterFunction:   false
+  AfterFunction:   true
   AfterNamespace:  false
   AfterObjCDeclaration: false
   AfterStruct:     false
@@ -37,7 +37,7 @@ BraceWrapping:
   SplitEmptyRecord: true
   SplitEmptyNamespace: true
 BreakBeforeBinaryOperators: None
-BreakBeforeBraces: Attach
+BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: false
 BreakInheritanceList: BeforeColon
 BreakBeforeTernaryOperators: true
@@ -58,8 +58,17 @@ ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
 ForEachMacros:   
   - foreach
-  - Q_FOREACH
-  - BOOST_FOREACH
+  - FOREACH_USE_ARG
+  - FOR_ITEMS_IN_LIST
+  - FOR_ITEMS_IN_XCODEML_LIST
+  - FOR_CTLS
+  - FOREACH_ID
+  - SAFE_FOREACH_ID
+  - FOREACH_EXT_ID
+  - SAFE_FOREACH_EXT_ID
+  - FOREACH_BLOCKS
+  - FOREACH_IN_HASH
+  - FOREACH_TYPE_EXT_ID
 IncludeBlocks:   Preserve
 IncludeCategories: 
   - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
@@ -69,7 +78,7 @@ IncludeCategories:
   - Regex:           '.*'
     Priority:        1
 IncludeIsMainRegex: '(Test)?$'
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentPPDirectives: None
 IndentWidth:     4
 IndentWrappedFunctionNames: false

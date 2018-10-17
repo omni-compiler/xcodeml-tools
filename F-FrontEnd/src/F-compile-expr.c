@@ -35,124 +35,131 @@ expv compile_terminal_node(x) expr x;
 
     switch (EXPR_CODE(x)) {
 
-    case STRING_CONSTANT: {
-        int len = strlen(EXPR_STR(x));
-        if (len > 132 * 39)
-            len = CHAR_LEN_UNFIXED;
-        ret = expv_str_term(STRING_CONSTANT, type_char(len), EXPR_STR(x));
-        break;
-    }
-
-    case F_QUAD_CONSTANT:
-    case F_DOUBLE_CONSTANT:
-    case FLOAT_CONSTANT: {
-        TYPE_DESC tp = type_basic(
-            (EXPR_CODE(x) == F_DOUBLE_CONSTANT) ? TYPE_DREAL : TYPE_REAL);
-        ret = expv_float_term(FLOAT_CONSTANT, tp, EXPR_FLOAT(x),
-                              EXPR_ORIGINAL_TOKEN(x));
-        if (ret != NULL && EXPR_CODE(x) == F_QUAD_CONSTANT) {
-            /*
-             * We won't introduce TYPE_QUAD. Instead, quad-real
-             * constant is treated as a constant with a kind
-             * specifier _16.
-             */
-            TYPE_KIND(EXPV_TYPE(ret)) =
-                expv_int_term(INT_CONSTANT, type_INT, 16);
-        }
-        break;
-    }
-
-    case F_TRUE_CONSTANT: {
-        ret = expv_int_term(INT_CONSTANT, type_basic(TYPE_LOGICAL), 1);
-        break;
-    }
-
-    case F_FALSE_CONSTANT: {
-        ret = expv_int_term(INT_CONSTANT, type_basic(TYPE_LOGICAL), 0);
-        break;
-    }
-
-    case INT_CONSTANT: {
-        omllint_t n;
-        ret = expv_int_term(INT_CONSTANT, type_basic(TYPE_INT), EXPR_INT(x));
-        n = EXPV_INT_VALUE(ret);
-        if (n > INT_MAX) {
-            EXPV_TYPE(ret) = getLargeIntType();
-        }
-        break;
-    }
-
-    case COMPLEX_CONSTANT: {
-        expv re = NULL;
-        expv im = NULL;
-        TYPE_DESC tp = NULL;
-
-        if (expr_is_constant(EXPR_ARG1(x))) {
-            re = expr_constant_value(EXPR_ARG1(x));
-        } else {
-            error("non constant expression (real) is in complex constant.");
+        case STRING_CONSTANT: {
+            int len = strlen(EXPR_STR(x));
+            if (len > 132 * 39)
+                len = CHAR_LEN_UNFIXED;
+            ret = expv_str_term(STRING_CONSTANT, type_char(len), EXPR_STR(x));
             break;
         }
 
-        if (expr_is_constant(EXPR_ARG2(x))) {
-            im = expr_constant_value(EXPR_ARG2(x));
-        } else {
-            error("non constant expression (imag) is in complex constant.");
+        case F_QUAD_CONSTANT:
+        case F_DOUBLE_CONSTANT:
+        case FLOAT_CONSTANT: {
+            TYPE_DESC tp = type_basic(
+                (EXPR_CODE(x) == F_DOUBLE_CONSTANT) ? TYPE_DREAL : TYPE_REAL);
+            ret = expv_float_term(FLOAT_CONSTANT, tp, EXPR_FLOAT(x),
+                                  EXPR_ORIGINAL_TOKEN(x));
+            if (ret != NULL && EXPR_CODE(x) == F_QUAD_CONSTANT) {
+                /*
+                 * We won't introduce TYPE_QUAD. Instead, quad-real
+                 * constant is treated as a constant with a kind
+                 * specifier _16.
+                 */
+                TYPE_KIND(EXPV_TYPE(ret)) =
+                    expv_int_term(INT_CONSTANT, type_INT, 16);
+            }
             break;
         }
 
-        if (re == NULL || im == NULL) {
-            fatal("compile_terminal_node: can't create complex constant.");
-            break;
-        } else if ((!(IS_NUMERIC(EXPV_TYPE(re)))) ||
-                   (!(IS_NUMERIC(EXPV_TYPE(im))))) {
-            error("non numeric expression(s) is in complex constant.");
+        case F_TRUE_CONSTANT: {
+            ret = expv_int_term(INT_CONSTANT, type_basic(TYPE_LOGICAL), 1);
             break;
         }
 
-        /* Last check before cons. */
-        if (expr_is_constant(re) == FALSE) {
-            error("about to create complex constant with non-constant (real).");
-            break;
-        }
-        if (expr_is_constant(im) == FALSE) {
-            error("about to create complex constant with non-constant (imag).");
+        case F_FALSE_CONSTANT: {
+            ret = expv_int_term(INT_CONSTANT, type_basic(TYPE_LOGICAL), 0);
             break;
         }
 
-        tp = max_type(EXPV_TYPE(re), EXPV_TYPE(im));
-        if (IS_REAL(tp) == FALSE) {
-            /* Use DREAL. */
-            tp = type_basic(TYPE_DREAL);
+        case INT_CONSTANT: {
+            omllint_t n;
+            ret =
+                expv_int_term(INT_CONSTANT, type_basic(TYPE_INT), EXPR_INT(x));
+            n = EXPV_INT_VALUE(ret);
+            if (n > INT_MAX) {
+                EXPV_TYPE(ret) = getLargeIntType();
+            }
+            break;
         }
 
-        re = expv_reduce_conv_const(tp, re);
-        im = expv_reduce_conv_const(tp, im);
-        ret = expv_cons(COMPLEX_CONSTANT,
-                        type_basic((TYPE_BASIC_TYPE(tp) == TYPE_DREAL)
-                                       ? TYPE_DCOMPLEX
-                                       : TYPE_COMPLEX),
-                        re, im);
-        break;
-    }
+        case COMPLEX_CONSTANT: {
+            expv re = NULL;
+            expv im = NULL;
+            TYPE_DESC tp = NULL;
 
-    case IDENT: {
-        ret = compile_ident_expression(x);
-        break;
-    }
+            if (expr_is_constant(EXPR_ARG1(x))) {
+                re = expr_constant_value(EXPR_ARG1(x));
+            } else {
+                error("non constant expression (real) is in complex "
+                      "constant.");
+                break;
+            }
 
-    case F_VAR:
-    case F_PARAM:
-    case F_FUNC:
-    case ID_LIST:
-    case F_ASTERISK:
-        ret = x;
-        break;
+            if (expr_is_constant(EXPR_ARG2(x))) {
+                im = expr_constant_value(EXPR_ARG2(x));
+            } else {
+                error("non constant expression (imag) is in complex "
+                      "constant.");
+                break;
+            }
 
-    default: {
-        ret = NULL;
-        break;
-    }
+            if (re == NULL || im == NULL) {
+                fatal("compile_terminal_node: can't create complex "
+                      "constant.");
+                break;
+            } else if ((!(IS_NUMERIC(EXPV_TYPE(re)))) ||
+                       (!(IS_NUMERIC(EXPV_TYPE(im))))) {
+                error("non numeric expression(s) is in complex "
+                      "constant.");
+                break;
+            }
+
+            /* Last check before cons. */
+            if (expr_is_constant(re) == FALSE) {
+                error("about to create complex constant with "
+                      "non-constant (real).");
+                break;
+            }
+            if (expr_is_constant(im) == FALSE) {
+                error("about to create complex constant with "
+                      "non-constant (imag).");
+                break;
+            }
+
+            tp = max_type(EXPV_TYPE(re), EXPV_TYPE(im));
+            if (IS_REAL(tp) == FALSE) {
+                /* Use DREAL. */
+                tp = type_basic(TYPE_DREAL);
+            }
+
+            re = expv_reduce_conv_const(tp, re);
+            im = expv_reduce_conv_const(tp, im);
+            ret = expv_cons(COMPLEX_CONSTANT,
+                            type_basic((TYPE_BASIC_TYPE(tp) == TYPE_DREAL)
+                                           ? TYPE_DCOMPLEX
+                                           : TYPE_COMPLEX),
+                            re, im);
+            break;
+        }
+
+        case IDENT: {
+            ret = compile_ident_expression(x);
+            break;
+        }
+
+        case F_VAR:
+        case F_PARAM:
+        case F_FUNC:
+        case ID_LIST:
+        case F_ASTERISK:
+            ret = x;
+            break;
+
+        default: {
+            ret = NULL;
+            break;
+        }
     }
 
     return ret;
@@ -170,7 +177,8 @@ bottom_type(type) const TYPE_DESC type;
     return tp;
 }
 
-static TYPE_DESC force_to_logical_type(expv v) {
+static TYPE_DESC force_to_logical_type(expv v)
+{
     TYPE_DESC tp = EXPV_TYPE(v);
     TYPE_DESC tp1 = type_basic(TYPE_LOGICAL);
     TYPE_ATTR_FLAGS(tp1) = TYPE_ATTR_FLAGS(tp);
@@ -181,7 +189,8 @@ static TYPE_DESC force_to_logical_type(expv v) {
 int are_dimension_and_shape_conformant_by_type(expr x, TYPE_DESC lt,
                                                TYPE_DESC rt, expv *shapePtr,
                                                int for_argument,
-                                               int issue_error) {
+                                               int issue_error)
+{
     int ret = FALSE;
     expv lShape = list0(LIST);
     expv rShape = list0(LIST);
@@ -233,23 +242,26 @@ int are_dimension_and_shape_conformant_by_type(expr x, TYPE_DESC lt,
             if (laSz > 0 && raSz > 0) {
                 if (!for_argument && laSz == raSz) {
                     /*
-                     * Both the array-specs are identical. Use left.
+                     * Both the array-specs are identical. Use
+                     * left.
                      */
                     aSpec = laSpec;
                 } else if (for_argument && laSz <= raSz) {
                     /*
-                     * The actual argument can be longer then the dummy
-                     * argument. Use left.
+                     * The actual argument can be longer then
+                     * the dummy argument. Use left.
                      */
                     aSpec = laSpec;
                 } else {
                     if (x != NULL) {
                         error_at_node(x,
-                                      "Subscript #%d array-spec size differs, "
+                                      "Subscript #%d array-spec size "
+                                      "differs, "
                                       "%d and %d.",
                                       i + 1, laSz, raSz);
                     } else {
-                        error("Subscript #%d array-spec size differs, "
+                        error("Subscript #%d array-spec "
+                              "size differs, "
                               "%d and %d.",
                               i + 1, laSz, raSz);
                     }
@@ -286,7 +298,6 @@ int are_dimension_and_shape_conformant_by_type(expr x, TYPE_DESC lt,
         }
 
         ret = TRUE;
-
     } else if (type_is_assumed_size_array(lt) == TRUE && TYPE_N_DIM(rt) > 0) {
         /*
          * An assumed size array accept all arrays. Only the size
@@ -296,13 +307,14 @@ int are_dimension_and_shape_conformant_by_type(expr x, TYPE_DESC lt,
     } else {
         if (issue_error) {
             if (x != NULL) {
-                error_at_node(
-                    x,
-                    "error at node: incompatible dimension for the operation, "
-                    "%d and %d.",
-                    TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+                error_at_node(x,
+                              "error at node: incompatible "
+                              "dimension for the operation, "
+                              "%d and %d.",
+                              TYPE_N_DIM(lt), TYPE_N_DIM(rt));
             } else {
-                error("error: incompatible dimension for the operation, %d and "
+                error("error: incompatible dimension for the "
+                      "operation, %d and "
                       "%d.",
                       TYPE_N_DIM(lt), TYPE_N_DIM(rt));
             }
@@ -314,15 +326,16 @@ Done:
 }
 
 static int are_dimension_and_shape_conformant(expr x, expv left, expv right,
-                                              expv *shapePtr,
-                                              int for_argument) {
+                                              expv *shapePtr, int for_argument)
+{
     TYPE_DESC lt = EXPV_TYPE(left);
     TYPE_DESC rt = EXPV_TYPE(right);
     return are_dimension_and_shape_conformant_by_type(x, lt, rt, shapePtr,
                                                       for_argument, TRUE);
 }
 
-static void switch_id_to_proc(ID id) {
+static void switch_id_to_proc(ID id)
+{
     if (ID_CLASS(id) == CL_PROC)
         return;
     memset(&id->info.proc_info, 0, sizeof(id->info.proc_info));
@@ -336,7 +349,8 @@ enum binary_expr_type {
 };
 
 /* evaluate expression */
-expv compile_expression(expr x) {
+expv compile_expression(expr x)
+{
     expr x1;
     expv left, right, right2, v;
     expv shape, lshape, rshape;
@@ -368,97 +382,99 @@ expv compile_expression(expr x) {
 
     switch (EXPR_CODE(x)) {
 
-    case F_ARRAY_REF: { /* (F_ARRAY_REF name args) */
-        x1 = EXPR_ARG1(x);
-        if (EXPR_CODE(x1) == F_ARRAY_REF) {
-            /* substr of character array */
-            return compile_substr_ref(x);
-        } else if (EXPR_CODE(x1) == IDENT) {
-            s = EXPR_SYM(x1);
-            id = find_ident(s);
-            if (id == NULL) {
-                id = declare_ident(s, CL_UNKNOWN);
-                if (id == NULL)
+        case F_ARRAY_REF: { /* (F_ARRAY_REF name args) */
+            x1 = EXPR_ARG1(x);
+            if (EXPR_CODE(x1) == F_ARRAY_REF) {
+                /* substr of character array */
+                return compile_substr_ref(x);
+            } else if (EXPR_CODE(x1) == IDENT) {
+                s = EXPR_SYM(x1);
+                id = find_ident(s);
+                if (id == NULL) {
+                    id = declare_ident(s, CL_UNKNOWN);
+                    if (id == NULL)
+                        return NULL;
+                }
+                if (ID_IS_AMBIGUOUS(id)) {
+                    error_at_node(x, "an ambiguous reference to symbol '%s'",
+                                  ID_NAME(id));
                     return NULL;
-            }
-            if (ID_IS_AMBIGUOUS(id)) {
-                error_at_node(x, "an ambiguous reference to symbol '%s'",
-                              ID_NAME(id));
-                return NULL;
-            }
-            v = NULL;
+                }
+                v = NULL;
 
-            // Fix #566
-            if (ID_CLASS(id) == CL_MULTI) {
-                // Looks for the correct type to return
-                FOREACH_ID(ip, MULTI_ID_LIST(id)) {
-                    if (ID_CLASS(ip) == CL_PROC) {
-                        id = ip;
-                        break;
+                // Fix #566
+                if (ID_CLASS(id) == CL_MULTI) {
+                    // Looks for the correct type to return
+                    FOREACH_ID (ip, MULTI_ID_LIST(id)) {
+                        if (ID_CLASS(ip) == CL_PROC) {
+                            id = ip;
+                            break;
+                        }
                     }
+                }
+
+                tp = ID_TYPE(id);
+                if (TYPE_IS_MODIFIED(tp)) {
+                    tp = TYPE_REF(tp);
+                }
+            } else {
+                id = NULL;
+                v = compile_lhs_expression(x1);
+                if (v == NULL) /* error recovery. */
+                    return NULL;
+                tp = EXPV_TYPE(v);
+
+                if (EXPR_CODE(v) == F95_MEMBER_REF) {
+                    return compile_member_array_ref(x, v);
                 }
             }
 
-            tp = ID_TYPE(id);
-            if (TYPE_IS_MODIFIED(tp)) {
-                tp = TYPE_REF(tp);
+            if (id == NULL ||
+                (EXPR_ARG2(x) != NULL && EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
+                 EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
+
+                if (IS_ARRAY_TYPE(tp) ||
+                    (IS_FUNCTION_TYPE(tp) &&
+                     IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)))) {
+                    return compile_array_ref(id, v, EXPR_ARG2(x), FALSE);
+                } else if (IS_CHAR(tp)) {
+                    return compile_substr_ref(x);
+                } else {
+                    if (id)
+                        error("%s is not an array nor a character",
+                              ID_NAME(id));
+                    else
+                        error("not array nor character", ID_NAME(id));
+                    goto err;
+                }
             }
-        } else {
-            id = NULL;
-            v = compile_lhs_expression(x1);
-            if (v == NULL) /* error recovery. */
-                return NULL;
-            tp = EXPV_TYPE(v);
 
-            if (EXPR_CODE(v) == F95_MEMBER_REF) {
-                return compile_member_array_ref(x, v);
-            }
-        }
+            if (!ID_LINE(id))
+                ID_LINE(id) = EXPR_LINE(x); // set line number if not set
 
-        if (id == NULL ||
-            (EXPR_ARG2(x) != NULL && EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
-             EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
+            if ((ID_CLASS(id) == CL_PROC || ID_CLASS(id) == CL_ENTRY ||
+                 ID_CLASS(id) == CL_MULTI || ID_CLASS(id) == CL_UNKNOWN)) {
 
-            if (IS_ARRAY_TYPE(tp) ||
-                (IS_FUNCTION_TYPE(tp) &&
-                 IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)))) {
-                return compile_array_ref(id, v, EXPR_ARG2(x), FALSE);
-            } else if (IS_CHAR(tp)) {
-                return compile_substr_ref(x);
-            } else {
-                if (id)
-                    error("%s is not an array nor a character", ID_NAME(id));
-                else
-                    error("not array nor character", ID_NAME(id));
-                goto err;
-            }
-        }
+                // In the following code snippet, although f is a name
+                // of the function, the reference to it in line 3 isn't
+                // a recursive call to it but an reference to its
+                // array-valued result value.
+                //
+                // function f()
+                // real f(8)
+                // a = f(1)
+                // end function f
+                //
+                if (IS_FUNCTION_TYPE(tp) &&
+                    IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) &&
+                    TYPE_IS_FOR_FUNC_SELF(tp) && !TYPE_IS_RECURSIVE(tp))
+                    goto not_func_call;
 
-        if (!ID_LINE(id))
-            ID_LINE(id) = EXPR_LINE(x); // set line number if not set
-
-        if ((ID_CLASS(id) == CL_PROC || ID_CLASS(id) == CL_ENTRY ||
-             ID_CLASS(id) == CL_MULTI || ID_CLASS(id) == CL_UNKNOWN)) {
-
-            // In the following code snippet, although f is a name of the
-            // function, the reference to it in line 3 isn't a recursive call to
-            // it but an reference to its array-valued result value.
-            //
-            // function f()
-            // real f(8)
-            // a = f(1)
-            // end function f
-            //
-            if (IS_FUNCTION_TYPE(tp) &&
-                IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) &&
-                TYPE_IS_FOR_FUNC_SELF(tp) && !TYPE_IS_RECURSIVE(tp))
-                goto not_func_call;
-
-            expv vRet = NULL;
-            if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
-                error("'%s' is a subroutine, not a function.", ID_NAME(id));
-                goto err;
-            }
+                expv vRet = NULL;
+                if (ID_CLASS(id) == CL_PROC && IS_SUBR(ID_TYPE(id))) {
+                    error("'%s' is a subroutine, not a function.", ID_NAME(id));
+                    goto err;
+                }
 
 #if 0
 		// to be resolved
@@ -484,672 +500,696 @@ expv compile_expression(expr x) {
                 }
 #endif
 
-            if (ID_IS_DUMMY_ARG(id)) {
-                vRet = compile_highorder_function_call(id, EXPR_ARG2(x), FALSE);
+                if (ID_IS_DUMMY_ARG(id)) {
+                    vRet = compile_highorder_function_call(id, EXPR_ARG2(x),
+                                                           FALSE);
+                } else {
+                    vRet = compile_function_call(id, EXPR_ARG2(x));
+                }
+                return vRet;
+            }
+
+        not_func_call:
+
+            if (ID_CLASS(id) == CL_TAGNAME) {
+                return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
+            }
+
+            if (!IS_ARRAY_TYPE(tp) && !IS_FUNCTION_TYPE(tp)) {
+                // probably an undefined function passed as argument
+                sp_check(id);
+                ID_IS_DECLARED(id) = FALSE;
+                switch_id_to_proc(id);
+                return compile_function_call(id, EXPR_ARG2(x));
+            }
+            return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
+        }
+
+        case XMP_COARRAY_REF: /* (XMP_COARRAY_REF expr args) */
+
+            return compile_coarray_ref(x);
+
+        /* implied do expression */
+        case F_IMPLIED_DO: { /* (F_IMPLIED_DO loop_spec do_args) */
+            return compile_implied_do_expression(x);
+        }
+
+        case F_UNARY_MINUS_EXPR: {
+            v = compile_expression(EXPR_ARG1(x));
+            if (v == NULL)
+                return NULL;
+            tp = getBaseType(EXPV_TYPE(v));
+            if (TYPE_IS_NOT_FIXED(tp)) {
+                if (!IS_NUMERIC(tp) && !IS_GENERIC_TYPE(tp)) {
+                    error_msg = "nonarithmetic operand of negation";
+                }
+                if (error_msg != NULL) {
+                    if (is_userdefined) {
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        goto err;
+                    }
+                } else {
+                    tp = EXPV_TYPE(v);
+                }
             } else {
-                vRet = compile_function_call(id, EXPR_ARG2(x));
+                if (!IS_NUMERIC(tp) && is_userdefined) {
+                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                } else {
+                    tp = EXPV_TYPE(v);
+                }
             }
-            return vRet;
+            return expv_cons(UNARY_MINUS_EXPR, tp, v, NULL);
         }
 
-    not_func_call:
+        /* arithmetic expression */
+        case F_PLUS_EXPR:
+            op = PLUS_EXPR;
+            biop = ARITB;
+            goto binary_op;
+        case F_MINUS_EXPR:
+            op = MINUS_EXPR;
+            biop = ARITB;
+            goto binary_op;
+        case F_MUL_EXPR:
+            op = MUL_EXPR;
+            biop = ARITB;
+            goto binary_op;
+        case F_DIV_EXPR:
+            op = DIV_EXPR;
+            biop = ARITB;
+            goto binary_op;
+        /* power operator */
+        case F_POWER_EXPR:
+            op = POWER_EXPR;
+            biop = ARITB;
+            goto binary_op;
 
-        if (ID_CLASS(id) == CL_TAGNAME) {
-            return compile_struct_constructor(id, NULL, EXPR_ARG2(x));
-        }
+        /* relational operator */
+        case F_EQ_EXPR:
+            op = LOG_EQ_EXPR;
+            biop = RELAB;
+            goto binary_op;
+        case F_NE_EXPR:
+            op = LOG_NEQ_EXPR;
+            biop = RELAB;
+            goto binary_op;
+        case F_GT_EXPR:
+            op = LOG_GT_EXPR;
+            biop = RELAB;
+            goto binary_op;
+        case F_GE_EXPR:
+            op = LOG_GE_EXPR;
+            biop = RELAB;
+            goto binary_op;
+        case F_LT_EXPR:
+            op = LOG_LT_EXPR;
+            biop = RELAB;
+            goto binary_op;
+        case F_LE_EXPR:
+            op = LOG_LE_EXPR;
+            biop = RELAB;
+            goto binary_op;
 
-        if (!IS_ARRAY_TYPE(tp) && !IS_FUNCTION_TYPE(tp)) {
-            // probably an undefined function passed as argument
-            sp_check(id);
-            ID_IS_DECLARED(id) = FALSE;
-            switch_id_to_proc(id);
-            return compile_function_call(id, EXPR_ARG2(x));
-        }
-        return compile_array_ref(id, NULL, EXPR_ARG2(x), FALSE);
-    }
+        /* logical operator */
+        case F_EQV_EXPR:
+            op = F_EQV_EXPR;
+            biop = LOGIB;
+            goto binary_op;
+        case F_NEQV_EXPR:
+            op = F_NEQV_EXPR;
+            biop = LOGIB;
+            goto binary_op;
+        case F_OR_EXPR:
+            op = LOG_OR_EXPR;
+            biop = LOGIB;
+            goto binary_op;
+        case F_AND_EXPR:
+            op = LOG_AND_EXPR;
+            biop = LOGIB;
+            goto binary_op;
 
-    case XMP_COARRAY_REF: /* (XMP_COARRAY_REF expr args) */
-
-        return compile_coarray_ref(x);
-
-    /* implied do expression */
-    case F_IMPLIED_DO: { /* (F_IMPLIED_DO loop_spec do_args) */
-        return compile_implied_do_expression(x);
-    }
-
-    case F_UNARY_MINUS_EXPR: {
-        v = compile_expression(EXPR_ARG1(x));
-        if (v == NULL)
-            return NULL;
-        tp = getBaseType(EXPV_TYPE(v));
-        if (TYPE_IS_NOT_FIXED(tp)) {
-            if (!IS_NUMERIC(tp) && !IS_GENERIC_TYPE(tp)) {
-                error_msg = "nonarithmetic operand of negation";
+        binary_op : {
+            left = compile_expression(EXPR_ARG1(x));
+            right = compile_expression(EXPR_ARG2(x));
+            if (left == NULL || right == NULL) {
+                goto err;
             }
-            if (error_msg != NULL) {
+
+            lt = EXPV_TYPE(left);
+            rt = EXPV_TYPE(right);
+            if (rt == NULL)
+                right = compile_expression(EXPR_ARG2(x));
+
+            bLType = bottom_type(lt);
+            bRType = bottom_type(rt);
+
+            /* FEAST change start */
+            /* if (TYPE_IS_NOT_FIXED(bLType) ||
+             * TYPE_IS_NOT_FIXED(bRType)) { */
+            /*     type_is_not_fixed = TRUE; */
+            /* } */
+            if (bLType == NULL || bRType == NULL) {
+                type_is_not_fixed = TRUE;
+            } else if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) {
+                type_is_not_fixed = TRUE;
+            }
+            /* FEAST change end */
+
+            /* The type of implicit declared function call is also not
+             * fixed */
+            if (EXPR_CODE(left) == FUNCTION_CALL && TYPE_IS_IMPLICIT(lt)) {
+                type_is_not_fixed = TRUE;
+            }
+            if (EXPR_CODE(right) == FUNCTION_CALL && TYPE_IS_IMPLICIT(rt)) {
+                type_is_not_fixed = TRUE;
+            }
+
+            switch (biop) {
+                case ARITB:
+                    if (!type_is_not_fixed) {
+                        if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
+                            (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
+                            error_msg = "nonarithmetic operand of "
+                                        "arithmetic operator";
+                        }
+                    }
+
+                    if (error_msg == NULL) {
+                        bType = max_type(bLType, bRType);
+                    } else if (is_userdefined) {
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        goto err;
+                    }
+
+                    break;
+
+                case RELAB:
+                    if (!type_is_not_fixed) {
+                        if (IS_CHAR(bLType) || IS_CHAR(bRType) ||
+                            IS_LOGICAL(bLType) || IS_LOGICAL(bRType)) {
+                            if (TYPE_BASIC_TYPE(bLType) !=
+                                TYPE_BASIC_TYPE(bRType)) {
+                                error_msg = "illegal comparison";
+                            }
+                        } else if (IS_COMPLEX(bLType) || IS_COMPLEX(bRType)) {
+                            if (op != LOG_EQ_EXPR && op != LOG_NEQ_EXPR) {
+                                error_msg = "order comparison "
+                                            "of complex data";
+                            }
+                        } else if ((!IS_NUMERIC(bLType) &&
+                                    !IS_GENERIC_TYPE(bLType)) ||
+                                   (!IS_NUMERIC(bRType) &&
+                                    !IS_GENERIC_TYPE(bRType))) {
+                            error_msg = "comparison of nonarithmetic data";
+                        }
+                    }
+
+                    if (error_msg == NULL) {
+                        if (IS_GNUMERIC_ALL(bLType) ||
+                            IS_GNUMERIC_ALL(bRType)) {
+                            /*
+                             * GNUMERIC_ALL can be an array.
+                             * So the type of this expression also
+                             * can be determined.
+                             */
+                            tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                        } else {
+                            bType = type_basic(TYPE_LOGICAL);
+                        }
+                    } else if (is_userdefined) {
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        goto err;
+                    }
+
+                    break;
+
+                case LOGIB:
+                    /*
+                     * FIXME
+                     * If the function defined in CONTAINS at end of
+                     * block, its type is implicitly declared at
+                     * this context. To avoid error, we forced to
+                     * change the type to logical.
+                     */
+                    if (!IS_LOGICAL(bLType) &&
+                        EXPV_CODE(left) == FUNCTION_CALL &&
+                        TYPE_IS_IMPLICIT(bLType)) {
+                        bLType = force_to_logical_type(left);
+                        lt = bLType;
+                    }
+                    if (!IS_LOGICAL(bRType) &&
+                        EXPV_CODE(right) == FUNCTION_CALL &&
+                        TYPE_IS_IMPLICIT(bRType)) {
+                        bRType = force_to_logical_type(right);
+                        rt = bRType;
+                    }
+
+                    if ((!IS_LOGICAL(bLType) && !IS_GENERIC_TYPE(bLType) &&
+                         !IS_GNUMERIC_ALL(bLType)) ||
+                        (!IS_LOGICAL(bRType) && !IS_GENERIC_TYPE(bRType) &&
+                         !IS_GNUMERIC_ALL(bRType))) {
+                        error_msg = "logical expression required";
+                    }
+
+                    if (error_msg == NULL) {
+                        bType = type_basic(TYPE_LOGICAL);
+                    } else if (is_userdefined) {
+                        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+                    } else {
+                        goto err;
+                    }
+
+                    break;
+
+                default:
+                    error("internal compiler error");
+                    goto err;
+            }
+
+            if (tp == NULL) {
+                int expDim = 0;
+
+                /*
+                 * First of all, check if which side is reshaped
+                 * type.
+                 */
+                /* FEAST add start */
+                if (!lt || !rt) {
+                    type_is_not_fixed = TRUE;
+                    goto doEmit;
+                }
+                /* FEAST add end */
+                if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
+                    if (bType == NULL) {
+                        tp = TYPE_IS_RESHAPED(rt) ? lt : rt;
+                        goto doEmit;
+                    } else {
+                        shape = list0(LIST);
+                        generate_shape_expr(TYPE_IS_RESHAPED(rt) ? lt : rt,
+                                            shape);
+                        tp = compile_dimensions(bType, shape);
+                        fix_array_dimensions(tp);
+                        delete_list(shape);
+                        goto doEmit;
+                    }
+                }
+
+                /*
+                 * Check the dimension of the both expressions.
+                 */
+                if (TYPE_N_DIM(lt) != TYPE_N_DIM(rt) &&
+                    (TYPE_N_DIM(lt) != 0 && TYPE_N_DIM(rt) != 0)) {
+                    error_at_node(x, "operation between different rank array.");
+                    error_at_node(x, "left dim %d != right dim %d.",
+                                  TYPE_N_DIM(lt), TYPE_N_DIM(rt));
+                    goto err;
+                }
+
+                lshape = list0(LIST);
+                rshape = list0(LIST);
+
+                generate_shape_expr(lt, lshape);
+                generate_shape_expr(rt, rshape);
+
+                /*
+                 * Check if (ARRAY binop scalar) or (scalar binop
+                 * ARRAY). In these case, ALWAYS use ARRAY's
+                 * dimension and the basic type must be the bType.
+                 */
+                if (TYPE_N_DIM(lt) == 0 && TYPE_N_DIM(rt) != 0) {
+                    expDim = TYPE_N_DIM(rt);
+                    shape = rshape;
+                } else if (TYPE_N_DIM(lt) != 0 && TYPE_N_DIM(rt) == 0) {
+                    expDim = TYPE_N_DIM(lt);
+                    shape = lshape;
+                }
+                if (expDim != 0) {
+                    tp = compile_dimensions(bType, shape);
+                    fix_array_dimensions(tp);
+                    goto doEmit;
+                }
+
+                /*
+                 * Then check the shape. After the above check, both
+                 * the left and the right are/aren't array
+                 * references so check the case both are array ref.
+                 */
+                if (TYPE_N_DIM(lt) > 0 && TYPE_N_DIM(rt) > 0 &&
+                    are_dimension_and_shape_conformant(
+                        x, left, right, &shape,
+                        /*for_argument=*/FALSE) == TRUE) {
+                    tp = compile_dimensions(bType, shape);
+                    fix_array_dimensions(tp);
+                    goto doEmit;
+                }
+
+                shape = max_shape(lshape, rshape, bType == bLType);
+
+                if (shape == NULL) {
+                    delete_list(lshape);
+                    delete_list(rshape);
+                    error("operation between non-conformable "
+                          "arrays. ");
+                    goto err;
+                }
+
+                /* NOTE:
+                 * if type and shape is same with the original type,
+                 * then type of expression is not created but used
+                 * with the origianl type.
+                 *
+                 * if operator is logical operator,
+                 * don't care about type but only shape.
+                 */
+                if ((biop == LOGIB || bType == bLType) && shape == lshape) {
+                    tp = wrap_type(lt); // This `tp` turns into
+                                        // `bottom_type(tp)`
+                    // later and `lt` == `bLType` if lt is not an
+                    // array type
+                } else if ((biop == LOGIB || bType == bRType) &&
+                           shape == rshape) {
+                    tp = wrap_type(rt); // same as above
+                } else {
+                    /* NOTE:
+                     * if shape is scalar (list0(LIST)), tp = bType.
+                     */
+                    tp = compile_dimensions(bType, shape);
+                    fix_array_dimensions(tp);
+                }
+
+                delete_list(lshape);
+                delete_list(rshape);
+            }
+
+        doEmit:
+            /* FEAST CHANGE start */
+            /* if (type_is_not_fixed) */
+            if (type_is_not_fixed) {
+                /* FEAST CHANGE end */
+                /*
+                 * Apply the attribute NOT FIXED on the result type
+                 * if one operand type is NOT FIXED.
+                 *
+                 * And the type should be copied to protect the
+                 * original type because it may be already fixed.
+                 */
+                if (tp == NULL) {
+                    tp = new_type_desc();
+                    TYPE_SET_NOT_FIXED(tp);
+                } else if (IS_ARRAY_TYPE(tp)) {
+                    TYPE_DESC tq;
+                    TYPE_DESC new_tp = new_type_desc();
+                    *new_tp = *bottom_type(tp);
+                    tq = tp;
+                    while (IS_ARRAY_TYPE(tq)) {
+                        if (!IS_ARRAY_TYPE(TYPE_REF(tq)))
+                            break;
+                        tq = TYPE_REF(tq);
+                    }
+                    TYPE_REF(tq) = new_tp;
+                    TYPE_SET_NOT_FIXED(new_tp);
+                } else {
+                    TYPE_DESC new_tp = new_type_desc();
+                    *new_tp = *tp;
+                    tp = new_tp;
+                    TYPE_SET_NOT_FIXED(tp);
+                }
+            }
+            return expv_cons(op, tp, left, right);
+        }
+
+        case F_NOT_EXPR: {
+            /* accept logical array. */
+            v = compile_logical_expression_with_array(EXPR_ARG1(x));
+            if (v == NULL)
+                goto err;
+            return expv_cons(LOG_NOT_EXPR, EXPV_TYPE(v), v, NULL);
+        }
+
+        case F_CONCAT_EXPR: {
+            left = compile_expression(EXPR_ARG1(x));
+            right = compile_expression(EXPR_ARG2(x));
+            if (left == NULL || right == NULL) {
+                goto err;
+            }
+            lt = bottom_type(EXPV_TYPE(left));
+            rt = bottom_type(EXPV_TYPE(right));
+            if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
+                (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
                 if (is_userdefined) {
                     tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
                 } else {
+                    error("concatenation of nonchar data");
                     goto err;
                 }
             } else {
-                tp = EXPV_TYPE(v);
+                int l1 = TYPE_CHAR_LEN(lt);
+                int l2 = TYPE_CHAR_LEN(rt);
+                tp = type_char((l1 <= 0 || l2 <= 0) ? 0 : l1 + l2);
             }
-        } else {
-            if (!IS_NUMERIC(tp) && is_userdefined) {
-                tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-            } else {
-                tp = EXPV_TYPE(v);
-            }
-        }
-        return expv_cons(UNARY_MINUS_EXPR, tp, v, NULL);
-    }
 
-    /* arithmetic expression */
-    case F_PLUS_EXPR:
-        op = PLUS_EXPR;
-        biop = ARITB;
-        goto binary_op;
-    case F_MINUS_EXPR:
-        op = MINUS_EXPR;
-        biop = ARITB;
-        goto binary_op;
-    case F_MUL_EXPR:
-        op = MUL_EXPR;
-        biop = ARITB;
-        goto binary_op;
-    case F_DIV_EXPR:
-        op = DIV_EXPR;
-        biop = ARITB;
-        goto binary_op;
-    /* power operator */
-    case F_POWER_EXPR:
-        op = POWER_EXPR;
-        biop = ARITB;
-        goto binary_op;
-
-    /* relational operator */
-    case F_EQ_EXPR:
-        op = LOG_EQ_EXPR;
-        biop = RELAB;
-        goto binary_op;
-    case F_NE_EXPR:
-        op = LOG_NEQ_EXPR;
-        biop = RELAB;
-        goto binary_op;
-    case F_GT_EXPR:
-        op = LOG_GT_EXPR;
-        biop = RELAB;
-        goto binary_op;
-    case F_GE_EXPR:
-        op = LOG_GE_EXPR;
-        biop = RELAB;
-        goto binary_op;
-    case F_LT_EXPR:
-        op = LOG_LT_EXPR;
-        biop = RELAB;
-        goto binary_op;
-    case F_LE_EXPR:
-        op = LOG_LE_EXPR;
-        biop = RELAB;
-        goto binary_op;
-
-    /* logical operator */
-    case F_EQV_EXPR:
-        op = F_EQV_EXPR;
-        biop = LOGIB;
-        goto binary_op;
-    case F_NEQV_EXPR:
-        op = F_NEQV_EXPR;
-        biop = LOGIB;
-        goto binary_op;
-    case F_OR_EXPR:
-        op = LOG_OR_EXPR;
-        biop = LOGIB;
-        goto binary_op;
-    case F_AND_EXPR:
-        op = LOG_AND_EXPR;
-        biop = LOGIB;
-        goto binary_op;
-
-    binary_op : {
-        left = compile_expression(EXPR_ARG1(x));
-        right = compile_expression(EXPR_ARG2(x));
-        if (left == NULL || right == NULL) {
-            goto err;
+            return expv_cons(F_CONCAT_EXPR, tp, left, right);
         }
 
-        lt = EXPV_TYPE(left);
-        rt = EXPV_TYPE(right);
-        if (rt == NULL)
+        case F95_USER_DEFINED_BINARY_EXPR: {
+            expr id = EXPR_ARG1(x);
+            left = compile_expression(EXPR_ARG2(x));
+            if (left == NULL) {
+                goto err;
+            }
+            if ((right = compile_expression(EXPR_ARG3(x))) == NULL) {
+                goto err;
+            }
+            tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+
+            return expv_user_def_cons(F95_USER_DEFINED_BINARY_EXPR, tp, id,
+                                      left, right);
+        }
+
+        case F95_USER_DEFINED_UNARY_EXPR: {
+            expr id = EXPR_ARG1(x);
+            left = compile_expression(EXPR_ARG2(x));
+            if (left == NULL) {
+                goto err;
+            }
+            tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
+
+            return expv_user_def_cons(F95_USER_DEFINED_UNARY_EXPR, tp, id, left,
+                                      NULL);
+        }
+
+        case F_LABEL_REF: {
+            error("label argument is not supported");
+            break;
+        }
+
+        case F95_TRIPLET_EXPR: {
+            expv retV = NULL;
+            left = compile_expression(EXPR_ARG1(x));
             right = compile_expression(EXPR_ARG2(x));
-
-        bLType = bottom_type(lt);
-        bRType = bottom_type(rt);
-
-        /* FEAST change start */
-        /* if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) { */
-        /*     type_is_not_fixed = TRUE; */
-        /* } */
-        if (bLType == NULL || bRType == NULL) {
-            type_is_not_fixed = TRUE;
-        } else if (TYPE_IS_NOT_FIXED(bLType) || TYPE_IS_NOT_FIXED(bRType)) {
-            type_is_not_fixed = TRUE;
-        }
-        /* FEAST change end */
-
-        /* The type of implicit declared function call is also not fixed */
-        if (EXPR_CODE(left) == FUNCTION_CALL && TYPE_IS_IMPLICIT(lt)) {
-            type_is_not_fixed = TRUE;
-        }
-        if (EXPR_CODE(right) == FUNCTION_CALL && TYPE_IS_IMPLICIT(rt)) {
-            type_is_not_fixed = TRUE;
+            right2 = compile_expression(EXPR_ARG3(x));
+            if (right && EXPR_CODE(right) == F_ASTERISK)
+                right = NULL;
+            if ((EXPR_ARG1(x) && left == NULL) ||
+                //(EXPR_ARG2(x) && right == NULL) ||
+                (EXPR_ARG3(x) && right2 == NULL)) {
+                goto err;
+            }
+            retV = list3(F_INDEX_RANGE, left, right, right2);
+            set_index_range_type(retV);
+            return retV;
         }
 
-        switch (biop) {
-        case ARITB:
-            if (!type_is_not_fixed) {
-                if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
-                    (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
-                    error_msg = "nonarithmetic operand of arithmetic operator";
+        case F95_CONSTANT_WITH: {
+            v1 = compile_expression(EXPR_ARG1(x)); /* constant */
+            if (v1 == NULL)
+                return NULL;
+            assert(EXPV_TYPE(v1));
+            v2 = compile_expression(EXPR_ARG2(x)); /* kind */
+
+            if (EXPV_CODE(v2) == STRING_CONSTANT) {
+                // for a case like 4_"hello"
+                expv tmp = v1;
+                v1 = v2;
+                v2 = tmp;
+            }
+
+        calc_kind:
+            if (v2 != NULL) {
+                v2 = expv_reduce_kind(v2);
+                if (v2 == NULL) {
+                    error("bad expression in constant kind "
+                          "parameter");
+                    break;
                 }
-            }
-
-            if (error_msg == NULL) {
-                bType = max_type(bLType, bRType);
-            } else if (is_userdefined) {
-                tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-            } else {
-                goto err;
-            }
-
-            break;
-
-        case RELAB:
-            if (!type_is_not_fixed) {
-                if (IS_CHAR(bLType) || IS_CHAR(bRType) || IS_LOGICAL(bLType) ||
-                    IS_LOGICAL(bRType)) {
-                    if (TYPE_BASIC_TYPE(bLType) != TYPE_BASIC_TYPE(bRType)) {
-                        error_msg = "illegal comparison";
-                    }
-                } else if (IS_COMPLEX(bLType) || IS_COMPLEX(bRType)) {
-                    if (op != LOG_EQ_EXPR && op != LOG_NEQ_EXPR) {
-                        error_msg = "order comparison of complex data";
-                    }
-                } else if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
-                           (!IS_NUMERIC(bRType) && !IS_GENERIC_TYPE(bRType))) {
-                    error_msg = "comparison of nonarithmetic data";
+                if (expr_is_constant_typeof(v2, TYPE_INT) == FALSE) {
+                    error("bad expression in constant kind "
+                          "parameter");
+                    break;
                 }
-            }
-
-            if (error_msg == NULL) {
-                if (IS_GNUMERIC_ALL(bLType) || IS_GNUMERIC_ALL(bRType)) {
-                    /*
-                     * GNUMERIC_ALL can be an array.
-                     * So the type of this expression also can be determined.
-                     */
-                    tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-                } else {
-                    bType = type_basic(TYPE_LOGICAL);
+                if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_DREAL) {
+                    error("an invalid constant expression, which has "
+                          "a 'd' exponent and an explicit kind.");
                 }
-            } else if (is_userdefined) {
-                tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-            } else {
-                goto err;
-            }
+                /* if kind is differ, make new type desc.
+                   for example, type desc for l2 and l3 should be
+                   differ. l2 = .false. l3 = .false._1
+                */
 
-            break;
-
-        case LOGIB:
-            /*
-             * FIXME
-             * If the function defined in CONTAINS at end of
-             * block, its type is implicitly declared at
-             * this context. To avoid error, we forced to
-             * change the type to logical.
-             */
-            if (!IS_LOGICAL(bLType) && EXPV_CODE(left) == FUNCTION_CALL &&
-                TYPE_IS_IMPLICIT(bLType)) {
-                bLType = force_to_logical_type(left);
-                lt = bLType;
-            }
-            if (!IS_LOGICAL(bRType) && EXPV_CODE(right) == FUNCTION_CALL &&
-                TYPE_IS_IMPLICIT(bRType)) {
-                bRType = force_to_logical_type(right);
-                rt = bRType;
-            }
-
-            if ((!IS_LOGICAL(bLType) && !IS_GENERIC_TYPE(bLType) &&
-                 !IS_GNUMERIC_ALL(bLType)) ||
-                (!IS_LOGICAL(bRType) && !IS_GENERIC_TYPE(bRType) &&
-                 !IS_GNUMERIC_ALL(bRType))) {
-                error_msg = "logical expression required";
-            }
-
-            if (error_msg == NULL) {
-                bType = type_basic(TYPE_LOGICAL);
-            } else if (is_userdefined) {
-                tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-            } else {
-                goto err;
-            }
-
-            break;
-
-        default:
-            error("internal compiler error");
-            goto err;
-        }
-
-        if (tp == NULL) {
-            int expDim = 0;
-
-            /*
-             * First of all, check if which side is reshaped type.
-             */
-            /* FEAST add start */
-            if (!lt || !rt) {
-                type_is_not_fixed = TRUE;
-                goto doEmit;
-            }
-            /* FEAST add end */
-            if (TYPE_IS_RESHAPED(lt) || TYPE_IS_RESHAPED(rt)) {
-                if (bType == NULL) {
-                    tp = TYPE_IS_RESHAPED(rt) ? lt : rt;
-                    goto doEmit;
-                } else {
-                    shape = list0(LIST);
-                    generate_shape_expr(TYPE_IS_RESHAPED(rt) ? lt : rt, shape);
-                    tp = compile_dimensions(bType, shape);
-                    fix_array_dimensions(tp);
-                    delete_list(shape);
-                    goto doEmit;
+                /* Constant cannot have function call as kind
+                   specifier, this does not make any sense.
+                   Therefore, we keep the kind identifier as an
+                   identifier. */
+                if (EXPV_CODE(v2) == FUNCTION_CALL) {
+                    v2 = expv_sym_term(IDENT, EXPV_TYPE(v2),
+                                       EXPR_SYM(EXPR_ARG2(x)));
                 }
+                TYPE_KIND(EXPV_TYPE(v1)) = v2;
             }
-
-            /*
-             * Check the dimension of the both expressions.
-             */
-            if (TYPE_N_DIM(lt) != TYPE_N_DIM(rt) &&
-                (TYPE_N_DIM(lt) != 0 && TYPE_N_DIM(rt) != 0)) {
-                error_at_node(x, "operation between different rank array.");
-                error_at_node(x, "left dim %d != right dim %d.", TYPE_N_DIM(lt),
-                              TYPE_N_DIM(rt));
-                goto err;
-            }
-
-            lshape = list0(LIST);
-            rshape = list0(LIST);
-
-            generate_shape_expr(lt, lshape);
-            generate_shape_expr(rt, rshape);
-
-            /*
-             * Check if (ARRAY binop scalar) or (scalar binop
-             * ARRAY). In these case, ALWAYS use ARRAY's dimension
-             * and the basic type must be the bType.
-             */
-            if (TYPE_N_DIM(lt) == 0 && TYPE_N_DIM(rt) != 0) {
-                expDim = TYPE_N_DIM(rt);
-                shape = rshape;
-            } else if (TYPE_N_DIM(lt) != 0 && TYPE_N_DIM(rt) == 0) {
-                expDim = TYPE_N_DIM(lt);
-                shape = lshape;
-            }
-            if (expDim != 0) {
-                tp = compile_dimensions(bType, shape);
-                fix_array_dimensions(tp);
-                goto doEmit;
-            }
-
-            /*
-             * Then check the shape. After the above check, both
-             * the left and the right are/aren't array references
-             * so check the case both are array ref.
-             */
-            if (TYPE_N_DIM(lt) > 0 && TYPE_N_DIM(rt) > 0 &&
-                are_dimension_and_shape_conformant(
-                    x, left, right, &shape, /*for_argument=*/FALSE) == TRUE) {
-                tp = compile_dimensions(bType, shape);
-                fix_array_dimensions(tp);
-                goto doEmit;
-            }
-
-            shape = max_shape(lshape, rshape, bType == bLType);
-
-            if (shape == NULL) {
-                delete_list(lshape);
-                delete_list(rshape);
-                error("operation between non-conformable arrays. ");
-                goto err;
-            }
-
-            /* NOTE:
-             * if type and shape is same with the original type,
-             * then type of expression is not created but used with
-             * the origianl type.
-             *
-             * if operator is logical operator,
-             * don't care about type but only shape.
-             */
-            if ((biop == LOGIB || bType == bLType) && shape == lshape) {
-                tp = wrap_type(lt); // This `tp` turns into `bottom_type(tp)`
-                // later and `lt` == `bLType` if lt is not an array type
-            } else if ((biop == LOGIB || bType == bRType) && shape == rshape) {
-                tp = wrap_type(rt); // same as above
-            } else {
-                /* NOTE:
-                 * if shape is scalar (list0(LIST)), tp = bType.
-                 */
-                tp = compile_dimensions(bType, shape);
-                fix_array_dimensions(tp);
-            }
-
-            delete_list(lshape);
-            delete_list(rshape);
+            return v1;
         }
 
-    doEmit:
-        /* FEAST CHANGE start */
-        /* if (type_is_not_fixed) */
-        if (type_is_not_fixed) {
-            /* FEAST CHANGE end */
-            /*
-             * Apply the attribute NOT FIXED on the result type if one
-             * operand type is NOT FIXED.
-             *
-             * And the type should be copied to protect the original type
-             * because it may be already fixed.
+        case F95_TRUE_CONSTANT_WITH:
+        case F95_FALSE_CONSTANT_WITH:
+            v1 = expv_int_term(INT_CONSTANT, type_basic(TYPE_LOGICAL),
+                               (EXPR_CODE(x) == F95_TRUE_CONSTANT_WITH));
+            v2 = compile_expression(EXPR_ARG1(x));
+            goto calc_kind;
+
+        case F_SET_EXPR:
+            return compile_set_expr(x);
+
+        case F95_MEMBER_REF: {
+            expv v = compile_member_ref(x);
+            /* TODO
+             * if type of member is array
+             * and type of argument is array,
+             * then raise error.
              */
-            if (tp == NULL) {
-                tp = new_type_desc();
-                TYPE_SET_NOT_FIXED(tp);
-            } else if (IS_ARRAY_TYPE(tp)) {
-                TYPE_DESC tq;
-                TYPE_DESC new_tp = new_type_desc();
-                *new_tp = *bottom_type(tp);
-                tq = tp;
-                while (IS_ARRAY_TYPE(tq)) {
-                    if (!IS_ARRAY_TYPE(TYPE_REF(tq)))
-                        break;
-                    tq = TYPE_REF(tq);
+            return v;
+        }
+
+        case F_DUP_DECL:
+            return compile_dup_decl(x);
+
+        case F95_KIND_SELECTOR_SPEC: {
+            expv v = NULL;
+            v = compile_expression(EXPR_ARG1(x));
+            if (v != NULL)
+                v = expv_reduce_kind(v) ?: v;
+            if (v != NULL && !expv_is_specification(v)) {
+                error_at_node(EXPR_ARG1(x),
+                              "kind must be a specification expression.");
+            }
+            if (v != NULL) {
+                EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
+            }
+            return v;
+        }
+
+        case F95_LEN_SELECTOR_SPEC: {
+            expv v;
+            if (EXPR_ARG1(x) == NULL)
+                return expv_any_term(F_ASTERISK, NULL);
+            if (EXPR_CODE(EXPR_ARG1(x)) == F08_LEN_SPEC_COLON)
+                return expv_any_term(F08_LEN_SPEC_COLON, NULL);
+
+            v = compile_expression(EXPR_ARG1(x));
+            if ((v = expv_reduce(v, FALSE)) == NULL)
+                return NULL;
+            /* if type is not fixed yet, do implicit declaration here */
+            if ((EXPV_CODE(v) == IDENT || EXPV_CODE(v) == F_VAR) &&
+                EXPV_TYPE(v) == NULL) {
+                id = find_ident(EXPV_NAME(v));
+                if (ID_TYPE(id) == NULL) {
+                    implicit_declaration(id);
                 }
-                TYPE_REF(tq) = new_tp;
-                TYPE_SET_NOT_FIXED(new_tp);
-            } else {
-                TYPE_DESC new_tp = new_type_desc();
-                *new_tp = *tp;
-                tp = new_tp;
-                TYPE_SET_NOT_FIXED(tp);
+                EXPV_TYPE(v) = ID_TYPE(id);
             }
+            /* TYPE will be checked in compile_basic_type() */
+            return v;
         }
-        return expv_cons(op, tp, left, right);
-    }
+        case PLUS_EXPR:
+        case MINUS_EXPR:
+        case DIV_EXPR:
+        case MUL_EXPR:
+        case POWER_EXPR:
+        case ARRAY_REF:
+        case UNARY_MINUS_EXPR:
+        case FUNCTION_CALL:
+            /* already compiled */
+            return x;
 
-    case F_NOT_EXPR: {
-        /* accept logical array. */
-        v = compile_logical_expression_with_array(EXPR_ARG1(x));
-        if (v == NULL)
-            goto err;
-        return expv_cons(LOG_NOT_EXPR, EXPV_TYPE(v), v, NULL);
-    }
+        case F95_ARRAY_CONSTRUCTOR:
+            return compile_array_constructor(x);
 
-    case F_CONCAT_EXPR: {
-        left = compile_expression(EXPR_ARG1(x));
-        right = compile_expression(EXPR_ARG2(x));
-        if (left == NULL || right == NULL) {
-            goto err;
-        }
-        lt = bottom_type(EXPV_TYPE(left));
-        rt = bottom_type(EXPV_TYPE(right));
-        if ((!IS_CHAR(lt) && !IS_GNUMERIC(lt) && !IS_GNUMERIC_ALL(lt)) ||
-            (!IS_CHAR(rt) && !IS_GNUMERIC(rt) && !IS_GNUMERIC_ALL(rt))) {
-            if (is_userdefined) {
-                tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-            } else {
-                error("concatenation of nonchar data");
-                goto err;
+        case F_MODULE_INTERNAL:
+            /* we regard a module imported expression as compiled */
+            return x;
+
+        case F_STRING_CONST_SUBSTR: {
+            expr strConstX = EXPR_ARG1(x);
+            expr indexX = EXPR_ARG2(x);
+            char *str = NULL;
+            int len = 0;
+            expr paramNameX = NULL;
+            expr typeDeclX = NULL;
+            expr accessX = NULL;
+
+            /*
+             * Generate parameter declaration.
+             */
+            if (EXPR_CODE(strConstX) != STRING_CONSTANT) {
+                fatal("1st arg is not a string.");
+                /* not reached. */
+                return NULL;
             }
-        } else {
-            int l1 = TYPE_CHAR_LEN(lt);
-            int l2 = TYPE_CHAR_LEN(rt);
-            tp = type_char((l1 <= 0 || l2 <= 0) ? 0 : l1 + l2);
+            str = EXPR_STR(strConstX);
+            len = strlen(str);
+
+            paramNameX = make_enode(IDENT, (void *)gen_temp_symbol("strconst")),
+            typeDeclX = list3(
+                F_TYPE_DECL,
+                list2(LIST, make_enode(F_TYPE_NODE, (void *)TYPE_CHAR),
+                      list2(LIST,
+                            list1(F95_LEN_SELECTOR_SPEC, make_int_enode(len)),
+                            NULL)),
+                list1(LIST,
+                      list5(LIST, paramNameX, NULL, NULL,
+                            make_enode(STRING_CONSTANT, (void *)str), NULL)),
+                (is_in_module() == FALSE)
+                    ? list1(LIST, list0(F95_PARAMETER_SPEC))
+                    : list2(LIST, list0(F95_PARAMETER_SPEC),
+                            list0(F95_PRIVATE_SPEC)));
+            compile_type_decl(EXPR_ARG1(typeDeclX), NULL, EXPR_ARG2(typeDeclX),
+                              EXPR_ARG3(typeDeclX));
+
+            accessX = list2(F_ARRAY_REF, paramNameX, indexX);
+            return compile_expression(accessX);
         }
 
-        return expv_cons(F_CONCAT_EXPR, tp, left, right);
-    }
-
-    case F95_USER_DEFINED_BINARY_EXPR: {
-        expr id = EXPR_ARG1(x);
-        left = compile_expression(EXPR_ARG2(x));
-        if (left == NULL) {
-            goto err;
+        case F03_STRUCT_CONSTRUCT: {
+            x1 = EXPR_ARG1(x);
+            assert(EXPR_CODE(x1) == IDENT);
+            id = find_ident(EXPR_SYM(x1));
+            assert(id);
+            assert(ID_CLASS(id) == CL_TAGNAME);
+            return compile_struct_constructor(id, EXPR_ARG2(x), EXPR_ARG3(x));
         }
-        if ((right = compile_expression(EXPR_ARG3(x))) == NULL) {
-            goto err;
-        }
-        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
 
-        return expv_user_def_cons(F95_USER_DEFINED_BINARY_EXPR, tp, id, left,
-                                  right);
-    }
-
-    case F95_USER_DEFINED_UNARY_EXPR: {
-        expr id = EXPR_ARG1(x);
-        left = compile_expression(EXPR_ARG2(x));
-        if (left == NULL) {
-            goto err;
-        }
-        tp = BASIC_TYPE_DESC(TYPE_GNUMERIC_ALL);
-
-        return expv_user_def_cons(F95_USER_DEFINED_UNARY_EXPR, tp, id, left,
-                                  NULL);
-    }
-
-    case F_LABEL_REF: {
-        error("label argument is not supported");
-        break;
-    }
-
-    case F95_TRIPLET_EXPR: {
-        expv retV = NULL;
-        left = compile_expression(EXPR_ARG1(x));
-        right = compile_expression(EXPR_ARG2(x));
-        right2 = compile_expression(EXPR_ARG3(x));
-        if (right && EXPR_CODE(right) == F_ASTERISK)
-            right = NULL;
-        if ((EXPR_ARG1(x) && left == NULL) ||
-            //(EXPR_ARG2(x) && right == NULL) ||
-            (EXPR_ARG3(x) && right2 == NULL)) {
+        case F08_LEN_SPEC_COLON:
+        case LEN_SPEC_ASTERISC: {
+            error_msg = "bad expression";
             goto err;
         }
-        retV = list3(F_INDEX_RANGE, left, right, right2);
-        set_index_range_type(retV);
-        return retV;
-    }
 
-    case F95_CONSTANT_WITH: {
-        v1 = compile_expression(EXPR_ARG1(x)); /* constant */
-        if (v1 == NULL)
-            return NULL;
-        assert(EXPV_TYPE(v1));
-        v2 = compile_expression(EXPR_ARG2(x)); /* kind */
-
-        if (EXPV_CODE(v2) == STRING_CONSTANT) {
-            // for a case like 4_"hello"
-            expv tmp = v1;
-            v1 = v2;
-            v2 = tmp;
+        default: {
+            fatal("compile_expression: unknown code '%s'",
+                  EXPR_CODE_NAME(EXPR_CODE(x)));
         }
-
-    calc_kind:
-        if (v2 != NULL) {
-            v2 = expv_reduce_kind(v2);
-            if (v2 == NULL) {
-                error("bad expression in constant kind parameter");
-                break;
-            }
-            if (expr_is_constant_typeof(v2, TYPE_INT) == FALSE) {
-                error("bad expression in constant kind parameter");
-                break;
-            }
-            if (TYPE_BASIC_TYPE(EXPV_TYPE(v1)) == TYPE_DREAL) {
-                error("an invalid constant expression, which has "
-                      "a 'd' exponent and an explicit kind.");
-            }
-            /* if kind is differ, make new type desc.
-               for example, type desc for l2 and l3 should be differ.
-               l2 = .false.
-               l3 = .false._1
-            */
-
-            /* Constant cannot have function call as kind specifier, this does
-               not make any sense. Therefore, we keep the kind identifier as
-               an identifier. */
-            if (EXPV_CODE(v2) == FUNCTION_CALL) {
-                v2 =
-                    expv_sym_term(IDENT, EXPV_TYPE(v2), EXPR_SYM(EXPR_ARG2(x)));
-            }
-            TYPE_KIND(EXPV_TYPE(v1)) = v2;
-        }
-        return v1;
-    }
-
-    case F95_TRUE_CONSTANT_WITH:
-    case F95_FALSE_CONSTANT_WITH:
-        v1 = expv_int_term(INT_CONSTANT, type_basic(TYPE_LOGICAL),
-                           (EXPR_CODE(x) == F95_TRUE_CONSTANT_WITH));
-        v2 = compile_expression(EXPR_ARG1(x));
-        goto calc_kind;
-
-    case F_SET_EXPR:
-        return compile_set_expr(x);
-
-    case F95_MEMBER_REF: {
-        expv v = compile_member_ref(x);
-        /* TODO
-         * if type of member is array
-         * and type of argument is array,
-         * then raise error.
-         */
-        return v;
-    }
-
-    case F_DUP_DECL:
-        return compile_dup_decl(x);
-
-    case F95_KIND_SELECTOR_SPEC: {
-        expv v = NULL;
-        v = compile_expression(EXPR_ARG1(x));
-        if (v != NULL)
-            v = expv_reduce_kind(v) ?: v;
-        if (v != NULL && !expv_is_specification(v)) {
-            error_at_node(EXPR_ARG1(x),
-                          "kind must be a specification expression.");
-        }
-        if (v != NULL) {
-            EXPV_KWOPT_NAME(v) = (const char *)strdup("kind");
-        }
-        return v;
-    }
-
-    case F95_LEN_SELECTOR_SPEC: {
-        expv v;
-        if (EXPR_ARG1(x) == NULL)
-            return expv_any_term(F_ASTERISK, NULL);
-        if (EXPR_CODE(EXPR_ARG1(x)) == F08_LEN_SPEC_COLON)
-            return expv_any_term(F08_LEN_SPEC_COLON, NULL);
-
-        v = compile_expression(EXPR_ARG1(x));
-        if ((v = expv_reduce(v, FALSE)) == NULL)
-            return NULL;
-        /* if type is not fixed yet, do implicit declaration here */
-        if ((EXPV_CODE(v) == IDENT || EXPV_CODE(v) == F_VAR) &&
-            EXPV_TYPE(v) == NULL) {
-            id = find_ident(EXPV_NAME(v));
-            if (ID_TYPE(id) == NULL) {
-                implicit_declaration(id);
-            }
-            EXPV_TYPE(v) = ID_TYPE(id);
-        }
-        /* TYPE will be checked in compile_basic_type() */
-        return v;
-    }
-    case PLUS_EXPR:
-    case MINUS_EXPR:
-    case DIV_EXPR:
-    case MUL_EXPR:
-    case POWER_EXPR:
-    case ARRAY_REF:
-    case UNARY_MINUS_EXPR:
-    case FUNCTION_CALL:
-        /* already compiled */
-        return x;
-
-    case F95_ARRAY_CONSTRUCTOR:
-        return compile_array_constructor(x);
-
-    case F_MODULE_INTERNAL:
-        /* we regard a module imported expression as compiled */
-        return x;
-
-    case F_STRING_CONST_SUBSTR: {
-        expr strConstX = EXPR_ARG1(x);
-        expr indexX = EXPR_ARG2(x);
-        char *str = NULL;
-        int len = 0;
-        expr paramNameX = NULL;
-        expr typeDeclX = NULL;
-        expr accessX = NULL;
-
-        /*
-         * Generate parameter declaration.
-         */
-        if (EXPR_CODE(strConstX) != STRING_CONSTANT) {
-            fatal("1st arg is not a string.");
-            /* not reached. */
-            return NULL;
-        }
-        str = EXPR_STR(strConstX);
-        len = strlen(str);
-
-        paramNameX = make_enode(IDENT, (void *)gen_temp_symbol("strconst")),
-        typeDeclX = list3(
-            F_TYPE_DECL,
-            list2(LIST, make_enode(F_TYPE_NODE, (void *)TYPE_CHAR),
-                  list2(LIST, list1(F95_LEN_SELECTOR_SPEC, make_int_enode(len)),
-                        NULL)),
-            list1(LIST, list5(LIST, paramNameX, NULL, NULL,
-                              make_enode(STRING_CONSTANT, (void *)str), NULL)),
-            (is_in_module() == FALSE) ? list1(LIST, list0(F95_PARAMETER_SPEC))
-                                      : list2(LIST, list0(F95_PARAMETER_SPEC),
-                                              list0(F95_PRIVATE_SPEC)));
-        compile_type_decl(EXPR_ARG1(typeDeclX), NULL, EXPR_ARG2(typeDeclX),
-                          EXPR_ARG3(typeDeclX));
-
-        accessX = list2(F_ARRAY_REF, paramNameX, indexX);
-        return compile_expression(accessX);
-    }
-
-    case F03_STRUCT_CONSTRUCT: {
-        x1 = EXPR_ARG1(x);
-        assert(EXPR_CODE(x1) == IDENT);
-        id = find_ident(EXPR_SYM(x1));
-        assert(id);
-        assert(ID_CLASS(id) == CL_TAGNAME);
-        return compile_struct_constructor(id, EXPR_ARG2(x), EXPR_ARG3(x));
-    }
-
-    case F08_LEN_SPEC_COLON:
-    case LEN_SPEC_ASTERISC: {
-        error_msg = "bad expression";
-        goto err;
-    }
-
-    default: {
-        fatal("compile_expression: unknown code '%s'",
-              EXPR_CODE_NAME(EXPR_CODE(x)));
-    }
     }
 
 err:
@@ -1158,7 +1198,8 @@ err:
     return NULL;
 }
 
-static expv is_statement_function_or_replace(ID id) {
+static expv is_statement_function_or_replace(ID id)
+{
     struct replace_item *rp;
 
     if (replace_stack == replace_sp)
@@ -1178,7 +1219,8 @@ static expv is_statement_function_or_replace(ID id) {
  * evaluate an identifier as an expression and translate it to Var
  * expression.
  */
-expv compile_ident_expression(expr x) {
+expv compile_ident_expression(expr x)
+{
     ID id;
     SYMBOL sym;
     expv ret = NULL;
@@ -1211,7 +1253,8 @@ expv compile_ident_expression(expr x) {
 
     if (ID_CLASS(id) == CL_PARAM) {
         if (VAR_INIT_VALUE(id) != NULL) {
-            // Not a external module parameter. Can be replaced by value.
+            // Not a external module parameter. Can be replaced by
+            // value.
             if (ID_IS_OFMODULE(id) == FALSE &&
                 EXPV_CODE(VAR_INIT_VALUE(id)) != F95_STRUCT_CONSTRUCTOR) {
                 TYPE_DESC tp0 = ID_TYPE(id);
@@ -1221,7 +1264,8 @@ expv compile_ident_expression(expr x) {
                      TYPE_KIND(tp0) == TYPE_KIND(tp1))) {
 
                     ret = VAR_INIT_VALUE(id);
-                    // Keep the kind information of the type (xcodeml-tools#42)
+                    // Keep the kind information of the type
+                    // (xcodeml-tools#42)
                     if (ID_TYPE(id) != NULL && TYPE_KIND(ID_TYPE(id)) != NULL &&
                         TYPE_KIND(EXPV_TYPE(ret)) == NULL) {
                         TYPE_KIND(EXPV_TYPE(ret)) = TYPE_KIND(ID_TYPE(id));
@@ -1230,7 +1274,8 @@ expv compile_ident_expression(expr x) {
                 }
             } else if (EXPV_CODE(VAR_INIT_VALUE(id)) !=
                        F95_STRUCT_CONSTRUCTOR) {
-                // Only constant from external module can be replaced safely.
+                // Only constant from external module can be
+                // replaced safely.
                 if (EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT ||
                     EXPV_CODE(VAR_INIT_VALUE(id)) == INT_CONSTANT ||
                     EXPV_CODE(VAR_INIT_VALUE(id)) == FLOAT_CONSTANT ||
@@ -1251,8 +1296,8 @@ expv compile_ident_expression(expr x) {
             (ID_CLASS(id) == CL_ENTRY)) {
             tp = FUNCTION_TYPE_RETURN_TYPE(tp);
             /*
-             * If id is this proc, BIND attribute is owned by the procedrue
-             * iteself.
+             * If id is this proc, BIND attribute is owned by the
+             * procedrue iteself.
              */
             TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id) & ~(TYPE_ATTR_BIND);
         } else {
@@ -1266,8 +1311,8 @@ expv compile_ident_expression(expr x) {
         if (ID_ADDR(id)) {
             /*
              * Renaming trick:
-             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name in
-             *  compile_FORALL_statement().
+             *  EXPV_NAME(ID_ADDR(id)) might be replaced to other name
+             * in compile_FORALL_statement().
              */
             ret = expv_sym_term(F_VAR, tp, EXPV_NAME(ID_ADDR(id)));
         } else {
@@ -1291,7 +1336,8 @@ done:
     return ret;
 }
 
-int substr_length(expv x) {
+int substr_length(expv x)
+{
     int length;
     expv upper, lower;
 
@@ -1324,7 +1370,8 @@ int substr_length(expv x) {
     return length;
 }
 
-expv compile_substr_ref(expr x) {
+expv compile_substr_ref(expr x)
+{
     int length;
     expv v1, v2, retv, v, dims;
     TYPE_DESC charType, tp;
@@ -1383,144 +1430,145 @@ expv compile_lhs_expression(x) expr x;
     SYMBOL s;
 
     switch (EXPR_CODE(x)) {
-    case F_ARRAY_REF: { /* (F_ARRAY_REF ident fun_arg_list) */
-        /* ident must be CL_VAR */
-        x1 = EXPR_ARG1(x);
-        if (EXPR_CODE(x1) == F_ARRAY_REF) {
-            /* substr of character array */
-            return compile_substr_ref(x);
+        case F_ARRAY_REF: { /* (F_ARRAY_REF ident fun_arg_list) */
+            /* ident must be CL_VAR */
+            x1 = EXPR_ARG1(x);
+            if (EXPR_CODE(x1) == F_ARRAY_REF) {
+                /* substr of character array */
+                return compile_substr_ref(x);
+            }
+
+            if (EXPR_CODE(x1) == IDENT) {
+                s = EXPR_SYM(x1);
+                id = find_ident(s);
+                if (id == NULL) {
+                    id = declare_ident(s, CL_UNKNOWN);
+                    if (id == NULL)
+                        goto err;
+                }
+                if (ID_IS_AMBIGUOUS(id)) {
+                    error("an ambiguous reference to symbol '%s'", ID_NAME(id));
+                    goto err;
+                }
+                v = NULL;
+                tp = ID_TYPE(id);
+                if (TYPE_IS_MODIFIED(tp)) {
+                    tp = TYPE_REF(tp);
+                }
+
+                if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
+                    tp = FUNCTION_TYPE_RETURN_TYPE(tp);
+                }
+            } else {
+                id = NULL;
+                v = compile_lhs_expression(x1);
+                if (v == NULL)
+                    goto err;
+
+                tp = EXPV_TYPE(v);
+
+                if (EXPR_CODE(v) == F95_MEMBER_REF) {
+                    return compile_member_array_ref(x, v);
+                }
+            }
+
+            if (id == NULL ||
+                (EXPR_ARG2(x) != NULL && EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
+                 EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
+                if (IS_ARRAY_TYPE(tp)) {
+                    return compile_array_ref(id, v, EXPR_ARG2(x), TRUE);
+                } else if (IS_CHAR(tp)) {
+                    return compile_substr_ref(x);
+                } else {
+                    error("%s is not arrray nor character", ID_NAME(id));
+                    goto err;
+                }
+            }
+
+            if (IS_ARRAY_TYPE(tp)) {
+                if ((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) ==
+                    NULL)
+                    goto err;
+            } else if (IS_FUNCTION_TYPE(tp)) {
+                /* assign to declared function result pointer */
+                expv args = compile_args(EXPR_ARG2(x));
+
+                if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                    if ((v = compile_function_call(id, args)) == NULL)
+                        goto err;
+                } else if (!FUNCTION_TYPE_IS_DEFINED(ID_TYPE(id))) {
+                    TYPE_SET_POINTER(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
+                    PROC_CLASS(id) = P_UNDEFINEDPROC;
+                    FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
+                    ID_STORAGE(id) = STG_AUTO;
+                    if ((v = compile_function_call(id, args)) == NULL)
+                        goto err;
+                }
+            } else {
+                error("subscripts on scalar variable, '%s'", ID_NAME(id));
+                goto err;
+            }
+
+            return v;
         }
 
-        if (EXPR_CODE(x1) == IDENT) {
-            s = EXPR_SYM(x1);
-            id = find_ident(s);
-            if (id == NULL) {
-                id = declare_ident(s, CL_UNKNOWN);
-                if (id == NULL)
-                    goto err;
-            }
+        case IDENT: /* terminal */
+            s = EXPR_SYM(x);
+            id = declare_ident(s, CL_UNKNOWN);
             if (ID_IS_AMBIGUOUS(id)) {
                 error("an ambiguous reference to symbol '%s'", ID_NAME(id));
                 goto err;
             }
-            v = NULL;
-            tp = ID_TYPE(id);
-            if (TYPE_IS_MODIFIED(tp)) {
-                tp = TYPE_REF(tp);
-            }
 
-            if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) {
-                tp = FUNCTION_TYPE_RETURN_TYPE(tp);
-            }
+            /* check if name is on the replace list? */
+            if ((v = is_statement_function_or_replace(id)) != NULL)
+                return v;
 
-        } else {
-            id = NULL;
-            v = compile_lhs_expression(x1);
-            if (v == NULL)
+            if ((id = declare_variable(id)) == NULL)
                 goto err;
 
-            tp = EXPV_TYPE(v);
+            return ID_ADDR(id);
 
-            if (EXPR_CODE(v) == F95_MEMBER_REF) {
-                return compile_member_array_ref(x, v);
-            }
-        }
+        case F95_MEMBER_REF:
+            return compile_member_ref(x);
 
-        if (id == NULL ||
-            (EXPR_ARG2(x) != NULL && EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
-             EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
-            if (IS_ARRAY_TYPE(tp)) {
-                return compile_array_ref(id, v, EXPR_ARG2(x), TRUE);
-            } else if (IS_CHAR(tp)) {
-                return compile_substr_ref(x);
-            } else {
-                error("%s is not arrray nor character", ID_NAME(id));
-                goto err;
-            }
-        }
+        case XMP_COARRAY_REF:
+            return compile_coarray_ref(x);
 
-        if (IS_ARRAY_TYPE(tp)) {
-            if ((v = compile_array_ref(id, NULL, EXPR_ARG2(x), TRUE)) == NULL)
-                goto err;
-
-        } else if (IS_FUNCTION_TYPE(tp)) {
-            /* assign to declared function result pointer */
-            expv args = compile_args(EXPR_ARG2(x));
-
-            if (TYPE_IS_POINTER(FUNCTION_TYPE_RETURN_TYPE(tp))) {
-                if ((v = compile_function_call(id, args)) == NULL)
-                    goto err;
-            } else if (!FUNCTION_TYPE_IS_DEFINED(ID_TYPE(id))) {
-                TYPE_SET_POINTER(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(id)));
-                PROC_CLASS(id) = P_UNDEFINEDPROC;
-                FUNCTION_TYPE_HAS_EXPLICIT_ARGS(ID_TYPE(id)) = TRUE;
-                ID_STORAGE(id) = STG_AUTO;
-                if ((v = compile_function_call(id, args)) == NULL)
-                    goto err;
-            }
-
-        } else {
-            error("subscripts on scalar variable, '%s'", ID_NAME(id));
-            goto err;
-        }
-
-        return v;
-    }
-
-    case IDENT: /* terminal */
-        s = EXPR_SYM(x);
-        id = declare_ident(s, CL_UNKNOWN);
-        if (ID_IS_AMBIGUOUS(id)) {
-            error("an ambiguous reference to symbol '%s'", ID_NAME(id));
-            goto err;
-        }
-
-        /* check if name is on the replace list? */
-        if ((v = is_statement_function_or_replace(id)) != NULL)
-            return v;
-
-        if ((id = declare_variable(id)) == NULL)
-            goto err;
-
-        return ID_ADDR(id);
-
-    case F95_MEMBER_REF:
-        return compile_member_ref(x);
-
-    case XMP_COARRAY_REF:
-        return compile_coarray_ref(x);
-
-    default:
-        fatal("compile_lhs_expression: unknown code");
-        /* error ? */
+        default:
+            fatal("compile_lhs_expression: unknown code");
+            /* error ? */
     }
 err:
     return NULL;
 }
 
-int expv_is_this_func(expv v) {
+int expv_is_this_func(expv v)
+{
     ID id;
 
     switch (EXPV_CODE(v)) {
-    case IDENT:
-    case F_VAR:
-    case F_FUNC:
-        id = find_ident(EXPV_NAME(v));
-        if (ID_CLASS(id) == CL_PROC) {
-            return (PROC_CLASS(id) == P_THISPROC);
-        }
-        break;
-    default:
-        break;
+        case IDENT:
+        case F_VAR:
+        case F_FUNC:
+            id = find_ident(EXPV_NAME(v));
+            if (ID_CLASS(id) == CL_PROC) {
+                return (PROC_CLASS(id) == P_THISPROC);
+            }
+            break;
+        default:
+            break;
     }
     return FALSE;
 }
 
-int expv_is_function_result_pointer(expv v) {
+int expv_is_function_result_pointer(expv v)
+{
     return EXPV_CODE(v) == FUNCTION_CALL && TYPE_IS_POINTER(EXPV_TYPE(v));
 }
 
-int expv_is_lvalue(expv v) {
+int expv_is_lvalue(expv v)
+{
     if (v == NULL)
         return FALSE;
     if (EXPV_IS_RVALUE(v) == TRUE)
@@ -1535,7 +1583,8 @@ int expv_is_lvalue(expv v) {
     return FALSE;
 }
 
-int expv_is_str_lvalue(expv v) {
+int expv_is_str_lvalue(expv v)
+{
     if (!IS_CHAR(bottom_type(EXPV_TYPE(v))))
         return FALSE;
 
@@ -1544,7 +1593,8 @@ int expv_is_str_lvalue(expv v) {
     return FALSE;
 }
 
-static TYPE_DESC getLargeIntType() {
+static TYPE_DESC getLargeIntType()
+{
     static TYPE_DESC tp = NULL;
     if (tp)
         return tp;
@@ -1556,7 +1606,8 @@ static TYPE_DESC getLargeIntType() {
 }
 
 /* compile into integer constant */
-expv compile_int_constant(expr x) {
+expv compile_int_constant(expr x)
+{
     expv v;
 
     if ((v = compile_expression(x)) == NULL)
@@ -1575,7 +1626,8 @@ expv compile_int_constant(expr x) {
     }
 }
 
-static expv compile_logical_expression0(expr x, int allowArray) {
+static expv compile_logical_expression0(expr x, int allowArray)
+{
     expv v;
     TYPE_DESC tp;
 
@@ -1608,15 +1660,18 @@ static expv compile_logical_expression0(expr x, int allowArray) {
     return v;
 }
 
-expv compile_logical_expression(expr x) {
+expv compile_logical_expression(expr x)
+{
     return compile_logical_expression0(x, FALSE);
 }
 
-expv compile_logical_expression_with_array(expr x) {
+expv compile_logical_expression_with_array(expr x)
+{
     return compile_logical_expression0(x, TRUE);
 }
 
-expv expv_assignment(expv v1, expv v2) {
+expv expv_assignment(expv v1, expv v2)
+{
     /* check assignment operator is user defined or not. */
     if (find_symbol_without_allocate(EXPR_CODE_SYMBOL(F95_ASSIGNOP)) != NULL)
         return expv_cons(F_LET_STATEMENT, NULL, v1, v2);
@@ -1671,7 +1726,8 @@ expv expv_assignment(expv v1, expv v2) {
     return expv_cons(F_LET_STATEMENT, NULL, v1, v2);
 }
 
-static int checkSubscriptIsInt(expv v) {
+static int checkSubscriptIsInt(expv v)
+{
     if (v == NULL)
         return TRUE;
     TYPE_DESC tp = EXPV_TYPE(v);
@@ -1700,7 +1756,8 @@ static int checkSubscriptIsInt(expv v) {
  *
  *	@return TRUE if some errors occurred.
  */
-static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
+static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs)
+{
     int n = 0;
     list lp;
     int err_flag = FALSE;
@@ -1712,7 +1769,7 @@ static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
 
     assert(subs != NULL);
 
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         v = NULL;
         aSpecV = NULL;
         tp = NULL;
@@ -1752,8 +1809,8 @@ static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
             } else {
                 if ((nDims = TYPE_N_DIM(tp)) > 0) {
                     /*
-                     * Could have to be treat as it is having
-                     * array-spec.
+                     * Could have to be treat as it is
+                     * having array-spec.
                      */
                     if (nDims != 1) {
                         error_at_node(d,
@@ -1766,7 +1823,8 @@ static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
                     aSpecV = list0(LIST);
                     generate_shape_expr(tp, aSpecV);
                     if (expr_list_length(aSpecV) != 1) {
-                        fatal("Invalid # of array-specs for one-dim "
+                        fatal("Invalid # of array-specs for "
+                              "one-dim "
                               "array shape.");
                         /* not reached. */
                         err_flag = TRUE;
@@ -1776,7 +1834,8 @@ static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
                 }
                 /*
                  * Otherwise this is just a integer expression
-                 * suitable for a subscription and not an array-spec.
+                 * suitable for a subscription and not an
+                 * array-spec.
                  */
             }
         } else {
@@ -1797,7 +1856,8 @@ static int compile_array_ref_dimension(expr args, expv subs, expv aSpecs) {
 TYPE_DESC
 get_rightmost_id_type(expv ref);
 
-expv compile_array_ref(ID id, expv vary, expr args, int isLeft) {
+expv compile_array_ref(ID id, expv vary, expr args, int isLeft)
+{
     int nDims;
     int n;
     int i;
@@ -1925,7 +1985,8 @@ expv compile_array_ref(ID id, expv vary, expr args, int isLeft) {
             /* } */
 
             /*
-             * Now we have two array-spec. Determine which one to be used.
+             * Now we have two array-spec. Determine which one to be
+             * used.
              */
             aSpec = NULL;
             aSpecSz = array_spec_size(argASpec, idASpec, &aSpec);
@@ -1941,12 +2002,14 @@ expv compile_array_ref(ID id, expv vary, expr args, int isLeft) {
             if ((aSpecSz > 0 && idASpecSz > 0) && (aSpecSz > idASpecSz)) {
                 if (id != NULL) {
                     error_at_node(args,
-                                  "The size of sunscript #%d is %d, exceeds "
+                                  "The size of sunscript #%d "
+                                  "is %d, exceeds "
                                   "the size of '%s', %d.",
                                   i + 1, aSpecSz, ID_NAME(id), idASpecSz);
                 } else {
                     error_at_node(args,
-                                  "The size of sunscript #%d is %d, exceeds "
+                                  "The size of sunscript #%d "
+                                  "is %d, exceeds "
                                   "%d.",
                                   i + 1, aSpecSz, idASpecSz);
                 }
@@ -2017,107 +2080,111 @@ expv compile_array_ref(ID id, expv vary, expr args, int isLeft) {
 }
 
 // find the coindexed, that is, rightmost id
-ID find_coindexed_id(expr ref) {
+ID find_coindexed_id(expr ref)
+{
 
     SYMBOL s;
     ID id;
 
     switch (EXPR_CODE(ref)) {
 
-    case IDENT:
+        case IDENT:
 
-        s = EXPR_SYM(ref);
-        id = find_ident(s);
+            s = EXPR_SYM(ref);
+            id = find_ident(s);
 
-        if (!id) {
-            id = declare_ident(s, CL_UNKNOWN);
+            if (!id) {
+                id = declare_ident(s, CL_UNKNOWN);
+            }
+
+            return id;
+
+        case F95_MEMBER_REF: {
+
+            /*     expr parent = EXPR_ARG1(ref); */
+            /*     expr child = EXPR_ARG2(ref); */
+            /*     TYPE_DESC parent_type; */
+
+            /*     assert(EXPR_CODE(child) == IDENT); */
+
+            /* /\*     stVTyp = EXPV_TYPE(ref); *\/ */
+
+            /* /\*     if (IS_ARRAY_TYPE(stVTyp)){ *\/ */
+            /* /\*       stVTyp = bottom_type(stVTyp); *\/ */
+            /* /\*     } *\/ */
+
+            /*     if (EXPR_CODE(parent) == IDENT){ */
+            /*       s = EXPR_SYM(ref); */
+            /*       id = find_ident(s); */
+            /*       if (!id){ */
+            /* 	id = declare_ident(s, CL_UNKNOWN); */
+            /*       } */
+            /*       parent_type = ID_TYPE(id); */
+            /*     } */
+
+            /*     return find_struct_member(parent_type, EXPR_SYM(child));
+             */
+
+            return find_coindexed_id(EXPR_ARG2(ref));
         }
 
-        return id;
+        case F_ARRAY_REF:
 
-    case F95_MEMBER_REF: {
+            return find_coindexed_id(EXPR_ARG1(ref));
 
-        /*     expr parent = EXPR_ARG1(ref); */
-        /*     expr child = EXPR_ARG2(ref); */
-        /*     TYPE_DESC parent_type; */
+        default:
 
-        /*     assert(EXPR_CODE(child) == IDENT); */
-
-        /* /\*     stVTyp = EXPV_TYPE(ref); *\/ */
-
-        /* /\*     if (IS_ARRAY_TYPE(stVTyp)){ *\/ */
-        /* /\*       stVTyp = bottom_type(stVTyp); *\/ */
-        /* /\*     } *\/ */
-
-        /*     if (EXPR_CODE(parent) == IDENT){ */
-        /*       s = EXPR_SYM(ref); */
-        /*       id = find_ident(s); */
-        /*       if (!id){ */
-        /* 	id = declare_ident(s, CL_UNKNOWN); */
-        /*       } */
-        /*       parent_type = ID_TYPE(id); */
-        /*     } */
-
-        /*     return find_struct_member(parent_type, EXPR_SYM(child)); */
-
-        return find_coindexed_id(EXPR_ARG2(ref));
-    }
-
-    case F_ARRAY_REF:
-
-        return find_coindexed_id(EXPR_ARG1(ref));
-
-    default:
-
-        error("wrong object coindexed");
-        return NULL;
+            error("wrong object coindexed");
+            return NULL;
     }
 }
 
 // find the coindexed, that is, rightmost id
 TYPE_DESC
-get_rightmost_id_type(expv ref) {
+get_rightmost_id_type(expv ref)
+{
 
     if (!ref)
         return NULL;
 
     switch (EXPV_CODE(ref)) {
 
-    case F95_MEMBER_REF: {
+        case F95_MEMBER_REF: {
 
-        expr parent = EXPV_LEFT(ref);
-        expr child = EXPV_RIGHT(ref);
-        TYPE_DESC parent_type;
-        ID member_id;
+            expr parent = EXPV_LEFT(ref);
+            expr child = EXPV_RIGHT(ref);
+            TYPE_DESC parent_type;
+            ID member_id;
 
-        assert(EXPR_CODE(child) == IDENT);
+            assert(EXPR_CODE(child) == IDENT);
 
-        parent_type = EXPV_TYPE(parent);
+            parent_type = EXPV_TYPE(parent);
 
-        if (IS_ARRAY_TYPE(parent_type)) {
-            parent_type = bottom_type(parent_type);
+            if (IS_ARRAY_TYPE(parent_type)) {
+                parent_type = bottom_type(parent_type);
+            }
+
+            member_id = find_struct_member(parent_type, EXPR_SYM(child));
+            return ID_TYPE(member_id);
         }
 
-        member_id = find_struct_member(parent_type, EXPR_SYM(child));
-        return ID_TYPE(member_id);
-    }
+        case ARRAY_REF:
 
-    case ARRAY_REF:
+            return EXPV_TYPE(EXPV_LEFT(ref));
 
-        return EXPV_TYPE(EXPV_LEFT(ref));
+        default:
 
-    default:
-
-        return EXPV_TYPE(ref);
+            return EXPV_TYPE(ref);
     }
 }
 
-int is_array(expv obj) {
+int is_array(expv obj)
+{
 
     assert(EXPV_CODE(obj) == ARRAY_REF);
 
     list lp;
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(obj)) {
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(obj)) {
         expr x = LIST_ITEM(lp);
         if (EXPR_CODE(x) == LIST || EXPR_CODE(x) == F_INDEX_RANGE) {
             return TRUE;
@@ -2127,7 +2194,8 @@ int is_array(expv obj) {
     return FALSE;
 }
 
-int check_ancestor(expv obj) {
+int check_ancestor(expv obj)
+{
 
     // Note: nested coarrays should have been checked when compiling types.
 
@@ -2156,7 +2224,6 @@ int check_ancestor(expv obj) {
 
         if (IS_ARRAY_TYPE(tp) || TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp))
             return FALSE;
-
     } else if (EXPV_CODE(obj) == ARRAY_REF) {
 
         if (is_array(obj))
@@ -2182,14 +2249,12 @@ int check_ancestor(expv obj) {
 
             ID member_id = find_struct_member(parent_type, EXPR_SYM(child));
             tp = ID_TYPE(member_id);
-
         } else {
             tp = EXPV_TYPE(var);
         }
 
         if (TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp))
             return FALSE;
-
     } else {
         tp = EXPV_TYPE(obj);
         if (IS_ARRAY_TYPE(tp) || TYPE_IS_ALLOCATABLE(tp) || TYPE_IS_POINTER(tp))
@@ -2201,7 +2266,8 @@ int check_ancestor(expv obj) {
 
 int is_in_alloc = FALSE;
 
-expv compile_coarray_ref(expr coarrayRef) {
+expv compile_coarray_ref(expr coarrayRef)
+{
 
     expr ref = EXPR_ARG1(coarrayRef);
     expr image_selector = EXPR_ARG2(coarrayRef);
@@ -2229,7 +2295,8 @@ expv compile_coarray_ref(expr coarrayRef) {
 
             if (!check_ancestor(parent)) {
                 error_at_node(coarrayRef,
-                              "Each ancestor of the coarray component must be "
+                              "Each ancestor of the coarray component must "
+                              "be "
                               "a non-allocatable, non-pointer scalar.");
                 return NULL;
             }
@@ -2261,7 +2328,7 @@ expv compile_coarray_ref(expr coarrayRef) {
     /*   fix_array_dimensions(tp); */
 
     int n = 0;
-    FOR_ITEMS_IN_LIST(lp, cosubs) {
+    FOR_ITEMS_IN_LIST (lp, cosubs) {
 
         if (is_in_alloc) {
 
@@ -2292,7 +2359,8 @@ expv compile_coarray_ref(expr coarrayRef) {
                 if (!upper) {
                     ;
                 }
-                /* 	else if (EXPV_CODE(upper) == F_ASTERISK){ */
+                /* 	else if (EXPV_CODE(upper) ==
+                   F_ASTERISK){ */
                 /* 	  upper = NULL; */
                 /* 	} */
                 else {
@@ -2326,7 +2394,8 @@ expv compile_coarray_ref(expr coarrayRef) {
                        FALSE);
 }
 
-expv compile_highorder_function_call(ID id, expr args, int isCall) {
+expv compile_highorder_function_call(ID id, expr args, int isCall)
+{
     if (!(ID_IS_DUMMY_ARG(id)) &&
         !(ID_TYPE(id) && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
         fatal("%s: '%s' is not a dummy arg.", __func__, SYM_NAME(ID_SYM(id)));
@@ -2349,9 +2418,10 @@ expv compile_highorder_function_call(ID id, expr args, int isCall) {
 }
 
 static TYPE_DESC choose_module_procedure_by_args(EXT_ID mod_procedures,
-                                                 expv args) {
+                                                 expv args)
+{
     EXT_ID ep;
-    FOREACH_EXT_ID(ep, mod_procedures) {
+    FOREACH_EXT_ID (ep, mod_procedures) {
         if (function_type_is_appliable(EXT_PROC_TYPE(ep), args, FALSE)) {
             return EXT_PROC_TYPE(ep);
         }
@@ -2359,14 +2429,15 @@ static TYPE_DESC choose_module_procedure_by_args(EXT_ID mod_procedures,
     return NULL;
 }
 
-expv max_rank_from_arguments(expv args) {
+expv max_rank_from_arguments(expv args)
+{
     list lp;
     expv maxRanked = NULL;
 
     if (args == NULL || EXPR_CODE(args) != LIST) {
         return NULL;
     }
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         if (maxRanked == NULL || (TYPE_N_DIM(EXPV_TYPE(maxRanked)) <
                                   TYPE_N_DIM(EXPV_TYPE(LIST_ITEM(lp))))) {
             maxRanked = LIST_ITEM(lp);
@@ -2376,12 +2447,14 @@ expv max_rank_from_arguments(expv args) {
     return maxRanked;
 }
 
-expv compile_function_call(ID f_id, expr args) {
+expv compile_function_call(ID f_id, expr args)
+{
     return compile_function_call_check_intrinsic_arg_type(f_id, args, FALSE);
 }
 
 expv compile_function_call_check_intrinsic_arg_type(ID f_id, expr args,
-                                                    int ignoreTypeMismatch) {
+                                                    int ignoreTypeMismatch)
+{
     expv a = NULL, v = NULL;
     EXT_ID ep = NULL;
     TYPE_DESC tp = NULL;
@@ -2410,143 +2483,145 @@ expv compile_function_call_check_intrinsic_arg_type(ID f_id, expr args,
     }
 
     switch (PROC_CLASS(f_id)) {
-    case P_UNDEFINEDPROC:
-        /* f_id is not defined yet. */
+        case P_UNDEFINEDPROC:
+            /* f_id is not defined yet. */
 
-        if (ID_TYPE(f_id) != NULL) {
-            if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id)) ||
-                IS_PROCEDURE_POINTER(ID_TYPE(f_id))) {
-                if (TYPE_IS_SAVE(ID_TYPE(f_id))) {
-                    TYPE_UNSET_SAVE(ID_TYPE(f_id));
+            if (ID_TYPE(f_id) != NULL) {
+                if (!IS_PROCEDURE_TYPE(ID_TYPE(f_id)) ||
+                    IS_PROCEDURE_POINTER(ID_TYPE(f_id))) {
+                    if (TYPE_IS_SAVE(ID_TYPE(f_id))) {
+                        TYPE_UNSET_SAVE(ID_TYPE(f_id));
+                    }
+                    ID_TYPE(f_id) = function_type(ID_TYPE(f_id));
+                    EXPV_TYPE(ID_ADDR(f_id)) =
+                        FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
                 }
-                ID_TYPE(f_id) = function_type(ID_TYPE(f_id));
-                EXPV_TYPE(ID_ADDR(f_id)) =
-                    FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(f_id));
+                tp = ID_TYPE(f_id);
+            } else {
+                /* f_id is function, but it's return type is unknown */
+                tp = function_type(new_type_desc());
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) =
+                    TYPE_GNUMERIC_ALL;
+            }
+
+            TYPE_SET_USED_EXPLICIT(tp);
+            /* FEAST add start */
+            if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ==
+                    TYPE_UNKNOWN ||
+                TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) {
+                /* ID_TYPE(f_id) = NULL; */
+                sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line);
+            }
+            /* FEAST add  end  */
+
+            a = compile_args(args);
+
+            v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
+                      expv_any_term(F_EXTFUNC, f_id));
+
+            if (IS_GENERIC_TYPE(tp)) {
+                EXPV_TYPE(v) = type_GNUMERIC_ALL;
+            } else {
+                EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
+                /*
+                 * EXPV_TYPE(v) should be replaced in finalization phase as:
+                 * EXT_PROC_TYPE(PROC_EXT_ID(EXPV_ANY(ID, EXPR_ARG3(v))))
+                 */
+                EXPV_NEED_TYPE_FIXUP(v) = TRUE;
+            }
+
+            break;
+
+        case P_THISPROC:
+            if (!TYPE_IS_RECURSIVE(ID_TYPE(f_id))) {
+                error("recursive call in not a recursive function");
+            } else if (IS_FUNCTION_TYPE(ID_TYPE(f_id)) &&
+                       FUNCTION_TYPE_RESULT(ID_TYPE(f_id)) == NULL) {
+                error("Use a RESULT variable for recursion");
+            }
+            /* FALL THROUGH */
+        case P_DEFINEDPROC:
+        case P_EXTERNAL: {
+            EXT_ID modProcs = NULL;
+            TYPE_DESC modProcType = NULL;
+
+            if (ID_TYPE(f_id) == NULL) {
+                error("attempt to use untyped function,'%s'", ID_NAME(f_id));
+                goto err;
             }
             tp = ID_TYPE(f_id);
-        } else {
-            /* f_id is function, but it's return type is unknown */
-            tp = function_type(new_type_desc());
-            TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
-        }
 
-        TYPE_SET_USED_EXPLICIT(tp);
-        /* FEAST add start */
-        if (TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN ||
-            TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) {
-            /* ID_TYPE(f_id) = NULL; */
-            sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line);
-        }
-        /* FEAST add  end  */
-
-        a = compile_args(args);
-
-        v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
-                  expv_any_term(F_EXTFUNC, f_id));
-
-        if (IS_GENERIC_TYPE(tp)) {
-            EXPV_TYPE(v) = type_GNUMERIC_ALL;
-        } else {
-            EXPV_TYPE(v) = FUNCTION_TYPE_RETURN_TYPE(tp);
-            /*
-             * EXPV_TYPE(v) should be replaced in finalization phase as:
-             * EXT_PROC_TYPE(PROC_EXT_ID(EXPV_ANY(ID, EXPR_ARG3(v))))
-             */
-            EXPV_NEED_TYPE_FIXUP(v) = TRUE;
-        }
-
-        break;
-
-    case P_THISPROC:
-        if (!TYPE_IS_RECURSIVE(ID_TYPE(f_id))) {
-            error("recursive call in not a recursive function");
-        } else if (IS_FUNCTION_TYPE(ID_TYPE(f_id)) &&
-                   FUNCTION_TYPE_RESULT(ID_TYPE(f_id)) == NULL) {
-            error("Use a RESULT variable for recursion");
-        }
-        /* FALL THROUGH */
-    case P_DEFINEDPROC:
-    case P_EXTERNAL: {
-        EXT_ID modProcs = NULL;
-        TYPE_DESC modProcType = NULL;
-
-        if (ID_TYPE(f_id) == NULL) {
-            error("attempt to use untyped function,'%s'", ID_NAME(f_id));
-            goto err;
-        }
-        tp = ID_TYPE(f_id);
-
-        if (!IS_PROCEDURE_TYPE(tp) ||
-            (IS_PROCEDURE_POINTER(tp) &&
-             !(has_attr_in_types(tp, TYPE_ATTR_EXTERNAL)))) {
-            tp = function_type(tp);
-            ID_TYPE(f_id) = tp;
-            EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
-        }
-
-        tp = get_bottom_ref_type(tp);
-
-        if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
-            error("'%s' is abstract", ID_NAME(f_id));
-            goto err;
-        }
-
-        TYPE_SET_USED_EXPLICIT(tp);
-        if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
-            TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) == TYPE_UNKNOWN) {
-            TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-        }
-        a = compile_args(args);
-
-        if (ID_DEFINED_BY(f_id) != NULL) {
-            ep = PROC_EXT_ID(ID_DEFINED_BY(f_id));
-        } else {
-            ep = PROC_EXT_ID(f_id);
-        }
-        if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE &&
-            (modProcs = EXT_PROC_INTR_DEF_EXT_IDS(ep)) != NULL) {
-            modProcType = choose_module_procedure_by_args(modProcs, a);
-            if (modProcType != NULL) {
-                tp = modProcType;
-
-            } else if (tagname != NULL) {
-                return compile_struct_constructor(tagname, NULL, args);
-
-            } else {
-
-                warning_at_id(f_id,
-                              "can't determine a function to "
-                              "be actually called for a generic "
-                              "interface function call of '%s', "
-                              "this is a current limitation.",
-                              SYM_NAME(EXT_SYM(ep)));
+            if (!IS_PROCEDURE_TYPE(tp) ||
+                (IS_PROCEDURE_POINTER(tp) &&
+                 !(has_attr_in_types(tp, TYPE_ATTR_EXTERNAL)))) {
+                tp = function_type(tp);
+                ID_TYPE(f_id) = tp;
+                EXPV_TYPE(ID_ADDR(f_id)) = ID_TYPE(f_id);
             }
-        } else if (ep == NULL) {
-            ep = new_external_id_for_external_decl(ID_SYM(f_id), ID_TYPE(f_id));
-            PROC_EXT_ID(f_id) = ep;
+
+            tp = get_bottom_ref_type(tp);
+
+            if (TYPE_IS_ABSTRACT(ID_TYPE(f_id))) {
+                error("'%s' is abstract", ID_NAME(f_id));
+                goto err;
+            }
+
+            TYPE_SET_USED_EXPLICIT(tp);
+            if (FUNCTION_TYPE_RETURN_TYPE(tp) != NULL &&
+                TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) ==
+                    TYPE_UNKNOWN) {
+                TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
+            }
+            a = compile_args(args);
+
+            if (ID_DEFINED_BY(f_id) != NULL) {
+                ep = PROC_EXT_ID(ID_DEFINED_BY(f_id));
+            } else {
+                ep = PROC_EXT_ID(f_id);
+            }
+            if (ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE &&
+                (modProcs = EXT_PROC_INTR_DEF_EXT_IDS(ep)) != NULL) {
+                modProcType = choose_module_procedure_by_args(modProcs, a);
+                if (modProcType != NULL) {
+                    tp = modProcType;
+                } else if (tagname != NULL) {
+                    return compile_struct_constructor(tagname, NULL, args);
+                } else {
+
+                    warning_at_id(f_id,
+                                  "can't determine a function to "
+                                  "be actually called for a generic "
+                                  "interface function call of '%s', "
+                                  "this is a current limitation.",
+                                  SYM_NAME(EXT_SYM(ep)));
+                }
+            } else if (ep == NULL) {
+                ep = new_external_id_for_external_decl(ID_SYM(f_id),
+                                                       ID_TYPE(f_id));
+                PROC_EXT_ID(f_id) = ep;
+            }
+
+            v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
+                      expv_any_term(F_EXTFUNC, f_id));
+
+            EXPV_TYPE(v) = IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))
+                               ? type_GNUMERIC_ALL
+                               : FUNCTION_TYPE_RETURN_TYPE(tp);
+
+            break;
         }
 
-        v = list3(FUNCTION_CALL, ID_ADDR(f_id), a,
-                  expv_any_term(F_EXTFUNC, f_id));
+        case P_INTRINSIC:
+            v = compile_intrinsic_call0(f_id, compile_data_args(args),
+                                        ignoreTypeMismatch);
+            break;
 
-        EXPV_TYPE(v) = IS_GENERIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp))
-                           ? type_GNUMERIC_ALL
-                           : FUNCTION_TYPE_RETURN_TYPE(tp);
+        case P_STFUNCT:
+            v = statement_function_call(f_id, compile_args(args));
+            break;
 
-        break;
-    }
-
-    case P_INTRINSIC:
-        v = compile_intrinsic_call0(f_id, compile_data_args(args),
-                                    ignoreTypeMismatch);
-        break;
-
-    case P_STFUNCT:
-        v = statement_function_call(f_id, compile_args(args));
-        break;
-
-    default:
-        fatal("%s: unknown proc_class %d", __func__, PROC_CLASS(f_id));
+        default:
+            fatal("%s: unknown proc_class %d", __func__, PROC_CLASS(f_id));
     }
 
     if (ID_TYPE(f_id) != NULL && TYPE_IS_ELEMENTAL(ID_TYPE(f_id))) {
@@ -2570,8 +2645,8 @@ err:
     return NULL;
 }
 
-static int type_param_values_required0(TYPE_DESC struct_tp, ID *head,
-                                       ID *tail) {
+static int type_param_values_required0(TYPE_DESC struct_tp, ID *head, ID *tail)
+{
     ID ip;
 
     if (TYPE_PARENT(struct_tp) &&
@@ -2579,7 +2654,7 @@ static int type_param_values_required0(TYPE_DESC struct_tp, ID *head,
         return TRUE;
     }
 
-    FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
+    FOREACH_ID (ip, TYPE_TYPE_PARAMS(struct_tp)) {
         if (!VAR_INIT_VALUE(ip)) {
             return TRUE;
         }
@@ -2588,25 +2663,28 @@ static int type_param_values_required0(TYPE_DESC struct_tp, ID *head,
     return FALSE;
 }
 
-int type_param_values_required(TYPE_DESC tp) {
+int type_param_values_required(TYPE_DESC tp)
+{
     ID head = NULL, tail = NULL;
     return type_param_values_required0(tp, &head, &tail);
 }
 
-static void get_type_params0(TYPE_DESC struct_tp, ID *head, ID *tail) {
+static void get_type_params0(TYPE_DESC struct_tp, ID *head, ID *tail)
+{
     ID id, ip;
 
     if (TYPE_PARENT(struct_tp))
         get_type_params0(TYPE_PARENT_TYPE(struct_tp), head, tail);
 
-    FOREACH_ID(ip, TYPE_TYPE_PARAMS(struct_tp)) {
+    FOREACH_ID (ip, TYPE_TYPE_PARAMS(struct_tp)) {
         id = XMALLOC(ID, sizeof(*id));
         *id = *ip;
         ID_LINK_ADD(id, *head, *tail);
     }
 }
 
-ID get_type_params(TYPE_DESC struct_tp) {
+ID get_type_params(TYPE_DESC struct_tp)
+{
     ID head = NULL, tail = NULL;
 
     get_type_params0(struct_tp, &head, &tail);
@@ -2616,10 +2694,11 @@ ID get_type_params(TYPE_DESC struct_tp) {
 
 // Expects to use for the dummy derived type
 // (genereted by declare_struct_type_wo_component)
-int compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args) {
+int compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args)
+{
     list lp;
     expv type_param_values = list0(LIST);
-    FOR_ITEMS_IN_LIST(lp, type_param_args) {
+    FOR_ITEMS_IN_LIST (lp, type_param_args) {
         expv v = compile_expression(LIST_ITEM(lp));
         if (v == NULL) {
             return FALSE;
@@ -2639,7 +2718,8 @@ int compile_type_param_values_dummy(TYPE_DESC struct_tp, expr type_param_args) {
  * `type_param_values` (and will be passed to type_apply_type_parameter())
  */
 int compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args,
-                              expv type_param_values, ID *used) {
+                              expv type_param_values, ID *used)
+{
     int has_keyword = FALSE;
     list lp;
     ID ip;
@@ -2656,7 +2736,7 @@ int compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args,
     rest_type_params = get_type_params(struct_tp);
     cur = rest_type_params;
 
-    FOR_ITEMS_IN_LIST(lp, type_param_args) {
+    FOR_ITEMS_IN_LIST (lp, type_param_args) {
         expv arg = LIST_ITEM(lp);
 
         if (EXPR_CODE(arg) == F_SET_EXPR) {
@@ -2685,9 +2765,10 @@ int compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args,
             sym = NULL;
 
             if (has_keyword == TRUE) {
-                /* KEYWORD connot be omitted after an argument which has a
-                 * KEYWORD */
-                error("KEYWORD connot be ommited after the type parameter "
+                /* KEYWORD connot be omitted after an argument which
+                 * has a KEYWORD */
+                error("KEYWORD connot be ommited after the type "
+                      "parameter "
                       "value with a keyword");
                 return FALSE;
             }
@@ -2703,47 +2784,48 @@ int compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args,
         }
 
         switch (e_code) {
-        case LEN_SPEC_ASTERISC:
-        case F08_LEN_SPEC_COLON:
-            if (!TYPE_IS_LEN(ID_TYPE(match))) {
-                error("length spec for no-length parameter");
-                return FALSE;
-            }
-            v = make_enode(e_code, NULL);
-            if (sym) {
-                EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
-            }
-            break;
-        case F95_TRIPLET_EXPR:
-            // NOTE: sorry but the current parser cannot differs the length
-            // spec and triplet with no values
-            if (!TYPE_IS_LEN(ID_TYPE(match))) {
-                error("length spec for no-length parameter");
-                return FALSE;
-            }
-            if (sym) {
-                arg = EXPR_ARG2(arg);
-            }
-            if (EXPR_ARG1(arg) != NULL || EXPR_ARG2(arg) != NULL) {
-                error("Invalid length specifier");
-                return FALSE;
-            }
-            v = make_enode(F08_LEN_SPEC_COLON, NULL);
-            if (sym) {
-                EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
-            }
-            break;
-        default:
-            /* A type parameter valeus should be a constatnt integer */
-            if (!expr_is_constant_typeof(
-                    EXPR_CODE(arg) == F_SET_EXPR ? EXPR_ARG2(arg) : arg,
-                    TYPE_INT)) {
-                error("type parameter value should be "
-                      "a constant integer expression");
-                return FALSE;
-            }
-            v = compile_expression(arg);
-            break;
+            case LEN_SPEC_ASTERISC:
+            case F08_LEN_SPEC_COLON:
+                if (!TYPE_IS_LEN(ID_TYPE(match))) {
+                    error("length spec for no-length parameter");
+                    return FALSE;
+                }
+                v = make_enode(e_code, NULL);
+                if (sym) {
+                    EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+                }
+                break;
+            case F95_TRIPLET_EXPR:
+                // NOTE: sorry but the current parser cannot differs the
+                // length spec and triplet with no values
+                if (!TYPE_IS_LEN(ID_TYPE(match))) {
+                    error("length spec for no-length parameter");
+                    return FALSE;
+                }
+                if (sym) {
+                    arg = EXPR_ARG2(arg);
+                }
+                if (EXPR_ARG1(arg) != NULL || EXPR_ARG2(arg) != NULL) {
+                    error("Invalid length specifier");
+                    return FALSE;
+                }
+                v = make_enode(F08_LEN_SPEC_COLON, NULL);
+                if (sym) {
+                    EXPV_KWOPT_NAME(v) = (const char *)strdup(SYM_NAME(sym));
+                }
+                break;
+            default:
+                /* A type parameter valeus should be a constatnt integer
+                 */
+                if (!expr_is_constant_typeof(
+                        EXPR_CODE(arg) == F_SET_EXPR ? EXPR_ARG2(arg) : arg,
+                        TYPE_INT)) {
+                    error("type parameter value should be "
+                          "a constant integer expression");
+                    return FALSE;
+                }
+                v = compile_expression(arg);
+                break;
         }
 
         if (!has_keyword) {
@@ -2757,7 +2839,7 @@ int compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args,
         list_put_last(type_param_values, v);
     }
     /* Check if not-initialized type parameters don't exist */
-    FOREACH_ID(ip, rest_type_params) {
+    FOREACH_ID (ip, rest_type_params) {
         if (!VAR_INIT_VALUE(ip)) {
             error("type parameter %s is not initialized", ID_NAME(ip));
             return FALSE;
@@ -2773,13 +2855,14 @@ int compile_type_param_values(TYPE_DESC struct_tp, expr type_param_args,
     return TRUE;
 }
 
-static void get_struct_members0(TYPE_DESC struct_tp, ID *head, ID *tail) {
+static void get_struct_members0(TYPE_DESC struct_tp, ID *head, ID *tail)
+{
     ID id, ip;
 
     if (TYPE_PARENT(struct_tp))
         get_struct_members0(TYPE_PARENT_TYPE(struct_tp), head, tail);
 
-    FOREACH_ID(ip, TYPE_MEMBER_LIST(struct_tp)) {
+    FOREACH_ID (ip, TYPE_MEMBER_LIST(struct_tp)) {
         if (ID_CLASS(ip) == CL_TYPE_BOUND_PROC)
             continue;
 
@@ -2789,7 +2872,8 @@ static void get_struct_members0(TYPE_DESC struct_tp, ID *head, ID *tail) {
     }
 }
 
-static ID get_struct_members(TYPE_DESC struct_tp) {
+static ID get_struct_members(TYPE_DESC struct_tp)
+{
     ID head = NULL, tail = NULL;
 
     get_struct_members0(struct_tp, &head, &tail);
@@ -2799,7 +2883,8 @@ static ID get_struct_members(TYPE_DESC struct_tp) {
 
 static expv compile_struct_constructor_with_components(const ID struct_id,
                                                        const TYPE_DESC stp,
-                                                       const expr args) {
+                                                       const expr args)
+{
     int has_keyword = FALSE;
     int is_first_arg = TRUE;
     list lp;
@@ -2822,7 +2907,7 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
     members = get_struct_members(this);
     cur = members;
 
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         expr arg = LIST_ITEM(lp);
         expv v = compile_expression(arg);
 
@@ -2835,19 +2920,25 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
                 for (; stp != NULL;
                      stp = TYPE_PARENT(stp) ? TYPE_PARENT_TYPE(stp) : NULL) {
                     ID pmem;
-                    FOREACH_MEMBER(pmem, stp) {
+                    FOREACH_MEMBER(pmem, stp)
+                    {
                         if (find_ident_head(ID_SYM(pmem), used) != NULL) {
-                            error("member '%s' is already specified",
+                            error("member '%s' is already "
+                                  "specified",
                                   ID_NAME(pmem));
                             return NULL;
                         }
                         if ((match = find_ident_head(ID_SYM(pmem), members)) ==
                             NULL) {
-                            error_at_node(
-                                args,
-                                "'%s' is specified as a parent type, "
-                                "but member '%s' is already in the constructor",
-                                ID_NAME(TYPE_TAGNAME(stp)), ID_NAME(pmem));
+                            error_at_node(args,
+                                          "'%s' is specified as a "
+                                          "parent "
+                                          "type, "
+                                          "but member '%s' is "
+                                          "already in "
+                                          "the constructor",
+                                          ID_NAME(TYPE_TAGNAME(stp)),
+                                          ID_NAME(pmem));
                             return NULL;
                         } else {
                             id_link_remove(&members, match);
@@ -2887,7 +2978,8 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
 
             if (has_keyword == TRUE) {
                 // KEYWORD connot be ommit after KEYWORD-ed arg
-                error("KEYWORD connot be ommited after the component with a "
+                error("KEYWORD connot be ommited after the component "
+                      "with a "
                       "keyword");
                 return NULL;
             }
@@ -2940,7 +3032,7 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
     /*
      * check all members are initialized
      */
-    FOREACH_ID(ip, members) {
+    FOREACH_ID (ip, members) {
         if (ID_CLASS(ip) != CL_TYPE_BOUND_PROC &&
             (!VAR_INIT_VALUE(ip) && !TYPE_IS_ALLOCATABLE(ID_TYPE(ip)))) {
             error("member %s is not initialized", ID_NAME(ip));
@@ -2958,7 +3050,8 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
     return result;
 }
 
-expv compile_struct_constructor(ID struct_id, expr type_param_args, expr args) {
+expv compile_struct_constructor(ID struct_id, expr type_param_args, expr args)
+{
     expv result, component;
     TYPE_DESC base_stp;
     TYPE_DESC tp;
@@ -2998,7 +3091,8 @@ expv compile_struct_constructor(ID struct_id, expr type_param_args, expr args) {
     return result;
 }
 
-expv compile_args(expr args) {
+expv compile_args(expr args)
+{
     list lp;
     expr a;
     expv v, arglist;
@@ -3009,7 +3103,7 @@ expv compile_args(expr args) {
     if (args == NULL)
         return arglist;
 
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         a = LIST_ITEM(lp);
         /* check function address */
         if (EXPR_CODE(a) == IDENT) {
@@ -3021,31 +3115,32 @@ expv compile_args(expr args) {
                 continue;
             }
             if (type_is_nopolymorphic_abstract(ID_TYPE(id))) {
-                error("an abstract interface '%s' in the actual argument",
+                error("an abstract interface '%s' in the actual "
+                      "argument",
                       ID_NAME(id));
             }
 
             switch (ID_CLASS(id)) {
-            case CL_PROC:
-            case CL_ENTRY:
-                if (PROC_CLASS(id) != P_THISPROC &&
-                    (declare_function(id) == NULL)) {
-                    continue;
-                }
-                break;
-            case CL_VAR:
-            case CL_UNKNOWN:
-                is_declared = ID_IS_DECLARED(id);
-                /* check variable name */
-                declare_variable(id);
-                ID_IS_DECLARED(id) = is_declared;
-                break;
-            case CL_PARAM:
-                break;
+                case CL_PROC:
+                case CL_ENTRY:
+                    if (PROC_CLASS(id) != P_THISPROC &&
+                        (declare_function(id) == NULL)) {
+                        continue;
+                    }
+                    break;
+                case CL_VAR:
+                case CL_UNKNOWN:
+                    is_declared = ID_IS_DECLARED(id);
+                    /* check variable name */
+                    declare_variable(id);
+                    ID_IS_DECLARED(id) = is_declared;
+                    break;
+                case CL_PARAM:
+                    break;
 
-            default:
-                error("illegal argument");
-                continue;
+                default:
+                    error("illegal argument");
+                    continue;
             }
         }
         if ((v = compile_expression(a)) == NULL)
@@ -3059,14 +3154,15 @@ expv compile_args(expr args) {
     return arglist;
 }
 
-static expv compile_data_args(expr args) {
+static expv compile_data_args(expr args)
+{
     list lp;
     expr a, v, arglist;
 
     if (args == NULL)
         return NULL;
     arglist = list0(LIST);
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         a = LIST_ITEM(lp);
         v = compile_expression(a);
         arglist = list_put_last(arglist, v);
@@ -3074,7 +3170,8 @@ static expv compile_data_args(expr args) {
     return arglist;
 }
 
-static expv genCastCall(const char *name, TYPE_DESC tp, expv arg, expv kind) {
+static expv genCastCall(const char *name, TYPE_DESC tp, expv arg, expv kind)
+{
     SYMBOL sym;
     expv symV, args;
     TYPE_DESC ftp;
@@ -3167,23 +3264,25 @@ expv arglist;
 
         if (b1 != b2 || TYPE_KIND(tp1)) {
             switch (b1) {
-            case TYPE_INT:
-                castName = "int";
-                break;
-            case TYPE_DREAL:
-                kind = expv_int_term(INT_CONSTANT, type_INT, KIND_PARAM_DOUBLE);
-                /* fall through */
-            case TYPE_REAL:
-                castName = "real";
-                break;
-            case TYPE_DCOMPLEX:
-                kind = expv_int_term(INT_CONSTANT, type_INT, KIND_PARAM_DOUBLE);
-                /* fall through */
-            case TYPE_COMPLEX:
-                castName = "cmplx";
-                break;
-            default:
-                break;
+                case TYPE_INT:
+                    castName = "int";
+                    break;
+                case TYPE_DREAL:
+                    kind = expv_int_term(INT_CONSTANT, type_INT,
+                                         KIND_PARAM_DOUBLE);
+                    /* fall through */
+                case TYPE_REAL:
+                    castName = "real";
+                    break;
+                case TYPE_DCOMPLEX:
+                    kind = expv_int_term(INT_CONSTANT, type_INT,
+                                         KIND_PARAM_DOUBLE);
+                    /* fall through */
+                case TYPE_COMPLEX:
+                    castName = "cmplx";
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -3211,7 +3310,8 @@ err:
  * pow_dd: DREAL*DREAL -> DREAL
  * pow_hh, pow_zz, pow_zi, pow_qq is not used
  */
-expv expv_power_expr(expv left, expv right) {
+expv expv_power_expr(expv left, expv right)
+{
     TYPE_DESC lt, rt, tp;
 
     /* check constant expression */
@@ -3247,7 +3347,8 @@ expv expv_power_expr(expv left, expv right) {
 /*
  * implied do expression
  */
-static expv compile_implied_do_expression(expr x) {
+static expv compile_implied_do_expression(expr x)
+{
     expv do_var, do_init, do_limit, do_incr, retv;
     expr var, init, limit, incr;
     // SYMBOL do_var_sym;
@@ -3290,7 +3391,7 @@ static expv compile_implied_do_expression(expr x) {
     expv x2 = list0(LIST);
     int nItems = 0;
     TYPE_DESC retTyp = NULL;
-    FOR_ITEMS_IN_LIST(lp, v) {
+    FOR_ITEMS_IN_LIST (lp, v) {
         x2 = list_put_last(x2, compile_expression(LIST_ITEM(lp)));
         nItems++;
     }
@@ -3307,7 +3408,8 @@ static expv compile_implied_do_expression(expr x) {
 /**
  * (F_DUP_DECL INT_CONSTANT CONSTANT)
  */
-static expv compile_dup_decl(expv x) {
+static expv compile_dup_decl(expv x)
+{
     expv numV = expr_constant_value(EXPR_ARG1(x));
 
     if (numV == NULL) {
@@ -3341,7 +3443,8 @@ static expv compile_dup_decl(expv x) {
     return expv_cons(F_DUP_DECL, EXPV_TYPE(valV), numV, valV);
 }
 
-static expv compile_array_constructor(expr x) {
+static expv compile_array_constructor(expr x)
+{
     int nElemsIsFixed = TRUE;
     int nElems = 0;
     list lp;
@@ -3364,7 +3467,7 @@ static expv compile_array_constructor(expr x) {
         res = list1(F95_ARRAY_CONSTRUCTOR, l);
     }
 
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(x)) {
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG1(x)) {
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
         tp = EXPV_TYPE(v);
@@ -3392,10 +3495,8 @@ static expv compile_array_constructor(expr x) {
             }
 
             tp = bottom_type(tp);
-
         } else if (IS_GNUMERIC_ALL(tp)) {
             nElemsIsFixed = FALSE;
-
         } else {
             nElems++;
         }
@@ -3407,12 +3508,16 @@ static expv compile_array_constructor(expr x) {
 
         if (elem_type == TYPE_STRUCT) {
             if (TYPE_BASIC_TYPE(tp) != elem_type && !IS_GNUMERIC_ALL(tp)) {
-                error("Array constructor elements have different data types.");
+                error("Array constructor elements have different "
+                      "data "
+                      "types.");
                 return NULL;
             }
         } else {
             if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
-                error("Array constructor elements have different data types.");
+                error("Array constructor elements have different "
+                      "data "
+                      "types.");
                 return NULL;
             }
         }
@@ -3458,7 +3563,8 @@ static expv compile_array_constructor(expr x) {
     return res;
 }
 
-expv compile_type_bound_procedure_call(expv memberRef, expr args) {
+expv compile_type_bound_procedure_call(expv memberRef, expr args)
+{
     expv v;
     expv a;
 
@@ -3479,7 +3585,7 @@ expv compile_type_bound_procedure_call(expv memberRef, expr args) {
          */
         ID bind;
         ID bindto;
-        FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
+        FOREACH_ID (bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
             bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
             if (TYPE_REF(ID_TYPE(bindto)) &&
                 function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a,
@@ -3509,8 +3615,9 @@ expv compile_type_bound_procedure_call(expv memberRef, expr args) {
 #endif
             if (TYPE_REF(ftp)) {
                 if (FUNCTION_TYPE_RETURN_TYPE(TYPE_REF(ftp)) == NULL) {
-                    // might have some ref indirection before getting to the
-                    // actual function type
+                    // might have some ref indirection
+                    // before getting to the actual function
+                    // type
                     while (TYPE_REF(TYPE_REF(ftp))) {
                         ftp = TYPE_REF(ftp);
                     }
@@ -3545,7 +3652,8 @@ expv compile_type_bound_procedure_call(expv memberRef, expr args) {
     return v;
 }
 
-expv compile_member_array_ref(expr x, expv v) {
+expv compile_member_array_ref(expr x, expv v)
+{
     expr indices = EXPR_ARG2(x);
     expv org_expr = EXPR_ARG1(v); // if v is member ref, org_expr is member_id.
     TYPE_DESC tq, tp;

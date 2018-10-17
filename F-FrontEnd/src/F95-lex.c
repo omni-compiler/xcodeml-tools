@@ -254,7 +254,8 @@ static int ScanFortranLine _ANSI_ARGS_(
 
 extern int unit_ctl_level;
 
-static void debugOutStatement() {
+static void debugOutStatement()
+{
     int len = strlen(line_buffer);
     char *trimBuf = (char *)alloca(len + 1);
     char *nlcr = NULL;
@@ -276,7 +277,8 @@ static void debugOutStatement() {
 
 static int is_top_level(void) { return unit_ctl_level == 0; }
 
-void initialize_lex() {
+void initialize_lex()
+{
     extern int mcLn_no;
     extern long mcStart;
 
@@ -305,7 +307,8 @@ void initialize_lex() {
         read_lineno.ln_no = 0;
     else {
         if (fseek(source_file, mcStart, SEEK_SET) == -1) {
-            error("internal comiler error: cannot seek given start point in "
+            error("internal comiler error: cannot seek given start "
+                  "point in "
                   "initialize_lex()");
             exit(-1);
         }
@@ -332,7 +335,8 @@ void initialize_lex() {
         add_sentinel(&sentinels, CDIR_SENTINEL);
 }
 
-void finalize_lex() {
+void finalize_lex()
+{
 #ifdef ENABLE_UCHARDET
     uchardet_delete(current_detector);
     if (current_cd) {
@@ -341,13 +345,15 @@ void finalize_lex() {
 #endif
 }
 
-static void prepare_for_new_statement(void) {
+static void prepare_for_new_statement(void)
+{
     token_history_count = 0;
     expect_next_token_is_keyword = TRUE;
     need_keyword = FALSE;
 }
 
-static int is_keyword(int k, struct keyword_token *tblPtr) {
+static int is_keyword(int k, struct keyword_token *tblPtr)
+{
     struct keyword_token *kwPtr;
 
     /*
@@ -391,83 +397,88 @@ static void switch_need_keyword(int t) { need_keyword = t; }
 
 static expr auxIdentX = NULL;
 
-static void type_spec_done() { /* printf("type_spec_done!\n"); */ }
+static void type_spec_done()
+{ /* printf("type_spec_done!\n"); */
+}
 
-int is_function_statement_context() {
+int is_function_statement_context()
+{
     int i = 0;
     int paran_level;
 
     for (i = 0; i < token_history_count - 1;) {
         switch (token_history_buf[i]) {
-        /* func_prefix */
-        case PURE:
-        case RECURSIVE:
-        case ELEMENTAL:
-        case MODULE:
-        case IMPURE:
-            i++;
-            continue;
-            /* type_spec */
-        case CLASS:
-        case KW_TYPE:
-        case KW_COMPLEX:
-        case KW_DOUBLE:
-        case KW_DCOMPLEX:
-        case KW_INTEGER:
-        case KW_LOGICAL:
-        case KW_REAL:
-            i++;
-            paran_level = 0;
-            /* SET_KIND and SET_LEN include a left parenthesis directly */
-            if (token_history_buf[i] == '(' ||
-                token_history_buf[i] == SET_KIND ||
-                token_history_buf[i] == SET_LEN) {
-                paran_level++;
-                for (i++; i < token_history_count; i++) {
-                    if (token_history_buf[i] == ')')
-                        paran_level--;
-                    if (token_history_buf[i] == '(')
-                        paran_level++;
-                    if (paran_level == 0) {
-                        i++;
-                        break;
+            /* func_prefix */
+            case PURE:
+            case RECURSIVE:
+            case ELEMENTAL:
+            case MODULE:
+            case IMPURE:
+                i++;
+                continue;
+                /* type_spec */
+            case CLASS:
+            case KW_TYPE:
+            case KW_COMPLEX:
+            case KW_DOUBLE:
+            case KW_DCOMPLEX:
+            case KW_INTEGER:
+            case KW_LOGICAL:
+            case KW_REAL:
+                i++;
+                paran_level = 0;
+                /* SET_KIND and SET_LEN include a left parenthesis
+                 * directly */
+                if (token_history_buf[i] == '(' ||
+                    token_history_buf[i] == SET_KIND ||
+                    token_history_buf[i] == SET_LEN) {
+                    paran_level++;
+                    for (i++; i < token_history_count; i++) {
+                        if (token_history_buf[i] == ')')
+                            paran_level--;
+                        if (token_history_buf[i] == '(')
+                            paran_level++;
+                        if (paran_level == 0) {
+                            i++;
+                            break;
+                        }
+                    }
+                    if (paran_level != 0) {
+                        /* parenthesis is not closed! */
+                        return FALSE;
                     }
                 }
-                if (paran_level != 0) {
-                    /* parenthesis is not closed! */
-                    return FALSE;
-                }
-            }
-            continue;
-        case KW_CHARACTER:
-            i++;
-            paran_level = 0;
-            /* SET_KIND and SET_LEN include a left parenthesis directly */
-            if (token_history_buf[i] == '(' ||
-                token_history_buf[i] == SET_KIND ||
-                token_history_buf[i] == SET_LEN) {
-                paran_level++;
-                for (i++; i < token_history_count; i++) {
-                    if (token_history_buf[i] == ')')
-                        paran_level--;
-                    if (token_history_buf[i] == '(')
-                        paran_level++;
-                    if (paran_level == 0) {
-                        i++;
-                        break;
+                continue;
+            case KW_CHARACTER:
+                i++;
+                paran_level = 0;
+                /* SET_KIND and SET_LEN include a left parenthesis
+                 * directly */
+                if (token_history_buf[i] == '(' ||
+                    token_history_buf[i] == SET_KIND ||
+                    token_history_buf[i] == SET_LEN) {
+                    paran_level++;
+                    for (i++; i < token_history_count; i++) {
+                        if (token_history_buf[i] == ')')
+                            paran_level--;
+                        if (token_history_buf[i] == '(')
+                            paran_level++;
+                        if (paran_level == 0) {
+                            i++;
+                            break;
+                        }
                     }
+                    if (paran_level != 0) {
+                        /* parenthesis is not closed! */
+                        return FALSE;
+                    }
+                } else if (token_history_buf[i] == '*') {
+                    // for a type_spec like 'character*8'
+                    i += 2;
                 }
-                if (paran_level != 0) {
-                    /* parenthesis is not closed! */
-                    return FALSE;
-                }
-            } else if (token_history_buf[i] == '*') {
-                // for a type_spec like 'character*8'
-                i += 2;
-            }
-            continue;
-        default:
-            break;
+                continue;
+            default:
+                break;
         }
         break;
     }
@@ -487,71 +498,73 @@ int is_function_statement_context() {
     }
 }
 
-int check_ident_context(char *name) {
+int check_ident_context(char *name)
+{
     int ret = IDENTIFIER;
 
     switch (token_history_buf[0]) {
-        /* type_spec */
-    case CLASS:
-    case KW_TYPE:
-    case KW_CHARACTER:
-    case KW_COMPLEX:
-    case KW_DOUBLE:
-    case KW_DCOMPLEX:
-    case KW_INTEGER:
-    case KW_LOGICAL:
-    case KW_REAL:
-        /* func_prefix */
-    case PURE:
-    case RECURSIVE:
-    case ELEMENTAL:
-    case MODULE:
-    case IMPURE:
-        if (fixed_format_flag) {
-            if (strncasecmp(name, "function", 8) == 0 &&
-                is_function_statement_context()) {
-                ret = FUNCTION;
-                if (strcasecmp(name, "function") != 0) {
-                    char *rest = name + 8;
-                    auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
-                }
-            }
-        } else { // free format
-            if (is_function_statement_context()) {
-                if (strcasecmp(name, "function") == 0) {
+            /* type_spec */
+        case CLASS:
+        case KW_TYPE:
+        case KW_CHARACTER:
+        case KW_COMPLEX:
+        case KW_DOUBLE:
+        case KW_DCOMPLEX:
+        case KW_INTEGER:
+        case KW_LOGICAL:
+        case KW_REAL:
+            /* func_prefix */
+        case PURE:
+        case RECURSIVE:
+        case ELEMENTAL:
+        case MODULE:
+        case IMPURE:
+            if (fixed_format_flag) {
+                if (strncasecmp(name, "function", 8) == 0 &&
+                    is_function_statement_context()) {
                     ret = FUNCTION;
-                } else if (strcasecmp(name, "elemental") == 0) {
-                    ret = ELEMENTAL;
-                } else if (strcasecmp(name, "pure") == 0) {
-                    ret = PURE;
-                } else if (strcasecmp(name, "recursive") == 0) {
-                    ret = RECURSIVE;
-                } else if (strcasecmp(name, "module") == 0) {
-                    ret = MODULE;
-                } else if (strcasecmp(name, "impure") == 0) {
-                    ret = IMPURE;
+                    if (strcasecmp(name, "function") != 0) {
+                        char *rest = name + 8;
+                        auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
+                    }
+                }
+            } else { // free format
+                if (is_function_statement_context()) {
+                    if (strcasecmp(name, "function") == 0) {
+                        ret = FUNCTION;
+                    } else if (strcasecmp(name, "elemental") == 0) {
+                        ret = ELEMENTAL;
+                    } else if (strcasecmp(name, "pure") == 0) {
+                        ret = PURE;
+                    } else if (strcasecmp(name, "recursive") == 0) {
+                        ret = RECURSIVE;
+                    } else if (strcasecmp(name, "module") == 0) {
+                        ret = MODULE;
+                    } else if (strcasecmp(name, "impure") == 0) {
+                        ret = IMPURE;
+                    }
                 }
             }
-        }
-        break;
+            break;
 
-    case ENDINTERFACE:
-        if (token_history_count == 2) {
-            if (strcasecmp(name, "operator") == 0)
-                return OPERATOR;
-            else if (strcasecmp(name, "assignment") == 0)
-                return ASSIGNMENT;
-            else if (strcasecmp(name, "read") == 0)
-                return READ;
-            else if (strcasecmp(name, "write") == 0)
-                return WRITE;
-        }
+        case ENDINTERFACE:
+            if (token_history_count == 2) {
+                if (strcasecmp(name, "operator") == 0)
+                    return OPERATOR;
+                else if (strcasecmp(name, "assignment") == 0)
+                    return ASSIGNMENT;
+                else if (strcasecmp(name, "read") == 0)
+                    return READ;
+                else if (strcasecmp(name, "write") == 0)
+                    return WRITE;
+            }
     }
     return ret;
 }
 
 /* lexical analyzer */
-int yylex() {
+int yylex()
+{
     if (token_history_buf == NULL)
         token_history_buf = malloc(sizeof(int) * token_history_buf_size);
 
@@ -608,139 +621,142 @@ Done:
     return curToken;
 }
 
-static int yylex0() {
+static int yylex0()
+{
     int t;
     static int tkn_cnt;
     char *p;
 
     switch (lexstate) {
-    case LEX_NEW_STATEMENT:
-    again:
-        prepare_for_new_statement();
-        if (read_initial_line() == ST_EOF) {
-            if (n_nested_file > 0) {
-                restore_file();
-                goto again;
+        case LEX_NEW_STATEMENT:
+        again:
+            prepare_for_new_statement();
+            if (read_initial_line() == ST_EOF) {
+                if (n_nested_file > 0) {
+                    restore_file();
+                    goto again;
+                }
+                return (ST_EOF);
             }
-            return (ST_EOF);
-        }
 
-        bufptr = st_buffer;
+            bufptr = st_buffer;
 
-        /* set bufptr st_buffer */
-        bufptr = st_buffer;
-        if (st_OMP_flag && OMP_flag) {
-            lexstate = LEX_OMP_TOKEN;
-            for (p = bufptr; *p != '\0'; p++)
-                *p = TOLOWER(*p);
-            return OMPKW_LINE;
-        }
-        if (st_XMP_flag && XMP_flag) {
-            lexstate = LEX_XMP_TOKEN;
-            for (p = bufptr; *p != '\0'; p++)
-                *p = TOLOWER(*p);
-            return XMPKW_LINE;
-        }
-        if (st_ACC_flag && ACC_flag) {
-            lexstate = LEX_ACC_TOKEN;
-            for (p = bufptr; *p != '\0'; p++)
-                *p = TOLOWER(*p);
-            return ACCKW_LINE;
-        }
-        if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
-            (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
-            lexstate = LEX_PRAGMA_TOKEN;
-            return PRAGMA_HEAD;
-        }
-        if (st_comment_line_flag) {
-            lexstate = LEX_COMMENT_TOKEN;
-            return COMMENT_HEAD;
-        }
-        tkn_cnt = 0;
-        lexstate = LEX_FIRST_TOKEN;
-        return (STATEMENT_LABEL_NO);
+            /* set bufptr st_buffer */
+            bufptr = st_buffer;
+            if (st_OMP_flag && OMP_flag) {
+                lexstate = LEX_OMP_TOKEN;
+                for (p = bufptr; *p != '\0'; p++)
+                    *p = TOLOWER(*p);
+                return OMPKW_LINE;
+            }
+            if (st_XMP_flag && XMP_flag) {
+                lexstate = LEX_XMP_TOKEN;
+                for (p = bufptr; *p != '\0'; p++)
+                    *p = TOLOWER(*p);
+                return XMPKW_LINE;
+            }
+            if (st_ACC_flag && ACC_flag) {
+                lexstate = LEX_ACC_TOKEN;
+                for (p = bufptr; *p != '\0'; p++)
+                    *p = TOLOWER(*p);
+                return ACCKW_LINE;
+            }
+            if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
+                (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
+                lexstate = LEX_PRAGMA_TOKEN;
+                return PRAGMA_HEAD;
+            }
+            if (st_comment_line_flag) {
+                lexstate = LEX_COMMENT_TOKEN;
+                return COMMENT_HEAD;
+            }
+            tkn_cnt = 0;
+            lexstate = LEX_FIRST_TOKEN;
+            return (STATEMENT_LABEL_NO);
 
-    case LEX_FIRST_TOKEN:
-    first:
-        tkn_cnt = 1;
+        case LEX_FIRST_TOKEN:
+        first:
+            tkn_cnt = 1;
 
-        st_class = classify_statement();
-        if (st_class == FORMAT) {
-            save_format_str();
+            st_class = classify_statement();
+            if (st_class == FORMAT) {
+                save_format_str();
+                lexstate = LEX_RET_EOS;
+            } else if (st_class == EOS) {
+                lexstate = LEX_NEW_STATEMENT;
+            } else {
+                lexstate = LEX_OTHER_TOKEN;
+            }
+            return (st_class);
+
+        case LEX_OTHER_TOKEN:
+            /* check 'if' '(' ... ')' */
+            if ((st_class == LOGIF ||
+                 (st_class == ELSEIFTHEN)) /* elseif in 95? */
+                && paren_level == 0 && tkn_cnt > 3)
+                goto first;
+            tkn_cnt++;
+            /* check 'assign' ... 'to' */
+            if (st_class == ASSIGN && tkn_cnt == 3 && bufptr[0] == 't' &&
+                bufptr[1] == 'o') {
+                bufptr += 2;
+                return (KW_TO);
+            } else if (st_class == DO && tkn_cnt == 3 && bufptr[0] == 'w' &&
+                       bufptr[1] == 'h' && bufptr[2] == 'i' &&
+                       bufptr[3] == 'l' && bufptr[4] == 'e') {
+                bufptr += 5;
+                return KW_WHILE;
+            }
+            t = token();
+            if (t == FORMAT) {
+                /*
+                 * "format" shouldn't be here...
+                 */
+                save_format_str();
+                lexstate = LEX_RET_EOS;
+            } else if (t == EOS) {
+                lexstate = LEX_NEW_STATEMENT;
+            }
+            return (t);
+
+        case LEX_RET_EOS:
+            lexstate = LEX_NEW_STATEMENT;
+            return (EOS);
+
+        case LEX_OMP_TOKEN:
+            t = OMP_lex_token();
+            if (t == EOS)
+                lexstate = LEX_NEW_STATEMENT;
+            return t;
+
+        case LEX_XMP_TOKEN:
+            t = XMP_lex_token();
+            if (t == EOS)
+                lexstate = LEX_NEW_STATEMENT;
+            return t;
+
+        case LEX_ACC_TOKEN:
+            t = ACC_lex_token();
+            if (t == EOS)
+                lexstate = LEX_NEW_STATEMENT;
+            return t;
+
+        case LEX_PRAGMA_TOKEN:
             lexstate = LEX_RET_EOS;
-        } else if (st_class == EOS) {
-            lexstate = LEX_NEW_STATEMENT;
-        } else {
-            lexstate = LEX_OTHER_TOKEN;
-        }
-        return (st_class);
+            return PRAGMA_SLINE;
 
-    case LEX_OTHER_TOKEN:
-        /* check 'if' '(' ... ')' */
-        if ((st_class == LOGIF || (st_class == ELSEIFTHEN)) /* elseif in 95? */
-            && paren_level == 0 && tkn_cnt > 3)
-            goto first;
-        tkn_cnt++;
-        /* check 'assign' ... 'to' */
-        if (st_class == ASSIGN && tkn_cnt == 3 && bufptr[0] == 't' &&
-            bufptr[1] == 'o') {
-            bufptr += 2;
-            return (KW_TO);
-        } else if (st_class == DO && tkn_cnt == 3 && bufptr[0] == 'w' &&
-                   bufptr[1] == 'h' && bufptr[2] == 'i' && bufptr[3] == 'l' &&
-                   bufptr[4] == 'e') {
-            bufptr += 5;
-            return KW_WHILE;
-        }
-        t = token();
-        if (t == FORMAT) {
-            /*
-             * "format" shouldn't be here...
-             */
-            save_format_str();
+        case LEX_COMMENT_TOKEN:
             lexstate = LEX_RET_EOS;
-        } else if (t == EOS) {
-            lexstate = LEX_NEW_STATEMENT;
-        }
-        return (t);
+            return COMMENT_SLINE;
 
-    case LEX_RET_EOS:
-        lexstate = LEX_NEW_STATEMENT;
-        return (EOS);
-
-    case LEX_OMP_TOKEN:
-        t = OMP_lex_token();
-        if (t == EOS)
-            lexstate = LEX_NEW_STATEMENT;
-        return t;
-
-    case LEX_XMP_TOKEN:
-        t = XMP_lex_token();
-        if (t == EOS)
-            lexstate = LEX_NEW_STATEMENT;
-        return t;
-
-    case LEX_ACC_TOKEN:
-        t = ACC_lex_token();
-        if (t == EOS)
-            lexstate = LEX_NEW_STATEMENT;
-        return t;
-
-    case LEX_PRAGMA_TOKEN:
-        lexstate = LEX_RET_EOS;
-        return PRAGMA_SLINE;
-
-    case LEX_COMMENT_TOKEN:
-        lexstate = LEX_RET_EOS;
-        return COMMENT_SLINE;
-
-    default:
-        fatal("lexstate");
+        default:
+            fatal("lexstate");
     }
     return UNKNOWN;
 }
 
-static void save_format_str() {
+static void save_format_str()
+{
     char *fmt = strchr(st_buffer_org, '(');
     char *end = NULL;
 
@@ -763,7 +779,8 @@ static void save_format_str() {
     formatString = strdup(fmt);
 }
 
-static void set_pragma_str(char *s) {
+static void set_pragma_str(char *s)
+{
     if (pragmaString != NULL) {
         free(pragmaString);
         pragmaString = NULL;
@@ -776,7 +793,8 @@ static void set_pragma_str(char *s) {
     pragmaString = strdup(pragmaBuf);
 }
 
-static void append_pragma_str(char *s) {
+static void append_pragma_str(char *s)
+{
     if (s == NULL)
         return; /* no change */
     if (pragmaString != NULL) {
@@ -796,13 +814,15 @@ static void append_pragma_str(char *s) {
 }
 
 /* flush line */
-static void flush_line() {
+static void flush_line()
+{
     lexstate = LEX_RET_EOS;
     need_keyword = FALSE;
     need_type_len = FALSE;
 }
 
-char *lex_get_line() {
+char *lex_get_line()
+{
     char *s;
 
     s = strdup(bufptr);
@@ -811,7 +831,9 @@ char *lex_get_line() {
 }
 
 void yyerror(s) const char *s;
-{ error("%s", s); }
+{
+    error("%s", s);
+}
 
 char *lexline(n) int *n;
 {
@@ -819,7 +841,8 @@ char *lexline(n) int *n;
     return (bufptr);
 }
 
-static int token() {
+static int token()
+{
     register char ch, *p;
     int t;
 
@@ -873,279 +896,280 @@ static int token() {
     }
 
     switch (ch = *bufptr++) {
-    case '\0':
-        return (EOS);
-    case QUOTE:
-        for (p = buffio;
-             UNDER_ST_BUF_SIZE(buffio, p) && ((ch = *bufptr++) != QUOTE);)
-            if (ch == '\0')
-                break;
-            else
-                *p++ = ch;
-        *p = 0;
-        yylval.val = GEN_NODE(STRING_CONSTANT, strdup(buffio));
-        return (CONSTANT); /* hollerith */
-    case '=':
-        if (*bufptr == '=') {
-            /* "==" */
-            bufptr++;
-            return (EQ);
-        }
-        if (*bufptr == '>') {
-            /* "=>" */
-            bufptr++;
-            return (REF_OP);
-        }
-        return ('=');
-    case '(':
-        paren_level++;
-        /* or interface operator (/), (/=), or (//) */
-        if (*bufptr == '/') {
-            char *save = ++bufptr; /* check 'interface operator (/)' ? */
+        case '\0':
+            return (EOS);
+        case QUOTE:
+            for (p = buffio;
+                 UNDER_ST_BUF_SIZE(buffio, p) && ((ch = *bufptr++) != QUOTE);)
+                if (ch == '\0')
+                    break;
+                else
+                    *p++ = ch;
+            *p = 0;
+            yylval.val = GEN_NODE(STRING_CONSTANT, strdup(buffio));
+            return (CONSTANT); /* hollerith */
+        case '=':
+            if (*bufptr == '=') {
+                /* "==" */
+                bufptr++;
+                return (EQ);
+            }
+            if (*bufptr == '>') {
+                /* "=>" */
+                bufptr++;
+                return (REF_OP);
+            }
+            return ('=');
+        case '(':
+            paren_level++;
+            /* or interface operator (/), (/=), or (//) */
+            if (*bufptr == '/') {
+                char *save = ++bufptr; /* check 'interface operator (/)' ? */
 
-            while (isspace(*bufptr))
-                bufptr++;         /* skip white space */
-            if (*bufptr == ')') { /* (/) in interface operator.  */
-                bufptr = save - 1;
-                return ('(');
-            } else if (*bufptr == '=') { /* (/=) in interface operator.  */
-                if (*++bufptr == ')') {
+                while (isspace(*bufptr))
+                    bufptr++;         /* skip white space */
+                if (*bufptr == ')') { /* (/) in interface operator.  */
+                    bufptr = save - 1;
+                    return ('(');
+                } else if (*bufptr == '=') { /* (/=) in interface operator.  */
+                    if (*++bufptr == ')') {
+                        bufptr = save - 1;
+                        return '(';
+                    }
+                } else if (*bufptr == '/') { /* (//) ? */
+                    if (*++bufptr == ')') {
+                        bufptr = save - 1;
+                        return '(';
+                    }
+                } else if (strncmp(bufptr, "periodic", 8) == 0) {
+                    bufptr += 8;
+                    if (*bufptr++ == '/') {
+                        while (isspace(*bufptr))
+                            bufptr++;
+                        if (*bufptr != ')') {
+                            bufptr = save - 1;
+                            return '(';
+                        }
+                    }
+                } else if (strncmp(bufptr, "unbound", 7) == 0) {
+                    bufptr += 7;
+                    if (*bufptr++ == '/') {
+                        while (isspace(*bufptr))
+                            bufptr++;
+                        if (*bufptr != ')') {
+                            bufptr = save - 1;
+                            return '(';
+                        }
+                    }
+                } else if (st_OMP_flag || st_ACC_flag) {
                     bufptr = save - 1;
                     return '(';
                 }
-            } else if (*bufptr == '/') { /* (//) ? */
-                if (*++bufptr == ')') {
-                    bufptr = save - 1;
-                    return '(';
+                bufptr = save;
+                return L_ARRAY_CONSTRUCTOR;
+            } else {
+                char *save = bufptr; /* check  '(LEN=' or '(KIND=' */
+                int t;
+                int save_n = need_keyword;
+                int save_p = paren_level;
+                need_keyword = TRUE;
+                t = token();
+
+                switch (token_history_buf[token_history_count - 1]) {
+                    case CLASS:
+                    case KW_TYPE:
+                    case KW_CHARACTER:
+                    case KW_COMPLEX:
+                    case KW_DOUBLE:
+                    case KW_DCOMPLEX:
+                    case KW_INTEGER:
+                    case KW_LOGICAL:
+                    case KW_REAL:
+                        // it's a type specifier.
+                        if (t == KW_LEN) {
+                            need_keyword = FALSE;
+                            while (isspace(*bufptr))
+                                bufptr++; /* skip white space */
+                            if (*bufptr++ == '=')
+                                return SET_LEN;
+                        } else if (t == KW_KIND) {
+                            need_keyword = FALSE;
+                            while (isspace(*bufptr))
+                                bufptr++; /* skip white space */
+                            if (*bufptr++ == '=')
+                                return SET_KIND;
+                        }
+                        break;
                 }
-            } else if (strncmp(bufptr, "periodic", 8) == 0) {
+
+                need_keyword = save_n;
+                bufptr = save;
+                paren_level = save_p;
+            }
+            return ('(');
+        case ')':
+            paren_level--;
+            return (')');
+        case '+':
+        case '-':
+        case ',':
+        case '$':
+        case '|':
+        case '%':
+        case '_': /* id should not has '_' in top.  */
+            return (ch);
+
+        case ':':
+            if (*bufptr == ':') {
+                bufptr++;
+                return (COL2);
+            }
+            return (':');
+
+        case '*':
+            if (*bufptr == '*') {
+                bufptr++;
+                return (POWER);
+            }
+            return ('*');
+        case '/':
+            if (*bufptr == '/') {
+                bufptr++;
+                return (CONCAT);
+            }
+            if (*bufptr == '=') {
+                bufptr++;
+                return (NE);
+            }
+            if (*bufptr == ')') {
+                bufptr++;
+                paren_level--;
+                { /* check 'interface operator (/)' ? */
+                    char *save = bufptr;
+                    bufptr -= 3;
+                    while (isspace(*bufptr))
+                        bufptr--;         /* skip white space */
+                    if (*bufptr == '(') { /* (/) in interface operator.  */
+                        bufptr = save - 1;
+                        return '/';
+                    }
+                    if (st_XMP_flag || st_OMP_flag || st_ACC_flag) {
+                        bufptr = save - 1;
+                        return '/';
+                    }
+                    bufptr = save;
+                }
+                return R_ARRAY_CONSTRUCTOR;
+            }
+            if (strncmp(bufptr, "periodic", 8) == 0) {
+                char *save = bufptr;
                 bufptr += 8;
                 if (*bufptr++ == '/') {
                     while (isspace(*bufptr))
                         bufptr++;
                     if (*bufptr != ')') {
-                        bufptr = save - 1;
-                        return '(';
+                        return XMPKW_PERIODIC;
                     }
                 }
-            } else if (strncmp(bufptr, "unbound", 7) == 0) {
+                bufptr = save + 1;
+            }
+            if (strncmp(bufptr, "unbound", 7) == 0) {
+                char *save = bufptr;
                 bufptr += 7;
                 if (*bufptr++ == '/') {
                     while (isspace(*bufptr))
                         bufptr++;
                     if (*bufptr != ')') {
-                        bufptr = save - 1;
-                        return '(';
+                        return XMPKW_UNBOUND;
                     }
                 }
-            } else if (st_OMP_flag || st_ACC_flag) {
-                bufptr = save - 1;
-                return '(';
+                bufptr = save + 1;
             }
-            bufptr = save;
-            return L_ARRAY_CONSTRUCTOR;
-        } else {
-            char *save = bufptr; /* check  '(LEN=' or '(KIND=' */
-            int t;
-            int save_n = need_keyword;
-            int save_p = paren_level;
-            need_keyword = TRUE;
-            t = token();
+            return ('/');
+        case '.':
+            if (isdigit((int)*bufptr))
+                goto number;
+            t = get_keyword(dot_keywords);
+            if (t != UNKNOWN)
+                return t;
+            else if (need_check_user_defined) {
+                char user_defined[33];
+                SYMBOL s;
+                int i;
 
-            switch (token_history_buf[token_history_count - 1]) {
-            case CLASS:
-            case KW_TYPE:
-            case KW_CHARACTER:
-            case KW_COMPLEX:
-            case KW_DOUBLE:
-            case KW_DCOMPLEX:
-            case KW_INTEGER:
-            case KW_LOGICAL:
-            case KW_REAL:
-                // it's a type specifier.
-                if (t == KW_LEN) {
-                    need_keyword = FALSE;
-                    while (isspace(*bufptr))
-                        bufptr++; /* skip white space */
-                    if (*bufptr++ == '=')
-                        return SET_LEN;
-                } else if (t == KW_KIND) {
-                    need_keyword = FALSE;
-                    while (isspace(*bufptr))
-                        bufptr++; /* skip white space */
-                    if (*bufptr++ == '=')
-                        return SET_KIND;
-                }
-                break;
-            }
+                user_defined[0] = '.';
+                user_defined[32] = '\0';
 
-            need_keyword = save_n;
-            bufptr = save;
-            paren_level = save_p;
-        }
-        return ('(');
-    case ')':
-        paren_level--;
-        return (')');
-    case '+':
-    case '-':
-    case ',':
-    case '$':
-    case '|':
-    case '%':
-    case '_': /* id should not has '_' in top.  */
-        return (ch);
-
-    case ':':
-        if (*bufptr == ':') {
-            bufptr++;
-            return (COL2);
-        }
-        return (':');
-
-    case '*':
-        if (*bufptr == '*') {
-            bufptr++;
-            return (POWER);
-        }
-        return ('*');
-    case '/':
-        if (*bufptr == '/') {
-            bufptr++;
-            return (CONCAT);
-        }
-        if (*bufptr == '=') {
-            bufptr++;
-            return (NE);
-        }
-        if (*bufptr == ')') {
-            bufptr++;
-            paren_level--;
-            { /* check 'interface operator (/)' ? */
-                char *save = bufptr;
-                bufptr -= 3;
-                while (isspace(*bufptr))
-                    bufptr--;         /* skip white space */
-                if (*bufptr == '(') { /* (/) in interface operator.  */
-                    bufptr = save - 1;
-                    return '/';
-                }
-                if (st_XMP_flag || st_OMP_flag || st_ACC_flag) {
-                    bufptr = save - 1;
-                    return '/';
-                }
-                bufptr = save;
-            }
-            return R_ARRAY_CONSTRUCTOR;
-        }
-        if (strncmp(bufptr, "periodic", 8) == 0) {
-            char *save = bufptr;
-            bufptr += 8;
-            if (*bufptr++ == '/') {
                 while (isspace(*bufptr))
                     bufptr++;
-                if (*bufptr != ')') {
-                    return XMPKW_PERIODIC;
-                }
-            }
-            bufptr = save + 1;
-        }
-        if (strncmp(bufptr, "unbound", 7) == 0) {
-            char *save = bufptr;
-            bufptr += 7;
-            if (*bufptr++ == '/') {
-                while (isspace(*bufptr))
-                    bufptr++;
-                if (*bufptr != ')') {
-                    return XMPKW_UNBOUND;
-                }
-            }
-            bufptr = save + 1;
-        }
-        return ('/');
-    case '.':
-        if (isdigit((int)*bufptr))
-            goto number;
-        t = get_keyword(dot_keywords);
-        if (t != UNKNOWN)
-            return t;
-        else if (need_check_user_defined) {
-            char user_defined[33];
-            SYMBOL s;
-            int i;
 
-            user_defined[0] = '.';
-            user_defined[32] = '\0';
+                for (i = 1; i < 32; i++) {
+                    if (*bufptr == '\0')
+                        break;
 
-            while (isspace(*bufptr))
-                bufptr++;
-
-            for (i = 1; i < 32; i++) {
-                if (*bufptr == '\0')
-                    break;
-
-                else if (*bufptr == '.') {
-                    user_defined[i++] = *bufptr++;
-                    user_defined[i] = '\0';
-                    break;
-                } else if (isspace(*bufptr)) {
-                    while (isspace(*bufptr))
-                        bufptr++;
-                    if (*bufptr == '.') {
+                    else if (*bufptr == '.') {
                         user_defined[i++] = *bufptr++;
                         user_defined[i] = '\0';
                         break;
-                    }
-                } else
-                    user_defined[i] = *bufptr++;
+                    } else if (isspace(*bufptr)) {
+                        while (isspace(*bufptr))
+                            bufptr++;
+                        if (*bufptr == '.') {
+                            user_defined[i++] = *bufptr++;
+                            user_defined[i] = '\0';
+                            break;
+                        }
+                    } else
+                        user_defined[i] = *bufptr++;
+                }
+                s = find_symbol(user_defined);
+                yylval.val = GEN_NODE(IDENT, s);
+                return USER_DEFINED_OP;
+            } else
+                return '.';
+        case '>':
+            if (*bufptr == '=') {
+                bufptr++;
+                return GE;
             }
-            s = find_symbol(user_defined);
-            yylval.val = GEN_NODE(IDENT, s);
-            return USER_DEFINED_OP;
-        } else
-            return '.';
-    case '>':
-        if (*bufptr == '=') {
-            bufptr++;
-            return GE;
-        }
-        return (GT);
-    case '<':
-        if (*bufptr == '=') {
-            bufptr++;
-            return (LE);
-        }
-        return (LT);
+            return (GT);
+        case '<':
+            if (*bufptr == '=') {
+                bufptr++;
+                return (LE);
+            }
+            return (LT);
 
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-    number:       /* reading number */
-        bufptr--; /* back */
-        return read_number();
-
-    case '[':
-    case ']':
-        return ch;
-
-    default:
-        if (isalpha(ch) || ch == '_') {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        number:       /* reading number */
             bufptr--; /* back */
-            return read_identifier();
-        } else
-            error("bad char %c(0x%x)", ch, ch & 0xFF);
-        return UNKNOWN;
+            return read_number();
+
+        case '[':
+        case ']':
+            return ch;
+
+        default:
+            if (isalpha(ch) || ch == '_') {
+                bufptr--; /* back */
+                return read_identifier();
+            } else
+                error("bad char %c(0x%x)", ch, ch & 0xFF);
+            return UNKNOWN;
     }
 }
 
-static int is_identifier_letter(char c, int pos) {
+static int is_identifier_letter(char c, int pos)
+{
     if (dollar_ok) {
         /* '_' and '$' are never placed on beginning */
         return (isalnum((int)c) || ((pos >= 1) && ((c == '_') || (c == '$'))));
@@ -1155,7 +1179,8 @@ static int is_identifier_letter(char c, int pos) {
     }
 }
 
-static int read_identifier() {
+static int read_identifier()
+{
     int tkn_len;
     char *p, ch;
     int excess_name_length = 0;
@@ -1189,18 +1214,18 @@ static int read_identifier() {
         int radix = 0;
         /* x'hhhhh' constant */
         switch (buffio[0]) {
-        case 'z':
-        case 'x':
-            radix = 16;
-            break;
-        case 'o':
-            radix = 8;
-            break;
-        case 'b':
-            radix = 2;
-            break;
-        default:
-            error("bad bit id");
+            case 'z':
+            case 'x':
+                radix = 16;
+                break;
+            case 'o':
+                radix = 8;
+                break;
+            case 'b':
+                radix = 2;
+                break;
+            default:
+                error("bad bit id");
         }
         tkn_len = 0;
         for (p = buffio, bufptr++;
@@ -1258,80 +1283,80 @@ static int read_identifier() {
         if (t != USER_DEFINED_OP && defined_io == 0) {
             enum expr_code code = ERROR_NODE;
             switch (t) {
-            case '=':
-                code = F95_ASSIGNOP;
-                break;
-            case '.':
-                code = F95_DOTOP;
-                break;
-            case POWER:
-                code = F95_POWEOP;
-                break;
-            case '*':
-                code = F95_MULOP;
-                break;
-            case '/':
-                code = F95_DIVOP;
-                break;
-            case '+':
-                code = F95_PLUSOP;
-                break;
-            case '-':
-                code = F95_MINUSOP;
-                break;
-            case EQ:
-                code = F95_EQOP;
-                break;
-            case NE:
-                code = F95_NEOP;
-                break;
-            case LT:
-                code = F95_LTOP;
-                break;
-            case LE:
-                code = F95_LEOP;
-                break;
-            case GE:
-                code = F95_GEOP;
-                break;
-            case GT:
-                code = F95_GTOP;
-                break;
-            case NOT:
-                code = F95_NOTOP;
-                break;
-            case AND:
-                code = F95_ANDOP;
-                break;
-            case OR:
-                code = F95_OROP;
-                break;
-            case EQV:
-                code = F95_EQVOP;
-                break;
-            case NEQV:
-                code = F95_NEQVOP;
-                break;
-            case CONCAT:
-                code = F95_CONCATOP;
-                break;
-            default:
-                error("syntax error. ");
-                break;
+                case '=':
+                    code = F95_ASSIGNOP;
+                    break;
+                case '.':
+                    code = F95_DOTOP;
+                    break;
+                case POWER:
+                    code = F95_POWEOP;
+                    break;
+                case '*':
+                    code = F95_MULOP;
+                    break;
+                case '/':
+                    code = F95_DIVOP;
+                    break;
+                case '+':
+                    code = F95_PLUSOP;
+                    break;
+                case '-':
+                    code = F95_MINUSOP;
+                    break;
+                case EQ:
+                    code = F95_EQOP;
+                    break;
+                case NE:
+                    code = F95_NEOP;
+                    break;
+                case LT:
+                    code = F95_LTOP;
+                    break;
+                case LE:
+                    code = F95_LEOP;
+                    break;
+                case GE:
+                    code = F95_GEOP;
+                    break;
+                case GT:
+                    code = F95_GTOP;
+                    break;
+                case NOT:
+                    code = F95_NOTOP;
+                    break;
+                case AND:
+                    code = F95_ANDOP;
+                    break;
+                case OR:
+                    code = F95_OROP;
+                    break;
+                case EQV:
+                    code = F95_EQVOP;
+                    break;
+                case NEQV:
+                    code = F95_NEQVOP;
+                    break;
+                case CONCAT:
+                    code = F95_CONCATOP;
+                    break;
+                default:
+                    error("syntax error. ");
+                    break;
             }
             yylval.val = list1(F95_GENERIC_SPEC, list0(code));
         } else if (defined_io != 0) {
             enum expr_code code = ERROR_NODE;
             switch (t) {
-            case FORMATTED:
-                code = F03_FORMATTED;
-                break;
-            case UNFORMATTED:
-                code = F03_UNFORMATTED;
-                break;
-            default:
-                error("syntax error. ");
-                break;
+                case FORMATTED:
+                    code = F03_FORMATTED;
+                    break;
+                case UNFORMATTED:
+                    code = F03_UNFORMATTED;
+                    break;
+                default:
+                    error("syntax error. ");
+                    break;
             }
             yylval.val = list1(defined_io, list0(code));
         } else {
@@ -1345,7 +1370,8 @@ returnId:
     return (IDENTIFIER);
 }
 
-static int read_number() {
+static int read_number()
+{
     typedef enum {
         PREC_UNKNOWN = 0,
         PREC_SINGLE,
@@ -1389,17 +1415,17 @@ static int read_number() {
                 break;
             have_exp = TRUE;
             switch (ch) {
-            case 'e':
-                e = PREC_SINGLE;
-                break;
-            case 'd':
-                e = PREC_DOUBLE;
-                break;
-            case 'q':
-                e = PREC_QUAD;
-                break;
-            default:
-                break;
+                case 'e':
+                    e = PREC_SINGLE;
+                    break;
+                case 'd':
+                    e = PREC_DOUBLE;
+                    break;
+                case 'q':
+                    e = PREC_QUAD;
+                    break;
+                default:
+                    break;
             }
             while (isdigit((int)*bufptr))
                 *p++ = *bufptr++;
@@ -1414,18 +1440,18 @@ static int read_number() {
     if (have_dot || have_exp) {
         enum expr_code exp_code = FLOAT_CONSTANT;
         switch (e) {
-        case PREC_DOUBLE: {
-            exp_code = F_DOUBLE_CONSTANT;
-            break;
-        }
-        case PREC_QUAD: {
-            exp_code = F_QUAD_CONSTANT;
-            break;
-        }
-        default: {
-            exp_code = FLOAT_CONSTANT;
-            break;
-        }
+            case PREC_DOUBLE: {
+                exp_code = F_DOUBLE_CONSTANT;
+                break;
+            }
+            case PREC_QUAD: {
+                exp_code = F_QUAD_CONSTANT;
+                break;
+            }
+            default: {
+                exp_code = FLOAT_CONSTANT;
+                break;
+            }
         }
         yylval.val = make_float_enode(exp_code, convert_str_double(buffio),
                                       strdup(buffio));
@@ -1494,7 +1520,8 @@ static double convert_str_double(s) char *s;
  * nature.
  */
 
-static int classify_statement() {
+static int classify_statement()
+{
     register char *p, *save;
 
     while (isspace(*bufptr))
@@ -1590,222 +1617,229 @@ static int classify_statement() {
         goto ret_LET;
 
     switch (st_class) {
-    case DO:
-        if (fixed_format_flag && exposed_eql) {
-            if (!exposed_comma)
-                goto ret_LET;
-        }
-        if (fixed_format_flag) {
-            /* when fixed format, it not blank mandatory for DO WHILE. */
-            if (strncmp(bufptr, "while", 5) == 0) {
-                bufptr = p + 5;
-                return DOWHILE;
+        case DO:
+            if (fixed_format_flag && exposed_eql) {
+                if (!exposed_comma)
+                    goto ret_LET;
             }
-        }
-        break;
-
-    case LOGIF: /* check whether ret_LET or LOGIF?  */
-    case WHERE: /* check whether ret_LET or WHERE?  */
-        /* Caution:  must save plevel and need_keyword.
-           special handling for '' */
-        if (fixed_format_flag && exposed_eql) {
-            /* LOGIF such as 'if' '('...')' 'yyy' '=' 'zzz'.  */
-            /* or 'if' '(' ...'('...')'...')')  'yyy' '=' 'zzz'.  */
-            /* fixed_format_flag here, no need skip white space.  */
-            int plevel = 0;
-            char *save = bufptr;
-            if (*bufptr == '(') { /* now point '(' ? */
-                plevel++;
-                while (*++bufptr) /* skip until ')'  */
-                    if (*bufptr == ')') {
-                        if (--plevel == 0) /* close for if cond.?  */
-                            break;
-                    } else if (*bufptr == '(') { /* another '('?  */
-                        plevel++;
-                    } else if (*bufptr == QUOTE) {
-                        /* skip in quote string */
-                        while (*++bufptr != QUOTE) {
-                            if (*bufptr == '\0') {
-                                error("syntax error in string");
-                                return EOS;
-                            }
-                        }
-                    }
-                /* match the parenthesis?  */
-                if ((plevel == 0) && *bufptr == ')') {
-                    bufptr++;
-                    if (isalpha(*bufptr)) { /* id?  if (....) 'id'=...*/
-                        ++bufptr;
-                        while (isalpha(*bufptr) || isdigit(*bufptr) ||
-                               (*bufptr == '_'))
-                            bufptr++;
-
-                        /* id, id(), id(...), etc.is here, so more simple.  */
-                        bufptr = save;
-                        goto ret_LOGIF;
-                    } else if (*bufptr == '=') { /* if(...) = ... */
-                        bufptr = save;
-                        goto ret_LET;
-                    }
+            if (fixed_format_flag) {
+                /* when fixed format, it not blank mandatory for DO
+                 * WHILE. */
+                if (strncmp(bufptr, "while", 5) == 0) {
+                    bufptr = p + 5;
+                    return DOWHILE;
                 }
             }
-            bufptr = save;
-            goto ret_LET;
-        } else { /* check arith if, such as 'if' '(' ... ')' 123,....  */
-            int plevel = 0;
-            char *save = bufptr;
-            while (isspace(*bufptr))
-                bufptr++;         /* skip space */
-            if (*bufptr == '(') { /* now point '(' ? */
-                plevel++;
-                while (*++bufptr) /* skip until ')'  */
-                    if (*bufptr == ')') {
-                        if (--plevel == 0) /* close?  */
-                            break;
-                    } else if (*bufptr == '(') { /* another '('?  */
-                        plevel++;
-                    } else if (*bufptr == QUOTE) {
-                        /* skip in string */
-                        while (*++bufptr != QUOTE) {
-                            if (*bufptr == '\0') {
-                                error("syntax error in string");
-                                return EOS;
+            break;
+
+        case LOGIF: /* check whether ret_LET or LOGIF?  */
+        case WHERE: /* check whether ret_LET or WHERE?  */
+            /* Caution:  must save plevel and need_keyword.
+               special handling for '' */
+            if (fixed_format_flag && exposed_eql) {
+                /* LOGIF such as 'if' '('...')' 'yyy' '=' 'zzz'.  */
+                /* or 'if' '(' ...'('...')'...')')  'yyy' '=' 'zzz'.  */
+                /* fixed_format_flag here, no need skip white space.  */
+                int plevel = 0;
+                char *save = bufptr;
+                if (*bufptr == '(') { /* now point '(' ? */
+                    plevel++;
+                    while (*++bufptr) /* skip until ')'  */
+                        if (*bufptr == ')') {
+                            if (--plevel == 0) /* close for if cond.?  */
+                                break;
+                        } else if (*bufptr == '(') { /* another '('?  */
+                            plevel++;
+                        } else if (*bufptr == QUOTE) {
+                            /* skip in quote string */
+                            while (*++bufptr != QUOTE) {
+                                if (*bufptr == '\0') {
+                                    error("syntax error in "
+                                          "string");
+                                    return EOS;
+                                }
                             }
                         }
-                    }
-                if ((plevel == 0) && *bufptr == ')') {
                     /* match the parenthesis?  */
-                    bufptr++;
-                    /* if (...) then ?  */
-                    while (isspace(*bufptr))
-                        bufptr++; /* skip space */
-                    if (isalpha(*bufptr)) {
-                        int save_n = need_keyword;
-                        int save_p = paren_level;
-                        need_keyword = TRUE;
-                        int t = token();
-                        if (t == THEN) { /* then key?  */
-                            need_keyword = FALSE;
-                            bufptr =
-                                save; /* it is IFTHEN statement, not LET.  */
-                            return IFTHEN;
+                    if ((plevel == 0) && *bufptr == ')') {
+                        bufptr++;
+                        if (isalpha(*bufptr)) { /* id?  if (....)
+                                                   'id'=...*/
+                            ++bufptr;
+                            while (isalpha(*bufptr) || isdigit(*bufptr) ||
+                                   (*bufptr == '_'))
+                                bufptr++;
+
+                            /* id, id(), id(...), etc.is here,
+                             * so more simple.  */
+                            bufptr = save;
+                            goto ret_LOGIF;
+                        } else if (*bufptr == '=') { /* if(...) = ... */
+                            bufptr = save;
+                            goto ret_LET;
                         }
-                        need_keyword = save_n;
-                        bufptr = save;
-                        paren_level = save_p;
-                        break;
-                    } else if (isdigit(*bufptr)) {
-                        bufptr = save; /* it is ARITHF statement, not LET.  */
-                        return ARITHIF;
                     }
                 }
+                bufptr = save;
+                goto ret_LET;
+            } else { /* check arith if, such as 'if' '(' ... ')' 123,.... */
+                int plevel = 0;
+                char *save = bufptr;
+                while (isspace(*bufptr))
+                    bufptr++;         /* skip space */
+                if (*bufptr == '(') { /* now point '(' ? */
+                    plevel++;
+                    while (*++bufptr) /* skip until ')'  */
+                        if (*bufptr == ')') {
+                            if (--plevel == 0) /* close?  */
+                                break;
+                        } else if (*bufptr == '(') { /* another '('?  */
+                            plevel++;
+                        } else if (*bufptr == QUOTE) {
+                            /* skip in string */
+                            while (*++bufptr != QUOTE) {
+                                if (*bufptr == '\0') {
+                                    error("syntax error in "
+                                          "string");
+                                    return EOS;
+                                }
+                            }
+                        }
+                    if ((plevel == 0) && *bufptr == ')') {
+                        /* match the parenthesis?  */
+                        bufptr++;
+                        /* if (...) then ?  */
+                        while (isspace(*bufptr))
+                            bufptr++; /* skip space */
+                        if (isalpha(*bufptr)) {
+                            int save_n = need_keyword;
+                            int save_p = paren_level;
+                            need_keyword = TRUE;
+                            int t = token();
+                            if (t == THEN) { /* then key?  */
+                                need_keyword = FALSE;
+                                bufptr = save; /* it is IFTHEN
+                                                  statement, not
+                                                  LET.  */
+                                return IFTHEN;
+                            }
+                            need_keyword = save_n;
+                            bufptr = save;
+                            paren_level = save_p;
+                            break;
+                        } else if (isdigit(*bufptr)) {
+                            bufptr = save; /* it is ARITHF statement,
+                                              not LET.  */
+                            return ARITHIF;
+                        }
+                    }
+                }
+                bufptr = save; /* resore the pointer.  */
             }
-            bufptr = save; /* resore the pointer.  */
-        }
-    ret_LOGIF:
-        break;
+        ret_LOGIF:
+            break;
 
-    case MODULE:
-        if (!is_top_level()) {
-            need_keyword = TRUE;
-        }
-    case ALLOCATABLE:
-    case ALLOCATE:
-    case BIND:
-    case CASE:
-    case COMMON:
-    case CONTAINS:
-    case CONTINUE:
-    case CYCLE:
-    case DATA:
-    case DEALLOCATE:
-    case DIMENSION:
-    case CODIMENSION:
-    case ELSE:
-    case END:
-    case ENTRY:
-    case EQUIV:
-    case EXIT:
-    case EXTERNAL:
-    case FUNCTION:
-    case GOTO:
-    case IMPORT:
-    case IMPLICIT:
-    case INCLUDE:
-    case INTENT:
-    case INTERFACE:
-    case INTRINSIC:
-    case BLOCK:
-    case KW_GO:
-    case KW_IN:
-    case KW_IS:
-    case KW_KIND:
-    case KW_LEN:
-    case KW_NAME:
-    case KW_OUT:
-    case KW_TO:
-    case KW_TYPE:
-    case NAMELIST:
-    case NULLIFY:
-    case OPTIONAL:
-    case PARAMETER:
-    case POINTER:
-    case VOLATILE:
-    case ASYNCHRONOUS:
-    case SAVE:
-    case SELECT:
-    case SEQUENCE:
-    case STOP:
-    case SUBROUTINE:
-    case VALUE:
-    case TARGET:
-        if (fixed_format_flag && exposed_eql) {
-            goto ret_LET;
-        }
-        break;
+        case MODULE:
+            if (!is_top_level()) {
+                need_keyword = TRUE;
+            }
+        case ALLOCATABLE:
+        case ALLOCATE:
+        case BIND:
+        case CASE:
+        case COMMON:
+        case CONTAINS:
+        case CONTINUE:
+        case CYCLE:
+        case DATA:
+        case DEALLOCATE:
+        case DIMENSION:
+        case CODIMENSION:
+        case ELSE:
+        case END:
+        case ENTRY:
+        case EQUIV:
+        case EXIT:
+        case EXTERNAL:
+        case FUNCTION:
+        case GOTO:
+        case IMPORT:
+        case IMPLICIT:
+        case INCLUDE:
+        case INTENT:
+        case INTERFACE:
+        case INTRINSIC:
+        case BLOCK:
+        case KW_GO:
+        case KW_IN:
+        case KW_IS:
+        case KW_KIND:
+        case KW_LEN:
+        case KW_NAME:
+        case KW_OUT:
+        case KW_TO:
+        case KW_TYPE:
+        case NAMELIST:
+        case NULLIFY:
+        case OPTIONAL:
+        case PARAMETER:
+        case POINTER:
+        case VOLATILE:
+        case ASYNCHRONOUS:
+        case SAVE:
+        case SELECT:
+        case SEQUENCE:
+        case STOP:
+        case SUBROUTINE:
+        case VALUE:
+        case TARGET:
+            if (fixed_format_flag && exposed_eql) {
+                goto ret_LET;
+            }
+            break;
 
-    case PUBLIC:
-    case PRIVATE:
-    case PROTECTED:
-        may_generic_spec = TRUE;
-        break;
+        case PUBLIC:
+        case PRIVATE:
+        case PROTECTED:
+            may_generic_spec = TRUE;
+            break;
 
-    case READ:
-        if (*p == '(') { /* read( */
-            bufptr = p + 1;
-            return READ_P;
-        }
-        break;
-    case WRITE:
-        if (*p == '(') { /* write( */
-            bufptr = p + 1;
-            return WRITE_P;
-        }
-        break;
-    case REWIND:
-        if (*p == '(') { /* rewind( */
-            bufptr = p + 1;
-            return REWIND_P;
-        }
-        break;
-    case ENDFILE:
-        if (*p == '(') { /* endfile( */
-            bufptr = p + 1;
-            return ENDFILE_P;
-        }
-        break;
-    case BACKSPACE:
-        if (*p == '(') { /* backspace( */
-            bufptr = p + 1;
-            return BACKSPACE_P;
-        }
-        break;
+        case READ:
+            if (*p == '(') { /* read( */
+                bufptr = p + 1;
+                return READ_P;
+            }
+            break;
+        case WRITE:
+            if (*p == '(') { /* write( */
+                bufptr = p + 1;
+                return WRITE_P;
+            }
+            break;
+        case REWIND:
+            if (*p == '(') { /* rewind( */
+                bufptr = p + 1;
+                return REWIND_P;
+            }
+            break;
+        case ENDFILE:
+            if (*p == '(') { /* endfile( */
+                bufptr = p + 1;
+                return ENDFILE_P;
+            }
+            break;
+        case BACKSPACE:
+            if (*p == '(') { /* backspace( */
+                bufptr = p + 1;
+                return BACKSPACE_P;
+            }
+            break;
 
-    case KW_ONLY:
-    case KW_USE:
-    case GENERIC:
-        may_generic_spec = TRUE;
-        break;
+        case KW_ONLY:
+        case KW_USE:
+        case GENERIC:
+            may_generic_spec = TRUE;
+            break;
     }
     return (st_class);
 
@@ -1826,7 +1860,8 @@ ret_LET:
 
    so we chagne the paren in letter group from (/) to </>(LT/GT).
 */
-static void replace_paren() {
+static void replace_paren()
+{
     char *lastRpar, *lastLpar;
     int plevel;
 
@@ -1860,7 +1895,8 @@ nextPair:
 }
 
 /* check token is syntax name or not. */
-static int is_not_keyword() {
+static int is_not_keyword()
+{
     char *save = bufptr;
     int ret = FALSE;
     bufptr--;
@@ -1913,29 +1949,30 @@ static int get_keyword(ks) struct keyword_token *ks;
                 if (*q == '\0') { /* found */
                     bufptr = p;   /* cut off keyword */
                     switch (kp->k_token) {
-                    case IMPLICIT: {
-                        char *save = bufptr;
-                        if (get_keyword(ks) == KW_NONE)
-                            return IMPLICIT_NONE;
-                        if (is_not_keyword())
-                            goto unknown;
-                        /* replace the (/) around letter group to </>. */
-                        bufptr = save;
-                        replace_paren();
-                        bufptr = save;
-                    } break;
-                    case CASE: {
-                        char *save = bufptr;
-                        if (get_keyword(ks) == KW_DEFAULT)
-                            return CASEDEFAULT;
-                        else
+                        case IMPLICIT: {
+                            char *save = bufptr;
+                            if (get_keyword(ks) == KW_NONE)
+                                return IMPLICIT_NONE;
+                            if (is_not_keyword())
+                                goto unknown;
+                            /* replace the (/) around letter
+                             * group to </>. */
                             bufptr = save;
-                    } break;
-                    case DO: {
-                        return DO;
-                    } break;
-                    default:
-                        break;
+                            replace_paren();
+                            bufptr = save;
+                        } break;
+                        case CASE: {
+                            char *save = bufptr;
+                            if (get_keyword(ks) == KW_DEFAULT)
+                                return CASEDEFAULT;
+                            else
+                                bufptr = save;
+                        } break;
+                        case DO: {
+                            return DO;
+                        } break;
+                        default:
+                            break;
                     }
                     if (is_not_keyword())
                         goto unknown;
@@ -1948,7 +1985,6 @@ static int get_keyword(ks) struct keyword_token *ks;
     unknown:
         bufptr = save;
         return (UNKNOWN);
-
     } else {
         int tkn_len;
         char *p;
@@ -1959,8 +1995,8 @@ static int get_keyword(ks) struct keyword_token *ks;
          * (read_identifier use it.)
          */
         char *keyword_save = save;
-        /*  'keyword_save' will be a point of buffer after read fortran keyword.
-         * If token is fortran keyword then return this.
+        /*  'keyword_save' will be a point of buffer after read fortran
+         * keyword. If token is fortran keyword then return this.
          */
         int excess_name_length = 0;
 
@@ -2023,7 +2059,8 @@ static int get_keyword(ks) struct keyword_token *ks;
     }
 }
 
-static int get_keyword_optional_blank(int class) {
+static int get_keyword_optional_blank(int class)
+{
     int cl;
     char *save;
 
@@ -2032,133 +2069,133 @@ static int get_keyword_optional_blank(int class) {
         bufptr++; /* skip space */
 
     switch (class) {
-    case END:
-        if ((cl = get_keyword(end_keywords)) != UNKNOWN) {
-            if (cl == BLOCK) {
-                while (isspace(*bufptr))
-                    bufptr++; /* skip space */
-                if (get_keyword(keywords) == DATA) {
+        case END:
+            if ((cl = get_keyword(end_keywords)) != UNKNOWN) {
+                if (cl == BLOCK) {
+                    while (isspace(*bufptr))
+                        bufptr++; /* skip space */
+                    if (get_keyword(keywords) == DATA) {
+                        return ENDBLOCKDATA;
+                    } else {
+                        return ENDBLOCK;
+                    }
+                    break;
+                } else if (cl == BLOCKDATA) {
                     return ENDBLOCKDATA;
                 } else {
-                    return ENDBLOCK;
+                    return cl;
                 }
-                break;
-            } else if (cl == BLOCKDATA) {
+            }
+            break;
+        case BLOCK: /* BLOCK or BLOCK DATA*/
+            if (get_keyword(keywords) == DATA) {
+                return BLOCKDATA;
+            } else {
+                return BLOCK;
+            }
+            break;
+        case ENDBLOCK: /* BLOCK or BLOCK DATA*/
+            if (get_keyword(keywords) == DATA) {
                 return ENDBLOCKDATA;
             } else {
-                return cl;
+                return ENDBLOCK;
             }
-        }
-        break;
-    case BLOCK: /* BLOCK or BLOCK DATA*/
-        if (get_keyword(keywords) == DATA) {
-            return BLOCKDATA;
-        } else {
-            return BLOCK;
-        }
-        break;
-    case ENDBLOCK: /* BLOCK or BLOCK DATA*/
-        if (get_keyword(keywords) == DATA) {
-            return ENDBLOCKDATA;
-        } else {
-            return ENDBLOCK;
-        }
 
-        break;
+            break;
 
-    case KW_DBL: { /* DOBULE PRECISION */
-                   /* DOBULE COMPLEX */
-        char *save2 = bufptr;
-        if (get_keyword(keywords) == KW_PRECISION)
-            return KW_DOUBLE;
-        bufptr = save2; /* recover and search */
-        if (get_keyword(keywords) == KW_COMPLEX)
-            return KW_DCOMPLEX;
-    } break;
+        case KW_DBL: { /* DOBULE PRECISION */
+                       /* DOBULE COMPLEX */
+            char *save2 = bufptr;
+            if (get_keyword(keywords) == KW_PRECISION)
+                return KW_DOUBLE;
+            bufptr = save2; /* recover and search */
+            if (get_keyword(keywords) == KW_COMPLEX)
+                return KW_DCOMPLEX;
+        } break;
 
-    case ELSE:
-        cl = get_keyword(keywords);
-        if (cl == LOGIF)
-            return ELSEIFTHEN;
-        else if (cl == WHERE)
-            return ELSEWHERE;
-        break;
-    case KW_GO:
-        if (get_keyword(keywords) == KW_TO)
-            return GOTO;
-        break;
-    case KW_IN:
-        if (get_keyword(keywords) == KW_OUT)
-            return KW_INOUT;
-        break;
-    case CLASS: {
-        char *savepoint = bufptr;
-        if (get_keyword(keywords) == KW_IS)
-            return CLASSIS;
-        bufptr = savepoint;
-        if (get_keyword(keywords) == KW_DEFAULT)
-            return CLASSDEFAULT;
-    } break;
-    case KW_TYPE:
-        if (get_keyword(keywords) == KW_IS)
-            return TYPEIS;
-        break;
-    case KW_SELECT: {
-        int kwd = get_keyword(keywords);
-        if (kwd == CASE)
-            return SELECT;
-        if (kwd == KW_TYPE)
-            return SELECTTYPE;
-    } break;
-    case DO: /* DO WHILE or DO CONCURRENT */ /* blanks mandatory.  */
-        cl = get_keyword(keywords);
-        if (cl == KW_WHILE)
-            return DOWHILE;
-        if (cl == CONCURRENT)
-            return DOCONCURRENT;
-        break;
-    case IMPLICIT: { /* IMPLICIT NONE */ /* in free format */
-        char *save2 = bufptr;
-        if (get_keyword(keywords) == KW_NONE)
-            return IMPLICIT_NONE;
-        bufptr = save2;
-        replace_paren();
-    } break;
-    case CASE: /* case default */
-        if (get_keyword(keywords) == KW_DEFAULT)
-            return CASEDEFAULT;
-        break;
-    case INTERFACE: /* interface assignment or interface operator */ {
-        char *save2 = bufptr;
-        if (get_keyword(keywords) == ASSIGNMENT)
-            return INTERFACEASSIGNMENT;
-        bufptr = save2;
-        if (get_keyword(keywords) == OPERATOR)
-            return INTERFACEOPERATOR;
-        bufptr = save2;
-        if (get_keyword(keywords) == READ)
-            return INTERFACEREAD;
-        bufptr = save2;
-        if (get_keyword(keywords) == WRITE)
-            return INTERFACEWRITE;
-    } break;
-    case MODULE: /* module procedure */
-        if (get_keyword(keywords) == PROCEDURE)
-            return MODULEPROCEDURE;
-        break;
-    case KW_SYNC: /* #060 coarray */
-        switch (get_keyword(keywords)) {
-        case KW_ALL:
-            return SYNCALL;
-        case KW_IMAGES:
-            return SYNCIMAGES;
-        case KW_MEMORY:
-            return SYNCMEMORY;
-        }
-        break;
-        break;
-    default:
-        break;
+        case ELSE:
+            cl = get_keyword(keywords);
+            if (cl == LOGIF)
+                return ELSEIFTHEN;
+            else if (cl == WHERE)
+                return ELSEWHERE;
+            break;
+        case KW_GO:
+            if (get_keyword(keywords) == KW_TO)
+                return GOTO;
+            break;
+        case KW_IN:
+            if (get_keyword(keywords) == KW_OUT)
+                return KW_INOUT;
+            break;
+        case CLASS: {
+            char *savepoint = bufptr;
+            if (get_keyword(keywords) == KW_IS)
+                return CLASSIS;
+            bufptr = savepoint;
+            if (get_keyword(keywords) == KW_DEFAULT)
+                return CLASSDEFAULT;
+        } break;
+        case KW_TYPE:
+            if (get_keyword(keywords) == KW_IS)
+                return TYPEIS;
+            break;
+        case KW_SELECT: {
+            int kwd = get_keyword(keywords);
+            if (kwd == CASE)
+                return SELECT;
+            if (kwd == KW_TYPE)
+                return SELECTTYPE;
+        } break;
+        case DO: /* DO WHILE or DO CONCURRENT */ /* blanks mandatory.  */
+            cl = get_keyword(keywords);
+            if (cl == KW_WHILE)
+                return DOWHILE;
+            if (cl == CONCURRENT)
+                return DOCONCURRENT;
+            break;
+        case IMPLICIT: { /* IMPLICIT NONE */ /* in free format */
+            char *save2 = bufptr;
+            if (get_keyword(keywords) == KW_NONE)
+                return IMPLICIT_NONE;
+            bufptr = save2;
+            replace_paren();
+        } break;
+        case CASE: /* case default */
+            if (get_keyword(keywords) == KW_DEFAULT)
+                return CASEDEFAULT;
+            break;
+        case INTERFACE: /* interface assignment or interface operator */ {
+            char *save2 = bufptr;
+            if (get_keyword(keywords) == ASSIGNMENT)
+                return INTERFACEASSIGNMENT;
+            bufptr = save2;
+            if (get_keyword(keywords) == OPERATOR)
+                return INTERFACEOPERATOR;
+            bufptr = save2;
+            if (get_keyword(keywords) == READ)
+                return INTERFACEREAD;
+            bufptr = save2;
+            if (get_keyword(keywords) == WRITE)
+                return INTERFACEWRITE;
+        } break;
+        case MODULE: /* module procedure */
+            if (get_keyword(keywords) == PROCEDURE)
+                return MODULEPROCEDURE;
+            break;
+        case KW_SYNC: /* #060 coarray */
+            switch (get_keyword(keywords)) {
+                case KW_ALL:
+                    return SYNCALL;
+                case KW_IMAGES:
+                    return SYNCIMAGES;
+                case KW_MEMORY:
+                    return SYNCMEMORY;
+            }
+            break;
+            break;
+        default:
+            break;
     }
 
     bufptr = save; /* recover */
@@ -2174,7 +2211,8 @@ int checkInsideUse() { return is_using_module; }
  * 2. if name is not either of abs. path and current/upper path,
  *    search name in include dir.
  */
-void include_file(char *name, int inside_use) {
+void include_file(char *name, int inside_use)
+{
     const char *path;
     FILE *fp;
     struct saved_file_state *p;
@@ -2239,7 +2277,8 @@ void include_file(char *name, int inside_use) {
     pre_read = 0;
 }
 
-static void restore_file() {
+static void restore_file()
+{
     struct saved_file_state *p;
 
     fclose(source_file);
@@ -2271,7 +2310,8 @@ static void restore_file() {
 /*
  * Files name table
  */
-int get_file_id(char *file) {
+int get_file_id(char *file)
+{
     int i;
     for (i = 0; i < n_files; i++) {
         if (strcmp(file_names[i], file) == 0)
@@ -2286,7 +2326,8 @@ int get_file_id(char *file) {
 /*
  * line reader
  */
-static int read_initial_line() {
+static int read_initial_line()
+{
     int ret;
     st_name = NULL;
 
@@ -2316,7 +2357,8 @@ static int read_initial_line() {
 /*     return FALSE; */
 /* } */
 
-static int find_last_ampersand(char *buf, int *len) {
+static int find_last_ampersand(char *buf, int *len)
+{
     int l;
     int flag = FALSE;
 
@@ -2347,7 +2389,8 @@ static int find_last_ampersand(char *buf, int *len) {
 /* check sentinel in line */
 /* if is sentnal return 1 and set index of sentinel list to index,
    unless return 0 and no set no value to index. */
-static int is_pragma_sentinel(sentinel_list *slist, char *line, int *index) {
+static int is_pragma_sentinel(sentinel_list *slist, char *line, int *index)
+{
     int longest_index = -1; /* do longest match */
     int longest = 0;
     unsigned int i, pos;
@@ -2373,7 +2416,8 @@ static int is_pragma_sentinel(sentinel_list *slist, char *line, int *index) {
     return 1;
 }
 /* check conditional compilation sign "!$" */
-static int is_cond_compilation(sentinel_list *slist, char *line) {
+static int is_cond_compilation(sentinel_list *slist, char *line)
+{
     int index;
 
     if (is_pragma_sentinel(slist, line, &index))
@@ -2388,7 +2432,8 @@ static int is_cond_compilation(sentinel_list *slist, char *line) {
 
 static int last_char_in_quote_is_quote = FALSE;
 
-static int read_free_format() {
+static int read_free_format()
+{
     int rv = ST_EOF;
     int st_len;
     char *p, *q, *pp;
@@ -2482,8 +2527,8 @@ again:
                     if (st_no == 0)
                         error("line number must be non-zero");
                     if (!isspace(*p) && *p != '\0')
-                        warning_lineno(&read_lineno,
-                                       "separator required after line number");
+                        warning_lineno(&read_lineno, "separator required "
+                                                     "after line number");
                 }
             }
         } else if (leave_comment_flag) {
@@ -2561,7 +2606,8 @@ again:
                 if (st_CONDCOMPL_flag) {
                     p += 2; /* length of "!$" */
                 } else {
-                    error("bad condition compilation continuation line");
+                    error("bad condition compilation "
+                          "continuation line");
                     goto Done;
                 }
             }
@@ -2652,7 +2698,8 @@ Last:
 }
 
 /* check the module compile? and if reach the end of offset?  */
-static int anotherEOF() {
+static int anotherEOF()
+{
     extern int mcLn_no;
     extern long mcEnd;
 
@@ -2664,7 +2711,8 @@ static int anotherEOF() {
     return FALSE;
 }
 
-static int readline_free_format() {
+static int readline_free_format()
+{
     int c, i;
     char *bp, *p;
     int inQuote;
@@ -2798,7 +2846,8 @@ done:
 }
 
 /* for fixed format */
-static int read_fixed_format() {
+static int read_fixed_format()
+{
     int rv = ST_EOF;
     int st_len, i;
     char *p, *q;
@@ -2899,7 +2948,8 @@ top:
             } else {
                 if ((OMP_flag || cond_compile_enabled) && st_CONDCOMPL_flag) {
                     /* in case of conditional compilation     */
-                    /* stn_cols with errors treated as comment line */
+                    /* stn_cols with errors treated as comment
+                     * line */
                     pre_read = 0;
                     goto top;
                 }
@@ -2955,7 +3005,8 @@ copy_body:
                     append_pragma_str(line_buffer);
                     goto copy_body_cont;
                 } else {
-                    error("OMP sentinels missing initial line, ignored");
+                    error("OMP sentinels missing initial line, "
+                          "ignored");
                     break;
                 }
             } else if (st_OMP_flag) {
@@ -2989,7 +3040,8 @@ copy_body:
                     append_pragma_str(line_buffer);
                     goto copy_body_cont;
                 }
-                error("PRAGMA sentinels missing initial line, ignored");
+                error("PRAGMA sentinels missing initial line, "
+                      "ignored");
                 break;
             }
         } else if (is_cond_compilation(&sentinels, stn_cols)) {
@@ -3001,9 +3053,9 @@ copy_body:
         } else {
             for (p = stn_cols, i = 0; *p != '\0' && i < 5; p++, i++) {
                 if (!isspace((int)*p)) {
-                    warning_lineno(
-                        &read_lineno,
-                        "statement label in continuation line is ignored");
+                    warning_lineno(&read_lineno,
+                                   "statement label in continuation line "
+                                   "is ignored");
                     break;
                 }
             }
@@ -3095,7 +3147,8 @@ Last:
 
 /* fixed format: read one line from input, check comment line */
 
-static int readline_fixed_format() {
+static int readline_fixed_format()
+{
     register int c, i;
     char *bp, *p;
     int maxChars = 0;
@@ -3247,7 +3300,8 @@ next_line0:
         }
     }
 
-    /* if there is a line begins with "!$", local_SENTINEL_flag is set TRUE. */
+    /* if there is a line begins with "!$", local_SENTINEL_flag is set TRUE.
+     */
     // local_SENTINEL_flag =
     // local_OMP_flag||local_XMP_flag||local_ACC_flag||local_CONDCOMPL_flag;
 
@@ -3272,59 +3326,59 @@ next_line0:
     if (anotherEOF())
         return ST_EOF;
     switch (c) {
-    case '#':    /* skip cpp line */
-        pos = 1; /* skip '#' */
-        while (line_buffer[pos] == ' ' || line_buffer[pos] == '\t' ||
-               line_buffer[pos] == '\b')
-            pos++; /* skip space */
-        if (isdigit((int)(line_buffer[pos]))) {
-            i = 0; /* line # reset default '0' */
-            while (isdigit((int)(line_buffer[pos]))) {
-                i = i * 10 + (line_buffer[pos] - '0');
-                pos++;
+        case '#':    /* skip cpp line */
+            pos = 1; /* skip '#' */
+            while (line_buffer[pos] == ' ' || line_buffer[pos] == '\t' ||
+                   line_buffer[pos] == '\b')
+                pos++; /* skip space */
+            if (isdigit((int)(line_buffer[pos]))) {
+                i = 0; /* line # reset default '0' */
+                while (isdigit((int)(line_buffer[pos]))) {
+                    i = i * 10 + (line_buffer[pos] - '0');
+                    pos++;
+                }
+                read_lineno.ln_no = i;
+                while (line_buffer[pos] == ' ')
+                    pos++;                     /* skip space, again */
+                if (line_buffer[pos] == '"') { /* parse file name */
+                    int bpos = 0;
+                    pos++;
+                    p = buffio; /* rewrite buffer file name */
+                    while (line_buffer[pos] != '"' && line_buffer[pos] != 0)
+                        buffio[bpos++] = line_buffer[pos++];
+                    buffio[bpos++] = '\0';
+                    read_lineno.file_id = get_file_id(buffio);
+                    /* if first line is #line, then set it
+                       as original source file name */
+                    if (line_count == 1)
+                        source_file_name = strdup(buffio);
+                }
+            } else {
+                warning_lineno(&read_lineno, "bad # line");
+                goto next_line;
             }
-            read_lineno.ln_no = i;
-            while (line_buffer[pos] == ' ')
-                pos++;                     /* skip space, again */
-            if (line_buffer[pos] == '"') { /* parse file name */
-                int bpos = 0;
-                pos++;
-                p = buffio; /* rewrite buffer file name */
-                while (line_buffer[pos] != '"' && line_buffer[pos] != 0)
-                    buffio[bpos++] = line_buffer[pos++];
-                buffio[bpos++] = '\0';
-                read_lineno.file_id = get_file_id(buffio);
-                /* if first line is #line, then set it
-                   as original source file name */
-                if (line_count == 1)
-                    source_file_name = strdup(buffio);
-            }
-        } else {
-            warning_lineno(&read_lineno, "bad # line");
-            goto next_line;
-        }
-        goto next_line0;
+            goto next_line0;
 
-    case '!':
-    case 'c':
-    case 'C':
-    case '*':
-        if (local_SENTINEL_flag) {
-            goto read_num_column;
-        }
-        goto next_line;
-    case ';':
-        /* multi sentence */
-        body_offset++;
-        goto KeepOnGoin;
-    case EOF:
-        return (ST_EOF);
-    case '\n':
-        /* blank line */
-        goto next_line;
-    default:
-        /* read line number column */
-        ;
+        case '!':
+        case 'c':
+        case 'C':
+        case '*':
+            if (local_SENTINEL_flag) {
+                goto read_num_column;
+            }
+            goto next_line;
+        case ';':
+            /* multi sentence */
+            body_offset++;
+            goto KeepOnGoin;
+        case EOF:
+            return (ST_EOF);
+        case '\n':
+            /* blank line */
+            goto next_line;
+        default:
+            /* read line number column */
+            ;
     }
 
 read_num_column:
@@ -3422,12 +3476,13 @@ KeepOnGoin:
             } else if (c == ';' && inQuote == 0 && inComment == FALSE) {
                 if (!OMP_flag && (is_cond_compilation(
                                      &sentinels, stn_cols))) { /* NEED FIX */
-                    ; /* a line like 'c$ ... ;' with -no-omp is not
-                         enable multi line as ';'.  */
+                    ; /* a line like 'c$ ... ;' with -no-omp is
+                         not enable multi line as ';'.  */
                 } else {
-                    /* ';' encorce new line, no count up for line
-                       number, and ungetc for \t since next line has
-                       neither line number nor continuation. */
+                    /* ';' encorce new line, no count up for
+                       line number, and ungetc for \t since next
+                       line has neither line number nor
+                       continuation. */
                     no_countup = TRUE;
                     if (fseek(source_file, starting_pos + body_offset + i,
                               SEEK_SET) != 0) {
@@ -3514,7 +3569,8 @@ KeepOnGoin:
 /*
    check whether label is conditional compilation statement label
  */
-static int is_fixed_cond_statement_label(char *label) {
+static int is_fixed_cond_statement_label(char *label)
+{
     if (strlen(label) < 6)
         return FALSE;
     if (label[0] != '!' && label[0] != '*' && label[0] != 'c' &&
@@ -3540,7 +3596,8 @@ static int is_fixed_cond_statement_label(char *label) {
     return FALSE;
 }
 
-static void _warning_if_doubtfulLongLine(char *buf, int maxLen) {
+static void _warning_if_doubtfulLongLine(char *buf, int maxLen)
+{
     int i;
 
     for (i = maxLen; isspace(buf[i]); i++)
@@ -3564,7 +3621,8 @@ static void _warning_if_doubtfulLongLine(char *buf, int maxLen) {
                    maxLen);
 }
 
-int lookup_col2() {
+int lookup_col2()
+{
     uint32_t count_lbrace = 0;
     uint32_t count_rbrace = 0;
 
@@ -3769,45 +3827,45 @@ char **newPtr;                               /* next scan point return. */
     cur++;
 
     switch ((int)*cur) {
-    case '\\': {
-        val = '\\';
-        cur++;
-        break;
-    }
-    case 't': {
-        val = '\t';
-        cur++;
-        break;
-    }
-    case 'b': {
-        val = '\b';
-        cur++;
-        break;
-    }
-    case 'f': {
-        val = '\f';
-        cur++;
-        break;
-    }
-    case 'n': {
-        val = '\n';
-        cur++;
-        break;
-    }
-    case 'r': {
-        val = '\r';
-        cur++;
-        break;
-    }
-    case '0': {
-        val = '\0';
-        cur++;
-        break;
-    }
-    default: {
-        val = '\\';
-        break;
-    }
+        case '\\': {
+            val = '\\';
+            cur++;
+            break;
+        }
+        case 't': {
+            val = '\t';
+            cur++;
+            break;
+        }
+        case 'b': {
+            val = '\b';
+            cur++;
+            break;
+        }
+        case 'f': {
+            val = '\f';
+            cur++;
+            break;
+        }
+        case 'n': {
+            val = '\n';
+            cur++;
+            break;
+        }
+        case 'r': {
+            val = '\r';
+            cur++;
+            break;
+        }
+        case '0': {
+            val = '\0';
+            cur++;
+            break;
+        }
+        default: {
+            val = '\\';
+            break;
+        }
     }
 
     if (newPtr != NULL) {
@@ -3943,7 +4001,8 @@ char **newDstPtr;
             // Now last_char_in_quote_is_quote is always FALSE.
             // Therefore some codes in this file should be deleted.
             /* if ((fixed_format_flag && *cur == '\0') || */
-            /* 	(!fixed_format_flag && *cur == '&' && *(cur+1) == '\0')){ */
+            /* 	(!fixed_format_flag && *cur == '&' && *(cur+1)
+             * == '\0')){ */
             /*   last_char_in_quote_is_quote = TRUE; */
             /* } */
             /* else */
@@ -4043,7 +4102,8 @@ char **newDstPtr;
                                   '=') /* || (*(src + 1) == '>') */)
                             ; /* else == ? */
                         else
-                            exposed_eql++; /* = (or maybe =>) */
+                            exposed_eql++; /* = (or maybe
+                                              =>) */
                     } else if (*src == ',') {
                         exposed_comma++;
                     }
@@ -4306,7 +4366,8 @@ struct keyword_token do_keywords[] = {
 /*
  * lex for OpenMP part
  */
-static int OMP_lex_token() {
+static int OMP_lex_token()
+{
     int t;
     while (isspace(*bufptr))
         bufptr++; /* skip white space */
@@ -4374,7 +4435,8 @@ struct keyword_token OMP_keywords[] = {{"parallel", OMPKW_PARALLEL},
 /*
  * lex for XcalableMP part
  */
-static int XMP_lex_token() {
+static int XMP_lex_token()
+{
     int t;
     while (isspace(*bufptr))
         bufptr++; /* skip white space */
@@ -4392,7 +4454,8 @@ static int XMP_lex_token() {
 
 /* sentinel list functions */
 /* initialize sentinel list */
-static void init_sentinel_list(sentinel_list *p) {
+static void init_sentinel_list(sentinel_list *p)
+{
     unsigned int i;
     p->sentinel_count = 0;
     for (i = 0; i < MAX_SENTINEL_COUNT; i++) {
@@ -4401,7 +4464,8 @@ static void init_sentinel_list(sentinel_list *p) {
 }
 
 /* add sentinel name to list */
-static int add_sentinel(sentinel_list *p, char *name) {
+static int add_sentinel(sentinel_list *p, char *name)
+{
     if (p->sentinel_count == MAX_SENTINEL_COUNT)
         return 0;
     if (name == NULL)
@@ -4413,17 +4477,20 @@ static int add_sentinel(sentinel_list *p, char *name) {
 }
 
 /* sentinel count */
-static unsigned int sentinel_count(sentinel_list *p) {
+static unsigned int sentinel_count(sentinel_list *p)
+{
     return p->sentinel_count;
 }
 
 /* sentinel name by index */
-static char *sentinel_name(sentinel_list *p, unsigned int n) {
+static char *sentinel_name(sentinel_list *p, unsigned int n)
+{
     return p->name_list[n];
 }
 
 /* sentinel index by name */
-static int sentinel_index(sentinel_list *p, char *name) {
+static int sentinel_index(sentinel_list *p, char *name)
+{
     int index;
     for (index = 0; index < p->sentinel_count; index++) {
         if (strcasecmp(p->name_list[index], name) == 0) {
@@ -4437,7 +4504,8 @@ static int sentinel_index(sentinel_list *p, char *name) {
 /*
  * Detects the encoding from line_buffer.
  */
-void detect_encoding() {
+void detect_encoding()
+{
     const char *encoding = NULL;
 
     /* if current_encoding is already detected, return */
@@ -4468,7 +4536,8 @@ void detect_encoding() {
 /*
  * Convert encoding
  */
-int convert_encoding(void) {
+int convert_encoding(void)
+{
     size_t in_size = strlen(line_buffer) + 1;
     size_t out_size = line_buf_size;
     int count = 0;
@@ -4559,7 +4628,8 @@ struct keyword_token XMP_keywords[] = {{"end", XMPKW_END},
 /*
  * lex for OpenACC part
  */
-static int ACC_lex_token() {
+static int ACC_lex_token()
+{
     int t;
     while (isspace(*bufptr))
         bufptr++; /* skip white space */

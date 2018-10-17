@@ -218,13 +218,16 @@ int doOverride;
     return TRUE;
 }
 
-int expr_list_length(expr x) {
+int expr_list_length(expr x)
+{
     int ret = 0;
 
     if (EXPR_CODE_IS_LIST(EXPR_CODE(x))) {
         list lp;
 
-        FOR_ITEMS_IN_LIST(lp, x) { ret++; }
+        FOR_ITEMS_IN_LIST (lp, x) {
+            ret++;
+        }
     }
 
     return ret;

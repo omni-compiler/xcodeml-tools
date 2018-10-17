@@ -9,7 +9,8 @@ xentry *type_table;
  *
  * @param entry
  */
-static void free_entry(xentry *entry) {
+static void free_entry(xentry *entry)
+{
     if (entry == NULL)
         return;
 
@@ -20,7 +21,8 @@ static void free_entry(xentry *entry) {
 /**
  * Initialize the hash table of the types.
  */
-void typetable_init() {
+void typetable_init()
+{
     if (type_table != NULL) {
         int i;
         for (i = 0; i < XCODEML_TYPE_TABLE_SIZE; i++) {
@@ -35,7 +37,8 @@ void typetable_init() {
 /**
  * Gets a hash value of the type signature.
  */
-static int typetable_hashcode(const char *type_signature) {
+static int typetable_hashcode(const char *type_signature)
+{
     int hcode = 0;
     const char *ch;
 
@@ -61,7 +64,8 @@ static int typetable_hashcode(const char *type_signature) {
 /**
  * Inserts a type to the hash table.
  */
-void typetable_enhash(XcodeMLNode *type) {
+void typetable_enhash(XcodeMLNode *type)
+{
     xentry *entry;
     char *type_signature;
     int hcode;
@@ -101,7 +105,8 @@ void typetable_enhash(XcodeMLNode *type) {
  *    <br>returns NULL if type_signature is NULL or
  *    <br>a type of the type_signature is not found.
  */
-xentry *typetable_dehash(char *type_signature) {
+xentry *typetable_dehash(char *type_signature)
+{
     xentry *entry;
     int hcode;
 
@@ -127,7 +132,8 @@ xentry *typetable_dehash(char *type_signature) {
  * @param type_signature a signature of the type.
  * @return returns true if the type is a primitive one.
  */
-bool type_isPrimitive(char *type_signature) {
+bool type_isPrimitive(char *type_signature)
+{
     if (type_signature == NULL)
         return false;
 

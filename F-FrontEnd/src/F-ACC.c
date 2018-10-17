@@ -38,7 +38,8 @@ static int _ACC_st_required = 0; // FALSE;
 
 /* static enum OMP_st_pragma OMP_st_required, OMP_st_flag; */
 
-int ACC_reduction_op(expr v) {
+int ACC_reduction_op(expr v)
+{
     char *s;
 
     if (EXPR_CODE(v) != IDENT)
@@ -59,7 +60,8 @@ int ACC_reduction_op(expr v) {
     return ACC_CLAUSE_REDUCTION_PLUS; /* dummy */
 }
 
-int ACC_num_attr(expr v) {
+int ACC_num_attr(expr v)
+{
     char *s;
 
     if (EXPR_CODE(v) != IDENT)
@@ -75,7 +77,8 @@ int ACC_num_attr(expr v) {
     return ACC_CLAUSE_VECTOR_LENGTH; /* dummy */
 }
 
-void ACC_check_num_attr(expr v, enum ACC_pragma attr) {
+void ACC_check_num_attr(expr v, enum ACC_pragma attr)
+{
     char *s;
     enum ACC_pragma a;
 
@@ -95,18 +98,21 @@ void ACC_check_num_attr(expr v, enum ACC_pragma attr) {
     }
 }
 
-void init_for_ACC_pragma() {
+void init_for_ACC_pragma()
+{
     _ACC_do_required = FALSE;
     _ACC_st_required = 0; // FALSE;
 }
 
-static void push_ACC_construct(enum ACC_pragma dir, expv clauses) {
+static void push_ACC_construct(enum ACC_pragma dir, expv clauses)
+{
     push_ctl(CTL_ACC);
     CTL_ACC_ARG(ctl_top) = ACC_pragma_list(dir, clauses, NULL);
     EXPR_LINE(CTL_ACC_ARG(ctl_top)) = current_line;
 }
 
-static void pop_ACC_construct(enum ACC_pragma dir) {
+static void pop_ACC_construct(enum ACC_pragma dir)
+{
     if (CTL_TYPE(ctl_top) == CTL_ACC && CTL_ACC_ARG_DIR(ctl_top) == dir) {
         CTL_BLOCK(ctl_top) = ACC_pragma_list(dir, CTL_ACC_ARG_CLAUSE(ctl_top),
                                              CURRENT_STATEMENTS);
@@ -117,7 +123,8 @@ static void pop_ACC_construct(enum ACC_pragma dir) {
     }
 }
 
-static void pop_ACC_loop_construct(enum ACC_pragma dir) {
+static void pop_ACC_loop_construct(enum ACC_pragma dir)
+{
     if (CTL_TYPE(ctl_top) != CTL_ACC || CTL_ACC_ARG_DIR(ctl_top) != dir) {
         error("OpenACC LOOP | PARALLEL LOOP | KERNELS LOOP is not closed");
     }
@@ -128,7 +135,7 @@ static void pop_ACC_loop_construct(enum ACC_pragma dir) {
      * statement*/
     if (EXPR_CODE(statements) == LIST) {
         list lp;
-        FOR_ITEMS_IN_LIST(lp, statements) {
+        FOR_ITEMS_IN_LIST (lp, statements) {
             xx = LIST_ITEM(lp);
             if (EXPR_CODE(xx) == F_PRAGMA_STATEMENT)
                 CTL_SAVE(ctl_top) = list_put_last(CTL_SAVE(ctl_top), xx);
@@ -150,7 +157,8 @@ static void pop_ACC_loop_construct(enum ACC_pragma dir) {
     pop_ctl();
 }
 
-static void pop_ACC_atomic_construct(enum ACC_pragma dir) {
+static void pop_ACC_atomic_construct(enum ACC_pragma dir)
+{
     if (CTL_TYPE(ctl_top) != CTL_ACC || CTL_ACC_ARG_DIR(ctl_top) != dir) {
         error("OpenACC ATOMIC is not closed");
     }
@@ -182,30 +190,32 @@ static void pop_ACC_atomic_construct(enum ACC_pragma dir) {
     pop_ctl();
 }
 
-static enum ACC_pragma get_begin_directive(enum ACC_pragma dir) {
+static enum ACC_pragma get_begin_directive(enum ACC_pragma dir)
+{
     switch (dir) {
-    case ACC_END_PARALLEL:
-        return ACC_PARALLEL;
-    case ACC_END_KERNELS:
-        return ACC_KERNELS;
-    case ACC_END_DATA:
-        return ACC_DATA;
-    case ACC_END_PARALLEL_LOOP:
-        return ACC_PARALLEL_LOOP;
-    case ACC_END_KERNELS_LOOP:
-        return ACC_KERNELS_LOOP;
-    case ACC_END_ATOMIC:
-        return ACC_ATOMIC;
-    case ACC_END_HOST_DATA:
-        return ACC_HOST_DATA;
+        case ACC_END_PARALLEL:
+            return ACC_PARALLEL;
+        case ACC_END_KERNELS:
+            return ACC_KERNELS;
+        case ACC_END_DATA:
+            return ACC_DATA;
+        case ACC_END_PARALLEL_LOOP:
+            return ACC_PARALLEL_LOOP;
+        case ACC_END_KERNELS_LOOP:
+            return ACC_KERNELS_LOOP;
+        case ACC_END_ATOMIC:
+            return ACC_ATOMIC;
+        case ACC_END_HOST_DATA:
+            return ACC_HOST_DATA;
 
-    default:
-        fatal("get_begin_directive: not end directive");
+        default:
+            fatal("get_begin_directive: not end directive");
     }
     return ACC_DIR_END;
 }
 
-void compile_ACC_directive(expr x) {
+void compile_ACC_directive(expr x)
+{
     if (x == NULL)
         return; /* error */
 
@@ -238,82 +248,84 @@ void compile_ACC_directive(expr x) {
     check_for_XMP_pragma(-1, x);
 
     switch (dir_enum) {
-        // Constructs with end pragma
-    case ACC_PARALLEL:
-    case ACC_KERNELS:
-    case ACC_DATA:
-    case ACC_HOST_DATA:
-        check_INEXEC();
-        push_ACC_construct(dir_enum, clauses);
-        return;
-    case ACC_END_PARALLEL:
-    case ACC_END_KERNELS:
-    case ACC_END_DATA:
-    case ACC_END_HOST_DATA:
-        check_INEXEC();
-        pop_ACC_construct(get_begin_directive(dir_enum));
-        return;
+            // Constructs with end pragma
+        case ACC_PARALLEL:
+        case ACC_KERNELS:
+        case ACC_DATA:
+        case ACC_HOST_DATA:
+            check_INEXEC();
+            push_ACC_construct(dir_enum, clauses);
+            return;
+        case ACC_END_PARALLEL:
+        case ACC_END_KERNELS:
+        case ACC_END_DATA:
+        case ACC_END_HOST_DATA:
+            check_INEXEC();
+            pop_ACC_construct(get_begin_directive(dir_enum));
+            return;
 
-        // Constructs for do with/without end pragma
-    case ACC_LOOP:
-    case ACC_PARALLEL_LOOP:
-    case ACC_KERNELS_LOOP:
-        check_INEXEC();
-        push_ACC_construct(dir_enum, clauses);
-        _ACC_do_required = TRUE;
-        return;
-    case ACC_END_PARALLEL_LOOP:
-    case ACC_END_KERNELS_LOOP:
-        check_INEXEC();
-        pop_ACC_loop_construct(get_begin_directive(dir_enum));
-        return;
+            // Constructs for do with/without end pragma
+        case ACC_LOOP:
+        case ACC_PARALLEL_LOOP:
+        case ACC_KERNELS_LOOP:
+            check_INEXEC();
+            push_ACC_construct(dir_enum, clauses);
+            _ACC_do_required = TRUE;
+            return;
+        case ACC_END_PARALLEL_LOOP:
+        case ACC_END_KERNELS_LOOP:
+            check_INEXEC();
+            pop_ACC_loop_construct(get_begin_directive(dir_enum));
+            return;
 
-        // Construct for statement with/without end pragma
-    case ACC_ATOMIC:
-        check_INEXEC();
-        push_ACC_construct(dir_enum, clauses);
-        if (is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE)) {
-            _ACC_st_required = 2;
-        } else {
-            _ACC_st_required = 1;
-        }
-        return;
-    case ACC_END_ATOMIC:
-        check_INEXEC();
-        pop_ACC_construct(get_begin_directive(dir_enum));
-        return;
+            // Construct for statement with/without end pragma
+        case ACC_ATOMIC:
+            check_INEXEC();
+            push_ACC_construct(dir_enum, clauses);
+            if (is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE)) {
+                _ACC_st_required = 2;
+            } else {
+                _ACC_st_required = 1;
+            }
+            return;
+        case ACC_END_ATOMIC:
+            check_INEXEC();
+            pop_ACC_construct(get_begin_directive(dir_enum));
+            return;
 
-        // Executable directives
-    case ACC_WAIT:
-    case ACC_CACHE:
-    case ACC_ENTER_DATA:
-    case ACC_EXIT_DATA:
-    case ACC_UPDATE_D:
-    case ACC_INIT:
-    case ACC_SHUTDOWN:
-    case ACC_SET:
-        check_INEXEC();
-        output_statement(ACC_pragma_list(dir_enum, clauses, NULL));
-        return;
+            // Executable directives
+        case ACC_WAIT:
+        case ACC_CACHE:
+        case ACC_ENTER_DATA:
+        case ACC_EXIT_DATA:
+        case ACC_UPDATE_D:
+        case ACC_INIT:
+        case ACC_SHUTDOWN:
+        case ACC_SET:
+            check_INEXEC();
+            output_statement(ACC_pragma_list(dir_enum, clauses, NULL));
+            return;
 
-        // Declaration directives
-    case ACC_ROUTINE:
-    case ACC_DECLARE:
-        check_INDCL();
-        output_statement(ACC_pragma_list(dir_enum, clauses, NULL));
-        return;
+            // Declaration directives
+        case ACC_ROUTINE:
+        case ACC_DECLARE:
+            check_INDCL();
+            output_statement(ACC_pragma_list(dir_enum, clauses, NULL));
+            return;
 
-    default:
-        fatal("unknown ACC pragma");
+        default:
+            fatal("unknown ACC pragma");
     }
 }
 
-expv ACC_pragma_list(enum ACC_pragma pragma, expv arg1, expv arg2) {
+expv ACC_pragma_list(enum ACC_pragma pragma, expv arg1, expv arg2)
+{
     return list3(ACC_PRAGMA, expv_int_term(INT_CONSTANT, NULL, (int)pragma),
                  arg1, arg2);
 }
 
-static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir) {
+static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
+{
     if (_ACC_do_required) {
         // don't care the order of pragma around ACC LOOP
         if (EXPR_CODE(x) == F_PRAGMA_STATEMENT)
@@ -327,7 +339,8 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir) {
 
     if (_ACC_st_required > 0) {
         if (EXPR_CODE(x) != F_LET_STATEMENT) {
-            error("OpenACC ATOMIC directives must be followed by assignment");
+            error("OpenACC ATOMIC directives must be followed by "
+                  "assignment");
         }
         _ACC_st_required -= 1; // FALSE;
         return;
@@ -357,7 +370,8 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir) {
 
 void check_for_ACC_pragma(expr x) { check_for_ACC_pragma_2(x, ACC_DIR_END); }
 
-static int is_ACC_pragma(expr e, enum ACC_pragma p) {
+static int is_ACC_pragma(expr e, enum ACC_pragma p)
+{
     if (EXPR_CODE(e) != ACC_PRAGMA) {
         return FALSE;
     }
@@ -370,7 +384,8 @@ static int is_ACC_pragma(expr e, enum ACC_pragma p) {
 
 static expv compile_clause(expr x);
 
-static expv compile_clause_arg(expr x) {
+static expv compile_clause_arg(expr x)
+{
     if (x == NULL)
         return NULL;
 
@@ -386,7 +401,8 @@ static expv compile_clause_arg(expr x) {
     }
 }
 
-static expv compile_clause_arg_list(expr x) {
+static expv compile_clause_arg_list(expr x)
+{
     expr xx;
     list lp;
     expv vv, ret_list;
@@ -399,7 +415,7 @@ static expv compile_clause_arg_list(expr x) {
     if (EXPR_CODE(x) != LIST) {
         error("compile_clause_arg_list: not list");
     }
-    FOR_ITEMS_IN_LIST(lp, x) {
+    FOR_ITEMS_IN_LIST (lp, x) {
         xx = LIST_ITEM(lp);
         vv = compile_clause_arg(xx);
         ret_list = list_put_last(ret_list, vv);
@@ -407,7 +423,8 @@ static expv compile_clause_arg_list(expr x) {
     return ret_list;
 }
 
-static expv compile_clause(expr x) {
+static expv compile_clause(expr x)
+{
     if (x == NULL)
         return NULL;
 
@@ -429,7 +446,8 @@ static expv compile_clause(expr x) {
     }
 }
 
-static expv compile_clause_list(expr x) {
+static expv compile_clause_list(expr x)
+{
     expr xx;
     list lp;
     expv vv, ret_list;
@@ -442,7 +460,7 @@ static expv compile_clause_list(expr x) {
     if (EXPR_CODE(x) != LIST) {
         error("compile_clause: not list");
     }
-    FOR_ITEMS_IN_LIST(lp, x) {
+    FOR_ITEMS_IN_LIST (lp, x) {
         xx = LIST_ITEM(lp);
         vv = compile_clause(xx);
         ret_list = list_put_last(ret_list, vv);
@@ -450,7 +468,8 @@ static expv compile_clause_list(expr x) {
     return ret_list;
 }
 
-int is_ACC_loop_pragma(expv x) {
+int is_ACC_loop_pragma(expv x)
+{
     if (EXPR_CODE(x) != ACC_PRAGMA)
         return FALSE;
 

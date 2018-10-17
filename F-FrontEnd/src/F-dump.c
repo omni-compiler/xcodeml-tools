@@ -68,46 +68,46 @@ FILE *fp;
 
     if (EXPR_CODE_IS_TERMINAL(EXPV_CODE(v))) {
         switch (EXPV_CODE(v)) {
-        case IDENT:
-        case F_VAR:
-        case F_PARAM:
-        case F_FUNC:
-            fprintf(fp, " %s)", SYM_NAME(EXPV_NAME(v)));
-            break;
+            case IDENT:
+            case F_VAR:
+            case F_PARAM:
+            case F_FUNC:
+                fprintf(fp, " %s)", SYM_NAME(EXPV_NAME(v)));
+                break;
 
-        case INT_CONSTANT:
-            fprintf(fp, " 0x" OMLL_XFMT ")", EXPV_INT_VALUE(v));
-            break;
+            case INT_CONSTANT:
+                fprintf(fp, " 0x" OMLL_XFMT ")", EXPV_INT_VALUE(v));
+                break;
 
-        case ID_LIST:
-            if (EXPV_ANY(void *, v) != NULL) {
-                ID id;
-                int i = 0;
-                fprintf(fp, ":{");
-                FOREACH_ID(id, EXPV_ANY(ID, v)) {
-                    if (i++ > 0)
-                        fprintf(fp, ",");
-                    fprintf(fp, "%s", ID_NAME(id));
+            case ID_LIST:
+                if (EXPV_ANY(void *, v) != NULL) {
+                    ID id;
+                    int i = 0;
+                    fprintf(fp, ":{");
+                    FOREACH_ID (id, EXPV_ANY(ID, v)) {
+                        if (i++ > 0)
+                            fprintf(fp, ",");
+                        fprintf(fp, "%s", ID_NAME(id));
+                    }
+                    fprintf(fp, "})");
+                } else {
+                    fprintf(fp, ")");
                 }
-                fprintf(fp, "})");
-            } else {
+                break;
+
+            case STRING_CONSTANT:
+                print_string_constant(fp, EXPV_STR(v));
+                break;
+
+            case FLOAT_CONSTANT:
+                fprintf(fp, " %Lf)", EXPV_FLOAT_VALUE(v));
+                break;
+            case ERROR_NODE:
                 fprintf(fp, ")");
-            }
-            break;
-
-        case STRING_CONSTANT:
-            print_string_constant(fp, EXPV_STR(v));
-            break;
-
-        case FLOAT_CONSTANT:
-            fprintf(fp, " %Lf)", EXPV_FLOAT_VALUE(v));
-            break;
-        case ERROR_NODE:
-            fprintf(fp, ")");
-            break;
-        default:
-            fprintf(fp, " UNKNOWN)");
-            break;
+                break;
+            default:
+                fprintf(fp, " UNKNOWN)");
+                break;
         }
         return;
     }
@@ -141,9 +141,10 @@ int rec;
     fprintf(fp, "type=");
     print_type(ID_TYPE(id), fp, rec);
     switch (ID_CLASS(id)) {
-    case CL_PROC:
-        fprintf(fp, ",proc_class=%s", proc_class_name(PROC_CLASS(id)));
-    default: {}
+        case CL_PROC:
+            fprintf(fp, ",proc_class=%s", proc_class_name(PROC_CLASS(id)));
+        default: {
+        }
     }
     fprintf(fp, "\n");
 }
@@ -158,21 +159,25 @@ int rec;
     fflush(fp);
 }
 
-static void print_EXT_ID(EXT_ID ep, FILE *fp) {
+static void print_EXT_ID(EXT_ID ep, FILE *fp)
+{
     fprintf(fp, "'%s',tag=%s", SYM_NAME(EXT_SYM(ep)),
             storage_class_name(EXT_TAG(ep)));
     print_type(EXT_PROC_TYPE(ep), fp, FALSE);
     fprintf(fp, "\n");
 }
 
-void print_EXT_IDs(EXT_ID extids, FILE *fp) {
+void print_EXT_IDs(EXT_ID extids, FILE *fp)
+{
     EXT_ID ep;
     fprintf(fp, "# EXT_ID dump by %s\n", __func__);
-    FOREACH_EXT_ID(ep, extids) print_EXT_ID(ep, fp);
+    FOREACH_EXT_ID (ep, extids)
+        print_EXT_ID(ep, fp);
     fflush(fp);
 }
 
-void print_interface_IDs(ID id, FILE *fd) {
+void print_interface_IDs(ID id, FILE *fd)
+{
     EXT_ID eId;
     for (; id != NULL; id = ID_NEXT(id)) {
         if (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_EXTERNAL) {
@@ -207,7 +212,8 @@ void type_dump(TYPE_DESC tp) { type_output(tp, stderr); }
 
 void expv_dump0(expv x, FILE *fp);
 
-void print_type(TYPE_DESC tp, FILE *fp, int recursive) {
+void print_type(TYPE_DESC tp, FILE *fp, int recursive)
+{
     if (tp == NULL) {
         fprintf(fp, "{<NULL>}");
         return;
@@ -287,27 +293,27 @@ FILE *fp;
 
     if (EXPR_CODE_IS_TERMINAL(EXPR_CODE(x))) {
         switch (EXPR_CODE(x)) {
-        case IDENT:
-            fprintf(fp, " \"%s\")", SYM_NAME(EXPR_SYM(x)));
-            return;
-        case STRING_CONSTANT:
-            fprintf(fp, " \"%s\")", EXPR_STR(x));
-            return;
-        case INT_CONSTANT:
-            fprintf(fp, " " OMLL_DFMT ")", EXPR_INT(x));
-            return;
-        case FLOAT_CONSTANT:
-            fprintf(fp, " %Lf)", EXPR_FLOAT(x));
-            return;
-        case BASIC_TYPE_NODE:
-            fprintf(fp, " <%s>)", basic_type_name(EXPR_TYPE(x)));
-            return;
-        case ID_LIST:
-            fprintf(fp, " \"%s\" '%s')", ID_NAME(EXPV_ANY(ID, x)),
-                    storage_class_names[(int)ID_STORAGE(EXPV_ANY(ID, x))]);
-            return;
-        default:
-            fprintf(fp, " " OMLL_DFMT ")", EXPR_INT(x));
+            case IDENT:
+                fprintf(fp, " \"%s\")", SYM_NAME(EXPR_SYM(x)));
+                return;
+            case STRING_CONSTANT:
+                fprintf(fp, " \"%s\")", EXPR_STR(x));
+                return;
+            case INT_CONSTANT:
+                fprintf(fp, " " OMLL_DFMT ")", EXPR_INT(x));
+                return;
+            case FLOAT_CONSTANT:
+                fprintf(fp, " %Lf)", EXPR_FLOAT(x));
+                return;
+            case BASIC_TYPE_NODE:
+                fprintf(fp, " <%s>)", basic_type_name(EXPR_TYPE(x)));
+                return;
+            case ID_LIST:
+                fprintf(fp, " \"%s\" '%s')", ID_NAME(EXPV_ANY(ID, x)),
+                        storage_class_names[(int)ID_STORAGE(EXPV_ANY(ID, x))]);
+                return;
+            default:
+                fprintf(fp, " " OMLL_DFMT ")", EXPR_INT(x));
         }
         return;
     }
@@ -354,12 +360,14 @@ void print_controls(fp) FILE *fp;
 /*
  * for debug
  */
-void expr_dump(expr x) {
+void expr_dump(expr x)
+{
     expr_print_rec(x, 0, stderr);
     fprintf(stderr, "\n");
 }
 
-void expv_dump(expv x) {
+void expv_dump(expv x)
+{
     expv_output_rec(x, 0, stderr);
     fprintf(stderr, "\n");
 }
@@ -367,16 +375,26 @@ void expv_dump(expv x) {
 void expv_dump0(expv x, FILE *fp) { expv_output_rec(x, 0, fp); }
 
 char *basic_type_name(t) BASIC_DATA_TYPE t;
-{ return basic_type_names[(int)t]; }
+{
+    return basic_type_names[(int)t];
+}
 
 char *name_class_name(c) enum name_class c;
-{ return name_class_names[(int)c]; }
+{
+    return name_class_names[(int)c];
+}
 
 char *proc_class_name(c) enum proc_class c;
-{ return proc_class_names[(int)c]; }
+{
+    return proc_class_names[(int)c];
+}
 
 char *storage_class_name(c) enum storage_class c;
-{ return storage_class_names[(int)c]; }
+{
+    return storage_class_names[(int)c];
+}
 
 char *control_type_name(c) enum control_type c;
-{ return control_type_names[(int)c]; }
+{
+    return control_type_names[(int)c];
+}

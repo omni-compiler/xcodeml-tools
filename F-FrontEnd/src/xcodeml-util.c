@@ -6,7 +6,8 @@ XcodeMLNode *containsStmt = NULL;
 /**
  * Gets a content of XcodeMLNode as bool.
  */
-bool xcodeml_getAsBool(XcodeMLNode *ndPtr) {
+bool xcodeml_getAsBool(XcodeMLNode *ndPtr)
+{
     char *content;
 
     if (ndPtr == NULL) {
@@ -37,7 +38,8 @@ bool xcodeml_getAsBool(XcodeMLNode *ndPtr) {
 /**
  * Gets a content of XcodeMLNode as string.
  */
-char *xcodeml_getAsString(XcodeMLNode *ndPtr) {
+char *xcodeml_getAsString(XcodeMLNode *ndPtr)
+{
     char *content = NULL;
 
     if (ndPtr == NULL) {
@@ -45,23 +47,23 @@ char *xcodeml_getAsString(XcodeMLNode *ndPtr) {
     }
 
     switch (XCODEML_TYPE(ndPtr)) {
-    case XcodeML_Element: {
-        content = xcodeml_GetElementValue(ndPtr);
-        break;
-    }
+        case XcodeML_Element: {
+            content = xcodeml_GetElementValue(ndPtr);
+            break;
+        }
 
-    case XcodeML_Attribute: {
-        content = xcodeml_GetAttributeValue(ndPtr);
-        break;
-    }
+        case XcodeML_Attribute: {
+            content = xcodeml_GetAttributeValue(ndPtr);
+            break;
+        }
 
-    case XcodeML_Value: {
-        content = XCODEML_VALUE(ndPtr);
-        break;
-    }
+        case XcodeML_Value: {
+            content = XCODEML_VALUE(ndPtr);
+            break;
+        }
 
-    default:
-        break;
+        default:
+            break;
     }
 
     return content;
@@ -74,12 +76,14 @@ char *xcodeml_getAsString(XcodeMLNode *ndPtr) {
  *        <br/> returns object if object is element.
  *        <br/> returns content if object is attribute.
  */
-XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, char *name) {
+XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, char *name)
+{
     XcodeMLNode *x;
     XcodeMLList *lp;
 
-    if (ndPtr == NULL || name == NULL)
+    if (ndPtr == NULL || name == NULL) {
         return NULL;
+    }
 
     if (XCODEML_TYPE(ndPtr) != XcodeML_Element) {
         /* ERROR */
@@ -87,26 +91,28 @@ XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, char *name) {
         return NULL;
     }
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, ndPtr) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, ndPtr) {
         x = XCODEML_LIST_NODE(lp);
 
         switch (XCODEML_TYPE(x)) {
-        case XcodeML_Element: {
-            if (strcmp(name, XCODEML_NAME(x)) == 0)
-                return x;
-            break;
-        }
+            case XcodeML_Element: {
+                if (strcmp(name, XCODEML_NAME(x)) == 0)
+                    return x;
+                break;
+            }
 
-        case XcodeML_Attribute: {
-            if (strcmp(name, XCODEML_NAME(x)) == 0)
-                return XCODEML_ARG1(x);
-            break;
-        }
+            case XcodeML_Attribute: {
+                if (strcmp(name, XCODEML_NAME(x)) == 0)
+                    return XCODEML_ARG1(x);
+                break;
+            }
 
-        case XcodeML_Value:
-            break;
+            case XcodeML_Value:
+                break;
 
-        default: { break; }
+            default: {
+                break;
+            }
         }
     }
 
@@ -119,7 +125,8 @@ XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, char *name) {
  * @return returns NULL if there is no n'th child.
  *        <br/> returns n'th child.
  */
-XcodeMLNode *xcodeml_getElem(XcodeMLNode *ndPtr, int order) {
+XcodeMLNode *xcodeml_getElem(XcodeMLNode *ndPtr, int order)
+{
     XcodeMLNode *x;
     XcodeMLList *lp;
 
@@ -132,7 +139,7 @@ XcodeMLNode *xcodeml_getElem(XcodeMLNode *ndPtr, int order) {
         return NULL;
     }
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, ndPtr) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, ndPtr) {
         x = XCODEML_LIST_NODE(lp);
 
         if (x == ndPtr)
@@ -157,7 +164,8 @@ static symbol_filter *filterTop = NULL;
  *
  * @return a new filter on the top of the filter stack.
  */
-symbol_filter *push_new_filter(void) {
+symbol_filter *push_new_filter(void)
+{
     symbol_filter *next = filterTop;
     symbol_filter *new_filter;
 
@@ -180,7 +188,8 @@ symbol_filter *peek_filter(void) { return filterTop; }
 /**
  * Pops a filter from the fliter stack and discards it.
  */
-void pop_filter(void) {
+void pop_filter(void)
+{
     if (filterTop == NULL)
         return;
 
@@ -194,7 +203,8 @@ void pop_filter(void) {
  * @param use a symbol will be used in a new environment.
  * @param local a local name of symbol.
  */
-void symbol_filter_addElem(symbol_filter *filter, char *use, char *local) {
+void symbol_filter_addElem(symbol_filter *filter, char *use, char *local)
+{
     symbol_filterElem *newElm =
         XMALLOC(symbol_filterElem *, sizeof(symbol_filterElem));
 
@@ -212,7 +222,8 @@ void symbol_filter_addElem(symbol_filter *filter, char *use, char *local) {
  *     <br> if return value is not NULL then it is the symbol itself of a local
  * name of it.
  */
-char *apply_filter(symbol_filter *filter, char *symbol) {
+char *apply_filter(symbol_filter *filter, char *symbol)
+{
     if (filter == NULL || symbol == NULL)
         return symbol;
 
@@ -265,7 +276,8 @@ char *apply_filter(symbol_filter *filter, char *symbol) {
 /**
  * return if the symbol is in USE list.
  */
-int is_use_symbol(char *symbol) {
+int is_use_symbol(char *symbol)
+{
     symbol_filterElem *filterElem;
     symbol_filter *filter;
 
@@ -295,7 +307,8 @@ int is_use_symbol(char *symbol) {
 /**
  * get alternative symbol of which is not in use only list.
  */
-char *convert_to_non_use_symbol(char *orgname) {
+char *convert_to_non_use_symbol(char *orgname)
+{
     char *symbol;
     symbol_filter *filter;
     filter = peek_filter();
@@ -308,13 +321,14 @@ char *convert_to_non_use_symbol(char *orgname) {
 /**
  * Gets the FfunctionDefition by the name.
  */
-XcodeMLNode *get_funcDef(XcodeMLNode *defs, char *name) {
+XcodeMLNode *get_funcDef(XcodeMLNode *defs, char *name)
+{
     XcodeMLList *lp;
 
     if (defs == NULL || name == NULL)
         return NULL;
 
-    FOR_ITEMS_IN_XCODEML_LIST(lp, defs) {
+    FOR_ITEMS_IN_XCODEML_LIST (lp, defs) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
         XcodeMLNode *nameTag;
         char *func_name;

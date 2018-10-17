@@ -38,164 +38,164 @@ TN *lp, *rp;
         goto error;
 
     switch (opcode) {
-        /* check for multiplication by 0 and 1 and addition to 0 */
-    case OPSTAR:
-        if (IS_CONST(lp))
-            COMMUTE;
+            /* check for multiplication by 0 and 1 and addition to 0 */
+        case OPSTAR:
+            if (IS_CONST(lp))
+                COMMUTE;
 
-        if (IS_ICON(rp)) {
-            if (TN_CONST_INT(rp) == 0)
-                goto retright;
-            goto mulop;
-        }
-        break;
-
-    case OPSLASH:
-    case OPMOD:
-        if (ICON_EQ(rp, 0)) {
-            err("attempted division by zero");
-            rp = TN_ICON(1);
-            break;
-        }
-        if (opcode == OPMOD)
-            break;
-
-    mulop:
-        if (IS_ICON(rp)) {
-            if (TN_CONST_INT(rp) == 1)
-                goto retleft;
-            if (TN_CONST_INT(rp) == -1) {
-                return (cons_expr(OPNEG, lp, NULL));
+            if (IS_ICON(rp)) {
+                if (TN_CONST_INT(rp) == 0)
+                    goto retright;
+                goto mulop;
             }
-        }
+            break;
 
-        if (IS_STAROP(lp) && IS_ICON(TN_RIGHT(lp))) {
-            if (opcode == OPSTAR)
-                e = cons_expr(OPSTAR, TN_RIGHT(lp), rp);
-            else if (IS_ICON(rp) &&
-                     (TN_CONST_INT(TN_RIGHT(lp)) % TN_CONST_INT(rp)) == 0)
-                e = cons_expr(OPSLASH, TN_RIGHT(lp), rp);
-            else
+        case OPSLASH:
+        case OPMOD:
+            if (ICON_EQ(rp, 0)) {
+                err("attempted division by zero");
+                rp = TN_ICON(1);
+                break;
+            }
+            if (opcode == OPMOD)
                 break;
 
-            e1 = TN_LEFT(lp);
-            return (cons_expr(OPSTAR, e1, e));
-        }
-        break;
+        mulop:
+            if (IS_ICON(rp)) {
+                if (TN_CONST_INT(rp) == 1)
+                    goto retleft;
+                if (TN_CONST_INT(rp) == -1) {
+                    return (cons_expr(OPNEG, lp, NULL));
+                }
+            }
 
-    case OPPLUS:
-        if (IS_CONST(lp))
-            COMMUTE;
-        goto addop;
+            if (IS_STAROP(lp) && IS_ICON(TN_RIGHT(lp))) {
+                if (opcode == OPSTAR)
+                    e = cons_expr(OPSTAR, TN_RIGHT(lp), rp);
+                else if (IS_ICON(rp) &&
+                         (TN_CONST_INT(TN_RIGHT(lp)) % TN_CONST_INT(rp)) == 0)
+                    e = cons_expr(OPSLASH, TN_RIGHT(lp), rp);
+                else
+                    break;
 
-    case OPMINUS:
-        if (ICON_EQ(lp, 0)) {
-            return (cons_expr(OPNEG, rp, NULL));
-        }
-        if (IS_CONST(rp)) {
-            opcode = OPPLUS;
-            const_negop(rp);
-        }
-
-    addop:
-        if (IS_ICON(rp)) {
-            if (TN_CONST_INT(rp) == 0)
-                goto retleft;
-            if (TN_TAG(lp) == T_EXPR && TN_OPCODE(lp) == OPPLUS &&
-                IS_ICON(TN_RIGHT(lp))) {
-                e = cons_expr(OPPLUS, TN_RIGHT(lp), rp);
                 e1 = TN_LEFT(lp);
-                return (cons_expr(OPPLUS, e1, e));
+                return (cons_expr(OPSTAR, e1, e));
             }
-        }
-        break;
+            break;
 
-    case OPPOWER:
-        break;
+        case OPPLUS:
+            if (IS_CONST(lp))
+                COMMUTE;
+            goto addop;
 
-    case OPNEG:
-        if (ltag == T_EXPR && TN_OPCODE(lp) == OPNEG) {
-            e = TN_LEFT(lp);
-            return (e);
-        }
-        break;
-
-    case OPNOT:
-        if (ltag == T_EXPR && TN_OPCODE(lp) == OPNOT) {
-            e = TN_LEFT(lp);
-            return (e);
-        }
-        break;
-
-    case OPCALL:
-    case OPCCALL:
-        etype = ltype;
-        if (rp != NULL && TN_LIST(rp) == NULL) {
-            rp = NULL;
-        }
-        break;
-
-    case OPAND:
-    case OPOR:
-        /* logical OR/AND */
-        if (IS_CONST(lp))
-            COMMUTE;
-
-        if (IS_CONST(rp)) {
-            if (TN_CONST_INT(rp) == 0) {
-                /* FALSE */
-                if (opcode == OPOR)
-                    goto retleft;
-                else
-                    goto retright;
-            } else {
-                if (opcode == OPOR)
-                    goto retright;
-                else
-                    goto retleft;
+        case OPMINUS:
+            if (ICON_EQ(lp, 0)) {
+                return (cons_expr(OPNEG, rp, NULL));
             }
-        }
-    case OPEQV:
-    case OPNEQV:
+            if (IS_CONST(rp)) {
+                opcode = OPPLUS;
+                const_negop(rp);
+            }
 
-    case OPBITAND:
-    case OPBITOR:
-    case OPBITXOR:
-    case OPBITNOT:
-    case OPLSHIFT:
-    case OPRSHIFT:
+        addop:
+            if (IS_ICON(rp)) {
+                if (TN_CONST_INT(rp) == 0)
+                    goto retleft;
+                if (TN_TAG(lp) == T_EXPR && TN_OPCODE(lp) == OPPLUS &&
+                    IS_ICON(TN_RIGHT(lp))) {
+                    e = cons_expr(OPPLUS, TN_RIGHT(lp), rp);
+                    e1 = TN_LEFT(lp);
+                    return (cons_expr(OPPLUS, e1, e));
+                }
+            }
+            break;
 
-    case OPLT:
-    case OPGT:
-    case OPLE:
-    case OPGE:
-    case OPEQ:
-    case OPNE:
+        case OPPOWER:
+            break;
 
-    case OPCONCAT:
-        break;
-    case OPMIN:
-    case OPMAX:
+        case OPNEG:
+            if (ltag == T_EXPR && TN_OPCODE(lp) == OPNEG) {
+                e = TN_LEFT(lp);
+                return (e);
+            }
+            break;
 
-    case OPASSIGN:
-    case OPPLUSEQ:
-    case OPSTAREQ:
+        case OPNOT:
+            if (ltag == T_EXPR && TN_OPCODE(lp) == OPNOT) {
+                e = TN_LEFT(lp);
+                return (e);
+            }
+            break;
 
-    case OPCONV:
-    case OPADDR:
+        case OPCALL:
+        case OPCCALL:
+            etype = ltype;
+            if (rp != NULL && TN_LIST(rp) == NULL) {
+                rp = NULL;
+            }
+            break;
 
-    case OPCOMMA:
-    case OPQUEST:
-    case OPCOLON:
-        break;
+        case OPAND:
+        case OPOR:
+            /* logical OR/AND */
+            if (IS_CONST(lp))
+                COMMUTE;
+
+            if (IS_CONST(rp)) {
+                if (TN_CONST_INT(rp) == 0) {
+                    /* FALSE */
+                    if (opcode == OPOR)
+                        goto retleft;
+                    else
+                        goto retright;
+                } else {
+                    if (opcode == OPOR)
+                        goto retright;
+                    else
+                        goto retleft;
+                }
+            }
+        case OPEQV:
+        case OPNEQV:
+
+        case OPBITAND:
+        case OPBITOR:
+        case OPBITXOR:
+        case OPBITNOT:
+        case OPLSHIFT:
+        case OPRSHIFT:
+
+        case OPLT:
+        case OPGT:
+        case OPLE:
+        case OPGE:
+        case OPEQ:
+        case OPNE:
+
+        case OPCONCAT:
+            break;
+        case OPMIN:
+        case OPMAX:
+
+        case OPASSIGN:
+        case OPPLUSEQ:
+        case OPSTAREQ:
+
+        case OPCONV:
+        case OPADDR:
+
+        case OPCOMMA:
+        case OPQUEST:
+        case OPCOLON:
+            break;
 
 #ifdef HAVE_BL
-    case OPMKBL:
-        break;
+        case OPMKBL:
+            break;
 #endif
 
-    default:
-        fatal("badop, cons_expr", opcode);
+        default:
+            fatal("badop, cons_expr", opcode);
     }
 
     e = TN_ALLOC(TN_EXPR);

@@ -5,14 +5,16 @@
 #include "F-front.h"
 
 TYPE_DESC
-new_type_desc() {
+new_type_desc()
+{
     TYPE_DESC tp;
     tp = XMALLOC(TYPE_DESC, sizeof(*tp));
     return (tp);
 }
 
 TYPE_DESC
-type_basic(BASIC_DATA_TYPE t) {
+type_basic(BASIC_DATA_TYPE t)
+{
     TYPE_DESC tp;
     assert(t != TYPE_CHAR);
 
@@ -22,7 +24,8 @@ type_basic(BASIC_DATA_TYPE t) {
 }
 
 TYPE_DESC
-type_char(int len) {
+type_char(int len)
+{
     TYPE_DESC tp;
 
     /* (len <=0) means character(len=*) in function argument */
@@ -37,7 +40,8 @@ type_char(int len) {
  * type of the function which returns tp
  */
 TYPE_DESC
-function_type(TYPE_DESC tp) {
+function_type(TYPE_DESC tp)
+{
     TYPE_DESC ftp;
     ftp = new_type_desc();
     TYPE_BASIC_TYPE(ftp) = TYPE_FUNCTION;
@@ -137,7 +141,8 @@ function_type(TYPE_DESC tp) {
     return ftp;
 }
 
-void replace_or_assign_type(TYPE_DESC *tp, const TYPE_DESC new_tp) {
+void replace_or_assign_type(TYPE_DESC *tp, const TYPE_DESC new_tp)
+{
     if (tp == NULL || new_tp == NULL) {
         return;
     }
@@ -150,21 +155,24 @@ void replace_or_assign_type(TYPE_DESC *tp, const TYPE_DESC new_tp) {
 }
 
 TYPE_DESC
-intrinsic_function_type(TYPE_DESC return_type) {
+intrinsic_function_type(TYPE_DESC return_type)
+{
     TYPE_DESC ftp = function_type(return_type);
     TYPE_SET_INTRINSIC(ftp);
     return ftp;
 }
 
 TYPE_DESC
-intrinsic_subroutine_type() {
+intrinsic_subroutine_type()
+{
     TYPE_DESC ftp = subroutine_type();
     TYPE_SET_INTRINSIC(ftp);
     return ftp;
 }
 
 TYPE_DESC
-subroutine_type(void) {
+subroutine_type(void)
+{
     TYPE_DESC tp;
     TYPE_DESC tq;
 
@@ -178,7 +186,8 @@ subroutine_type(void) {
 }
 
 TYPE_DESC
-generic_procedure_type() {
+generic_procedure_type()
+{
     TYPE_DESC tp;
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
@@ -193,7 +202,8 @@ generic_procedure_type() {
  * - set generic flag
  */
 TYPE_DESC
-generic_function_type() {
+generic_function_type()
+{
     TYPE_DESC tp;
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_GENERIC;
@@ -203,7 +213,8 @@ generic_function_type() {
 }
 
 TYPE_DESC
-generic_subroutine_type() {
+generic_subroutine_type()
+{
     TYPE_DESC tp;
     TYPE_DESC tq;
 
@@ -218,14 +229,16 @@ generic_subroutine_type() {
 }
 
 TYPE_DESC
-program_type(void) {
+program_type(void)
+{
     TYPE_DESC tp = subroutine_type();
     FUNCTION_TYPE_SET_PROGRAM(tp);
     return tp;
 }
 
 TYPE_DESC
-type_bound_procedure_type(void) {
+type_bound_procedure_type(void)
+{
     TYPE_DESC ret; /* dummy return type */
     TYPE_DESC tp;
     ret = new_type_desc();
@@ -236,7 +249,8 @@ type_bound_procedure_type(void) {
 }
 
 TYPE_DESC
-procedure_type(const TYPE_DESC ftp) {
+procedure_type(const TYPE_DESC ftp)
+{
     TYPE_DESC tp;
     if (IS_SUBR(ftp)) {
         tp = subroutine_type();
@@ -253,7 +267,8 @@ procedure_type(const TYPE_DESC ftp) {
 }
 
 TYPE_DESC
-struct_type(ID id) {
+struct_type(ID id)
+{
     TYPE_DESC tp;
     tp = new_type_desc();
     TYPE_BASIC_TYPE(tp) = TYPE_STRUCT;
@@ -266,7 +281,8 @@ struct_type(ID id) {
 }
 
 TYPE_DESC
-wrap_type(TYPE_DESC tp) {
+wrap_type(TYPE_DESC tp)
+{
     TYPE_DESC tq = new_type_desc();
     if (tp == tq) {
         fatal("%s: must be an malloc() problem, "
@@ -289,12 +305,14 @@ wrap_type(TYPE_DESC tp) {
     return tq;
 }
 
-void merge_attributes(TYPE_DESC tp1, TYPE_DESC tp2) {
+void merge_attributes(TYPE_DESC tp1, TYPE_DESC tp2)
+{
     TYPE_ATTR_FLAGS(tp1) |= TYPE_ATTR_FLAGS(tp2);
 }
 
 TYPE_DESC
-getBaseType(TYPE_DESC tp) {
+getBaseType(TYPE_DESC tp)
+{
     if (TYPE_REF(tp) != NULL) {
         return getBaseType(TYPE_REF(tp));
     } else {
@@ -306,7 +324,8 @@ BASIC_DATA_TYPE
 getBasicType(TYPE_DESC tp) { return get_basic_type(tp); }
 
 TYPE_DESC
-getBaseParameterizedType(TYPE_DESC td) {
+getBaseParameterizedType(TYPE_DESC td)
+{
     if (td == NULL)
         return NULL;
     while ((TYPE_REF(td) && IS_STRUCT_TYPE(TYPE_REF(td))) &&
@@ -316,7 +335,8 @@ getBaseParameterizedType(TYPE_DESC td) {
     return td;
 }
 
-TYPE_DESC array_element_type(TYPE_DESC tp) {
+TYPE_DESC array_element_type(TYPE_DESC tp)
+{
     if (!IS_ARRAY_TYPE(tp))
         fatal("array_element_type: not ARRAY_TYPE");
     while (IS_ARRAY_TYPE(tp))
@@ -324,11 +344,13 @@ TYPE_DESC array_element_type(TYPE_DESC tp) {
     return tp;
 }
 
-int type_is_unlimited_class(TYPE_DESC tp) {
+int type_is_unlimited_class(TYPE_DESC tp)
+{
     return (TYPE_IS_CLASS(tp) && TYPE_REF(tp) == NULL);
 }
 
-int type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class) {
+int type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
+{
     TYPE_DESC class_base;
     TYPE_DESC derived_type_base;
 
@@ -351,7 +373,8 @@ int type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class) {
 /*
  * Retrun TRUE if the type is ABSTRACT and is not polymorphic = CLASS
  */
-int type_is_nopolymorphic_abstract(TYPE_DESC tp) {
+int type_is_nopolymorphic_abstract(TYPE_DESC tp)
+{
     TYPE_DESC btp;
 
     if (tp == NULL || !IS_STRUCT_TYPE(tp)) {
@@ -379,7 +402,8 @@ int type_is_nopolymorphic_abstract(TYPE_DESC tp) {
  * shrink_type() and type_is_omissible() are quick-fix.
  * see shrink_type().
  */
-int type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext) {
+int type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext)
+{
     // NULL or a terminal type is not omissible.
     if (tp == NULL || TYPE_REF(tp) == NULL)
         return FALSE;
@@ -430,7 +454,8 @@ int type_is_omissible(TYPE_DESC tp, uint32_t attr, uint32_t ext) {
  * This quick-fix don't care above, but shrink TYPE_REF list after
  * type is created.
  */
-void shrink_type(TYPE_DESC tp) {
+void shrink_type(TYPE_DESC tp)
+{
     TYPE_DESC ref = TYPE_REF(tp);
     while (type_is_omissible(ref, 0, 0)) {
         TYPE_REF(tp) = TYPE_REF(ref);
@@ -439,7 +464,8 @@ void shrink_type(TYPE_DESC tp) {
 }
 
 static TYPE_DESC simplify_type_recursively(TYPE_DESC tp, uint32_t attr,
-                                           uint32_t ext) {
+                                           uint32_t ext)
+{
     if (TYPE_REF(tp) != NULL) {
         TYPE_REF(tp) = simplify_type_recursively(TYPE_REF(tp), attr, ext);
     }
@@ -457,7 +483,8 @@ static TYPE_DESC simplify_type_recursively(TYPE_DESC tp, uint32_t attr,
  *	@return A reduced TYPE_DESC (could be the tp).
  */
 TYPE_DESC
-reduce_type(TYPE_DESC tp) {
+reduce_type(TYPE_DESC tp)
+{
     TYPE_DESC ret = NULL;
 
     if (tp != NULL) {
@@ -476,7 +503,7 @@ reduce_type(TYPE_DESC tp) {
         ID ip;
         FUNCTION_TYPE_RETURN_TYPE(ret) =
             reduce_type(FUNCTION_TYPE_RETURN_TYPE(ret));
-        FOREACH_ID(ip, FUNCTION_TYPE_ARGS(ret)) {
+        FOREACH_ID (ip, FUNCTION_TYPE_ARGS(ret)) {
             ID_TYPE(ip) = reduce_type(ID_TYPE(ip));
         }
     }
@@ -484,7 +511,8 @@ reduce_type(TYPE_DESC tp) {
     return ret;
 }
 
-int char_length(TYPE_DESC tp) {
+int char_length(TYPE_DESC tp)
+{
     int len = 1;
 
     while (TYPE_REF(tp)) {
@@ -501,7 +529,8 @@ int char_length(TYPE_DESC tp) {
     return len * TYPE_CHAR_LEN(tp);
 }
 
-int type_is_possible_dreal(TYPE_DESC tp) {
+int type_is_possible_dreal(TYPE_DESC tp)
+{
     expv kind, kind1;
 
     if (TYPE_REF(tp))
@@ -526,7 +555,8 @@ int type_is_possible_dreal(TYPE_DESC tp) {
     return TRUE;
 }
 
-int is_array_size_adjustable(TYPE_DESC tp) {
+int is_array_size_adjustable(TYPE_DESC tp)
+{
     assert(IS_ARRAY_TYPE(tp));
 
     while (IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
@@ -537,7 +567,8 @@ int is_array_size_adjustable(TYPE_DESC tp) {
     return FALSE;
 }
 
-int is_array_shape_assumed(TYPE_DESC tp) {
+int is_array_shape_assumed(TYPE_DESC tp)
+{
     assert(IS_ARRAY_TYPE(tp));
 
     while (IS_ARRAY_TYPE(tp) && TYPE_REF(tp)) {
@@ -555,7 +586,8 @@ int is_array_shape_assumed(TYPE_DESC tp) {
  * ex)
  *    INTEGER, PARAMETER :: array(*, 1:*) = (/(/1,2/), (/3,4/), (/5,6/)/)
  */
-int is_array_implicit_shape(TYPE_DESC tp) {
+int is_array_implicit_shape(TYPE_DESC tp)
+{
     assert(IS_ARRAY_TYPE(tp));
 
     if (!TYPE_IS_PARAMETER(tp) && !IS_ARRAY_TYPE(tp))
@@ -575,7 +607,8 @@ int is_array_implicit_shape(TYPE_DESC tp) {
     return TRUE;
 }
 
-int is_array_size_const(TYPE_DESC tp) {
+int is_array_size_const(TYPE_DESC tp)
+{
     expv upper;
     assert(IS_ARRAY_TYPE(tp));
 
@@ -589,7 +622,8 @@ int is_array_size_const(TYPE_DESC tp) {
 }
 
 TYPE_DESC
-find_struct_decl_head(SYMBOL s, TYPE_DESC head) {
+find_struct_decl_head(SYMBOL s, TYPE_DESC head)
+{
     TYPE_DESC tp;
 
     for (tp = head; tp != NULL; tp = TYPE_SLINK(tp)) {
@@ -601,9 +635,11 @@ find_struct_decl_head(SYMBOL s, TYPE_DESC head) {
 }
 
 TYPE_DESC
-current_struct() {
+current_struct()
+{
     CTL cp;
-    FOR_CTLS_BACKWARD(cp) {
+    FOR_CTLS_BACKWARD(cp)
+    {
         if (CTL_TYPE(cp) == CTL_STRUCT) {
             return CTL_STRUCT_TYPEDESC(cp);
         }
@@ -611,12 +647,14 @@ current_struct() {
     return NULL;
 }
 
-ID find_struct_member(TYPE_DESC struct_td, SYMBOL sym) {
+ID find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
+{
     return find_struct_member_allow_private(struct_td, sym, FALSE);
 }
 
 ID find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym,
-                                    int allow_private_member) {
+                                    int allow_private_member)
+{
     ID member = NULL;
 
     if (!IS_STRUCT_TYPE(struct_td)) {
@@ -625,25 +663,29 @@ ID find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym,
 
     struct_td = getBaseParameterizedType(struct_td);
 
-    FOREACH_MEMBER(member, struct_td) {
+    FOREACH_MEMBER(member, struct_td)
+    {
         if (strcmp(ID_NAME(member), SYM_NAME(sym)) == 0) {
 
             if (ID_CLASS(member) == CL_TYPE_BOUND_PROC) {
                 if (!allow_private_member && TYPE_IS_PRIVATE(member)) {
                     /*
-                     * If the struct type is defined in the other module,
-                     * check accesssibility of the type bound procedure.
+                     * If the struct type is defined in the
+                     * other module, check accesssibility of the
+                     * type bound procedure.
                      *
-                     * The PRIVATE type-bound procedure can be accessed by:
-                     * - the module in which the PRIVATE type-bound procedure is
-                     * defined
+                     * The PRIVATE type-bound procedure can be
+                     * accessed by:
+                     * - the module in which the PRIVATE
+                     * type-bound procedure is defined
                      * - the submodule of the module
                      */
                     if (TYPE_TAGNAME(struct_td) != NULL &&
                         ID_USEASSOC_INFO(TYPE_TAGNAME(struct_td)) != NULL &&
                         ID_IS_FROM_PARENT_MOD(TYPE_TAGNAME(struct_td)) ==
                             FALSE) {
-                        error("'%s' is private type bound procedure",
+                        error("'%s' is private type bound "
+                              "procedure",
                               SYM_NAME(sym));
                         return NULL;
                     }
@@ -694,7 +736,8 @@ ID find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym,
 /*   return FALSE; */
 /* } */
 
-int has_coarray_component(TYPE_DESC tp) {
+int has_coarray_component(TYPE_DESC tp)
+{
 
     ID id;
 
@@ -703,7 +746,8 @@ int has_coarray_component(TYPE_DESC tp) {
 
     if (IS_STRUCT_TYPE(tp)) {
 
-        FOREACH_MEMBER(id, tp) {
+        FOREACH_MEMBER(id, tp)
+        {
             if (TYPE_IS_COINDEXED(ID_TYPE(id)))
                 return TRUE;
             if (IS_STRUCT_TYPE(ID_TYPE(id)) &&
@@ -724,7 +768,8 @@ int has_coarray_component(TYPE_DESC tp) {
  * Check type compatiblity of types softly
  * ignoring type parameters like KIND, LENGTH
  */
-int type_is_soft_compatible(TYPE_DESC tp, TYPE_DESC tq) {
+int type_is_soft_compatible(TYPE_DESC tp, TYPE_DESC tq)
+{
     if (tp == NULL || tq == NULL || IS_ARRAY_TYPE(tp) || IS_ARRAY_TYPE(tq))
         return FALSE;
     if (TYPE_BASIC_TYPE(tp) != TYPE_BASIC_TYPE(tq)) {
@@ -747,7 +792,8 @@ int type_is_soft_compatible(TYPE_DESC tp, TYPE_DESC tq) {
     return TRUE;
 }
 
-static int type_is_double(TYPE_DESC tp) {
+static int type_is_double(TYPE_DESC tp)
+{
     return TYPE_BASIC_TYPE(tp) == TYPE_DREAL ||
            (TYPE_BASIC_TYPE(tp) == TYPE_REAL &&
             EXPR_CODE(TYPE_KIND(tp)) == INT_CONSTANT &&
@@ -756,7 +802,8 @@ static int type_is_double(TYPE_DESC tp) {
 
 static int type_parameter_expv_equals(expv v1, expv v2, int is_strict,
                                       int for_argument, int for_assignment,
-                                      int is_pointer_assignment) {
+                                      int is_pointer_assignment)
+{
     uint32_t i1, i2;
 
     if (v1 == NULL && v2 == NULL) {
@@ -770,8 +817,9 @@ static int type_parameter_expv_equals(expv v1, expv v2, int is_strict,
 
         if (v1 == NULL || v2 == NULL) {
             /*
-             * if v1 or v2 is NULL, the kind specifies the default value of its
-             * type. Maybe the default value is 4, but don't consider it.
+             * if v1 or v2 is NULL, the kind specifies the default value
+             * of its type. Maybe the default value is 4, but don't
+             * consider it.
              */
             return TRUE;
         }
@@ -850,10 +898,12 @@ static int type_parameter_expv_equals(expv v1, expv v2, int is_strict,
                     return TRUE;
                 } else if (!EXPR_HAS_ARG1(EXPR_ARG2(v1)) ||
                            !EXPR_HAS_ARG1(EXPR_ARG2(v2))) {
-                    // one of selected_real_kind() has no arg and one has.
+                    // one of selected_real_kind() has no arg
+                    // and one has.
                     return FALSE;
                 } else {
-                    // both selected real kind have at least one args
+                    // both selected real kind have at least one
+                    // args
                     int nbArgs1 = EXPR_HAS_ARG3(EXPR_ARG2(v1))
                                       ? 3
                                       : EXPR_HAS_ARG2(EXPR_ARG2(v1)) ? 2 : 1;
@@ -923,19 +973,22 @@ static int type_parameter_expv_equals(expv v1, expv v2, int is_strict,
  * expects 2 expv appears as type parameter value and are already reduced
  */
 static int type_parameter_expv_equals_for_assignment(expv v1, expv v2,
-                                                     int is_pointer_set) {
+                                                     int is_pointer_set)
+{
     return type_parameter_expv_equals(v1, v2, FALSE, FALSE, TRUE,
                                       is_pointer_set);
 }
 
-static int type_parameter_expv_equals_for_argument(expv v1, expv v2) {
+static int type_parameter_expv_equals_for_argument(expv v1, expv v2)
+{
     return type_parameter_expv_equals(v1, v2, FALSE, TRUE, FALSE, FALSE);
 }
 
 /*
  * Compare derived-type by their tagnames
  */
-int compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2) {
+int compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
+{
     ID name1, name2;
     SYMBOL sym1 = NULL, sym2 = NULL, module1 = NULL, module2 = NULL;
     TYPE_DESC btp1, btp2;
@@ -993,7 +1046,8 @@ int compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2) {
  * Check `parent` and `child` is the same derived-type or
  * `parent` is the parent type of `child`
  */
-int type_is_parent_type(TYPE_DESC parent, TYPE_DESC child) {
+int type_is_parent_type(TYPE_DESC parent, TYPE_DESC child)
+{
     if (parent == NULL || child == NULL) {
         return FALSE;
     }
@@ -1011,7 +1065,8 @@ int type_is_parent_type(TYPE_DESC parent, TYPE_DESC child) {
 }
 
 static int derived_type_parameter_values_is_compatible_for_assignment(
-    TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set) {
+    TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
+{
     ID type_params1, type_params2;
     ID id1, id2;
 
@@ -1021,7 +1076,7 @@ static int derived_type_parameter_values_is_compatible_for_assignment(
     type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
     type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
 
-    FOREACH_ID(id1, type_params1) {
+    FOREACH_ID (id1, type_params1) {
         id2 = find_ident_head(ID_SYM(id1), type_params2);
         if (id2 == NULL) {
             return FALSE;
@@ -1038,7 +1093,8 @@ static int derived_type_parameter_values_is_compatible_for_assignment(
 
 static int derived_type_parameter_values_is_compatible(TYPE_DESC tp1,
                                                        TYPE_DESC tp2,
-                                                       int for_argunemt) {
+                                                       int for_argunemt)
+{
     ID type_params1, type_params2;
     ID id1, id2;
 
@@ -1048,7 +1104,7 @@ static int derived_type_parameter_values_is_compatible(TYPE_DESC tp1,
     type_params1 = TYPE_TYPE_ACTUAL_PARAMS(tp1);
     type_params2 = TYPE_TYPE_ACTUAL_PARAMS(tp2);
 
-    FOREACH_ID(id1, type_params1) {
+    FOREACH_ID (id1, type_params1) {
         id2 = find_ident_head(ID_SYM(id1), type_params2);
         if (id2 == NULL) {
             return FALSE;
@@ -1071,7 +1127,8 @@ static int derived_type_parameter_values_is_compatible(TYPE_DESC tp1,
  * Check compatiblity of types with type parameters
  */
 int derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right,
-                               int for_argunemt) {
+                               int for_argunemt)
+{
     if (!compare_derived_type_name(left, right)) {
         if (TYPE_IS_CLASS(left) && TYPE_PARENT(right)) {
             /*
@@ -1109,7 +1166,8 @@ int derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right,
 int type_is_compatible(TYPE_DESC left, TYPE_DESC right, int is_strict,
                        int for_argunemt, int for_assignment,
                        int is_pointer_assignment, int compare_rank,
-                       int issue_error) {
+                       int issue_error)
+{
     TYPE_DESC left_basic, right_basic;
 
     if (left == NULL || right == NULL) {
@@ -1208,7 +1266,6 @@ rank_compatibility:
 
     if (TYPE_N_DIM(left) == 0 && TYPE_N_DIM(right) == 0) {
         goto attribute_compatibility;
-
     } else if (TYPE_N_DIM(left) > 0 && TYPE_N_DIM(right) > 0 &&
                are_dimension_and_shape_conformant_by_type(
                    NULL, left, right, NULL, for_argunemt, issue_error)) {
@@ -1248,7 +1305,8 @@ incompatible:
 }
 
 int type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int compare_rank,
-                              int issue_error) {
+                              int issue_error)
+{
     return type_is_compatible(left, right,
                               /*is_strict=*/TRUE,
                               /*for_argument=*/FALSE,
@@ -1258,7 +1316,8 @@ int type_is_strict_compatible(TYPE_DESC left, TYPE_DESC right, int compare_rank,
 }
 
 static int type_is_match_for_argument(TYPE_DESC left, TYPE_DESC right,
-                                      int compare_rank, int issue_error) {
+                                      int compare_rank, int issue_error)
+{
     return type_is_compatible(left, right,
                               /*is_strict=*/TRUE,
                               /*for_argument=*/TRUE,
@@ -1267,7 +1326,8 @@ static int type_is_match_for_argument(TYPE_DESC left, TYPE_DESC right,
                               /*compare_rank=*/compare_rank, issue_error);
 }
 
-int type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right) {
+int type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right)
+{
     return type_is_compatible(left, right,
                               /*is_strict=*/TRUE,
                               /*for_argument=*/FALSE,
@@ -1278,7 +1338,8 @@ int type_is_compatible_for_allocation(TYPE_DESC left, TYPE_DESC right) {
 
 static int function_type_is_compatible0(const TYPE_DESC ftp1,
                                         const TYPE_DESC ftp2, int override,
-                                        int assignment) {
+                                        int assignment)
+{
     ID args1;
     ID args2;
     ID arg1;
@@ -1392,7 +1453,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
 
         if (override || assignment) {
             if (pass_arg != NULL && pass_arg == ID_SYM(arg1)) {
-                /* when checking override, skip PASS arugment check */
+                /* when checking override, skip PASS arugment check
+                 */
                 continue;
             }
         }
@@ -1401,7 +1463,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
                                        TRUE)) {
             if (debug_flag) {
                 fprintf(debug_fp,
-                        "argument types are not match ('%s' and '%s')\n",
+                        "argument types are not match ('%s' and "
+                        "'%s')\n",
                         SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
             }
             return FALSE;
@@ -1419,7 +1482,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
     return TRUE;
 }
 
-int function_type_is_compatible(const TYPE_DESC ftp1, const TYPE_DESC ftp2) {
+int function_type_is_compatible(const TYPE_DESC ftp1, const TYPE_DESC ftp2)
+{
     return function_type_is_compatible0(ftp1, ftp2, FALSE, FALSE);
 }
 
@@ -1427,19 +1491,22 @@ int function_type_is_compatible(const TYPE_DESC ftp1, const TYPE_DESC ftp2) {
  * Check type-bound procedures have the same type except pass arguments.
  */
 int type_bound_procedure_types_are_compatible(const TYPE_DESC tbp1,
-                                              const TYPE_DESC tbp2) {
+                                              const TYPE_DESC tbp2)
+{
     return function_type_is_compatible0(tbp1, tbp2, TRUE, FALSE);
 }
 
 /*
  * Check type-bound procedures have the same type except pass arguments.
  */
-int procedure_pointers_are_compatible(TYPE_DESC p1, TYPE_DESC p2) {
+int procedure_pointers_are_compatible(TYPE_DESC p1, TYPE_DESC p2)
+{
     return function_type_is_compatible0(p1, p2, FALSE, TRUE);
 }
 
 int procedure_has_pass_arg(const TYPE_DESC ftp, const SYMBOL pass_arg,
-                           const TYPE_DESC stp) {
+                           const TYPE_DESC stp)
+{
     ID target;
     TYPE_DESC tp;
 
@@ -1471,10 +1538,8 @@ int procedure_has_pass_arg(const TYPE_DESC ftp, const SYMBOL pass_arg,
 
     if (type_is_unlimited_class(tp)) {
         return TRUE;
-
     } else if (type_is_class_of(stp, tp)) {
         return TRUE;
-
     } else {
         debug("PASS object should be CLASS of the derived-type");
         return FALSE;
@@ -1503,7 +1568,8 @@ int procedure_has_pass_arg(const TYPE_DESC ftp, const SYMBOL pass_arg,
  *   END TYPE t
  *
  */
-int check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp) {
+int check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp)
+{
     ID pass_arg;
 
     if (!(FUNCTION_TYPE_HAS_PASS_ARG(tbp))) {
@@ -1515,7 +1581,8 @@ int check_tbp_pass_arg(TYPE_DESC stp, TYPE_DESC tbp, TYPE_DESC ftp) {
     return procedure_has_pass_arg(ftp, pass_arg ? ID_SYM(pass_arg) : NULL, stp);
 }
 
-int procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right) {
+int procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right)
+{
     TYPE_DESC left_ftp;
     TYPE_DESC right_ftp;
     struct type_descriptor type;
@@ -1588,13 +1655,11 @@ int procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right) {
         FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(right_ftp)) {
 
         return procedure_pointers_are_compatible(left, right_ftp);
-
     } else if (!FUNCTION_TYPE_HAS_EXPLICT_INTERFACE(left_ftp)) {
 
         return type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(left_ftp),
                                          FUNCTION_TYPE_RETURN_TYPE(right_ftp),
                                          TRUE, TRUE);
-
     } else {
 
         return FALSE;
@@ -1604,13 +1669,14 @@ int procedure_is_assignable(const TYPE_DESC left, const TYPE_DESC right) {
 /*
  * Update a function type, decide the type of its arugments.
  */
-void function_type_udpate(TYPE_DESC ftp, ID idList) {
+void function_type_udpate(TYPE_DESC ftp, ID idList)
+{
     ID id;
     ID arg;
 
     fix_array_dimensions(FUNCTION_TYPE_RETURN_TYPE(ftp));
 
-    FOREACH_ID(arg, FUNCTION_TYPE_ARGS(ftp)) {
+    FOREACH_ID (arg, FUNCTION_TYPE_ARGS(ftp)) {
         if (ID_TYPE(arg)) {
             continue;
         }
@@ -1628,8 +1694,8 @@ void function_type_udpate(TYPE_DESC ftp, ID idList) {
  * This function does not consider named argument,
  * so this function is insufficient normal function/subroutine call.
  */
-int function_type_is_appliable(TYPE_DESC ftp, expv actual_args,
-                               int issue_error) {
+int function_type_is_appliable(TYPE_DESC ftp, expv actual_args, int issue_error)
+{
     expv actual_arg = NULL;
     ID dummy_arg;
     ID dummy_args;
@@ -1661,7 +1727,7 @@ int function_type_is_appliable(TYPE_DESC ftp, expv actual_args,
     actual_lp = EXPR_LIST(actual_args);
     actual_arg = actual_lp ? LIST_ITEM(actual_lp) : NULL;
 
-    FOREACH_ID(dummy_arg, dummy_args) {
+    FOREACH_ID (dummy_arg, dummy_args) {
 
         debug("dummy args is '%s'\n", SYM_NAME(ID_SYM(dummy_arg)));
 
@@ -1677,8 +1743,8 @@ int function_type_is_appliable(TYPE_DESC ftp, expv actual_args,
                     continue;
                 }
             } else {
-                /* If the PASS argument is not specified, the first arugment is
-                 * the PASS argument*/
+                /* If the PASS argument is not specified, the
+                 * first arugment is the PASS argument*/
                 if (dummy_arg == dummy_args) {
                     continue;
                 }
@@ -1765,7 +1831,8 @@ int function_type_is_appliable(TYPE_DESC ftp, expv actual_args,
  * Check type compatibility of derived-types
  */
 int struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
-                                             int is_pointer_set) {
+                                             int is_pointer_set)
+{
     TYPE_DESC btp1, btp2;
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
@@ -1821,7 +1888,8 @@ int struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
         if (debug_flag)
             fprintf(debug_fp,
                     "                                      ... not match\n");
-        /* Check if the imported id match. Type ID might be not identical
+        /* Check if the imported id match. Type ID might be not
+         * identical
          * in case of multiple indirection in module hierachy. */
         if (btp1->imported_id && btp2->imported_id &&
             strcmp(btp1->imported_id, btp2->imported_id) == 0) {
@@ -1864,7 +1932,8 @@ int struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
 }
 
 /* check type compatiblity of element types */
-int type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2) {
+int type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2)
+{
     BASIC_DATA_TYPE b1;
     BASIC_DATA_TYPE b2;
 
@@ -1881,41 +1950,43 @@ int type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2) {
         return TRUE;
 
     switch (b1) {
-    case TYPE_ARRAY:
-    case TYPE_INT:
-    case TYPE_REAL:
-    case TYPE_DREAL:
-    case TYPE_COMPLEX:
-    case TYPE_DCOMPLEX:
-    case TYPE_GNUMERIC:
-    case TYPE_GNUMERIC_ALL:
-        if (b2 != TYPE_LOGICAL ||
-            (b1 == TYPE_ARRAY && IS_LOGICAL(array_element_type(tp1))))
+        case TYPE_ARRAY:
+        case TYPE_INT:
+        case TYPE_REAL:
+        case TYPE_DREAL:
+        case TYPE_COMPLEX:
+        case TYPE_DCOMPLEX:
+        case TYPE_GNUMERIC:
+        case TYPE_GNUMERIC_ALL:
+            if (b2 != TYPE_LOGICAL ||
+                (b1 == TYPE_ARRAY && IS_LOGICAL(array_element_type(tp1))))
+                return TRUE;
+            break;
+        case TYPE_LOGICAL:
+            if (b2 == TYPE_LOGICAL || b2 == TYPE_GENERIC)
+                return TRUE;
+            break;
+        case TYPE_CHAR:
+            if (b2 == TYPE_CHAR || b2 == TYPE_GENERIC)
+                return TRUE;
+            break;
+        case TYPE_STRUCT:
+            if (b2 == TYPE_GENERIC)
+                return TRUE;
+            else if (b2 == TYPE_STRUCT)
+                return struct_type_is_compatible_for_assignment(tp1, tp2,
+                                                                FALSE);
+            break;
+        case TYPE_GENERIC:
             return TRUE;
-        break;
-    case TYPE_LOGICAL:
-        if (b2 == TYPE_LOGICAL || b2 == TYPE_GENERIC)
-            return TRUE;
-        break;
-    case TYPE_CHAR:
-        if (b2 == TYPE_CHAR || b2 == TYPE_GENERIC)
-            return TRUE;
-        break;
-    case TYPE_STRUCT:
-        if (b2 == TYPE_GENERIC)
-            return TRUE;
-        else if (b2 == TYPE_STRUCT)
-            return struct_type_is_compatible_for_assignment(tp1, tp2, FALSE);
-        break;
-    case TYPE_GENERIC:
-        return TRUE;
-    default:
-        break;
+        default:
+            break;
     }
     return FALSE;
 }
 
-int type_is_specific_than(TYPE_DESC tp, TYPE_DESC tq) {
+int type_is_specific_than(TYPE_DESC tp, TYPE_DESC tq)
+{
     if (tp == NULL || tq == NULL || IS_MODULE(tp) || IS_MODULE(tq))
         fatal("invalid argument in type comparison.");
 
@@ -1936,7 +2007,8 @@ int type_is_specific_than(TYPE_DESC tp, TYPE_DESC tq) {
 }
 
 TYPE_DESC
-get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
+get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1)
+{
     /*
      * Based on the type promotion rule regulated by the JIS X 3001-1
      * (ISO/IEC 1539-1 : 2004)
@@ -1957,157 +2029,174 @@ get_binary_numeric_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
 
     switch (b0) {
 
-    case TYPE_INT: {
-        switch (b1) {
-        case TYPE_INT:
-        case TYPE_REAL:
-        case TYPE_DREAL:
-        case TYPE_COMPLEX:
-        case TYPE_DCOMPLEX:
-        case TYPE_GNUMERIC:
-        case TYPE_GNUMERIC_ALL: {
-            ret = t1;
-            break;
-        }
-        default: { break; }
-        }
-        break;
-    }
-
-    case TYPE_REAL: {
-        switch (b1) {
         case TYPE_INT: {
-            ret = t0;
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC:
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        case TYPE_REAL:
-        case TYPE_DREAL:
-        case TYPE_COMPLEX:
-        case TYPE_DCOMPLEX:
-        case TYPE_GNUMERIC:
-        case TYPE_GNUMERIC_ALL: {
-            ret = t1;
-            break;
-        }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_DREAL: {
-        switch (b1) {
-        case TYPE_INT:
         case TYPE_REAL: {
-            ret = t0;
+            switch (b1) {
+                case TYPE_INT: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC:
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        case TYPE_DREAL:
-        case TYPE_COMPLEX:
-        case TYPE_DCOMPLEX:
-        case TYPE_GNUMERIC:
-        case TYPE_GNUMERIC_ALL: {
-            ret = t1;
-            break;
-        }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_COMPLEX: {
-        switch (b1) {
-        case TYPE_INT:
-        case TYPE_REAL:
-        case TYPE_DREAL:
-        case TYPE_GNUMERIC: {
-            ret = t0;
+        case TYPE_DREAL: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_DREAL:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC:
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        case TYPE_COMPLEX:
-        case TYPE_DCOMPLEX:
-        case TYPE_GNUMERIC_ALL: {
-            ret = t1;
-            break;
-        }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_DCOMPLEX: {
-        switch (b1) {
-        case TYPE_INT:
-        case TYPE_REAL:
-        case TYPE_DREAL:
-        case TYPE_GNUMERIC:
-        case TYPE_COMPLEX:
+        case TYPE_COMPLEX: {
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_GNUMERIC: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+            break;
+        }
+
         case TYPE_DCOMPLEX: {
-            ret = t0;
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_GNUMERIC:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        case TYPE_GNUMERIC_ALL: {
-            ret = t1;
-            break;
-        }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_GNUMERIC: {
-        switch (b1) {
-        case TYPE_INT:
-        case TYPE_REAL:
-        case TYPE_DREAL:
-        case TYPE_COMPLEX:
-        case TYPE_DCOMPLEX:
         case TYPE_GNUMERIC: {
-            ret = t0;
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC: {
+                    ret = t0;
+                    break;
+                }
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
+
         case TYPE_GNUMERIC_ALL: {
-            ret = t1;
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC:
+                case TYPE_GNUMERIC_ALL: {
+                    ret = t0;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_GNUMERIC_ALL: {
-        switch (b1) {
-        case TYPE_INT:
-        case TYPE_REAL:
-        case TYPE_DREAL:
-        case TYPE_COMPLEX:
-        case TYPE_DCOMPLEX:
-        case TYPE_GNUMERIC:
-        case TYPE_GNUMERIC_ALL: {
-            ret = t0;
+        case TYPE_STRUCT: {
+            /*
+             * FIXME:
+             *	it depends on operation, could be a user defined
+             *	operator. Anyway return NULL at this moment.
+             */
             break;
         }
-        default: { break; }
+
+        default: {
+            break;
         }
-        break;
-    }
-
-    case TYPE_STRUCT: {
-        /*
-         * FIXME:
-         *	it depends on operation, could be a user defined
-         *	operator. Anyway return NULL at this moment.
-         */
-        break;
-    }
-
-    default: { break; }
     }
 
     return ret;
 }
 
 TYPE_DESC
-get_binary_comparative_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
+get_binary_comparative_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1)
+{
     /*
      * Based on the type promotion rule regulated by the JIS X 3001-1
      * (ISO/IEC 1539-1 : 2004)
@@ -2129,48 +2218,53 @@ get_binary_comparative_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
 
     switch (b0) {
 
-    case TYPE_INT:
-    case TYPE_REAL:
-    case TYPE_DREAL:
-    case TYPE_GNUMERIC: {
-        switch (b1) {
         case TYPE_INT:
         case TYPE_REAL:
         case TYPE_DREAL:
         case TYPE_GNUMERIC: {
-            isValid = TRUE;
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_GNUMERIC: {
+                    isValid = TRUE;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_CHAR: {
-        if (b1 == TYPE_CHAR) {
-            isValid = TRUE;
+        case TYPE_CHAR: {
+            if (b1 == TYPE_CHAR) {
+                isValid = TRUE;
+                break;
+            }
             break;
         }
-        break;
-    }
 
-    case TYPE_STRUCT: {
-        /*
-         * FIXME:
-         *	it depends on operation, could be a user defined
-         *	operator. Anyway return NULL at this moment.
-         */
-        break;
-    }
+        case TYPE_STRUCT: {
+            /*
+             * FIXME:
+             *	it depends on operation, could be a user defined
+             *	operator. Anyway return NULL at this moment.
+             */
+            break;
+        }
 
-    default: { break; }
+        default: {
+            break;
+        }
     }
 
     return (isValid == TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
 }
 
 TYPE_DESC
-get_binary_equal_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
+get_binary_equal_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1)
+{
     /*
      * Based on the type promotion rule regulated by the JIS X 3001-1
      * (ISO/IEC 1539-1 : 2004)
@@ -2192,14 +2286,6 @@ get_binary_equal_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
 
     switch (b0) {
 
-    case TYPE_INT:
-    case TYPE_REAL:
-    case TYPE_DREAL:
-    case TYPE_COMPLEX:
-    case TYPE_DCOMPLEX:
-    case TYPE_GNUMERIC:
-    case TYPE_GNUMERIC_ALL: {
-        switch (b1) {
         case TYPE_INT:
         case TYPE_REAL:
         case TYPE_DREAL:
@@ -2207,38 +2293,51 @@ get_binary_equal_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
         case TYPE_DCOMPLEX:
         case TYPE_GNUMERIC:
         case TYPE_GNUMERIC_ALL: {
-            isValid = TRUE;
+            switch (b1) {
+                case TYPE_INT:
+                case TYPE_REAL:
+                case TYPE_DREAL:
+                case TYPE_COMPLEX:
+                case TYPE_DCOMPLEX:
+                case TYPE_GNUMERIC:
+                case TYPE_GNUMERIC_ALL: {
+                    isValid = TRUE;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
             break;
         }
-        default: { break; }
-        }
-        break;
-    }
 
-    case TYPE_CHAR: {
-        if (b1 == TYPE_CHAR) {
-            isValid = TRUE;
+        case TYPE_CHAR: {
+            if (b1 == TYPE_CHAR) {
+                isValid = TRUE;
+                break;
+            }
             break;
         }
-        break;
-    }
 
-    case TYPE_STRUCT: {
-        /*
-         * FIXME:
-         *	it depends on operation, could be a user defined
-         *	operator. Anyway return NULL at this moment.
-         */
-        break;
-    }
+        case TYPE_STRUCT: {
+            /*
+             * FIXME:
+             *	it depends on operation, could be a user defined
+             *	operator. Anyway return NULL at this moment.
+             */
+            break;
+        }
 
-    default: { break; }
+        default: {
+            break;
+        }
     }
 
     return (isValid == TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
 }
 
-int type_is_linked(TYPE_DESC tp, TYPE_DESC tlist) {
+int type_is_linked(TYPE_DESC tp, TYPE_DESC tlist)
+{
     if (tlist == NULL)
         return FALSE;
     do {
@@ -2250,7 +2349,8 @@ int type_is_linked(TYPE_DESC tp, TYPE_DESC tlist) {
 }
 
 TYPE_DESC
-type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail) {
+type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail)
+{
     if (ttail == NULL)
         return tp;
     TYPE_LINK(ttail) = tp;
@@ -2265,7 +2365,8 @@ type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail) {
 }
 
 TYPE_DESC
-copy_type_partially(TYPE_DESC tp, int doCopyAttr) {
+copy_type_partially(TYPE_DESC tp, int doCopyAttr)
+{
     TYPE_DESC ret = NULL;
     if (tp != NULL) {
         ret = new_type_desc();

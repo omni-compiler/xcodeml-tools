@@ -16,7 +16,8 @@ char *xmalloc(size) int size;
 }
 
 /* lineno */
-lineno_info *new_line_info(int fid, int ln) {
+lineno_info *new_line_info(int fid, int ln)
+{
     lineno_info *l;
     l = XMALLOC(lineno_info *, sizeof(*l));
     l->file_id = fid;
@@ -30,7 +31,8 @@ lineno_info *new_line_info(int fid, int ln) {
 static SYMBOL symbol_hash_table[SYMBOL_HASH_SIZE];
 
 SYMBOL
-find_symbol(const char *name) {
+find_symbol(const char *name)
+{
     SYMBOL sp;
     int hcode;
     const char *cp;
@@ -66,7 +68,8 @@ find_symbol(const char *name) {
 }
 
 SYMBOL
-find_symbol_without_allocate(const char *name) {
+find_symbol_without_allocate(const char *name)
+{
     SYMBOL sp;
     int hcode;
     const char *cp;
@@ -157,15 +160,21 @@ struct list_node *l;
 }
 
 expr list0(code) enum expr_code code;
-{ return (make_enode(code, NULL)); }
+{
+    return (make_enode(code, NULL));
+}
 
 expr list1(code, x1) enum expr_code code;
 expr x1;
-{ return (make_enode(code, (void *)cons_list(x1, NULL))); }
+{
+    return (make_enode(code, (void *)cons_list(x1, NULL)));
+}
 
 expr list2(code, x1, x2) enum expr_code code;
 expr x1, x2;
-{ return (make_enode(code, (void *)cons_list(x1, cons_list(x2, NULL)))); }
+{
+    return (make_enode(code, (void *)cons_list(x1, cons_list(x2, NULL))));
+}
 
 expr list3(code, x1, x2, x3) enum expr_code code;
 expr x1, x2, x3;
@@ -236,7 +245,7 @@ expr x;
     list first;
 
     first = oLp = lp = EXPR_LIST(lx);
-    FOR_ITEMS_IN_LIST(lp, lx) {
+    FOR_ITEMS_IN_LIST (lp, lx) {
         if (LIST_ITEM(lp) == x) {
             break;
         }
@@ -270,7 +279,8 @@ expr x;
     return lx;
 }
 
-void delete_list(expr lx) {
+void delete_list(expr lx)
+{
     list lp;
     list prev_list;
 

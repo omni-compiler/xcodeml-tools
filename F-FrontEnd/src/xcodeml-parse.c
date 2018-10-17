@@ -1,6 +1,7 @@
 #include "xcodeml.h"
 
-static char *sanitizeText(char *str) {
+static char *sanitizeText(char *str)
+{
     char *p = str;
 
     bool foundNonSpaces = false;
@@ -19,7 +20,8 @@ static char *sanitizeText(char *str) {
     }
 }
 
-static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
+static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr)
+{
     bool ret = false;
 
     if (ndPtr != NULL) {
@@ -34,36 +36,36 @@ static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
 
             switch (curNode->type) {
 
-            case XML_ELEMENT_NODE: {
-                me = xcodeml_CreateList0(XcodeML_Element);
-                XCODEML_NAME(me) = strdup((char *)curNode->name);
-                break;
-            }
+                case XML_ELEMENT_NODE: {
+                    me = xcodeml_CreateList0(XcodeML_Element);
+                    XCODEML_NAME(me) = strdup((char *)curNode->name);
+                    break;
+                }
 
-            case XML_ATTRIBUTE_NODE: {
-                me = xcodeml_CreateList0(XcodeML_Attribute);
-                XCODEML_NAME(me) = strdup((char *)curNode->name);
-                break;
-            }
+                case XML_ATTRIBUTE_NODE: {
+                    me = xcodeml_CreateList0(XcodeML_Attribute);
+                    XCODEML_NAME(me) = strdup((char *)curNode->name);
+                    break;
+                }
 
-            case XML_TEXT_NODE: {
-                char *text = sanitizeText((char *)curNode->content);
-                me = xcodeml_CreateValueNode(text);
-                break;
-            }
+                case XML_TEXT_NODE: {
+                    char *text = sanitizeText((char *)curNode->content);
+                    me = xcodeml_CreateValueNode(text);
+                    break;
+                }
 
-            case XML_COMMENT_NODE: {
-                isComment = true;
-                break;
-            }
+                case XML_COMMENT_NODE: {
+                    isComment = true;
+                    break;
+                }
 
-            default: {
-                fprintf(stderr,
-                        "%s: Error: unknown node type "
-                        "%d.\n",
-                        fileName, curNode->type);
-                break;
-            }
+                default: {
+                    fprintf(stderr,
+                            "%s: Error: unknown node type "
+                            "%d.\n",
+                            fileName, curNode->type);
+                    break;
+                }
             }
 
             if (isComment == true) {
@@ -117,7 +119,8 @@ static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
     return ret;
 }
 
-char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr) {
+char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr)
+{
     if (XCODEML_TYPE(ndPtr) == XcodeML_Attribute) {
         if (XCODEML_TYPE(XCODEML_ARG1(ndPtr)) == XcodeML_Value) {
             return XCODEML_VALUE(XCODEML_ARG1(ndPtr));
@@ -126,11 +129,12 @@ char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr) {
     return "";
 }
 
-char *xcodeml_GetElementValue(XcodeMLNode *ndPtr) {
+char *xcodeml_GetElementValue(XcodeMLNode *ndPtr)
+{
     if (XCODEML_TYPE(ndPtr) == XcodeML_Element) {
         XcodeMLNode *x1;
         XcodeMLList *lp;
-        FOR_ITEMS_IN_XCODEML_LIST(lp, ndPtr) {
+        FOR_ITEMS_IN_XCODEML_LIST (lp, ndPtr) {
             x1 = XCODEML_LIST_NODE(lp);
             if (XCODEML_TYPE(x1) == XcodeML_Value) {
                 return XCODEML_VALUE(x1);
@@ -142,7 +146,8 @@ char *xcodeml_GetElementValue(XcodeMLNode *ndPtr) {
 
 #include "F-front.h"
 
-XcodeMLNode *xcodeml_ParseFile(const char *fileName) {
+XcodeMLNode *xcodeml_ParseFile(const char *fileName)
+{
 
     char buff[MAX_PATH_LEN];
     xmlDocPtr doc;
@@ -213,7 +218,8 @@ Done:
     return ret;
 }
 
-static void lvlFprintf(int lvl, FILE *fd, const char *fmt, ...) {
+static void lvlFprintf(int lvl, FILE *fd, const char *fmt, ...)
+{
     va_list args;
     va_start(args, fmt);
 
@@ -227,53 +233,54 @@ static void lvlFprintf(int lvl, FILE *fd, const char *fmt, ...) {
     va_end(args);
 }
 
-void xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl) {
+void xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl)
+{
     lvlFprintf(lvl, fd, "(");
 
     switch (XCODEML_TYPE(ndPtr)) {
-    case XcodeML_Value: {
-        fprintf(fd, "value \"%s\")", XCODEML_VALUE(ndPtr));
-        break;
-    }
-
-    case XcodeML_Element: {
-        char *v = xcodeml_GetElementValue(ndPtr);
-        XcodeMLNode *x1;
-        XcodeMLList *lp;
-
-        if (strlen(v) > 0) {
-            fprintf(fd, "TAG (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
-        } else {
-            fprintf(fd, "TAG (\"%s\")", XCODEML_NAME(ndPtr));
+        case XcodeML_Value: {
+            fprintf(fd, "value \"%s\")", XCODEML_VALUE(ndPtr));
+            break;
         }
 
-        FOR_ITEMS_IN_XCODEML_LIST(lp, ndPtr) {
-            x1 = XCODEML_LIST_NODE(lp);
-            if (XCODEML_TYPE(x1) != XcodeML_Value) {
-                fprintf(fd, "\n");
-                xcodeml_DumpTree(fd, x1, lvl + 1);
+        case XcodeML_Element: {
+            char *v = xcodeml_GetElementValue(ndPtr);
+            XcodeMLNode *x1;
+            XcodeMLList *lp;
+
+            if (strlen(v) > 0) {
+                fprintf(fd, "TAG (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
+            } else {
+                fprintf(fd, "TAG (\"%s\")", XCODEML_NAME(ndPtr));
             }
+
+            FOR_ITEMS_IN_XCODEML_LIST (lp, ndPtr) {
+                x1 = XCODEML_LIST_NODE(lp);
+                if (XCODEML_TYPE(x1) != XcodeML_Value) {
+                    fprintf(fd, "\n");
+                    xcodeml_DumpTree(fd, x1, lvl + 1);
+                }
+            }
+            fprintf(fd, ")");
+
+            break;
         }
-        fprintf(fd, ")");
 
-        break;
-    }
-
-    case XcodeML_Attribute: {
-        char *v = xcodeml_GetAttributeValue(ndPtr);
-        if (strlen(v) > 0) {
-            fprintf(fd, "PROP (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
-        } else {
-            fprintf(fd, "PROP (\"%s\")", XCODEML_NAME(ndPtr));
+        case XcodeML_Attribute: {
+            char *v = xcodeml_GetAttributeValue(ndPtr);
+            if (strlen(v) > 0) {
+                fprintf(fd, "PROP (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
+            } else {
+                fprintf(fd, "PROP (\"%s\")", XCODEML_NAME(ndPtr));
+            }
+            fprintf(fd, ")");
+            break;
         }
-        fprintf(fd, ")");
-        break;
-    }
 
-    default: {
-        fprintf(fd, "UNKNOWN)");
-        break;
-    }
+        default: {
+            fprintf(fd, "UNKNOWN)");
+            break;
+        }
     }
 
     if (lvl == 0) {

@@ -58,7 +58,8 @@ static int getVarSize(str) char *str;
     }
 }
 
-static void cmd_error_exit EXC_VARARGS_DEF(char *, fmt) {
+static void cmd_error_exit EXC_VARARGS_DEF(char *, fmt)
+{
     va_list args;
 
     fprintf(stderr, "error: ");
@@ -71,7 +72,8 @@ static void cmd_error_exit EXC_VARARGS_DEF(char *, fmt) {
     exit(EXITCODE_ERR);
 }
 
-static void cmd_warning EXC_VARARGS_DEF(char *, fmt) {
+static void cmd_warning EXC_VARARGS_DEF(char *, fmt)
+{
     va_list args;
 
     fprintf(stderr, "warning: ");
@@ -107,7 +109,8 @@ int flag_do_module_cache = TRUE;
 
 char *xmoduleIncludeDirv = NULL;
 
-static void usage() {
+static void usage()
+{
     const char *usages[] = {
         "", "OPTIONS", "",
         /* "-d", */
@@ -233,35 +236,37 @@ char *argv[];
         } else if (strcmp(argv[0], "-u") == 0) {
             doImplicitUndef = TRUE;
         } else if (strcmp(argv[0], "-C") == 0) {
-            cmd_warning(
-                "Array range check is not supported, just ignore this option.");
+            cmd_warning("Array range check is not supported, just "
+                        "ignore this option.");
         } else if (strncmp(argv[0], "-r", 2) == 0) {
             int sz = getVarSize(argv[0] + 2);
             switch (sz) {
-            case SIZEOF_FLOAT:
-                defaultSingleRealType = TYPE_REAL;
-                break;
-            case SIZEOF_DOUBLE:
-                defaultSingleRealType = TYPE_DREAL;
-                break;
-            default: {
-                cmd_error_exit("invalid single-real size %d, must be %d or %d.",
-                               sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
-            }
+                case SIZEOF_FLOAT:
+                    defaultSingleRealType = TYPE_REAL;
+                    break;
+                case SIZEOF_DOUBLE:
+                    defaultSingleRealType = TYPE_DREAL;
+                    break;
+                default: {
+                    cmd_error_exit("invalid single-real size %d, "
+                                   "must be %d or %d.",
+                                   sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
+                }
             }
         } else if (strncmp(argv[0], "-d", 2) == 0) {
             int sz = getVarSize(argv[0] + 2);
             switch (sz) {
-            case SIZEOF_FLOAT:
-                defaultDoubleRealType = TYPE_REAL;
-                break;
-            case SIZEOF_DOUBLE:
-                defaultDoubleRealType = TYPE_DREAL;
-                break;
-            default: {
-                cmd_error_exit("invalid double-real size %d, must be %d or %d.",
-                               sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
-            }
+                case SIZEOF_FLOAT:
+                    defaultDoubleRealType = TYPE_REAL;
+                    break;
+                case SIZEOF_DOUBLE:
+                    defaultDoubleRealType = TYPE_DREAL;
+                    break;
+                default: {
+                    cmd_error_exit("invalid double-real size %d, "
+                                   "must be %d or %d.",
+                                   sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
+                }
             }
         } else if (strcmp(argv[0], "-force-fixed-format") == 0) {
             if (flag_force_fixed_format != -1)
@@ -298,9 +303,9 @@ char *argv[];
             if (includeDirvI < 256) {
                 includeDirv[includeDirvI++] = path;
             } else {
-                cmd_error_exit(
-                    "over the maximum include search dir. vector, %d",
-                    MAXINCLUDEDIRV);
+                cmd_error_exit("over the maximum include search "
+                               "dir. vector, %d",
+                               MAXINCLUDEDIRV);
             }
         } else if (strncmp(argv[0], "-M", 2) == 0) {
             /* -M <anotherDir> or -M<anotherDir> */
@@ -318,20 +323,22 @@ char *argv[];
             if (modincludeDirvI < MAXMODINCLUDEDIRV) {
                 modincludeDirv[modincludeDirvI++] = path;
             } else {
-                cmd_error_exit(
-                    "over the maximum module include search dir. vector, %d",
-                    MAXMODINCLUDEDIRV);
+                cmd_error_exit("over the maximum module include "
+                               "search dir. vector, %d",
+                               MAXMODINCLUDEDIRV);
             }
         } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
             char *path;
             if (strlen(argv[0]) == 25) {
-                /* -fintrinsic-xmodules-path <intrinsic xmodule dir> */
+                /* -fintrinsic-xmodules-path <intrinsic xmodule dir>
+                 */
                 if (--argc <= 0)
                     cmd_error_exit("no arg for -fintrinsic-xmodules-path.");
                 argv++;
                 path = argv[0];
             } else {
-                /* -fintrinsic-xmodules-path<intrinsic xmodule dir> */
+                /* -fintrinsic-xmodules-path<intrinsic xmodule dir>
+                 */
                 path = argv[0] + 25;
             }
             xmoduleIncludeDirv = path;
@@ -345,9 +352,9 @@ char *argv[];
             /* enable c comment in free format.  */
             flag_force_c_comment = TRUE;
             if (flag_force_fixed_format == 1) {
-                cmd_warning(
-                    "no need option for enable c comment(-force-c-comment) in "
-                    "fixed format mode(.f or .F).");
+                cmd_warning("no need option for enable c "
+                            "comment(-force-c-comment) in "
+                            "fixed format mode(.f or .F).");
             }
         } else if (strcmp(argv[0], "--save") == 0) {
             auto_save_attr_kb = 1; // 1kbytes
@@ -359,18 +366,18 @@ char *argv[];
             max_name_len = atoi(argv[0] + 14);
             if (max_name_len < MAX_NAME_LEN) {
                 max_name_len = MAX_NAME_LEN;
-                sprintf(
-                    message_str,
-                    "attempt to set too small value for max_name_len. use %d.",
-                    MAX_NAME_LEN);
+                sprintf(message_str,
+                        "attempt to set too small value for "
+                        "max_name_len. use %d.",
+                        MAX_NAME_LEN);
                 cmd_warning(message_str);
             }
             if (max_name_len > MAX_NAME_LEN_UPPER_LIMIT) {
                 max_name_len = MAX_NAME_LEN_UPPER_LIMIT;
-                sprintf(
-                    message_str,
-                    "attempt to set too large value for max_name_len. use %d.",
-                    MAX_NAME_LEN_UPPER_LIMIT);
+                sprintf(message_str,
+                        "attempt to set too large value for "
+                        "max_name_len. use %d.",
+                        MAX_NAME_LEN_UPPER_LIMIT);
                 cmd_warning(message_str);
             }
             if (debug_flag) {
@@ -429,7 +436,8 @@ char *argv[];
     }
 
     if (max_name_len < 0) { /* unset */
-        // max_name_len = fixed_format_flag?MAX_NAME_LEN_F77:MAX_NAME_LEN_F03;
+        // max_name_len =
+        // fixed_format_flag?MAX_NAME_LEN_F77:MAX_NAME_LEN_F03;
         max_name_len = MAX_NAME_LEN;
     }
 
@@ -487,7 +495,8 @@ Done:
     return (nerrors ? EXITCODE_ERR : EXITCODE_OK);
 }
 
-const char *search_include_path(const char *filename) {
+const char *search_include_path(const char *filename)
+{
     int i;
     int length;
     static char path[MAX_PATH_LEN];
@@ -534,7 +543,8 @@ const char *search_include_path(const char *filename) {
     return NULL;
 }
 
-void where(lineno_info *ln) {
+void where(lineno_info *ln)
+{
     extern SYMBOL current_module_name;
 
     /* print location of error  */
@@ -552,7 +562,8 @@ void where(lineno_info *ln) {
 
 /* nonfatal error message */
 /* VARARGS0 */
-void error EXC_VARARGS_DEF(char *, fmt) {
+void error EXC_VARARGS_DEF(char *, fmt)
+{
     va_list args;
 
     ++nerrors;
@@ -566,7 +577,8 @@ void error EXC_VARARGS_DEF(char *, fmt) {
 }
 
 /* VARARGS0 */
-void error_at_node EXC_VARARGS_DEF(expr, x) {
+void error_at_node EXC_VARARGS_DEF(expr, x)
+{
     va_list args;
     char *fmt;
 
@@ -582,7 +594,8 @@ void error_at_node EXC_VARARGS_DEF(expr, x) {
 }
 
 /* VARARGS0 */
-void error_at_id EXC_VARARGS_DEF(ID, x) {
+void error_at_id EXC_VARARGS_DEF(ID, x)
+{
     va_list args;
     char *fmt;
 
@@ -598,7 +611,8 @@ void error_at_id EXC_VARARGS_DEF(ID, x) {
 }
 
 /* VARARGS0 */
-void warning_at_node EXC_VARARGS_DEF(expr, x) {
+void warning_at_node EXC_VARARGS_DEF(expr, x)
+{
     va_list args;
     char *fmt;
 
@@ -612,7 +626,8 @@ void warning_at_node EXC_VARARGS_DEF(expr, x) {
     fflush(stderr);
 }
 
-void warning_at_id EXC_VARARGS_DEF(ID, x) {
+void warning_at_id EXC_VARARGS_DEF(ID, x)
+{
     va_list args;
     char *fmt;
 
@@ -628,7 +643,8 @@ void warning_at_id EXC_VARARGS_DEF(ID, x) {
 
 /* debug message */
 /* VARARGS0 */
-void debug EXC_VARARGS_DEF(char *, fmt) {
+void debug EXC_VARARGS_DEF(char *, fmt)
+{
     va_list args;
 
     if (!debug_flag)
@@ -644,19 +660,20 @@ void debug EXC_VARARGS_DEF(char *, fmt) {
     check_nerrors();
 }
 
-static void check_nerrors() {
+static void check_nerrors()
+{
     if (nerrors > 30) {
         /* give the compiler the benefit of the doubt */
-        fprintf(
-            stderr,
-            "too many error, cannot recover from earlier errors: goodbye!\n");
+        fprintf(stderr, "too many error, cannot recover from earlier "
+                        "errors: goodbye!\n");
         exit(EXITCODE_ERR);
     }
 }
 
 /* compiler error: die */
 /* VARARGS1 */
-void fatal EXC_VARARGS_DEF(char *, fmt) {
+void fatal EXC_VARARGS_DEF(char *, fmt)
+{
     va_list args;
 
     where(current_line); /*, "Fatal");*/
@@ -672,7 +689,8 @@ void fatal EXC_VARARGS_DEF(char *, fmt) {
 int warning_flag = FALSE;
 
 /* warning with lineno_info */
-void warning_lineno(lineno_info *info, char *fmt, ...) {
+void warning_lineno(lineno_info *info, char *fmt, ...)
+{
     va_list args;
 
     if (warning_flag)
@@ -687,7 +705,8 @@ void warning_lineno(lineno_info *info, char *fmt, ...) {
 }
 
 /* warning */
-void warning EXC_VARARGS_DEF(char *, fmt) {
+void warning EXC_VARARGS_DEF(char *, fmt)
+{
     va_list args;
 
     if (warning_flag)

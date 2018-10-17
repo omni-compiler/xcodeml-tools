@@ -9,56 +9,58 @@
 static char *varInitTypeStr[] = {"never",          "whole array", "substring",
                                  "array elements", "equivalence", NULL};
 
-static expv serializeInitialValue(expr x, expv new) {
+static expv serializeInitialValue(expr x, expv new)
+{
     expv valV;
 
     if (new == NULL)
         new = list0(LIST);
 
     switch (EXPR_CODE(x)) {
-    case LIST: {
-        list lp;
-        expr xL;
+        case LIST: {
+            list lp;
+            expr xL;
 
-        FOR_ITEMS_IN_LIST(lp, x) {
-            xL = LIST_ITEM(lp);
-            new = serializeInitialValue(xL, new);
-            if (new == NULL)
+            FOR_ITEMS_IN_LIST (lp, x) {
+                xL = LIST_ITEM(lp);
+                new = serializeInitialValue(xL, new);
+                if (new == NULL)
+                    return NULL;
+            }
+            break;
+        }
+
+        case F_DUP_DECL: {
+            expv vdup = compile_expression(x);
+            if (vdup == NULL)
                 return NULL;
+            expv numV = EXPR_ARG1(vdup);
+            valV = EXPR_ARG2(vdup);
+            int i, num;
+
+            num = EXPV_INT_VALUE(numV);
+            assert(num > 0);
+
+            for (i = 0; i < num; i++)
+                new = list_put_last(new, valV);
+            break;
         }
-        break;
-    }
 
-    case F_DUP_DECL: {
-        expv vdup = compile_expression(x);
-        if (vdup == NULL)
-            return NULL;
-        expv numV = EXPR_ARG1(vdup);
-        valV = EXPR_ARG2(vdup);
-        int i, num;
-
-        num = EXPV_INT_VALUE(numV);
-        assert(num > 0);
-
-        for (i = 0; i < num; i++)
+        default:
+            valV = expr_constant_value(x);
+            if (valV == NULL) {
+                error("data value not constant.");
+                return NULL;
+            }
             new = list_put_last(new, valV);
-        break;
-    }
-
-    default:
-        valV = expr_constant_value(x);
-        if (valV == NULL) {
-            error("data value not constant.");
-            return NULL;
-        }
-        new = list_put_last(new, valV);
-        break;
+            break;
     }
 
     return new;
 }
 
-static expv findArrayRef(expv spec, expv new) {
+static expv findArrayRef(expv spec, expv new)
+{
     list lp;
     expv v;
 
@@ -66,7 +68,7 @@ static expv findArrayRef(expv spec, expv new) {
         new = list0(LIST);
     }
 
-    FOR_ITEMS_IN_LIST(lp, spec) {
+    FOR_ITEMS_IN_LIST (lp, spec) {
         v = LIST_ITEM(lp);
         if (v == NULL) {
             continue;
@@ -74,24 +76,25 @@ static expv findArrayRef(expv spec, expv new) {
 
         switch (EXPR_CODE(v)) {
 
-        case F_ARRAY_REF: {
-            new = list_put_last(new, v);
-            break;
-        }
-
-        default: {
-            if (EXPR_CODE_IS_TERMINAL(EXPR_CODE(v)) != TRUE) {
-                new = findArrayRef(v, new);
+            case F_ARRAY_REF: {
+                new = list_put_last(new, v);
+                break;
             }
-            break;
-        }
+
+            default: {
+                if (EXPR_CODE_IS_TERMINAL(EXPR_CODE(v)) != TRUE) {
+                    new = findArrayRef(v, new);
+                }
+                break;
+            }
         }
     }
 
     return new;
 }
 
-static expv getVariableSpec(expv v, ID *idPtr) {
+static expv getVariableSpec(expv v, ID *idPtr)
+{
     ID id;
     expv ret = NULL;
     expv iList = NULL;
@@ -137,10 +140,11 @@ static expv getVariableSpec(expv v, ID *idPtr) {
             int i;
 
             if (ret == NULL) {
-                fatal("'%s' is array but can't determine array spec??",
+                fatal("'%s' is array but can't determine array "
+                      "spec??",
                       ID_NAME(id));
             }
-            FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(ret)) {
+            FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(ret)) {
                 numElem *= EXPV_INT_VALUE(EXPR_ARG1(LIST_ITEM(lp)));
             }
 
@@ -164,7 +168,8 @@ static expv getVariableSpec(expv v, ID *idPtr) {
     return ret;
 }
 
-static expv genImpliedDo(expv loopSpec, int dim, int lvl, expv refSpec) {
+static expv genImpliedDo(expv loopSpec, int dim, int lvl, expv refSpec)
+{
     expv new = NULL;
 
     if (lvl < dim) {
@@ -181,25 +186,138 @@ static expv genImpliedDo(expv loopSpec, int dim, int lvl, expv refSpec) {
     return new;
 }
 
-static expv serializeVariable(expv v, expv new) {
+static expv serializeVariable(expv v, expv new)
+{
     ID id;
 
     if (new == NULL) {
         new = list0(LIST);
     }
     switch (EXPR_CODE(v)) {
-    case F_IMPLIED_DO: {
-        list lp;
-        expr x;
-        expv refList = findArrayRef(v, (expv)NULL);
+        case F_IMPLIED_DO: {
+            list lp;
+            expr x;
+            expv refList = findArrayRef(v, (expv)NULL);
 
-        FOR_ITEMS_IN_LIST(lp, refList) {
-            x = LIST_ITEM(lp);
+            FOR_ITEMS_IN_LIST (lp, refList) {
+                x = LIST_ITEM(lp);
 
-            getVariableSpec(x, &id);
+                getVariableSpec(x, &id);
+                if (id == NULL) {
+                    return NULL;
+                }
+                if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER &&
+                    VAR_INIT_TYPE(id) != VAR_INIT_PARTIAL) {
+                    error("\"%s\" is already initialized as %s.",
+                          SYM_NAME(ID_SYM(id)),
+                          varInitTypeStr[VAR_INIT_TYPE(id)]);
+                    return NULL;
+                }
+                VAR_INIT_TYPE(id) = VAR_INIT_PARTIAL;
+            }
+
+            new = ExpandImpliedDoInDATA(v, new);
+            break;
+        }
+
+        case LIST: {
+            list lp;
+            expr x;
+
+            FOR_ITEMS_IN_LIST (lp, v) {
+                x = LIST_ITEM(lp);
+                new = serializeVariable(x, new);
+                if (new == NULL) {
+                    return NULL;
+                }
+            }
+            break;
+        }
+
+        case IDENT: {
+            expv asV = getVariableSpec(v, &id);
             if (id == NULL) {
                 return NULL;
             }
+            if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER) {
+                error("\"%s\" is already initialized as %s.",
+                      SYM_NAME(ID_SYM(id)), varInitTypeStr[VAR_INIT_TYPE(id)]);
+                return NULL;
+            }
+            VAR_INIT_TYPE(id) = VAR_INIT_WHOLE;
+
+            if (asV != NULL) {
+                /*
+                 * Initialize whole array.
+                 */
+                int nDim = (int)EXPV_INT_VALUE(EXPR_ARG1(asV));
+                int i;
+                expv ll;
+                SYMBOL sp;
+                char varName[64];
+                expv var;
+                expv vL;
+                expv refSpec;
+                expv loopSpec = list0(LIST);
+                expv doSpec;
+                ID dumId;
+
+                for (i = 0; i < nDim; i++) {
+                    ll = expr_list_get_n(EXPR_ARG2(asV), nDim - i - 1);
+                    if (ll == NULL) {
+                        error("can't initialize %s.", SYM_NAME(ID_SYM(id)));
+                        return NULL;
+                    }
+                    sprintf(varName, "__ImpDoIdx_%c", 'i' + nDim - i - 1);
+                    sp = find_symbol(varName);
+                    dumId = declare_ident(sp, CL_VAR);
+                    declare_id_type(dumId, type_INT);
+                    declare_variable(dumId);
+                    VAR_IS_IMPLIED_DO_DUMMY(dumId) = TRUE;
+                    var = list0(LIST);
+                    var = list_put_last(var, make_enode(IDENT, (void *)sp));
+                    var = list_put_last(var, EXPR_ARG2(ll));
+                    var = list_put_last(var, EXPR_ARG3(ll));
+                    var = list_put_last(var, NULL);
+                    loopSpec = list_put_last(loopSpec, var);
+                }
+                vL = list0(LIST);
+
+                for (i = 0; i < nDim; i++) {
+                    ll = expr_list_get_n(loopSpec, nDim - i - 1);
+                    vL = list_put_last(vL, EXPR_ARG1(ll));
+                }
+                refSpec = list2(F_ARRAY_REF, v, vL);
+
+                doSpec = genImpliedDo(loopSpec, nDim, 0, refSpec);
+                new = ExpandImpliedDoInDATA(doSpec, new);
+            } else {
+                new = list_put_last(new, v);
+            }
+            break;
+        }
+
+        case F_ARRAY_REF: {
+            expv idxV = NULL;
+            expv newV;
+            expv asV = getVariableSpec(v, &id);
+            if (id == NULL) {
+                return NULL;
+            }
+            if (asV == NULL) {
+                if (VAR_IS_UNCOMPILED_ARRAY(id) == FALSE) {
+                    error("'%s' is not an array.", ID_NAME(id));
+                    return NULL;
+                } else {
+                    goto DoPut;
+                }
+            }
+            if (EXPV_CODE(asV) == F_SUBSTR_REF) {
+                new = list_put_last(new, asV);
+                VAR_INIT_TYPE(id) = VAR_INIT_SUBSTR;
+                break;
+            }
+
             if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER &&
                 VAR_INIT_TYPE(id) != VAR_INIT_PARTIAL) {
                 error("\"%s\" is already initialized as %s.",
@@ -207,157 +325,46 @@ static expv serializeVariable(expv v, expv new) {
                 return NULL;
             }
             VAR_INIT_TYPE(id) = VAR_INIT_PARTIAL;
-        }
 
-        new = ExpandImpliedDoInDATA(v, new);
-        break;
-    }
-
-    case LIST: {
-        list lp;
-        expr x;
-
-        FOR_ITEMS_IN_LIST(lp, v) {
-            x = LIST_ITEM(lp);
-            new = serializeVariable(x, new);
-            if (new == NULL) {
+        DoPut:
+            idxV = expr_array_index(v);
+            if (idxV == NULL) {
                 return NULL;
             }
-        }
-        break;
-    }
-
-    case IDENT: {
-        expv asV = getVariableSpec(v, &id);
-        if (id == NULL) {
-            return NULL;
-        }
-        if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER) {
-            error("\"%s\" is already initialized as %s.", SYM_NAME(ID_SYM(id)),
-                  varInitTypeStr[VAR_INIT_TYPE(id)]);
-            return NULL;
-        }
-        VAR_INIT_TYPE(id) = VAR_INIT_WHOLE;
-
-        if (asV != NULL) {
-            /*
-             * Initialize whole array.
-             */
-            int nDim = (int)EXPV_INT_VALUE(EXPR_ARG1(asV));
-            int i;
-            expv ll;
-            SYMBOL sp;
-            char varName[64];
-            expv var;
-            expv vL;
-            expv refSpec;
-            expv loopSpec = list0(LIST);
-            expv doSpec;
-            ID dumId;
-
-            for (i = 0; i < nDim; i++) {
-                ll = expr_list_get_n(EXPR_ARG2(asV), nDim - i - 1);
-                if (ll == NULL) {
-                    error("can't initialize %s.", SYM_NAME(ID_SYM(id)));
-                    return NULL;
-                }
-                sprintf(varName, "__ImpDoIdx_%c", 'i' + nDim - i - 1);
-                sp = find_symbol(varName);
-                dumId = declare_ident(sp, CL_VAR);
-                declare_id_type(dumId, type_INT);
-                declare_variable(dumId);
-                VAR_IS_IMPLIED_DO_DUMMY(dumId) = TRUE;
-                var = list0(LIST);
-                var = list_put_last(var, make_enode(IDENT, (void *)sp));
-                var = list_put_last(var, EXPR_ARG2(ll));
-                var = list_put_last(var, EXPR_ARG3(ll));
-                var = list_put_last(var, NULL);
-                loopSpec = list_put_last(loopSpec, var);
-            }
-            vL = list0(LIST);
-
-            for (i = 0; i < nDim; i++) {
-                ll = expr_list_get_n(loopSpec, nDim - i - 1);
-                vL = list_put_last(vL, EXPR_ARG1(ll));
-            }
-            refSpec = list2(F_ARRAY_REF, v, vL);
-
-            doSpec = genImpliedDo(loopSpec, nDim, 0, refSpec);
-            new = ExpandImpliedDoInDATA(doSpec, new);
-        } else {
-            new = list_put_last(new, v);
-        }
-        break;
-    }
-
-    case F_ARRAY_REF: {
-        expv idxV = NULL;
-        expv newV;
-        expv asV = getVariableSpec(v, &id);
-        if (id == NULL) {
-            return NULL;
-        }
-        if (asV == NULL) {
-            if (VAR_IS_UNCOMPILED_ARRAY(id) == FALSE) {
-                error("'%s' is not an array.", ID_NAME(id));
-                return NULL;
-            } else {
-                goto DoPut;
-            }
-        }
-        if (EXPV_CODE(asV) == F_SUBSTR_REF) {
-            new = list_put_last(new, asV);
-            VAR_INIT_TYPE(id) = VAR_INIT_SUBSTR;
+            newV = list2(F_ARRAY_REF, EXPR_ARG1(v), idxV);
+            new = list_put_last(new, newV);
             break;
         }
 
-        if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER &&
-            VAR_INIT_TYPE(id) != VAR_INIT_PARTIAL) {
-            error("\"%s\" is already initialized as %s.", SYM_NAME(ID_SYM(id)),
-                  varInitTypeStr[VAR_INIT_TYPE(id)]);
+        case F_SUBSTR_REF: {
+            expv vTmp = compile_expression(v);
+            ID id;
+            expv newV;
+
+            if (vTmp == NULL || !IS_CHAR(EXPV_TYPE(vTmp))) {
+                fatal("sub string not char???");
+            }
+
+            getVariableSpec(EXPR_ARG1(v), &id);
+            if (id == NULL) {
+                return NULL;
+            }
+            if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER &&
+                VAR_INIT_TYPE(id) != VAR_INIT_SUBSTR) {
+                error("\"%s\" is already initialized as %s.",
+                      SYM_NAME(ID_SYM(id)), varInitTypeStr[VAR_INIT_TYPE(id)]);
+                return NULL;
+            }
+            VAR_INIT_TYPE(id) = VAR_INIT_SUBSTR;
+            newV = expv_sym_term(IDENT, ID_TYPE(id), EXPR_SYM(EXPR_ARG1(v)));
+            new = list_put_last(new, newV);
+            break;
+        }
+
+        default: {
+            error("invalid type in DATA statement.");
             return NULL;
         }
-        VAR_INIT_TYPE(id) = VAR_INIT_PARTIAL;
-
-    DoPut:
-        idxV = expr_array_index(v);
-        if (idxV == NULL) {
-            return NULL;
-        }
-        newV = list2(F_ARRAY_REF, EXPR_ARG1(v), idxV);
-        new = list_put_last(new, newV);
-        break;
-    }
-
-    case F_SUBSTR_REF: {
-        expv vTmp = compile_expression(v);
-        ID id;
-        expv newV;
-
-        if (vTmp == NULL || !IS_CHAR(EXPV_TYPE(vTmp))) {
-            fatal("sub string not char???");
-        }
-
-        getVariableSpec(EXPR_ARG1(v), &id);
-        if (id == NULL) {
-            return NULL;
-        }
-        if (VAR_INIT_TYPE(id) != VAR_INIT_NEVER &&
-            VAR_INIT_TYPE(id) != VAR_INIT_SUBSTR) {
-            error("\"%s\" is already initialized as %s.", SYM_NAME(ID_SYM(id)),
-                  varInitTypeStr[VAR_INIT_TYPE(id)]);
-            return NULL;
-        }
-        VAR_INIT_TYPE(id) = VAR_INIT_SUBSTR;
-        newV = expv_sym_term(IDENT, ID_TYPE(id), EXPR_SYM(EXPR_ARG1(v)));
-        new = list_put_last(new, newV);
-        break;
-    }
-
-    default: {
-        error("invalid type in DATA statement.");
-        return NULL;
-    }
     }
 
     return new;
@@ -365,13 +372,14 @@ static expv serializeVariable(expv v, expv new) {
 
 static char idxStrBuf[4096];
 
-static char *idxToStr(expv v) {
+static char *idxToStr(expv v)
+{
     list lp;
     char buf[sizeof(idxStrBuf)];
     int len;
     memset(idxStrBuf, 0, sizeof(idxStrBuf));
 
-    FOR_ITEMS_IN_LIST(lp, v) {
+    FOR_ITEMS_IN_LIST (lp, v) {
         sprintf(buf, "%lld,", EXPV_INT_VALUE(LIST_ITEM(lp)));
         strcat(idxStrBuf, buf);
     }
@@ -385,7 +393,8 @@ static char *idxToStr(expv v) {
  * vrV : variable
  * vlV : initial value
  */
-static int setInitialValue(expv vrV, expv vlV) {
+static int setInitialValue(expv vrV, expv vlV)
+{
     ID id;
     expv aSpec = getVariableSpec(vrV, &id);
     expv tryAssign = NULL;
@@ -407,8 +416,9 @@ static int setInitialValue(expv vrV, expv vlV) {
     if (ID_TYPE(id) == NULL) {
         if (ID_CLASS(id) == CL_VAR && VAR_IS_UNCOMPILED(id) == TRUE) {
             /*
-             * We can't determine the type yet, so at here, at this moment,
-             * assume that having an ID is the proof of validness.
+             * We can't determine the type yet, so at here, at this
+             * moment, assume that having an ID is the proof of
+             * validness.
              */
             return TRUE;
         }
@@ -479,7 +489,8 @@ static int setInitialValue(expv vrV, expv vlV) {
     return TRUE;
 }
 
-static int isValidDataDecl(expr x) {
+static int isValidDataDecl(expr x)
+{
     int valNum = 0;
     int varNum = 0;
     int num = 0;
@@ -494,8 +505,12 @@ static int isValidDataDecl(expr x) {
     if (varList == NULL || valList == NULL)
         return FALSE;
 
-    FOR_ITEMS_IN_LIST(lp, varList) { varNum++; }
-    FOR_ITEMS_IN_LIST(lp, valList) { valNum++; }
+    FOR_ITEMS_IN_LIST (lp, varList) {
+        varNum++;
+    }
+    FOR_ITEMS_IN_LIST (lp, valList) {
+        valNum++;
+    }
 
     num = (valNum > varNum) ? varNum : valNum;
 
@@ -550,20 +565,23 @@ static int isValidDataDecl(expr x) {
 /*     } */
 /* } */
 
-static void fixIdTypesInDataDecl(expr x) {
+static void fixIdTypesInDataDecl(expr x)
+{
     expr iX = NULL;
     ID id;
 
     switch (EXPR_CODE(x)) {
-    case IDENT: {
-        iX = x;
-        break;
-    }
-    case F_ARRAY_REF: {
-        iX = EXPR_ARG1(x);
-        break;
-    }
-    default: { break; }
+        case IDENT: {
+            iX = x;
+            break;
+        }
+        case F_ARRAY_REF: {
+            iX = EXPR_ARG1(x);
+            break;
+        }
+        default: {
+            break;
+        }
     }
 
     if (iX == NULL || EXPR_CODE(iX) != IDENT) {
@@ -576,14 +594,15 @@ static void fixIdTypesInDataDecl(expr x) {
     fix_type(id);
 }
 
-static int compile_DATA_decl_or_statement0(expv varAndVal, int is_declaration) {
+static int compile_DATA_decl_or_statement0(expv varAndVal, int is_declaration)
+{
     expv v, vVars, vVals, vLp;
     list lp;
 
     vVars = list0(LIST);
     vVals = list0(LIST);
 
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG1(varAndVal)) {
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG1(varAndVal)) {
         vLp = LIST_ITEM(lp);
 
         /*
@@ -603,7 +622,7 @@ static int compile_DATA_decl_or_statement0(expv varAndVal, int is_declaration) {
         list_put_last(vVars, v);
     }
 
-    FOR_ITEMS_IN_LIST(lp, EXPR_ARG2(varAndVal)) {
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(varAndVal)) {
         vLp = LIST_ITEM(lp);
         v = compile_expression(vLp);
         if (v == NULL) {
@@ -624,7 +643,8 @@ static int compile_DATA_decl_or_statement0(expv varAndVal, int is_declaration) {
     return TRUE;
 }
 
-void compile_DATA_decl_or_statement(expr x, int is_declaration) {
+void compile_DATA_decl_or_statement(expr x, int is_declaration)
+{
     list lp;
     list lp1;
     expr lx;
@@ -635,11 +655,11 @@ void compile_DATA_decl_or_statement(expr x, int is_declaration) {
      * x => (LIST ((LIST m n) (LIST 5 6)) ((LIST p) (LIST 7)))
      */
 
-    FOR_ITEMS_IN_LIST(lp, x) {
+    FOR_ITEMS_IN_LIST (lp, x) {
         varAndVal = LIST_ITEM(lp);
         /* varAndVal => ((LIST m n) (LIST 5 6)) */
 
-        FOR_ITEMS_IN_LIST(lp1, EXPR_ARG1(varAndVal)) {
+        FOR_ITEMS_IN_LIST (lp1, EXPR_ARG1(varAndVal)) {
             lx = LIST_ITEM(lp1);
             /* lx => m */
             fixIdTypesInDataDecl(lx);
