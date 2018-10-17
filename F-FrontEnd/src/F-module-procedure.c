@@ -3,18 +3,15 @@
 static HashTable genProcTbl;
 static int isInitialized = FALSE;
 
-static void
-destroy_module_procedure(mod_proc_t mp) {
+static void destroy_module_procedure(mod_proc_t mp) {
     if (mp != NULL) {
         free((void *)MOD_PROC_NAME(mp));
         free((void *)mp);
     }
 }
 
-
-static mod_proc_t
-create_module_procedure(const char *genName, const char *modName,
-                        TYPE_DESC tp) {
+static mod_proc_t create_module_procedure(const char *genName,
+                                          const char *modName, TYPE_DESC tp) {
     int succeeded = FALSE;
     mod_proc_t ret = NULL;
     gen_proc_t gp = NULL;
@@ -33,8 +30,7 @@ create_module_procedure(const char *genName, const char *modName,
             MOD_PROC_NAME(ret) = (const char *)strdup(modName);
             MOD_PROC_GEN_PROC(ret) = gp;
             MOD_PROC_TYPE(ret) = tp;
-            hPtr = CreateHashEntry(GEN_PROC_MOD_TABLE(gp),
-                                   MOD_PROC_NAME(ret),
+            hPtr = CreateHashEntry(GEN_PROC_MOD_TABLE(gp), MOD_PROC_NAME(ret),
                                    &isNew);
             if (hPtr != NULL && isNew == 1) {
                 SetHashValue(hPtr, (ClientData)ret);
@@ -44,7 +40,7 @@ create_module_procedure(const char *genName, const char *modName,
         }
     }
 
-    Done:
+Done:
     if (succeeded == FALSE) {
         if (hPtr != NULL && isNew == 1) {
             DeleteHashEntry(hPtr);
@@ -58,9 +54,7 @@ create_module_procedure(const char *genName, const char *modName,
     return ret;
 }
 
-
-static void
-destroy_generic_procedure(gen_proc_t gp) {
+static void destroy_generic_procedure(gen_proc_t gp) {
     if (gp != NULL) {
         HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
         if (tPtr != NULL) {
@@ -75,9 +69,7 @@ destroy_generic_procedure(gen_proc_t gp) {
                 }
             }
 
-            FOREACH_IN_HASH(hPtr, &sCtx, tPtr) {
-                DeleteHashEntry(hPtr);
-            }
+            FOREACH_IN_HASH(hPtr, &sCtx, tPtr) { DeleteHashEntry(hPtr); }
 
             DeleteHashTable(tPtr);
         }
@@ -88,9 +80,7 @@ destroy_generic_procedure(gen_proc_t gp) {
     }
 }
 
-
-static void
-destroy_all_generic_procedures(void) {
+static void destroy_all_generic_procedures(void) {
     HashEntry *hPtr;
     HashSearch sCtx;
     gen_proc_t gp;
@@ -102,14 +92,10 @@ destroy_all_generic_procedures(void) {
         }
     }
 
-    FOREACH_IN_HASH(hPtr, &sCtx, &genProcTbl) {
-        DeleteHashEntry(hPtr);
-    }
+    FOREACH_IN_HASH(hPtr, &sCtx, &genProcTbl) { DeleteHashEntry(hPtr); }
 }
 
-
-static gen_proc_t
-create_generic_procedure(const char *name) {
+static gen_proc_t create_generic_procedure(const char *name) {
     HashEntry *hPtr = NULL;
     int isNew = 0;
     int succeeded = FALSE;
@@ -141,8 +127,7 @@ create_generic_procedure(const char *name) {
     return ret;
 }
 
-void
-module_procedure_manager_init(void) {
+void module_procedure_manager_init(void) {
     if (is_in_module() == FALSE) {
         if (isInitialized == TRUE) {
             destroy_all_generic_procedures();
@@ -152,8 +137,7 @@ module_procedure_manager_init(void) {
     }
 }
 
-gen_proc_t
-find_generic_procedure(const char *name) {
+gen_proc_t find_generic_procedure(const char *name) {
     gen_proc_t gp = NULL;
     if (isValidString(name)) {
         HashEntry *hPtr = FindHashEntry(&genProcTbl, name);
@@ -164,9 +148,7 @@ find_generic_procedure(const char *name) {
     return gp;
 }
 
-
-gen_proc_t
-add_generic_procedure(const char *name, int *isNewPtr) {
+gen_proc_t add_generic_procedure(const char *name, int *isNewPtr) {
     gen_proc_t ret = find_generic_procedure(name);
     if (ret == NULL) {
         ret = create_generic_procedure(name);
@@ -188,9 +170,7 @@ add_generic_procedure(const char *name, int *isNewPtr) {
     return ret;
 }
 
-
-void
-delete_generic_procedure(gen_proc_t gp) {
+void delete_generic_procedure(gen_proc_t gp) {
     if (gp != NULL) {
         HashEntry *hPtr = GEN_PROC_HASH_ENTRY(gp);
         destroy_generic_procedure(gp);
@@ -198,9 +178,7 @@ delete_generic_procedure(gen_proc_t gp) {
     }
 }
 
-
-void
-delete_generic_procedure_by_name(const char *name) {
+void delete_generic_procedure_by_name(const char *name) {
     if (isValidString(name)) {
         gen_proc_t gp = find_generic_procedure(name);
         if (gp != NULL) {
@@ -209,9 +187,7 @@ delete_generic_procedure_by_name(const char *name) {
     }
 }
 
-
-mod_proc_t
-find_module_procedure(const char *genName, const char *modName) {
+mod_proc_t find_module_procedure(const char *genName, const char *modName) {
     gen_proc_t gp = NULL;
     mod_proc_t ret = NULL;
 
@@ -230,14 +206,12 @@ find_module_procedure(const char *genName, const char *modName) {
         }
     }
 
-    Done:
+Done:
     return ret;
 }
 
-
-mod_proc_t
-add_module_procedure(const char *genName, const char *modName,
-                     TYPE_DESC tp, int *isNewPtr) {
+mod_proc_t add_module_procedure(const char *genName, const char *modName,
+                                TYPE_DESC tp, int *isNewPtr) {
     mod_proc_t ret = find_module_procedure(genName, modName);
     if (ret == NULL) {
         ret = create_module_procedure(genName, modName, tp);
@@ -259,9 +233,7 @@ add_module_procedure(const char *genName, const char *modName,
     return ret;
 }
 
-
-void
-delete_module_procedure(mod_proc_t mp) {
+void delete_module_procedure(mod_proc_t mp) {
     if (mp != NULL) {
         HashEntry *hPtr = MOD_PROC_HASH_ENTRY(mp);
         destroy_module_procedure(mp);
@@ -269,9 +241,7 @@ delete_module_procedure(mod_proc_t mp) {
     }
 }
 
-
-void
-delete_module_procdure_by_name(const char *genName, const char *modName) {
+void delete_module_procdure_by_name(const char *genName, const char *modName) {
     if (isValidString(genName) && isValidString(modName)) {
         mod_proc_t mp = find_module_procedure(genName, modName);
         if (mp != NULL) {
@@ -280,9 +250,7 @@ delete_module_procdure_by_name(const char *genName, const char *modName) {
     }
 }
 
-
-static ID
-generate_module_procedure_dummy_args(expv args) {
+static ID generate_module_procedure_dummy_args(expv args) {
     expv v;
     list lp;
     TYPE_DESC tp;
@@ -313,9 +281,7 @@ generate_module_procedure_dummy_args(expv args) {
     return ret;
 }
 
-
-void
-fixup_module_procedure(mod_proc_t mp) {
+void fixup_module_procedure(mod_proc_t mp) {
     if (mp != NULL) {
         const char *modName = NULL;
         SYMBOL s = NULL;
@@ -334,9 +300,8 @@ fixup_module_procedure(mod_proc_t mp) {
                     eId = PROC_EXT_ID(id);
                 }
             }
-            if (eId != NULL &&
-                (EXT_PROC_CLASS(eId) == EP_MODULE_PROCEDURE ||
-                 EXT_PROC_CLASS(eId) == EP_PROC)) {
+            if (eId != NULL && (EXT_PROC_CLASS(eId) == EP_MODULE_PROCEDURE ||
+                                EXT_PROC_CLASS(eId) == EP_PROC)) {
                 tp = EXT_PROC_TYPE(eId);
                 args = EXT_PROC_ARGS(eId);
             }
@@ -363,9 +328,7 @@ fixup_module_procedure(mod_proc_t mp) {
     }
 }
 
-
-void
-fixup_module_procedures(gen_proc_t gp) {
+void fixup_module_procedures(gen_proc_t gp) {
     if (gp != NULL) {
         HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
         if (tPtr != NULL) {
@@ -379,9 +342,7 @@ fixup_module_procedures(gen_proc_t gp) {
     }
 }
 
-
-void
-fixup_all_module_procedures(void) {
+void fixup_all_module_procedures(void) {
     HashEntry *hPtr;
     HashSearch sCtx;
 
@@ -390,25 +351,20 @@ fixup_all_module_procedures(void) {
     }
 }
 
-
-static void
-collect_module_procedure_types(mod_proc_t mp, expr l) {
+static void collect_module_procedure_types(mod_proc_t mp, expr l) {
     if (mp != NULL) {
         expv v;
         TYPE_DESC ftp;
 
         if ((ftp = MOD_PROC_TYPE(mp)) != NULL) {
-            v = list2(LIST,
-                      expv_int_term(INT_CONSTANT, type_INT, 1),
+            v = list2(LIST, expv_int_term(INT_CONSTANT, type_INT, 1),
                       expv_any_term(IDENT, (void *)ftp));
             list_put_last(l, v);
         }
     }
 }
 
-
-static void
-collect_module_procedures_types(gen_proc_t gp, expr l) {
+static void collect_module_procedures_types(gen_proc_t gp, expr l) {
     if (gp != NULL) {
         HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
         if (tPtr != NULL) {
@@ -423,9 +379,7 @@ collect_module_procedures_types(gen_proc_t gp, expr l) {
     }
 }
 
-
-expr
-collect_all_module_procedures_types(void) {
+expr collect_all_module_procedures_types(void) {
     expr ret = list0(LIST);
     HashEntry *hPtr;
     HashSearch sCtx;
@@ -437,9 +391,7 @@ collect_all_module_procedures_types(void) {
     return ret;
 }
 
-
-void
-dump_module_procedure(mod_proc_t mp, FILE *fd) {
+void dump_module_procedure(mod_proc_t mp, FILE *fd) {
     if (mp != NULL) {
         TYPE_DESC tp = MOD_PROC_TYPE(mp);
         gen_proc_t gp = MOD_PROC_GEN_PROC(mp);
@@ -469,9 +421,7 @@ dump_module_procedure(mod_proc_t mp, FILE *fd) {
     }
 }
 
-
-void
-dump_module_procedures(gen_proc_t gp, FILE *fd) {
+void dump_module_procedures(gen_proc_t gp, FILE *fd) {
     if (gp != NULL) {
         HashTable *tPtr = GEN_PROC_MOD_TABLE(gp);
         if (tPtr != NULL) {
@@ -487,9 +437,7 @@ dump_module_procedures(gen_proc_t gp, FILE *fd) {
     }
 }
 
-
-void
-dump_all_module_procedures(FILE *fd) {
+void dump_all_module_procedures(FILE *fd) {
     HashEntry *hPtr;
     HashSearch sCtx;
 

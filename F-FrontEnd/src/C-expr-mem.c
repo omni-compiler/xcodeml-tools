@@ -6,20 +6,17 @@
 
 static struct list_node *cons_list _ANSI_ARGS_((expr x, struct list_node *l));
 
-char *
-xmalloc(size)
-     int size;
+char *xmalloc(size) int size;
 {
     char *p;
-    if((p = (char *)malloc(size)) == NULL)
-      fatal("no memory");
-    bzero(p,size);
-    return(p);
+    if ((p = (char *)malloc(size)) == NULL)
+        fatal("no memory");
+    bzero(p, size);
+    return (p);
 }
 
 /* lineno */
-lineno_info *new_line_info(int fid,int ln)
-{
+lineno_info *new_line_info(int fid, int ln) {
     lineno_info *l;
     l = XMALLOC(lineno_info *, sizeof(*l));
     l->file_id = fid;
@@ -28,8 +25,8 @@ lineno_info *new_line_info(int fid,int ln)
     return l;
 }
 
-#define SYMBOL_HASH_SIZE        0x400
-#define SYMBOL_HASH_MASK        (SYMBOL_HASH_SIZE - 1)
+#define SYMBOL_HASH_SIZE 0x400
+#define SYMBOL_HASH_MASK (SYMBOL_HASH_SIZE - 1)
 static SYMBOL symbol_hash_table[SYMBOL_HASH_SIZE];
 
 SYMBOL
@@ -39,8 +36,7 @@ find_symbol(const char *name) {
     const char *cp;
 
     if (name == NULL || *name == '\0') {
-        fatal("%s: About to find symbol NULL or null string.",
-              __func__);
+        fatal("%s: About to find symbol NULL or null string.", __func__);
         /* not reached */
         return NULL;
     }
@@ -51,7 +47,7 @@ find_symbol(const char *name) {
         hcode = (hcode << 1) + *cp;
     }
     hcode &= SYMBOL_HASH_MASK;
-    
+
     for (sp = symbol_hash_table[hcode]; sp != NULL; sp = sp->s_next) {
         if (strcmp(name, sp->s_name) == 0) {
             return sp;
@@ -66,7 +62,7 @@ find_symbol(const char *name) {
     /* link it */
     sp->s_next = symbol_hash_table[hcode];
     symbol_hash_table[hcode] = sp;
-    return(sp);
+    return (sp);
 }
 
 SYMBOL
@@ -76,8 +72,7 @@ find_symbol_without_allocate(const char *name) {
     const char *cp;
 
     if (name == NULL || *name == '\0') {
-        fatal("%s: About to find symbol NULL or null string.",
-              __func__);
+        fatal("%s: About to find symbol NULL or null string.", __func__);
         /* not reached */
         return NULL;
     }
@@ -88,7 +83,7 @@ find_symbol_without_allocate(const char *name) {
         hcode = (hcode << 1) + *cp;
     }
     hcode &= SYMBOL_HASH_MASK;
-    
+
     for (sp = symbol_hash_table[hcode]; sp != NULL; sp = sp->s_next) {
         if (strcmp(name, sp->s_name) == 0) {
             return sp;
@@ -98,13 +93,11 @@ find_symbol_without_allocate(const char *name) {
 }
 
 #ifndef HAVE_STRDUP
-char *
-strdup(s)
-     char *s;
+char *strdup(s) char *s;
 {
     char *p;
     int len = strlen(s);
-    
+
     p = XMALLOC(char *, len + 1);
     memcpy(p, s, len);
     p[len] = '\0';
@@ -112,146 +105,131 @@ strdup(s)
 }
 #endif /* !HAVE_STRDUP */
 
-expr
-make_enode(code,v)
-     enum expr_code code;
-     void *v;
+expr make_enode(code, v) enum expr_code code;
+void *v;
 {
     expr ep;
-    
-    ep = XMALLOC(expr,sizeof(*ep));
+
+    ep = XMALLOC(expr, sizeof(*ep));
     ep->e_code = code;
     ep->e_line = current_line;
     ep->v.e_gen = v;
-    return(ep);
+    return (ep);
 }
 
-expr make_float_enode(code,d,token)
-     enum expr_code code;
-     omldouble_t d;
-     const char *token;
+expr make_float_enode(code, d, token) enum expr_code code;
+omldouble_t d;
+const char *token;
 {
     expr ep;
-    
-    ep = XMALLOC(expr,sizeof(*ep));
+
+    ep = XMALLOC(expr, sizeof(*ep));
     ep->e_code = code;
     ep->e_line = current_line;
     ep->v.e_lfval = d;
     ep->e_original_token = token;
-    return(ep);
+    return (ep);
 }
 
-expr make_int_enode(i)
-     omllint_t i;
+expr make_int_enode(i) omllint_t i;
 {
     expr ep;
-    
-    ep = XMALLOC(expr,sizeof(*ep));
+
+    ep = XMALLOC(expr, sizeof(*ep));
     ep->e_code = INT_CONSTANT;
     ep->e_line = current_line;
     ep->v.e_llval = i;
-    return(ep);
+    return (ep);
 }
 
-struct list_node *cons_list(x,l)
-     expr x;
-     struct list_node *l;
+struct list_node *cons_list(x, l) expr x;
+struct list_node *l;
 {
     struct list_node *lp;
-    
-    lp = XMALLOC(struct list_node *,sizeof(struct list_node));
+
+    lp = XMALLOC(struct list_node *, sizeof(struct list_node));
     lp->l_next = l;
     lp->l_item = x;
     lp->l_last = NULL;
     lp->l_array = NULL;
     lp->l_nItems = 1;
-    return(lp);
+    return (lp);
 }
 
-expr list0(code)
-     enum expr_code code;
+expr list0(code) enum expr_code code;
+{ return (make_enode(code, NULL)); }
+
+expr list1(code, x1) enum expr_code code;
+expr x1;
+{ return (make_enode(code, (void *)cons_list(x1, NULL))); }
+
+expr list2(code, x1, x2) enum expr_code code;
+expr x1, x2;
+{ return (make_enode(code, (void *)cons_list(x1, cons_list(x2, NULL)))); }
+
+expr list3(code, x1, x2, x3) enum expr_code code;
+expr x1, x2, x3;
 {
-    return(make_enode(code,NULL));
+    return (make_enode(
+        code, (void *)cons_list(x1, cons_list(x2, cons_list(x3, NULL)))));
 }
 
-expr list1(code,x1)
-     enum expr_code code;
-     expr x1;
+expr list4(code, x1, x2, x3, x4) enum expr_code code;
+expr x1, x2, x3, x4;
 {
-    return(make_enode(code,(void *)cons_list(x1,NULL)));
+    return (make_enode(
+        code, (void *)cons_list(
+                  x1, cons_list(x2, cons_list(x3, cons_list(x4, NULL))))));
 }
 
-expr list2(code,x1,x2)
-     enum expr_code code;
-     expr x1,x2;
+expr list5(code, x1, x2, x3, x4, x5) enum expr_code code;
+expr x1, x2, x3, x4, x5;
 {
-    return(make_enode(code,(void *)cons_list(x1,cons_list(x2,NULL))));
+    return (make_enode(code,
+                       (void *)cons_list(x1, cons_list(x2, cons_list(x3, cons_\
+list(x4, cons_list(x5, NULL)))))));
 }
 
-expr list3(code,x1,x2,x3)
-     enum expr_code code;
-     expr x1,x2,x3;
+expr list6(code, x1, x2, x3, x4, x5, x6) enum expr_code code;
+expr x1, x2, x3, x4, x5, x6;
 {
-    return(make_enode(code,(void *)cons_list(x1,cons_list(x2,cons_list(x3,NULL)))));
+    return (make_enode(code,
+                       (void *)cons_list(x1, cons_list(x2, cons_list(x3, cons_\
+list(x4, cons_list(x5, cons_list(x6, NULL))))))));
 }
 
-expr list4(code,x1,x2,x3,x4)
-     enum expr_code code;
-     expr x1,x2,x3,x4;
+expr list_cons(v, w) expv v, w;
 {
-    return(make_enode(code,(void *)cons_list(x1,cons_list(x2,cons_list(x3,cons_list(x4,NULL))))));
+    EXPR_LIST(w) = cons_list(v, EXPR_LIST(w));
+    return (w);
 }
 
-expr list5(code,x1,x2,x3,x4,x5)
-     enum expr_code code;
-     expr x1,x2,x3,x4,x5;
-{
-    return(make_enode(code,(void *)cons_list(x1,cons_list(x2,cons_list(x3,cons_\
-list(x4,cons_list(x5,NULL)))))));
-}
-
-expr list6(code,x1,x2,x3,x4,x5,x6)
-     enum expr_code code;
-     expr x1,x2,x3,x4,x5,x6;
-{
-    return(make_enode(code,(void *)cons_list(x1,cons_list(x2,cons_list(x3,cons_\
-list(x4,cons_list(x5,cons_list(x6,NULL))))))));
-}
-
-expr list_cons(v,w)
-     expv v,w;
-{
-    EXPR_LIST(w) = cons_list(v,EXPR_LIST(w));
-    return(w);
-}
-
-expr list_put_last(lx,x)
-     expr lx;
-     expr x;
+expr list_put_last(lx, x) expr lx;
+expr x;
 {
     struct list_node *lp;
 
-    if (lx == NULL) return(lx); /* error recovery in C-parser.y */
+    if (lx == NULL)
+        return (lx); /* error recovery in C-parser.y */
     lp = lx->v.e_lp;
     if (lp == NULL) {
-      lx->v.e_lp = cons_list(x,NULL);
+        lx->v.e_lp = cons_list(x, NULL);
     } else {
         if (LIST_LAST(lp) != NULL) {
             lp = LIST_LAST(lp);
         } else {
-            for (; lp->l_next != NULL; lp = lp->l_next) /* */;
+            for (; lp->l_next != NULL; lp = lp->l_next) /* */
+                ;
         }
-        lp->l_next = cons_list(x,NULL);
+        lp->l_next = cons_list(x, NULL);
         LIST_LAST(lx->v.e_lp) = lp->l_next;
         LIST_N_ITEMS(lx->v.e_lp) += 1;
     }
-    return(lx);
+    return (lx);
 }
 
-expr
-list_delete_item(lx, x)
-     expr lx;
-     expr x;
+expr list_delete_item(lx, x) expr lx;
+expr x;
 {
     list lp;
     list oLp;
@@ -267,7 +245,8 @@ list_delete_item(lx, x)
     if (lp != NULL) {
         if (lp == first) {
             if (LIST_NEXT(lp)) {
-                struct list_node *l = (struct list_node *)malloc(sizeof(struct list_node));
+                struct list_node *l =
+                    (struct list_node *)malloc(sizeof(struct list_node));
                 memcpy(l, LIST_NEXT(lp), sizeof(struct list_node));
                 LIST_NEXT(lp) = NULL;
                 EXPR_LIST(lx) = l;
@@ -291,16 +270,13 @@ list_delete_item(lx, x)
     return lx;
 }
 
-
-void
-delete_list(expr lx)
-{
+void delete_list(expr lx) {
     list lp;
     list prev_list;
 
     lp = lx->v.e_lp;
 
-    while(lp != NULL) {
+    while (lp != NULL) {
         prev_list = lp;
         lp = LIST_NEXT(lp);
         free(prev_list);
@@ -308,4 +284,3 @@ delete_list(expr lx)
 
     free(lx);
 }
-

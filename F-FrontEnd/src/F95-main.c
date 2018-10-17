@@ -28,7 +28,7 @@ int nerrors;
 char *original_source_file_name = NULL;
 char *source_file_name = NULL;
 char *output_file_name = NULL;
-FILE *source_file,*output_file;
+FILE *source_file, *output_file;
 
 /* -save=? */
 int auto_save_attr_kb = -1;
@@ -37,14 +37,12 @@ int endlineno_flag = 0;
 int ocl_flag = 0;
 int cdir_flag = 0;
 int max_name_len = -1;
-int dollar_ok = 0; // accept '$' in identifier or not. 
+int dollar_ok = 0; // accept '$' in identifier or not.
 
-extern int      yyparse _ANSI_ARGS_((void));
-static void     check_nerrors _ANSI_ARGS_((void));
+extern int yyparse _ANSI_ARGS_((void));
+static void check_nerrors _ANSI_ARGS_((void));
 
-static int
-getVarSize(str)
-char *str;
+static int getVarSize(str) char *str;
 {
     int ret = 0;
     char *ePtr = NULL;
@@ -60,37 +58,33 @@ char *str;
     }
 }
 
-static void
-cmd_error_exit EXC_VARARGS_DEF(char *, fmt)
-{
+static void cmd_error_exit EXC_VARARGS_DEF(char *, fmt) {
     va_list args;
 
-    fprintf(stderr, "error: " );
+    fprintf(stderr, "error: ");
     EXC_VARARGS_START(char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
     check_nerrors();
     exit(EXITCODE_ERR);
 }
 
-static void
-cmd_warning EXC_VARARGS_DEF(char *, fmt)
-{ 
+static void cmd_warning EXC_VARARGS_DEF(char *, fmt) {
     va_list args;
 
-    fprintf(stderr, "warning: " );
+    fprintf(stderr, "warning: ");
     EXC_VARARGS_START(char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
     check_nerrors();
 }
 
 /* xmodule path */
-char xmodule_path[MAX_PATH_LEN] = { 0 };
+char xmodule_path[MAX_PATH_LEN] = {0};
 
 /* module compile(-MC=) arg.  */
 int mcLn_no = -1;
@@ -113,13 +107,9 @@ int flag_do_module_cache = TRUE;
 
 char *xmoduleIncludeDirv = NULL;
 
-static void
-usage()
-{
+static void usage() {
     const char *usages[] = {
-        "",
-        "OPTIONS",
-        "",
+        "", "OPTIONS", "",
         /* "-d", */
         /* "-yd", */
         "-o [outputfile]           specify output file path.",
@@ -128,8 +118,10 @@ usage()
         "-fopenmp                  enable openmp translation.",
         "-facc                     enable OpenACC translation.",
         "-fxmp                     enable XcalableMP translation.",
-        "-fno-xmp-coarray          disable translation coarray statements to XcalableMP subroutin calls.",
-        "-fintrinsic-xmodules-path specify a xmod path for the intrinsic modules.",
+        "-fno-xmp-coarray          disable translation coarray statements to "
+        "XcalableMP subroutin calls.",
+        "-fintrinsic-xmodules-path specify a xmod path for the intrinsic "
+        "modules.",
         "-Kscope-omp               enable conditional compilation.",
         "-force-fixed-format       read file as fixed format.",
         "-force-free-format        read file as free format.",
@@ -146,20 +138,17 @@ usage()
         "-r[N]                     set double precision size (default N=8).",
         "--save[=n]                add save attribute than n kbytes except",
         "                          in a recursive function and common "
-                                  "variables.",
+        "variables.",
         "                          (default n=1)",
         "-max_name_len=n           set maximum identifier name length.",
         "-fdollar-ok               enable using \'$\' in identifier.",
-	"-fleave-comment           leave comment in xcodeml file.",
-	"-endlineno                output the endlineno attribute.",
-        "",
-        "internal options:",
-        "-d                        enable debug mode.",
+        "-fleave-comment           leave comment in xcodeml file.",
+        "-endlineno                output the endlineno attribute.", "",
+        "internal options:", "-d                        enable debug mode.",
         "-no-module-cache          always load module from file.",
 
-        NULL
-    };
-    const char * const *p = usages;
+        NULL};
+    const char *const *p = usages;
 
     fprintf(stderr, "usage: %s <OPTIONS> <INPUT_FILE>\n", myName);
 
@@ -168,10 +157,8 @@ usage()
     }
 }
 
-int
-main(argc, argv) 
-int argc; 
-char *argv[]; 
+int main(argc, argv) int argc;
+char *argv[];
 {
     extern int fixed_format_flag;
     extern int max_line_len;
@@ -198,17 +185,17 @@ char *argv[];
     ++argv;
 
     /* parse command line */
-    while(argc > 0 && argv[0] != NULL) {
+    while (argc > 0 && argv[0] != NULL) {
         if (argv[0][0] != '-' && argv[0][0] != '\0') {
-            if(source_file_name != NULL)
+            if (source_file_name != NULL)
                 cmd_error_exit("too many arguments");
 
             source_file_name = argv[0];
             original_source_file_name = source_file_name;
 
-            if((source_file = fopen(source_file_name,"r")) == NULL)
-                cmd_error_exit("cannot open file : %s",source_file_name);
-        } else if (strcmp(argv[0],"-d") == 0) {
+            if ((source_file = fopen(source_file_name, "r")) == NULL)
+                cmd_error_exit("cannot open file : %s", source_file_name);
+        } else if (strcmp(argv[0], "-d") == 0) {
             ++debug_flag;
         } else if (strcmp(argv[0], "-yd") == 0) {
 #if YYDEBUG != 0
@@ -217,28 +204,28 @@ char *argv[];
         } else if (strcmp(argv[0], "-o") == 0) {
             argc--;
             argv++;
-            if((argc == 0) || (argv[0] == NULL) || (*argv[0] == '\0')) {
+            if ((argc == 0) || (argv[0] == NULL) || (*argv[0] == '\0')) {
                 cmd_error_exit("output file name not specified.");
             }
             output_file_name = argv[0];
-            if((output_file = fopen(output_file_name,"w")) == NULL)
-                cmd_error_exit("cannot open file : %s",output_file_name);
-            if(xmodule_path[0] == '\0') {
+            if ((output_file = fopen(output_file_name, "w")) == NULL)
+                cmd_error_exit("cannot open file : %s", output_file_name);
+            if (xmodule_path[0] == '\0') {
                 char *dir = strdup(output_file_name);
                 strcpy(xmodule_path, dirname(dir));
             }
-        } else if (strcmp(argv[0],"-fopenmp") == 0){
-            OMP_flag = TRUE;   /* enable openmp */
-        } else if (strcmp(argv[0],"-fxmp") == 0){
-	    XMP_flag = TRUE;   /* enable XcalableMP */
-        } else if (strcmp(argv[0],"-fno-xmp-coarray") == 0){
-            XMP_coarray_flag = FALSE;   /* disable XcalableMP coarray subroutine*/
-        } else if (strcmp(argv[0],"-facc") == 0){
-	    ACC_flag = TRUE;   /* enable OpenACC */
-        } else if (strcmp(argv[0],"-Kscope-omp") == 0){
-	    cond_compile_enabled = TRUE;
-        } else if (strcmp(argv[0],"-fleave-comment") == 0){
-	    leave_comment_flag = TRUE;
+        } else if (strcmp(argv[0], "-fopenmp") == 0) {
+            OMP_flag = TRUE; /* enable openmp */
+        } else if (strcmp(argv[0], "-fxmp") == 0) {
+            XMP_flag = TRUE; /* enable XcalableMP */
+        } else if (strcmp(argv[0], "-fno-xmp-coarray") == 0) {
+            XMP_coarray_flag = FALSE; /* disable XcalableMP coarray subroutine*/
+        } else if (strcmp(argv[0], "-facc") == 0) {
+            ACC_flag = TRUE; /* enable OpenACC */
+        } else if (strcmp(argv[0], "-Kscope-omp") == 0) {
+            cond_compile_enabled = TRUE;
+        } else if (strcmp(argv[0], "-fleave-comment") == 0) {
+            leave_comment_flag = TRUE;
         } else if (strncmp(argv[0], "-max-line-length=", 17) == 0) {
             max_line_len = atoi(argv[0] + 17);
         } else if (strncmp(argv[0], "-max-cont-line=", 15) == 0) {
@@ -246,42 +233,51 @@ char *argv[];
         } else if (strcmp(argv[0], "-u") == 0) {
             doImplicitUndef = TRUE;
         } else if (strcmp(argv[0], "-C") == 0) {
-            cmd_warning("Array range check is not supported, just ignore this option.");
+            cmd_warning(
+                "Array range check is not supported, just ignore this option.");
         } else if (strncmp(argv[0], "-r", 2) == 0) {
             int sz = getVarSize(argv[0] + 2);
             switch (sz) {
-            case SIZEOF_FLOAT:      defaultSingleRealType = TYPE_REAL; break;
-            case SIZEOF_DOUBLE:     defaultSingleRealType = TYPE_DREAL; break;
+            case SIZEOF_FLOAT:
+                defaultSingleRealType = TYPE_REAL;
+                break;
+            case SIZEOF_DOUBLE:
+                defaultSingleRealType = TYPE_DREAL;
+                break;
             default: {
-                cmd_error_exit(
-                    "invalid single-real size %d, must be %d or %d.",
-                    sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
+                cmd_error_exit("invalid single-real size %d, must be %d or %d.",
+                               sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
             }
             }
         } else if (strncmp(argv[0], "-d", 2) == 0) {
             int sz = getVarSize(argv[0] + 2);
             switch (sz) {
-            case SIZEOF_FLOAT:      defaultDoubleRealType = TYPE_REAL; break;
-            case SIZEOF_DOUBLE:     defaultDoubleRealType = TYPE_DREAL; break;
+            case SIZEOF_FLOAT:
+                defaultDoubleRealType = TYPE_REAL;
+                break;
+            case SIZEOF_DOUBLE:
+                defaultDoubleRealType = TYPE_DREAL;
+                break;
             default: {
-                cmd_error_exit(
-                    "invalid double-real size %d, must be %d or %d.",
-                    sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
+                cmd_error_exit("invalid double-real size %d, must be %d or %d.",
+                               sz, SIZEOF_FLOAT, SIZEOF_DOUBLE);
             }
             }
         } else if (strcmp(argv[0], "-force-fixed-format") == 0) {
             if (flag_force_fixed_format != -1)
-                cmd_warning("it seems to be set both of -force-fixed-format and -force-free-format.");
+                cmd_warning("it seems to be set both of -force-fixed-format "
+                            "and -force-free-format.");
             /* do not file name checking for fixed-format.  */
             flag_force_fixed_format = TRUE;
         } else if (strcmp(argv[0], "-force-free-format") == 0) {
             if (flag_force_fixed_format != -1)
-                cmd_warning("it seems to be set both of -force-fixed-format and -force-free-format.");
+                cmd_warning("it seems to be set both of -force-fixed-format "
+                            "and -force-free-format.");
             flag_force_fixed_format = FALSE;
         } else if (strncmp(argv[0], "-TD=", 4) == 0) {
             /* -TD=directoryPath */
             strcpy(xmodule_path, argv[0] + 4);
-            if(strlen(xmodule_path) == 0)
+            if (strlen(xmodule_path) == 0)
                 cmd_error_exit("invalid path after -TD.");
         } else if (strcmp(argv[0], "-module-compile") == 0) {
             flag_module_compile = TRUE;
@@ -306,7 +302,7 @@ char *argv[];
                     "over the maximum include search dir. vector, %d",
                     MAXINCLUDEDIRV);
             }
-	}else if (strncmp(argv[0], "-M", 2) == 0) {
+        } else if (strncmp(argv[0], "-M", 2) == 0) {
             /* -M <anotherDir> or -M<anotherDir> */
             char *path;
             if (strlen(argv[0]) == 2) {
@@ -319,12 +315,12 @@ char *argv[];
                 /* -M<anotherDir> */
                 path = argv[0] + 2;
             }
-            if(modincludeDirvI < MAXMODINCLUDEDIRV){
+            if (modincludeDirvI < MAXMODINCLUDEDIRV) {
                 modincludeDirv[modincludeDirvI++] = path;
             } else {
                 cmd_error_exit(
-                     "over the maximum module include search dir. vector, %d",
-                     MAXMODINCLUDEDIRV);
+                    "over the maximum module include search dir. vector, %d",
+                    MAXMODINCLUDEDIRV);
             }
         } else if (strcmp(argv[0], "-fintrinsic-xmodules-path") == 0) {
             char *path;
@@ -348,8 +344,10 @@ char *argv[];
         } else if (strcmp(argv[0], "-force-c-comment") == 0) {
             /* enable c comment in free format.  */
             flag_force_c_comment = TRUE;
-            if (flag_force_fixed_format == 1)  {
-                cmd_warning("no need option for enable c comment(-force-c-comment) in fixed format mode(.f or .F).");
+            if (flag_force_fixed_format == 1) {
+                cmd_warning(
+                    "no need option for enable c comment(-force-c-comment) in "
+                    "fixed format mode(.f or .F).");
             }
         } else if (strcmp(argv[0], "--save") == 0) {
             auto_save_attr_kb = 1; // 1kbytes
@@ -358,38 +356,42 @@ char *argv[];
             if (auto_save_attr_kb < 0)
                 cmd_error_exit("invalid value after -save.");
         } else if (strncmp(argv[0], "-max-name-len=", 14) == 0) {
-            max_name_len = atoi(argv[0]+14);
-            if (max_name_len < MAX_NAME_LEN){
+            max_name_len = atoi(argv[0] + 14);
+            if (max_name_len < MAX_NAME_LEN) {
                 max_name_len = MAX_NAME_LEN;
-                sprintf(message_str, "attempt to set too small value for max_name_len. use %d.", 
-                       MAX_NAME_LEN);
+                sprintf(
+                    message_str,
+                    "attempt to set too small value for max_name_len. use %d.",
+                    MAX_NAME_LEN);
                 cmd_warning(message_str);
             }
-            if (max_name_len > MAX_NAME_LEN_UPPER_LIMIT){
+            if (max_name_len > MAX_NAME_LEN_UPPER_LIMIT) {
                 max_name_len = MAX_NAME_LEN_UPPER_LIMIT;
-                sprintf(message_str, "attempt to set too large value for max_name_len. use %d.", 
-                        MAX_NAME_LEN_UPPER_LIMIT);
+                sprintf(
+                    message_str,
+                    "attempt to set too large value for max_name_len. use %d.",
+                    MAX_NAME_LEN_UPPER_LIMIT);
                 cmd_warning(message_str);
             }
-            if( debug_flag ){
+            if (debug_flag) {
                 sprintf(message_str, "max_name_len = %d", max_name_len);
                 cmd_warning(message_str);
             }
-        } else if (strcmp(argv[0],"-fdollar-ok") == 0){
-	    dollar_ok = 1;   /* enable using '$' in identifier */
+        } else if (strcmp(argv[0], "-fdollar-ok") == 0) {
+            dollar_ok = 1; /* enable using '$' in identifier */
         } else if (strcmp(argv[0], "-endlineno") == 0) {
- 	    endlineno_flag = 1;
-	} else if (strcmp(argv[0], "-ocl") == 0) {
- 	    ocl_flag = 1;
-	} else if (strcmp(argv[0], "-cdir") == 0) {
- 	    cdir_flag = 1;
+            endlineno_flag = 1;
+        } else if (strcmp(argv[0], "-ocl") == 0) {
+            ocl_flag = 1;
+        } else if (strcmp(argv[0], "-cdir") == 0) {
+            cdir_flag = 1;
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
             exit(0);
         } else if (strcmp(argv[0], "-no-module-cache") == 0) {
             flag_do_module_cache = FALSE;
         } else {
-            cmd_error_exit("unknown option : %s",argv[0]);
+            cmd_error_exit("unknown option : %s", argv[0]);
         }
         --argc;
         ++argv;
@@ -405,9 +407,8 @@ char *argv[];
         /* file name checking for fixed-format.  */
         if (flag_force_fixed_format == -1) { /* unset?  */
             const char *dotPos = strrchr(source_file_name, '.');
-            if (dotPos != NULL &&
-                (strcasecmp(dotPos, ".f") == 0 ||
-                 strcasecmp(dotPos, ".f77") == 0)) {
+            if (dotPos != NULL && (strcasecmp(dotPos, ".f") == 0 ||
+                                   strcasecmp(dotPos, ".f77") == 0)) {
                 fixed_format_flag = TRUE;
             }
         } else {
@@ -415,21 +416,21 @@ char *argv[];
         }
     }
 
-    if(output_file_name == NULL) {
+    if (output_file_name == NULL) {
         output_file = stdout;
-        if(getcwd(xmodule_path, MAX_PATH_LEN) == NULL) {
+        if (getcwd(xmodule_path, MAX_PATH_LEN) == NULL) {
             cmd_error_exit("cannot get current directory");
         }
     }
 
-    if( max_line_len < 0 ){ /* unset */
-        max_line_len = fixed_format_flag ? DEFAULT_MAX_LINE_LEN_FIXED :
-                       DEFAULT_MAX_LINE_LEN_FREE;
+    if (max_line_len < 0) { /* unset */
+        max_line_len = fixed_format_flag ? DEFAULT_MAX_LINE_LEN_FIXED
+                                         : DEFAULT_MAX_LINE_LEN_FREE;
     }
 
-    if( max_name_len < 0 ){ /* unset */
-      //max_name_len = fixed_format_flag?MAX_NAME_LEN_F77:MAX_NAME_LEN_F03;
-      max_name_len = MAX_NAME_LEN;
+    if (max_name_len < 0) { /* unset */
+        // max_name_len = fixed_format_flag?MAX_NAME_LEN_F77:MAX_NAME_LEN_F03;
+        max_name_len = MAX_NAME_LEN;
     }
 
     /* DEBUG */
@@ -440,26 +441,24 @@ char *argv[];
     initialize_compile();
 
     /* start processing */
-/* FEAST add start */
+    /* FEAST add start */
     second_pass_init();
-/* FEAST add  end  */
+    /* FEAST add  end  */
     parseError = yyparse();
-    if (nerrors != 0 ||
-        parseError != 0) {
+    if (nerrors != 0 || parseError != 0) {
         goto Done;
     }
     nerrors = 0;
 
-/* FEAST add start */
+    /* FEAST add start */
     /* second pass */
     parseError = second_pass();
     /* printf("parseError = %d, nerrors = %d\n", parseError, nerrors); */
-    if (nerrors != 0 ||
-        parseError != 0) {
+    if (nerrors != 0 || parseError != 0) {
         goto Done;
     }
-/* FEAST add  end  */
-    
+    /* FEAST add  end  */
+
     /* end compile */
     if (unit_ctl_level != 0) {
         error("contains stack is not closed properly");
@@ -473,7 +472,7 @@ char *argv[];
     if (nerrors != 0) {
         goto Done;
     }
-    
+
     /* output XcodeML/Fortran code */
     output_XcodeML_file();
 
@@ -488,13 +487,11 @@ Done:
     return (nerrors ? EXITCODE_ERR : EXITCODE_OK);
 }
 
-const char *
-search_include_path(const char * filename)
-{
+const char *search_include_path(const char *filename) {
     int i;
     int length;
     static char path[MAX_PATH_LEN];
-    FILE * fp;
+    FILE *fp;
 
     if ((fp = fopen(filename, "r")) != NULL) {
         fclose(fp);
@@ -510,9 +507,9 @@ search_include_path(const char * filename)
         return filename;
     }
 
-    if (modincludeDirvI > 0){
+    if (modincludeDirvI > 0) {
         // Iterate over available module search path
-        for(i = 0; i < modincludeDirvI; i++){
+        for (i = 0; i < modincludeDirvI; i++) {
             strcpy(path, modincludeDirv[i]);
             strcat(path, "/");
             strcat(path, filename);
@@ -537,20 +534,17 @@ search_include_path(const char * filename)
     return NULL;
 }
 
-void
-where(lineno_info *ln)
-{ 
+void where(lineno_info *ln) {
     extern SYMBOL current_module_name;
 
     /* print location of error  */
     if (ln != NULL) {
         if (current_module_name == NULL)
-            fprintf(stderr, "\"%s\", line %d: ",FILE_NAME(ln->file_id), ln->ln_no);
-        else
-            fprintf(stderr, "\"%s:%s\", line %d: ",
-                    FILE_NAME(ln->file_id),
-                    SYM_NAME(current_module_name),
+            fprintf(stderr, "\"%s\", line %d: ", FILE_NAME(ln->file_id),
                     ln->ln_no);
+        else
+            fprintf(stderr, "\"%s:%s\", line %d: ", FILE_NAME(ln->file_id),
+                    SYM_NAME(current_module_name), ln->ln_no);
     } else {
         fprintf(stderr, "\"??\", line ??: ");
     }
@@ -558,9 +552,7 @@ where(lineno_info *ln)
 
 /* nonfatal error message */
 /* VARARGS0 */
-void
-error EXC_VARARGS_DEF(char *, fmt)
-{ 
+void error EXC_VARARGS_DEF(char *, fmt) {
     va_list args;
 
     ++nerrors;
@@ -568,16 +560,13 @@ error EXC_VARARGS_DEF(char *, fmt)
     EXC_VARARGS_START(char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
     check_nerrors();
 }
 
-
 /* VARARGS0 */
-void
-error_at_node EXC_VARARGS_DEF(expr, x)
-{
+void error_at_node EXC_VARARGS_DEF(expr, x) {
     va_list args;
     char *fmt;
 
@@ -587,16 +576,13 @@ error_at_node EXC_VARARGS_DEF(expr, x)
     fmt = va_arg(args, char *);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
     check_nerrors();
 }
 
-
 /* VARARGS0 */
-void
-error_at_id EXC_VARARGS_DEF(ID, x)
-{
+void error_at_id EXC_VARARGS_DEF(ID, x) {
     va_list args;
     char *fmt;
 
@@ -606,126 +592,111 @@ error_at_id EXC_VARARGS_DEF(ID, x)
     fmt = va_arg(args, char *);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
     check_nerrors();
 }
 
-
 /* VARARGS0 */
-void
-warning_at_node EXC_VARARGS_DEF(expr, x)
-{ 
+void warning_at_node EXC_VARARGS_DEF(expr, x) {
     va_list args;
     char *fmt;
 
     where(EXPR_LINE(x)); /*, "WarnAtNode"); */
-    fprintf(stderr,"warning: ");
+    fprintf(stderr, "warning: ");
     EXC_VARARGS_START(expr, x, args);
     fmt = va_arg(args, char *);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
 }
 
-
-void
-warning_at_id EXC_VARARGS_DEF(ID, x)
-{ 
+void warning_at_id EXC_VARARGS_DEF(ID, x) {
     va_list args;
     char *fmt;
 
     where(ID_LINE(x));
-    fprintf(stderr,"warning: ");
+    fprintf(stderr, "warning: ");
     EXC_VARARGS_START(ID, x, args);
     fmt = va_arg(args, char *);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
 }
 
-
 /* debug message */
 /* VARARGS0 */
-void
-debug EXC_VARARGS_DEF(char *, fmt)
-{
+void debug EXC_VARARGS_DEF(char *, fmt) {
     va_list args;
 
-    if (!debug_flag) return;
+    if (!debug_flag)
+        return;
 
     ++nerrors;
     where(current_line);
     EXC_VARARGS_START(char *, fmt, args);
     vfprintf(debug_fp, fmt, args);
     va_end(args);
-    fprintf(debug_fp, "\n" );
+    fprintf(debug_fp, "\n");
     fflush(debug_fp);
     check_nerrors();
 }
 
-
-static void
-check_nerrors()
-{
-    if(nerrors > 30)
-    {
+static void check_nerrors() {
+    if (nerrors > 30) {
         /* give the compiler the benefit of the doubt */
-        fprintf(stderr, 
-                "too many error, cannot recover from earlier errors: goodbye!\n" );
+        fprintf(
+            stderr,
+            "too many error, cannot recover from earlier errors: goodbye!\n");
         exit(EXITCODE_ERR);
     }
 }
 
 /* compiler error: die */
 /* VARARGS1 */
-void
-fatal EXC_VARARGS_DEF(char *, fmt)
-{ 
+void fatal EXC_VARARGS_DEF(char *, fmt) {
     va_list args;
-    
+
     where(current_line); /*, "Fatal");*/
-    fprintf(stderr, "compiler error: " );
+    fprintf(stderr, "compiler error: ");
     EXC_VARARGS_START(char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
     abort();
 }
 
-int warning_flag = FALSE; 
+int warning_flag = FALSE;
 
 /* warning with lineno_info */
-void
-warning_lineno (lineno_info * info, char * fmt, ...)
-{
+void warning_lineno(lineno_info *info, char *fmt, ...) {
     va_list args;
 
-    if (warning_flag) return;
+    if (warning_flag)
+        return;
     where(info); /*, "Warn");*/
     EXC_VARARGS_START(char *, fmt, args);
-    fprintf(stderr, "warning: " );
+    fprintf(stderr, "warning: ");
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
 }
 
 /* warning */
-void
-warning EXC_VARARGS_DEF(char *, fmt)
-{
+void warning EXC_VARARGS_DEF(char *, fmt) {
     va_list args;
 
-    if (warning_flag) return;
+    if (warning_flag)
+        return;
     where(current_line); /*, "Warn");*/
     EXC_VARARGS_START(char *, fmt, args);
-    fprintf(stderr, "warning: " );
+    fprintf(stderr, "warning: ");
     vfprintf(stderr, fmt, args);
     va_end(args);
-    fprintf(stderr, "\n" );
+    fprintf(stderr, "\n");
     fflush(stderr);
 }
