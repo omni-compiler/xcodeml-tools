@@ -6,6 +6,7 @@
 #define SP_ERR_CHAR_LEN 2
 #define SP_ERR_FATAL 3
 #define SP_ERR_UNDEF_TYPE_FUNC 4
+#define SP_ERR_FOWARD_FUNC 5
 
 extern void second_pass_init();
 extern int second_pass();
