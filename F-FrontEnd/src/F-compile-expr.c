@@ -1275,6 +1275,12 @@ compile_ident_expression(expr x)
             ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
         }
         goto done;
+    } else {
+        // Fix for issue #52
+        id = find_ident(sym);
+        tp = ID_TYPE(id);
+        ret = expv_sym_term(IDENT, tp, ID_SYM(id));
+        sp_link_id(id, SP_ERR_FOWARD_FUNC, current_line);
     }
 
     done:

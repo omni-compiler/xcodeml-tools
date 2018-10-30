@@ -151,6 +151,14 @@ static int second_pass_clean()
       error("attempt to use undefined type function, %s", ID_NAME(list->info.id));
       err_num++;
       break;
+    case SP_ERR_FOWARD_FUNC: /* 5 */
+      current_line = list->line;
+      TYPE_DESC tpFunc = list->info.id->type;
+      if (tpFunc && (IS_SUBR(tpFunc) || IS_FUNCTION_TYPE(tpFunc))) break;
+      error("attempt to use undefined variable or function, %s",
+          ID_NAME(list->info.id));
+      err_num++;
+      break;
     case SP_ERR_FATAL:  /* 3 */
       current_line = list->line;
       error("%s: invalid code", SYM_NAME(EXPR_SYM(list->info.ep)));
