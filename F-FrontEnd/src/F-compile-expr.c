@@ -570,12 +570,18 @@ compile_expression(expr x)
         case F_POWER_EXPR: op = POWER_EXPR;   biop = ARITB; goto binary_op;
 
         /* relational operator */
-        case F_EQ_EXPR:  op = LOG_EQ_EXPR;    biop = RELAB; goto binary_op;
-        case F_NE_EXPR:  op = LOG_NEQ_EXPR;   biop = RELAB; goto binary_op;
-        case F_GT_EXPR:  op = LOG_GT_EXPR;    biop = RELAB; goto binary_op;
-        case F_GE_EXPR:  op = LOG_GE_EXPR;    biop = RELAB; goto binary_op;
-        case F_LT_EXPR:  op = LOG_LT_EXPR;    biop = RELAB; goto binary_op;
-        case F_LE_EXPR:  op = LOG_LE_EXPR;    biop = RELAB; goto binary_op;
+        case F_EQ_EXPR_DOT: op = LOG_EQ_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_EQ_EXPR:     op = LOG_EQ_EXPR;      biop = RELAB; goto binary_op;
+        case F_NE_EXPR_DOT: op = LOG_NEQ_EXPR_DOT; biop = RELAB; goto binary_op;
+        case F_NE_EXPR:     op = LOG_NEQ_EXPR;     biop = RELAB; goto binary_op;
+        case F_GT_EXPR_DOT: op = LOG_GT_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_GT_EXPR:     op = LOG_GT_EXPR;      biop = RELAB; goto binary_op;
+        case F_GE_EXPR_DOT: op = LOG_GE_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_GE_EXPR:     op = LOG_GE_EXPR;      biop = RELAB; goto binary_op;
+        case F_LT_EXPR_DOT: op = LOG_LT_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_LT_EXPR:     op = LOG_LT_EXPR;      biop = RELAB; goto binary_op;
+        case F_LE_EXPR_DOT: op = LOG_LE_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_LE_EXPR:     op = LOG_LE_EXPR;      biop = RELAB; goto binary_op;
 
         /* logical operator */
         case F_EQV_EXPR:    op = F_EQV_EXPR;    biop = LOGIB; goto binary_op;
@@ -644,7 +650,9 @@ compile_expression(expr x)
                             error_msg = "illegal comparison";
                         }
                     } else if (IS_COMPLEX(bLType) || IS_COMPLEX(bRType)) {
-                        if (op != LOG_EQ_EXPR && op!= LOG_NEQ_EXPR) {
+                        if (op != LOG_EQ_EXPR && op != LOG_EQ_EXPR_DOT 
+                            && op!= LOG_NEQ_EXPR && op != LOG_NEQ_EXPR_DOT) 
+                        {
                             error_msg = "order comparison of complex data";
                         }
                     } else if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||

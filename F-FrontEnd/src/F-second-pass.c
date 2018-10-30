@@ -443,7 +443,13 @@ static void second_pass_expv_scan(expv v)
   case F_LT_EXPR:
   case F_LE_EXPR:
   case F_NE_EXPR:
-  case F_OR_EXPR:
+  case F_EQ_EXPR_DOT:
+  case F_GT_EXPR_DOT:
+  case F_GE_EXPR_DOT:
+  case F_LT_EXPR_DOT:
+  case F_LE_EXPR_DOT:
+  case F_NE_EXPR_DOT:
+  case F_OR_EXPR_DOT:
   case F_AND_EXPR:
   case F_NOT_EXPR:
   case F_ARRAY_REF:
@@ -512,6 +518,12 @@ static void second_pass_expv_scan(expv v)
   case F95_LEOP:
   case F95_GEOP:
   case F95_GTOP:
+  case F95_EQOP_DOT:
+  case F95_NEOP_DOT:
+  case F95_LTOP_DOT:
+  case F95_LEOP_DOT:
+  case F95_GEOP_DOT:
+  case F95_GTOP_DOT:
   case F95_NOTOP:
   case F95_ANDOP:
   case F95_OROP:
