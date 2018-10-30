@@ -94,7 +94,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
     expectedOut=`echo ${f} | sed -e 's_/enabled/_/result/_g' -e 's_/tp/_/result/_g' -e 's/.f90$/.res/g' -e 's/.f$/.res/g' -e 's/.f08$/.res/g'`
     executeResult=${b}.res
     skipNative=${f}.skip.native
-    skipTrans=${f}.skip.trans
+    nativeOriginal=${f}.native # Compile the original file with the native compiler
     fOpts=''
     if test -f ${f}.options; then
         fOpts=`cat ${f}.options`
@@ -103,13 +103,10 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
         additionalNativeOpts=`cat ${f}.native.options`
     fi
 
-    if test ! -e "${skipTrans}"; then
-        ${frontend} ${frontendOpt} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} -o ${xmlOut} > ${errOut} 2>&1
-    fi
+    ${frontend} ${frontendOpt} ${F_FRONT_TEST_OPTS} ${fOpts} -I ${testdata} ${f} -o ${xmlOut} > ${errOut} 2>&1
     if test $? -eq 0; then
-        if test ! -e "${skipTrans}"; then
-            ${backend} --test ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
-        else
+        ${backend} --test ${backendOpt} ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1
+        if test ! -e "${nativeOriginal}"; then
             decompiledSrc=${f}
         fi
         if test $? -eq 0; then
