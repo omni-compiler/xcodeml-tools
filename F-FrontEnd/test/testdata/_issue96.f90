@@ -31,5 +31,5 @@ contains
     type(t1), intent(in) :: lhs
     type(t1), intent(in) :: rhs
     lt = lhs%id < rhs%id
-  end function greater_than
+  end function less_than
 end module mo_operator
