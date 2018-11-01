@@ -6216,7 +6216,8 @@ compile_INTERFACE_statement(expr x)
                     error_at_node(x,
                                   "'%s' is already defined"
                                   " as a generic procedure in module '%s'",
-                                  SYM_NAME(s), iid->use_assoc->module_name);
+                                  SYM_NAME(s), 
+                                  SYM_NAME(iid->use_assoc->module_name));
                 else
                     use_associated_ep = PROC_EXT_ID(iid);
             }
