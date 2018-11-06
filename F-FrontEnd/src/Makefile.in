@@ -75,6 +75,9 @@ install: $(F_FRONT)
 	$(MKDIR_P) $(XMODDIR)
 	$(INSTALL) $(INTRMOD) $(XMODDIR)
 
+format:
+	clang-format -i *.c *.h
+
 clean:
 	rm -f *.o $(CREATE_FILES) $(F_FRONT)
 
