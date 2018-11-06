@@ -6049,18 +6049,30 @@ get_generic_spec_symbol(int expr_code){
         gen_spec = make_enode(IDENT, (void *)find_symbol("+"));
     } else if(expr_code == F95_MINUSOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol("-"));
-    } else if(expr_code == F95_EQOP) {
+    } else if(expr_code == F95_EQOP_DOT) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".eq."));
-    } else if(expr_code == F95_NEOP) {
+    } else if(expr_code == F95_EQOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("=="));   
+    } else if(expr_code == F95_NEOP_DOT) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".ne."));
-    } else if(expr_code == F95_LTOP) {
+    } else if(expr_code == F95_NEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("/="));        
+    } else if(expr_code == F95_LTOP_DOT) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".lt."));
-    } else if(expr_code == F95_LEOP) {
+    } else if(expr_code == F95_LTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("<"));        
+    } else if(expr_code == F95_LEOP_DOT) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".le."));
-    } else if(expr_code == F95_GEOP) {
+    } else if(expr_code == F95_LEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol("<="));        
+    } else if(expr_code == F95_GEOP_DOT) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".ge."));
-    } else if(expr_code == F95_GTOP) {
+    } else if(expr_code == F95_GEOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(">="));        
+    } else if(expr_code == F95_GTOP_DOT) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".gt."));
+    } else if(expr_code == F95_GTOP) {
+        gen_spec = make_enode(IDENT, (void *)find_symbol(">"));        
     } else if(expr_code == F95_NOTOP) {
         gen_spec = make_enode(IDENT, (void *)find_symbol(".not."));
     } else if(expr_code == F95_ANDOP) {
@@ -6259,6 +6271,12 @@ compile_INTERFACE_statement(expr x)
         case F95_LEOP:
         case F95_GEOP:
         case F95_GTOP:
+        case F95_EQOP_DOT:
+        case F95_NEOP_DOT:
+        case F95_LTOP_DOT:
+        case F95_LEOP_DOT:
+        case F95_GEOP_DOT:
+        case F95_GTOP_DOT:
         case F95_NOTOP:
         case F95_ANDOP:
         case F95_OROP:

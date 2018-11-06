@@ -6045,6 +6045,12 @@ compile_type_bound_generic_procedure(expr x)
                 case F95_EQVOP:
                 case F95_NEQVOP:
                 case F95_CONCATOP:
+                case F95_EQOP_DOT:
+                case F95_NEOP_DOT:
+                case F95_LTOP_DOT:
+                case F95_LEOP_DOT:
+                case F95_GEOP_DOT:
+                case F95_GTOP_DOT:
                     binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR;
                     break;
                 default:

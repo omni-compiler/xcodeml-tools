@@ -245,12 +245,18 @@ state 2058
 %token NEQV     /* .neqv. */
 %token EQV      /* .eqv. */
 %token NOT      /* .not. */
-%token EQ       /* .eq. */
-%token LT       /* .lt. */
-%token GT       /* .gt. */
-%token LE       /* .le. */
-%token GE       /* .ge. */
-%token NE       /* .ne. */
+%token EQ_DOT   /* .eq. */
+%token LT_DOT   /* .lt. */
+%token GT_DOT   /* .gt. */
+%token LE_DOT   /* .le. */
+%token GE_DOT   /* .ge. */
+%token NE_DOT   /* .ne. */
+%token EQ       /* == */
+%token LT       /* < */
+%token GT       /* > */
+%token LE       /* <= */
+%token GE       /* >= */
+%token NE       /* /= */
 %token USER_DEFINED_OP /* .USER_DEFINED. */
 
 /* Specify precedences and associativities. */
@@ -263,6 +269,7 @@ state 2058
 %left AND
 %left NOT
 %nonassoc LT GT LE GE EQ NE
+%nonassoc LT_DOT GT_DOT LE_DOT GE_DOT EQ_DOT NE_DOT
 %left CONCAT REF_OP
 %left '+' '-'
 %left '*' '/'
@@ -914,6 +921,18 @@ intrinsic_operator: '.'
         { $$ = list0(F95_PLUSOP); }
         | '-'
         { $$ = list0(F95_MINUSOP); }
+        | EQ_DOT
+        { $$ = list0(F95_EQOP_DOT); }
+        | NE_DOT
+        { $$ = list0(F95_NEOP_DOT); }
+        | LT_DOT
+        { $$ = list0(F95_LTOP_DOT); }
+        | LE_DOT
+        { $$ = list0(F95_LEOP_DOT); }
+        | GE_DOT
+        { $$ = list0(F95_GEOP_DOT); }
+        | GT_DOT
+        { $$ = list0(F95_GTOP_DOT); } 
         | EQ
         { $$ = list0(F95_EQOP); }
         | NE
@@ -925,7 +944,7 @@ intrinsic_operator: '.'
         | GE
         { $$ = list0(F95_GEOP); }
         | GT
-        { $$ = list0(F95_GTOP); }
+        { $$ = list0(F95_GTOP); } 
         | NOT
         { $$ = list0(F95_NOTOP); }
         | AND
@@ -2281,16 +2300,28 @@ expr:     lhs
         { $$ = list2(F_POWER_EXPR,$1,$3); }
         | expr EQ expr  %prec EQ
         { $$ = list2(F_EQ_EXPR,$1,$3); }
+        | expr EQ_DOT expr  %prec EQ
+        { $$ = list2(F_EQ_EXPR_DOT,$1,$3); }
         | expr GT expr  %prec EQ
         { $$ = list2(F_GT_EXPR,$1,$3); }
+        | expr GT_DOT expr  %prec EQ
+        { $$ = list2(F_GT_EXPR_DOT,$1,$3); }
         | expr LT expr  %prec EQ
         { $$ = list2(F_LT_EXPR,$1,$3); }
+        | expr LT_DOT expr  %prec EQ
+        { $$ = list2(F_LT_EXPR_DOT,$1,$3); }
         | expr GE expr  %prec EQ
         { $$ = list2(F_GE_EXPR,$1,$3); }
+        | expr GE_DOT expr  %prec EQ
+        { $$ = list2(F_GE_EXPR_DOT,$1,$3); }
         | expr LE expr  %prec EQ
         { $$ = list2(F_LE_EXPR,$1,$3); }
+        | expr LE_DOT expr  %prec EQ
+        { $$ = list2(F_LE_EXPR_DOT,$1,$3); }
         | expr NE expr  %prec EQ
         { $$ = list2(F_NE_EXPR,$1,$3); }
+        | expr NE_DOT expr  %prec EQ
+        { $$ = list2(F_NE_EXPR_DOT,$1,$3); }
         | expr EQV expr
         { $$ = list2(F_EQV_EXPR,$1,$3); }
         | expr NEQV expr
