@@ -5,155 +5,133 @@
 #include "F-front.h"
 
 /* construct expression */
-expv
-expv_cons(code,tp,left,right)
-     enum expr_code code;
-     TYPE_DESC tp;
-     expv left,right;
+expv expv_cons(code, tp, left, right) enum expr_code code;
+TYPE_DESC tp;
+expv left, right;
 {
     expv v;
-    struct list_node *l,*r;
+    struct list_node *l, *r;
 
-    v = XMALLOC(expv,sizeof(*v));
-    l = XMALLOC(struct list_node *,sizeof(struct list_node));
+    v = XMALLOC(expv, sizeof(*v));
+    l = XMALLOC(struct list_node *, sizeof(struct list_node));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = tp;
     EXPV_LIST(v) = l;
     l->l_item = left;
-    if(right){
-        r = XMALLOC(struct list_node *,sizeof(struct list_node));
+    if (right) {
+        r = XMALLOC(struct list_node *, sizeof(struct list_node));
         r->l_item = right;
         l->l_next = r;
     }
-    return(v);
+    return (v);
 }
 
-expv
-expv_user_def_cons(code, tp, id, left, right)
-     enum expr_code code;
-     TYPE_DESC tp;
-     expv id,left,right;
+expv expv_user_def_cons(code, tp, id, left, right) enum expr_code code;
+TYPE_DESC tp;
+expv id, left, right;
 {
     expv v;
-    struct list_node *i,*l,*r;
+    struct list_node *i, *l, *r;
 
-    v = XMALLOC(expv,sizeof(*v));
-    i = XMALLOC(struct list_node *,sizeof(struct list_node));
-    l = XMALLOC(struct list_node *,sizeof(struct list_node));
+    v = XMALLOC(expv, sizeof(*v));
+    i = XMALLOC(struct list_node *, sizeof(struct list_node));
+    l = XMALLOC(struct list_node *, sizeof(struct list_node));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = tp;
     EXPV_LIST(v) = i;
     i->l_item = id;
     i->l_next = l;
     l->l_item = left;
-    if(right){
-        r = XMALLOC(struct list_node *,sizeof(struct list_node));
+    if (right) {
+        r = XMALLOC(struct list_node *, sizeof(struct list_node));
         r->l_item = right;
         l->l_next = r;
     }
-    return(v);
+    return (v);
 }
 
-
 /* FOR:
- *      IDENT 
+ *      IDENT
  *      STRING_CONSTANT
  *      LABEL_CONSTANT
- */     
-expv
-expv_sym_term(code,tp,name)
-     enum expr_code code;
-     TYPE_DESC tp;
-     SYMBOL name;
+ */
+expv expv_sym_term(code, tp, name) enum expr_code code;
+TYPE_DESC tp;
+SYMBOL name;
 {
     expv v;
 
-    v = XMALLOC(expv,sizeof(*v));
+    v = XMALLOC(expv, sizeof(*v));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = tp;
     EXPV_NAME(v) = name;
-    return(v);
+    return (v);
 }
 
-expv
-expv_str_term(code,tp,str)
-     enum expr_code code;
-     TYPE_DESC tp;
-     char *str;
+expv expv_str_term(code, tp, str) enum expr_code code;
+TYPE_DESC tp;
+char *str;
 {
     expv v;
 
-    v = XMALLOC(expv,sizeof(*v));
+    v = XMALLOC(expv, sizeof(*v));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = tp;
     EXPV_STR(v) = strdup(str);
-    return(v);
+    return (v);
 }
 
-
-expv
-expv_int_term(code, tp, i)
-     enum expr_code code;
-     TYPE_DESC tp;
-     omllint_t i;
+expv expv_int_term(code, tp, i) enum expr_code code;
+TYPE_DESC tp;
+omllint_t i;
 {
     expv v;
 
-    v = XMALLOC(expv,sizeof(*v));
+    v = XMALLOC(expv, sizeof(*v));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = tp;
     EXPV_INT_VALUE(v) = i;
-    return(v);
+    return (v);
 }
 
-
-expv
-expv_any_term(code,p)
-     enum expr_code code;
-     void *p;
+expv expv_any_term(code, p) enum expr_code code;
+void *p;
 {
     expv v;
 
-    v = XMALLOC(expv,sizeof(*v));
+    v = XMALLOC(expv, sizeof(*v));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = NULL;
     EXPV_GEN(v) = p;
-    return(v);
+    return (v);
 }
 
-expv
-expv_float_term(code,tp,d,token)
-     enum expr_code code;
-     TYPE_DESC tp;
-     omldouble_t d;
-     const char *token;
+expv expv_float_term(code, tp, d, token) enum expr_code code;
+TYPE_DESC tp;
+omldouble_t d;
+const char *token;
 {
     expv v;
 
-    v = XMALLOC(expv,sizeof(*v));
+    v = XMALLOC(expv, sizeof(*v));
     EXPV_CODE(v) = code;
     EXPV_TYPE(v) = tp;
     EXPV_FLOAT_VALUE(v) = d;
     EXPV_ORIGINAL_TOKEN(v) = token;
-    return(v);
+    return (v);
 }
 
-expv
-expv_retype(tp,v)
-     TYPE_DESC tp;
-     expv v;
+expv expv_retype(tp, v) TYPE_DESC tp;
+expv v;
 {
     expv vv;
-    vv = XMALLOC(expv,sizeof(*v));
-    bcopy(v,vv,sizeof(*v));
+    vv = XMALLOC(expv, sizeof(*v));
+    bcopy(v, vv, sizeof(*v));
     EXPV_TYPE(vv) = tp;
-    return(vv);
+    return (vv);
 }
 
-
-static void
-listToArray(lp)
-     list lp;
+static void listToArray(lp) list lp;
 {
     if (LIST_ARRAY(lp) == NULL) {
         list lq;
@@ -164,7 +142,8 @@ listToArray(lp)
         }
         LIST_N_ITEMS(lp) = n;
         if (LIST_N_ITEMS(lp) > 0) {
-            LIST_ARRAY(lp) = (struct list_node **)malloc(sizeof(struct list_node *) * LIST_N_ITEMS(lp));
+            LIST_ARRAY(lp) = (struct list_node **)malloc(
+                sizeof(struct list_node *) * LIST_N_ITEMS(lp));
             for (lq = lp; i < LIST_N_ITEMS(lp); i++, lq = lq->l_next) {
                 lp->l_array[i] = lq;
             }
@@ -172,43 +151,41 @@ listToArray(lp)
     }
 }
 
-expr
-expr_list_get_n(x, n)
-     expr x;
-     int n;
+expr expr_list_get_n(x, n) expr x;
+int n;
 {
     list lp;
     int i;
-    for (i = 0, lp = EXPR_LIST(x); (i < n && lp != NULL); i++, lp = LIST_NEXT(lp)) {};
+    for (i = 0, lp = EXPR_LIST(x); (i < n && lp != NULL);
+         i++, lp = LIST_NEXT(lp)) {
+    };
     if (lp == NULL) {
         return NULL;
     }
     return LIST_ITEM(lp);
 }
 
-expr
-expr_list_get_n_or_named(x, n, named_arg)
-     expr x;
-     int n;
-     const char* named_arg;
+expr expr_list_get_n_or_named(x, n, named_arg) expr x;
+int n;
+const char *named_arg;
 {
     list lp;
     int i;
 
-    for (i = 0, lp = EXPR_LIST(x); (i < n && lp != NULL); i++, lp = LIST_NEXT(lp)) {};
+    for (i = 0, lp = EXPR_LIST(x); (i < n && lp != NULL);
+         i++, lp = LIST_NEXT(lp)) {
+    };
     if (lp == NULL) {
         return NULL;
     }
-    if(EXPV_KWOPT_NAME(LIST_ITEM(lp)) == NULL 
-        || strcmp(EXPV_KWOPT_NAME(LIST_ITEM(lp)), named_arg) == 0) 
-    {
+    if (EXPV_KWOPT_NAME(LIST_ITEM(lp)) == NULL ||
+        strcmp(EXPV_KWOPT_NAME(LIST_ITEM(lp)), named_arg) == 0) {
         return LIST_ITEM(lp);
     } else {
         for (i = 0, lp = EXPR_LIST(x); lp != NULL; ++i, lp = LIST_NEXT(lp)) {
-            if(LIST_ITEM(lp) != NULL) {
-                if(EXPV_KWOPT_NAME(LIST_ITEM(lp)) != NULL 
-                  && strcmp(named_arg, EXPV_KWOPT_NAME(LIST_ITEM(lp))) == 0) 
-                {
+            if (LIST_ITEM(lp) != NULL) {
+                if (EXPV_KWOPT_NAME(LIST_ITEM(lp)) != NULL &&
+                    strcmp(named_arg, EXPV_KWOPT_NAME(LIST_ITEM(lp))) == 0) {
                     return LIST_ITEM(lp);
                 }
             }
@@ -217,15 +194,13 @@ expr_list_get_n_or_named(x, n, named_arg)
     return NULL;
 }
 
-int
-expr_list_set_n(x, n, val, doOverride)
-     expr x;
-     int n;
-     expr val;
-     int doOverride;
+int expr_list_set_n(x, n, val, doOverride) expr x;
+int n;
+expr val;
+int doOverride;
 {
     list lp = EXPR_LIST(x);
-    
+
     if (LIST_ARRAY(lp) == NULL) {
         listToArray(lp);
     }
@@ -243,15 +218,14 @@ expr_list_set_n(x, n, val, doOverride)
     return TRUE;
 }
 
-
-int
-expr_list_length(expr x) {
+int expr_list_length(expr x)
+{
     int ret = 0;
 
     if (EXPR_CODE_IS_LIST(EXPR_CODE(x))) {
         list lp;
 
-        FOR_ITEMS_IN_LIST(lp, x) {
+        FOR_ITEMS_IN_LIST (lp, x) {
             ret++;
         }
     }
