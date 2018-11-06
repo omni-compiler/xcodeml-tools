@@ -326,8 +326,11 @@ expr_is_constant_typeof(x, bt)
              * expr may be array ref or character ref or intrinsic call
              */
 
-            if (((id = find_ident(EXPR_SYM(x1))) == NULL && SYM_TYPE(EXPR_SYM(x1)) == S_INTR) ||
-                (ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_INTRINSIC)) {
+            if (((id = find_ident(EXPR_SYM(x1))) == NULL 
+                && SYM_TYPE(EXPR_SYM(x1)) == S_INTR) 
+                || (id != NULL && ID_CLASS(id) == CL_PROC 
+                && PROC_CLASS(id) == P_INTRINSIC)) 
+            {
                 if (id == NULL) {
                     id = declare_ident(EXPR_SYM(x1), CL_UNKNOWN);
                     ID_CLASS(id) = CL_PROC;
@@ -341,7 +344,9 @@ expr_is_constant_typeof(x, bt)
                     return FALSE;
                 }
 
-                if ((v = compile_function_call_check_intrinsic_arg_type(id, EXPR_ARG2(x), TRUE)) == NULL) {
+                if ((v = compile_function_call_check_intrinsic_arg_type(id, 
+                    EXPR_ARG2(x), TRUE)) == NULL) 
+                {
                     return FALSE;
                 }
                 if (bt != TYPE_UNKNOWN) {

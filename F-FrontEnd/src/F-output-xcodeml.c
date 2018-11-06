@@ -198,11 +198,17 @@ xtag(enum expr_code code)
     case DIV_EXPR:                  return "divExpr";
     case POWER_EXPR:                return "FpowerExpr";
     case F_CONCAT_EXPR:             return "FconcatExpr";
+    case LOG_EQ_EXPR_DOT:
     case LOG_EQ_EXPR:               return "logEQExpr";
+    case LOG_NEQ_EXPR_DOT:
     case LOG_NEQ_EXPR:              return "logNEQExpr";
+    case LOG_GE_EXPR_DOT:
     case LOG_GE_EXPR:               return "logGEExpr";
+    case LOG_GT_EXPR_DOT:
     case LOG_GT_EXPR:               return "logGTExpr";
+    case LOG_LE_EXPR_DOT:
     case LOG_LE_EXPR:               return "logLEExpr";
+    case LOG_LT_EXPR_DOT:
     case LOG_LT_EXPR:               return "logLTExpr";
     case LOG_AND_EXPR:              return "logAndExpr";
     case LOG_OR_EXPR:               return "logOrExpr";
@@ -294,6 +300,12 @@ xtag(enum expr_code code)
     case F_DIV_EXPR:
     case F_UNARY_MINUS_EXPR:
     case F_POWER_EXPR:
+    case F_EQ_EXPR_DOT:
+    case F_GT_EXPR_DOT:
+    case F_GE_EXPR_DOT:
+    case F_LT_EXPR_DOT:
+    case F_LE_EXPR_DOT:
+    case F_NE_EXPR_DOT:
     case F_EQ_EXPR:
     case F_GT_EXPR:
     case F_GE_EXPR:
@@ -374,6 +386,12 @@ xtag(enum expr_code code)
     case F95_LEOP:
     case F95_GEOP:
     case F95_GTOP:
+    case F95_EQOP_DOT:
+    case F95_NEOP_DOT:
+    case F95_LTOP_DOT:
+    case F95_LEOP_DOT:
+    case F95_GEOP_DOT:
+    case F95_GTOP_DOT:
     case F95_NOTOP:
     case F95_ANDOP:
     case F95_OROP:
@@ -644,6 +662,7 @@ outx_false(int cond, const char *flagname)
 #define TOPT_NEXTLINE   (1 << 1)
 #define TOPT_CLOSE      (1 << 2)
 #define TOPT_INTRINSIC  (1 << 3)
+#define TOPT_SYMBOL     (1 << 4)
 
 
 static int
@@ -867,6 +886,9 @@ outx_typeAttrs(int l, TYPE_DESC tp, const char *tag, int options)
 
     if((options & TOPT_INTRINSIC) > 0)
         outx_true(1, "is_intrinsic");
+    
+    if((options & TOPT_SYMBOL) > 0)
+        outx_true(1, "is_symbol");
 
     if((options & TOPT_NEXTLINE) > 0)
         outx_print(">\n");
@@ -1045,7 +1067,7 @@ outx_tagText(int l, const char *tag, const char *s)
 }
 
 
-#define outx_symbolName(l, s)   outx_tagText(l, "name", SYM_NAME(s))
+#define outx_symbolName(l, s)   outx_tagText(l, "name", getXmlEscapedStr(SYM_NAME(s)))
 #define outx_expvName(l, v)     outx_symbolName(l, EXPV_NAME(v))
 
 
@@ -1089,7 +1111,7 @@ static void
 outx_symbolNameWithType_ID(int l, ID id)
 {
     outx_typeAttrs(l, ID_TYPE(id), "name", TOPT_TYPEONLY);
-    outx_print(">%s</name>\n", SYM_NAME(ID_SYM(id)));
+    outx_print(">%s</name>\n", getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
 }
 
 
@@ -3305,10 +3327,14 @@ outx_udefOp(int l, expv v)
  * output binary operator
  */
 static void
-outx_binaryOp(int l, expv v)
+outx_binaryOp(int l, expv v, int is_symbol)
 {
     const int l1 = l + 1;
-    outx_tagOfExpression(l, v);
+    if(is_symbol) {
+        outx_tagOfExpression1(l, v, TOPT_SYMBOL);
+    } else {
+        outx_tagOfExpression(l, v);
+    }
     outx_expv(l1, EXPR_ARG1(v));
     outx_expv(l1, EXPR_ARG2(v));
     outx_expvClose(l, v);
@@ -3883,17 +3909,23 @@ outx_expv(int l, expv v)
     case MUL_EXPR:
     case DIV_EXPR:
     case POWER_EXPR:
+    case LOG_EQ_EXPR_DOT:
+    case LOG_NEQ_EXPR_DOT:
+    case LOG_GE_EXPR_DOT:
+    case LOG_GT_EXPR_DOT:
+    case LOG_LE_EXPR_DOT:
+    case LOG_LT_EXPR_DOT:
+    case LOG_AND_EXPR:
+    case LOG_OR_EXPR:
+    case F_EQV_EXPR:
+    case F_NEQV_EXPR:
+    case F_CONCAT_EXPR:     outx_binaryOp(l, v, FALSE); break;
     case LOG_EQ_EXPR:
     case LOG_NEQ_EXPR:
     case LOG_GE_EXPR:
     case LOG_GT_EXPR:
     case LOG_LE_EXPR:
-    case LOG_LT_EXPR:
-    case LOG_AND_EXPR:
-    case LOG_OR_EXPR:
-    case F_EQV_EXPR:
-    case F_NEQV_EXPR:
-    case F_CONCAT_EXPR:     outx_binaryOp(l, v); break;
+    case LOG_LT_EXPR:       outx_binaryOp(l, v, TRUE); break;
     case LOG_NOT_EXPR:
     case UNARY_MINUS_EXPR:  outx_unaryOp(l, v); break;
 
@@ -4073,6 +4105,12 @@ outx_expv(int l, expv v)
     case F95_LEOP:
     case F95_GEOP:
     case F95_GTOP:
+    case F95_EQOP_DOT:
+    case F95_NEOP_DOT:
+    case F95_LTOP_DOT:
+    case F95_LEOP_DOT:
+    case F95_GEOP_DOT:
+    case F95_GTOP_DOT:
     case F95_NOTOP:
     case F95_ANDOP:
     case F95_OROP:
@@ -5804,7 +5842,7 @@ outx_interfaceDecl(int l, EXT_ID ep)
             break;
         case INTF_OPERATOR:
         case INTF_USEROP:
-            outx_printi(0, " name=\"%s\"", SYM_NAME(EXT_SYM(ep)));
+            outx_printi(0, " name=\"%s\"", getXmlEscapedStr(SYM_NAME(EXT_SYM(ep))));
             outx_true(TRUE, "is_operator");
             break;
         case INTF_GENERIC_WRITE_FORMATTED:
@@ -6234,7 +6272,7 @@ outx_id_mod(int l, ID id)
     const char *sclass = get_sclass(id);
 
     outx_print(" sclass=\"%s\"", sclass);
-    outx_print(" original_name=\"%s\"", SYM_NAME(id->use_assoc->original_name));
+    outx_print(" original_name=\"%s\"", getXmlEscapedStr(SYM_NAME(id->use_assoc->original_name)));
     outx_print(" declared_in=\"%s\"", SYM_NAME(id->use_assoc->module_name));
     if(ID_IS_AMBIGUOUS(id))
         outx_print(" is_ambiguous=\"true\"");

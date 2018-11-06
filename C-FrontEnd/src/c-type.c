@@ -1073,9 +1073,9 @@ resolveType_ident(CExpr *expr, int occurErrorIfNotFound, int *ignore)
         case ST_FUNC:
             td = getGccBuiltinFuncType(sym);
             if(td == NULL) {
-                if(EXPR_CODE(EXPR_PARENT(sym)) != EC_FUNCTION_CALL) {
-		    if(occurErrorIfNotFound)
-		        addError((CExpr*)sym, CERR_040, sym->e_symName);
+                if(EXPR_CODE(EXPR_PARENT(sym)) != EC_FUNCTION_CALL && EXPR_CODE(EXPR_PARENT(sym)) != EC_ARRAY_DECL) {
+		  if(occurErrorIfNotFound)
+		    addError((CExpr*)sym, CERR_040, sym->e_symName);
                 } else {
                     sym->e_symType = ST_FUNC;
                     *ignore = 1; // implicit declared function call

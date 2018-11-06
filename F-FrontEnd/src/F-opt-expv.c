@@ -81,26 +81,32 @@ expv_numeric_const_reduce(left, right, code, v)
                     i = -EXPV_INT_VALUE(nL);
                     break;
                 }
+                case LOG_EQ_EXPR_DOT:
                 case LOG_EQ_EXPR: {
                     i = (EXPV_INT_VALUE(nL) == EXPV_INT_VALUE(nR));
                     break;
                 }
+                case LOG_NEQ_EXPR_DOT:
                 case LOG_NEQ_EXPR: {
                     i = (EXPV_INT_VALUE(nL) != EXPV_INT_VALUE(nR));
                     break;
                 }
+                case LOG_GE_EXPR_DOT:
                 case LOG_GE_EXPR: {
                     i = (EXPV_INT_VALUE(nL) >= EXPV_INT_VALUE(nR));
                     break;
                 }
+                case LOG_GT_EXPR_DOT:
                 case LOG_GT_EXPR: {
                     i = (EXPV_INT_VALUE(nL) > EXPV_INT_VALUE(nR));
                     break;
                 }
+                case LOG_LE_EXPR_DOT:
                 case LOG_LE_EXPR: {
                     i = (EXPV_INT_VALUE(nL) <= EXPV_INT_VALUE(nR));
                     break;
                 }
+                case LOG_LT_EXPR_DOT:
                 case LOG_LT_EXPR: {
                     i = (EXPV_INT_VALUE(nL) < EXPV_INT_VALUE(nR));
                     break;
@@ -427,7 +433,7 @@ expv_reduce(expv v, int doParamReduce)
             return expv_numeric_const_reduce(left, (expv)NULL, code, v);
         }
         break;
-
+    case LOG_EQ_EXPR_DOT:
     case LOG_EQ_EXPR:
         if(lcode == INT_CONSTANT && 
            rcode == INT_CONSTANT)
@@ -441,7 +447,7 @@ expv_reduce(expv v, int doParamReduce)
             return expv_numeric_const_reduce(left, right, code, v);
         }
         break;
-
+    case LOG_NEQ_EXPR_DOT:
     case LOG_NEQ_EXPR:
         if(lcode == INT_CONSTANT && 
            rcode == INT_CONSTANT)
@@ -455,7 +461,7 @@ expv_reduce(expv v, int doParamReduce)
             return expv_numeric_const_reduce(left, right, code, v);
         }
         break;
-
+    case LOG_GE_EXPR_DOT:
     case LOG_GE_EXPR:
         if(lcode == INT_CONSTANT && 
            rcode == INT_CONSTANT){
@@ -470,7 +476,7 @@ expv_reduce(expv v, int doParamReduce)
             return expv_numeric_const_reduce(left, right, code, v);
         }
         break;
-
+    case LOG_GT_EXPR_DOT:
     case LOG_GT_EXPR:
         if(lcode == INT_CONSTANT && 
            rcode == INT_CONSTANT) {
@@ -485,7 +491,7 @@ expv_reduce(expv v, int doParamReduce)
             return expv_numeric_const_reduce(left, right, code, v);
         }
         break;
-
+    case LOG_LE_EXPR_DOT:
     case LOG_LE_EXPR:
         if(lcode == INT_CONSTANT && 
            rcode == INT_CONSTANT){
@@ -500,7 +506,7 @@ expv_reduce(expv v, int doParamReduce)
             return expv_numeric_const_reduce(left, right, code, v);
         }
         break;
-
+    case LOG_LT_EXPR_DOT:
     case LOG_LT_EXPR:
         if(lcode == INT_CONSTANT && 
            rcode == INT_CONSTANT)

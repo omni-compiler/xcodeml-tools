@@ -433,10 +433,13 @@ compile_expression(expr x)
                 EXPR_ARG1(EXPR_ARG2(x)) != NULL &&
                 EXPR_CODE(EXPR_ARG1(EXPR_ARG2(x))) == F95_TRIPLET_EXPR)) {
 
-                if (IS_ARRAY_TYPE(tp) ||
-		    (IS_FUNCTION_TYPE(tp) && IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)))) {
+                if (IS_ARRAY_TYPE(tp) || (IS_FUNCTION_TYPE(tp) 
+                    && IS_ARRAY_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)))) 
+                {
                     return compile_array_ref(id, v, EXPR_ARG2(x), FALSE);
-                } else if (IS_CHAR(tp)) {
+                } else if (IS_CHAR(tp) || (IS_FUNCTION_TYPE(tp) 
+                    && IS_CHAR(FUNCTION_TYPE_RETURN_TYPE(tp)))) 
+                {
                     return compile_substr_ref(x);
                 } else {
                     if(id)
@@ -570,12 +573,18 @@ compile_expression(expr x)
         case F_POWER_EXPR: op = POWER_EXPR;   biop = ARITB; goto binary_op;
 
         /* relational operator */
-        case F_EQ_EXPR:  op = LOG_EQ_EXPR;    biop = RELAB; goto binary_op;
-        case F_NE_EXPR:  op = LOG_NEQ_EXPR;   biop = RELAB; goto binary_op;
-        case F_GT_EXPR:  op = LOG_GT_EXPR;    biop = RELAB; goto binary_op;
-        case F_GE_EXPR:  op = LOG_GE_EXPR;    biop = RELAB; goto binary_op;
-        case F_LT_EXPR:  op = LOG_LT_EXPR;    biop = RELAB; goto binary_op;
-        case F_LE_EXPR:  op = LOG_LE_EXPR;    biop = RELAB; goto binary_op;
+        case F_EQ_EXPR_DOT: op = LOG_EQ_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_EQ_EXPR:     op = LOG_EQ_EXPR;      biop = RELAB; goto binary_op;
+        case F_NE_EXPR_DOT: op = LOG_NEQ_EXPR_DOT; biop = RELAB; goto binary_op;
+        case F_NE_EXPR:     op = LOG_NEQ_EXPR;     biop = RELAB; goto binary_op;
+        case F_GT_EXPR_DOT: op = LOG_GT_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_GT_EXPR:     op = LOG_GT_EXPR;      biop = RELAB; goto binary_op;
+        case F_GE_EXPR_DOT: op = LOG_GE_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_GE_EXPR:     op = LOG_GE_EXPR;      biop = RELAB; goto binary_op;
+        case F_LT_EXPR_DOT: op = LOG_LT_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_LT_EXPR:     op = LOG_LT_EXPR;      biop = RELAB; goto binary_op;
+        case F_LE_EXPR_DOT: op = LOG_LE_EXPR_DOT;  biop = RELAB; goto binary_op;
+        case F_LE_EXPR:     op = LOG_LE_EXPR;      biop = RELAB; goto binary_op;
 
         /* logical operator */
         case F_EQV_EXPR:    op = F_EQV_EXPR;    biop = LOGIB; goto binary_op;
@@ -644,7 +653,9 @@ compile_expression(expr x)
                             error_msg = "illegal comparison";
                         }
                     } else if (IS_COMPLEX(bLType) || IS_COMPLEX(bRType)) {
-                        if (op != LOG_EQ_EXPR && op!= LOG_NEQ_EXPR) {
+                        if (op != LOG_EQ_EXPR && op != LOG_EQ_EXPR_DOT 
+                            && op!= LOG_NEQ_EXPR && op != LOG_NEQ_EXPR_DOT) 
+                        {
                             error_msg = "order comparison of complex data";
                         }
                     } else if ((!IS_NUMERIC(bLType) && !IS_GENERIC_TYPE(bLType)) ||
@@ -1267,6 +1278,12 @@ compile_ident_expression(expr x)
             ret = expv_sym_term(F_VAR, tp, ID_SYM(id));
         }
         goto done;
+    } else {
+        // Fix for issue #52
+        id = find_ident(sym);
+        tp = ID_TYPE(id);
+        ret = expv_sym_term(IDENT, tp, ID_SYM(id));
+        sp_link_id(id, SP_ERR_FOWARD_FUNC, current_line);
     }
 
     done:

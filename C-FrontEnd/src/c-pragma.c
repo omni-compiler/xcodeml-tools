@@ -979,7 +979,7 @@ pg_parse_string_constant()
     int i,val;
 
     cp = pg_tok_buf;
-    end = &pg_tok_buf[MAX_TOKEN_LEN];
+    end = &pg_tok_buf[MAX_NAME_SIZ-1];
 
   cont:
 

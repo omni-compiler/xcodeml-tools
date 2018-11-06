@@ -2274,7 +2274,7 @@ get_binary_comparative_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
 
     }
 
-    return (isValid = TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
+    return (isValid == TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
 }
 
 TYPE_DESC
@@ -2342,7 +2342,7 @@ get_binary_equal_intrinsic_operation_type(TYPE_DESC t0, TYPE_DESC t1) {
 
     }
 
-    return (isValid = TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
+    return (isValid == TRUE) ? type_basic(TYPE_LOGICAL) : NULL;
 }
 
 int

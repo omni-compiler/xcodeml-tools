@@ -2764,7 +2764,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
     char * sclass;
     TYPE_ENTRY tep;
     SYMBOL name;
-    ID id, last;
+    ID id, last = NULL;
     ID cid = NULL, pid = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))

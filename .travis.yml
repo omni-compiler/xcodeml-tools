@@ -11,4 +11,4 @@ matrix:
         packages:
         - gcc-7 gfortran-7
 
-script: ./configure CC=gcc-7 FC=gfortran-7 && make && make test
+script: ./configure CC=gcc-7 FC=gfortran-7 && make && make test CC=gcc-7

@@ -1288,12 +1288,18 @@ read_identifier()
                 case '/' :    code = F95_DIVOP; break;
                 case '+' :    code = F95_PLUSOP; break;
                 case '-' :    code = F95_MINUSOP; break;
-                case EQ :     code = F95_EQOP; break;
+                case EQ :     code = F95_EQOP; break; // #96
                 case NE :     code = F95_NEOP; break;
                 case LT :     code = F95_LTOP; break;
                 case LE :     code = F95_LEOP; break;
                 case GE :     code = F95_GEOP; break;
                 case GT :     code = F95_GTOP; break;
+                case EQ_DOT : code = F95_EQOP_DOT; break; // #96
+                case NE_DOT : code = F95_NEOP_DOT; break;
+                case LT_DOT : code = F95_LTOP_DOT; break;
+                case LE_DOT : code = F95_LEOP_DOT; break;
+                case GE_DOT : code = F95_GEOP_DOT; break;
+                case GT_DOT : code = F95_GTOP_DOT; break;
                 case NOT :    code = F95_NOTOP; break;
                 case AND :    code = F95_ANDOP; break;
                 case OR :     code = F95_OROP; break;
@@ -4080,12 +4086,12 @@ struct keyword_token dot_keywords[] =
     {"not.", NOT},
     {"true.", TRUE_CONSTANT},
     {"false.", FALSE_CONSTANT},
-    {"eq.", EQ},
-    {"ne.", NE},
-    {"lt.", LT},
-    {"le.", LE},
-    {"gt.", GT},
-    {"ge.", GE},
+    {"eq.", EQ_DOT}, // Needs differentiation between == and .eq. #96
+    {"ne.", NE_DOT}, // same as above #96
+    {"lt.", LT_DOT}, // same as above #96
+    {"le.", LE_DOT}, // same as above #96
+    {"gt.", GT_DOT}, // same as above #96
+    {"ge.", GE_DOT}, // same as above #96
     {"neqv.", NEQV},
     {"eqv.", EQV},
     {NULL, 0}

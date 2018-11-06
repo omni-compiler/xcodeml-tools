@@ -1109,6 +1109,12 @@ XfDecompileDomVisitor {
           name.equals("+") ||
           name.equals("-") ||
           name.equals("//") ||
+          name.equals(">") ||
+          name.equals("<") ||
+          name.equals(">=") ||
+          name.equals("<=") ||
+          name.equals("==") ||
+          name.equals("/=") ||
           (name.startsWith(".") && name.endsWith(".")))
       {
         return  "OPERATOR(" + name + ")";
@@ -1149,11 +1155,18 @@ XfDecompileDomVisitor {
         }
 
         if (symbolName.equals("**") ||
-            symbolName.equals("*") ||
-            symbolName.equals("/") ||
-            symbolName.equals("+") ||
-            symbolName.equals("-") ||
-            symbolName.equals("//")) {
+            symbolName.equals("*")  ||
+            symbolName.equals("/")  ||
+            symbolName.equals("+")  ||
+            symbolName.equals("-")  ||
+            symbolName.equals("//") ||
+            symbolName.equals(">") ||
+            symbolName.equals("<") ||
+            symbolName.equals(">=") ||
+            symbolName.equals("<=") ||
+            symbolName.equals("==") ||
+            symbolName.equals("/=")
+            ) {
             symbolName = "OPERATOR(" + symbolName + ")";
         } else if (symbolName.equals("=")) {
             symbolName = "ASSIGNMENT(" + symbolName + ")";
@@ -6272,8 +6285,13 @@ XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
+            boolean isSymbol = XmDomUtil.getAttrBool(n, "is_symbol");
+            String op = ".eq.";
+            if(isSymbol) {
+                op = "==";
+            }
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "==", _checkBinaryExprRequireGrouping(n));
+                             op, _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -6312,8 +6330,13 @@ XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
+            boolean isSymbol = XmDomUtil.getAttrBool(n, "is_symbol");
+            String op = ".ge.";
+            if(isSymbol) {
+                op = ">=";
+            }
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ">=", _checkBinaryExprRequireGrouping(n));
+                             op, _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -6332,8 +6355,13 @@ XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
+            boolean isSymbol = XmDomUtil.getAttrBool(n, "is_symbol");
+            String op = ".gt.";
+            if(isSymbol) {
+                op = ">";
+            }
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             ">", _checkBinaryExprRequireGrouping(n));
+                             op, _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -6352,8 +6380,13 @@ XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
+            boolean isSymbol = XmDomUtil.getAttrBool(n, "is_symbol");
+            String op = ".le.";
+            if(isSymbol) {
+                op = "<=";
+            }
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "<=", _checkBinaryExprRequireGrouping(n));
+                             op, _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -6372,8 +6405,13 @@ XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
+            boolean isSymbol = XmDomUtil.getAttrBool(n, "is_symbol");
+            String op = ".lt.";
+            if(isSymbol) {
+                op = "<";
+            }
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "<", _checkBinaryExprRequireGrouping(n));
+                             op, _checkBinaryExprRequireGrouping(n));
         }
     }
 
@@ -6392,8 +6430,13 @@ XfDecompileDomVisitor {
          *      )
          */
         @Override public void enter(Node n) {
+            boolean isSymbol = XmDomUtil.getAttrBool(n, "is_symbol");
+            String op = ".ne.";
+            if(isSymbol) {
+                op = "/=";
+            }
             _writeBinaryExpr(XmDomUtil.collectChildNodes(n), 0,
-                             "/=", _checkBinaryExprRequireGrouping(n));
+                             op, _checkBinaryExprRequireGrouping(n));
         }
     }
 
