@@ -10176,8 +10176,9 @@ compile_ASSOCIATE_statement(expr x)
         id = declare_ident(EXPR_SYM(associate_name), CL_VAR);
 
         declare_id_type(id, EXPV_TYPE(v));
-        declare_variable(id);
+        TYPE_UNSET_ALLOCATABLE(ID_TYPE(id));
         TYPE_UNSET_IMPLICIT(ID_TYPE(id));
+        declare_variable(id);
 
         VAR_INIT_VALUE(id) = v;
     }
