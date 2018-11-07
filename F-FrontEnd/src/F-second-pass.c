@@ -132,8 +132,12 @@ static int second_pass_clean()
     /* error */
     switch(list->err_no){
     case SP_ERR_UNDEF_TYPE_VAR: /* 1 */
-      current_line = list->line;
-      error("attempt to use undefined type variable, %s", ID_NAME(list->info.id));
+    case SP_ERR_FOWARD_FUNC: /* 5 */
+     current_line = list->line;
+      TYPE_DESC tpFunc = list->info.id->type;
+      if (tpFunc && (IS_SUBR(tpFunc) || IS_FUNCTION_TYPE(tpFunc))) break;
+      error("attempt to use undefined variable or function, %s",
+        ID_NAME(list->info.id));
       err_num++;
       break;
     case SP_ERR_CHAR_LEN: /* 2*/
@@ -149,14 +153,6 @@ static int second_pass_clean()
           FUNCTION_TYPE_RETURN_TYPE(tp) &&
           !TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) break;
       error("attempt to use undefined type function, %s", ID_NAME(list->info.id));
-      err_num++;
-      break;
-    case SP_ERR_FOWARD_FUNC: /* 5 */
-      current_line = list->line;
-      TYPE_DESC tpFunc = list->info.id->type;
-      if (tpFunc && (IS_SUBR(tpFunc) || IS_FUNCTION_TYPE(tpFunc))) break;
-      error("attempt to use undefined variable or function, %s",
-          ID_NAME(list->info.id));
       err_num++;
       break;
     case SP_ERR_FATAL:  /* 3 */
