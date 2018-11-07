@@ -67,3 +67,11 @@ XcodeML-Common/build/
 
 include/config.h
 include/stamp-h1
+
+# IDE
+**/.vscode/**
+**/.idea/**
+*.iml
+
+# macos
+**/.DS_Store
