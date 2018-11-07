@@ -6225,8 +6225,8 @@ compile_INTERFACE_statement(expr x)
                 ID_CLASS(iid) = CL_PROC;
             } else if(ID_IS_OFMODULE(iid)) {
                 ep = PROC_EXT_ID(iid);
-                if(!IS_GENERIC_PROCEDURE_TYPE(ID_TYPE((iid))) 
-                    && (ep != NULL && EXT_PROC_CLASS(ep) != EP_INTERFACE)) 
+                if(!IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(iid)) 
+                    && !(ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE))
                 {
                     error_at_node(x,
                                   "'%s' is already defined"
