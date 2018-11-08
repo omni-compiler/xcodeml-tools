@@ -253,12 +253,15 @@ link_parent_defined_by(ID id)
         /* Conditions below is written to make test programs to pass. */
         /* And it is not derived from the specification. So condition */
         /* may be not enough. */
-        if (ID_CLASS(parent) == CL_PROC &&
-            (PROC_CLASS(parent) == P_UNDEFINEDPROC ||
-             PROC_CLASS(parent) == P_EXTERNAL ||
-             IS_TYPE_PUBLICORPRIVATE(parent) ||
-             (ID_TYPE(parent) != NULL &&
-              (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent)))))) {
+        if (ID_CLASS(parent) == CL_PROC 
+            && (PROC_CLASS(parent) == P_UNDEFINEDPROC ||
+                PROC_CLASS(parent) == P_EXTERNAL ||
+                PROC_CLASS(parent) == P_UNKNOWN || // foward declared function used as arg
+                IS_TYPE_PUBLICORPRIVATE(parent) ||
+                (ID_TYPE(parent) != NULL 
+                && (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent))))
+            )) 
+        {
             ID_DEFINED_BY(parent) = CURRENT_PROCEDURE;
         } else {
             error("%s is defined as a variable before", ID_NAME(parent));
