@@ -1089,10 +1089,10 @@ declare_function(ID id)
             }
 #endif
             if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-	      //ID_TYPE(id) = function_type(ID_TYPE(id));
-	      TYPE_DESC tp = function_type(ID_TYPE(id));
-	      TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-	      ID_TYPE(id) = tp;
+                //ID_TYPE(id) = function_type(ID_TYPE(id));
+                TYPE_DESC tp = function_type(ID_TYPE(id));
+                TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+                ID_TYPE(id) = tp;
             }
             PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
@@ -1134,6 +1134,9 @@ declare_function(ID id)
         return id;
     }
 
+    if(PROC_CLASS(id) == P_INTRINSIC && ID_STORAGE(id) != STG_EXT) {
+        ID_STORAGE(id) = STG_EXT;
+    }
     
     if (PROC_CLASS(id) != P_UNDEFINEDPROC) {
         ID_IS_DECLARED(id) = TRUE;
