@@ -1133,10 +1133,6 @@ declare_function(ID id)
     if (ID_IS_DECLARED(id)) {
         return id;
     }
-
-    if(PROC_CLASS(id) == P_INTRINSIC && ID_STORAGE(id) != STG_EXT) {
-        ID_STORAGE(id) = STG_EXT;
-    }
     
     if (PROC_CLASS(id) != P_UNDEFINEDPROC) {
         ID_IS_DECLARED(id) = TRUE;
@@ -1153,7 +1149,9 @@ declare_function(ID id)
         expv v;
         if (ID_STORAGE(id) != STG_EXT) {
             if (ID_STORAGE(id) != STG_ARG &&
-                !(ID_CLASS(id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
+                !(ID_CLASS(id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(id)))
+                && !(ID_CLASS(id) && PROC_CLASS(id) == P_INTRINSIC)) 
+            {
                 fatal("%s: unknown storage", __func__);
             }
         }
