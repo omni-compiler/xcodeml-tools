@@ -3028,12 +3028,11 @@ end_declaration()
             if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
-            } else if ((TYPE_IS_INTENT_IN(tp) ||
-                        TYPE_IS_INTENT_OUT(tp) ||
-                        TYPE_IS_INTENT_INOUT(tp)) &&
-                       !(ID_IS_DUMMY_ARG(ip))) {
-                warning_at_id(ip, "INTENT is applied only "
-                              "to dummy argument");
+            } else if ((TYPE_IS_INTENT_IN(tp) || TYPE_IS_INTENT_OUT(tp) ||
+                        TYPE_IS_INTENT_INOUT(tp)) 
+                        && !(ID_IS_DUMMY_ARG(ip)) && ID_CLASS(ip) != CL_PROC)
+            {
+                warning_at_id(ip, "INTENT is applied only to dummy argument");
             } else if (TYPE_IS_VALUE(tp) &&
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "VALUE is applied only "
