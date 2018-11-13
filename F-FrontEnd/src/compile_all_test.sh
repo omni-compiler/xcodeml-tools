@@ -95,6 +95,7 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
     executeResult=${b}.res
     skipNative=${f}.skip.native
     nativeOriginal=${f}.native # Compile the original file with the native compiler
+    reference=${f}.ref # Compare result with a reference
     fOpts=''
     if test -f ${f}.options; then
         fOpts=`cat ${f}.options`
@@ -142,9 +143,17 @@ for f in `find -L ${testdata} -type f -a -name '*.f' -o -name '*.f90' -o -name '
                     else
                         echo "--- ok : ${b}"
                     fi
+                    if test -e "${reference}"; then
+                      ${backend} --test -l ${xmlOut} -o ${decompiledSrc} >> ${errOut} 2>&1 # get the decompile file without line directive
+                      diff --ignore-all-space --ignore-blank-lines ${reference} ${decompiledSrc} > /dev/null 2>&1 # compare ouput
+                      if test ! $? -eq 0; then
+                          echo "--- failed reference: ${b}" | tee -a errors.txt
+                          status=1
+                      fi
+                    fi
                 else
                     echo "--- failed native: ${b}" | tee -a errors.txt
-		            status=1
+                    status=1
                 fi
             else
                 echo "--- ok(skip_native) : ${b}"
