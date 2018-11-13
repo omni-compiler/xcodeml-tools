@@ -1,0 +1,45 @@
+MODULE mod1
+ PRIVATE :: sub1
+
+CONTAINS
+ SUBROUTINE sub1 ( )
+
+  INTEGER :: ip
+  INTEGER :: k
+  INTEGER :: ke
+  INTEGER :: ipend
+  INTEGER :: itype
+
+!$ACC data                                           present(ptot_b,pp_nx_b,p0_b,dz_b,hhl_b,qrs_b)  present(qr_nx_b,qs_nx_b,qi_nx_b,qg_nx_b)
+!$ACC parallel
+  DO k = 1 , ke , 1
+!$ACC loop gang vector
+   DO ip = 1 , ipend , 1
+   END DO
+  END DO
+!$ACC end parallel
+  SELECT CASE ( itype )
+  CASE ( 3 )
+!$ACC parallel
+   DO k = 1 , ke , 1
+!$ACC loop gang vector
+    DO ip = 1 , ipend , 1
+    END DO
+   END DO
+  CASE ( 4 )
+!$ACC end parallel
+!$ACC parallel
+   DO k = 1 , ke , 1
+!$ACC loop gang vector
+    DO ip = 1 , ipend , 1
+    END DO
+   END DO
+!$ACC end parallel  
+  CASE DEFAULT
+   PRINT * ,"Not valid itype" , itype
+  END SELECT
+!$ACC end data
+ END SUBROUTINE sub1
+
+END MODULE mod1
+
