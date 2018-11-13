@@ -1273,6 +1273,7 @@ compile_statement1(int st_no, expr x)
         }
         break;
     case F_ENDSELECT_STATEMENT:
+        check_INEXEC();
         if (CTL_TYPE(ctl_top) == CTL_SELECT ||
             CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
             expr const_name = EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL;
