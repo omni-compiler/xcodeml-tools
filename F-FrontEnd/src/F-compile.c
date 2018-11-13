@@ -1154,6 +1154,7 @@ compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = st;
     } break;
     case F_CASELABEL_STATEMENT:
+        check_INEXEC();
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
             expr const_name = EXPR_ARG2(x);
