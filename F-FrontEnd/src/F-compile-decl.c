@@ -253,12 +253,15 @@ link_parent_defined_by(ID id)
         /* Conditions below is written to make test programs to pass. */
         /* And it is not derived from the specification. So condition */
         /* may be not enough. */
-        if (ID_CLASS(parent) == CL_PROC &&
-            (PROC_CLASS(parent) == P_UNDEFINEDPROC ||
-             PROC_CLASS(parent) == P_EXTERNAL ||
-             IS_TYPE_PUBLICORPRIVATE(parent) ||
-             (ID_TYPE(parent) != NULL &&
-              (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent)))))) {
+        if (ID_CLASS(parent) == CL_PROC 
+            && (PROC_CLASS(parent) == P_UNDEFINEDPROC ||
+                PROC_CLASS(parent) == P_EXTERNAL ||
+                PROC_CLASS(parent) == P_UNKNOWN || // foward declared function used as arg
+                IS_TYPE_PUBLICORPRIVATE(parent) ||
+                (ID_TYPE(parent) != NULL 
+                && (IS_TYPE_PUBLICORPRIVATE(ID_TYPE(parent))))
+            )) 
+        {
             ID_DEFINED_BY(parent) = CURRENT_PROCEDURE;
         } else {
             error("%s is defined as a variable before", ID_NAME(parent));
@@ -1089,10 +1092,10 @@ declare_function(ID id)
             }
 #endif
             if (ID_TYPE(id) && !IS_PROCEDURE_TYPE(ID_TYPE(id))) {
-	      //ID_TYPE(id) = function_type(ID_TYPE(id));
-	      TYPE_DESC tp = function_type(ID_TYPE(id));
-	      TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
-	      ID_TYPE(id) = tp;
+                //ID_TYPE(id) = function_type(ID_TYPE(id));
+                TYPE_DESC tp = function_type(ID_TYPE(id));
+                TYPE_ATTR_FLAGS(tp) |= TYPE_ATTR_FLAGS(id);
+                ID_TYPE(id) = tp;
             }
             PROC_CLASS(id) = P_UNDEFINEDPROC;
         } else if (ID_STORAGE(id) != STG_EXT /* maybe interface */) {
@@ -1133,7 +1136,6 @@ declare_function(ID id)
     if (ID_IS_DECLARED(id)) {
         return id;
     }
-
     
     if (PROC_CLASS(id) != P_UNDEFINEDPROC) {
         ID_IS_DECLARED(id) = TRUE;
@@ -1150,7 +1152,9 @@ declare_function(ID id)
         expv v;
         if (ID_STORAGE(id) != STG_EXT) {
             if (ID_STORAGE(id) != STG_ARG &&
-                !(ID_CLASS(id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(id)))) {
+                !(ID_CLASS(id) == CL_VAR && IS_PROCEDURE_TYPE(ID_TYPE(id)))
+                && !(ID_CLASS(id) && PROC_CLASS(id) == P_INTRINSIC)) 
+            {
                 fatal("%s: unknown storage", __func__);
             }
         }

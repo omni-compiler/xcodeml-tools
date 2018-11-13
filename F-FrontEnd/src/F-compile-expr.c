@@ -1280,9 +1280,12 @@ compile_ident_expression(expr x)
         goto done;
     } else {
         // Fix for issue #52
+        // probably an undefined function passed as argument
         id = find_ident(sym);
-        tp = ID_TYPE(id);
-        ret = expv_sym_term(IDENT, tp, ID_SYM(id));
+        sp_check(id);
+        ID_IS_DECLARED(id) = FALSE;
+        switch_id_to_proc(id);
+        ret = expv_sym_term(IDENT, ID_TYPE(id), ID_SYM(id));
         sp_link_id(id, SP_ERR_FOWARD_FUNC, current_line);
     }
 

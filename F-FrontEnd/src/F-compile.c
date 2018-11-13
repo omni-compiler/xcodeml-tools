@@ -1154,6 +1154,7 @@ compile_statement1(int st_no, expr x)
         CTL_BLOCK(ctl_top) = st;
     } break;
     case F_CASELABEL_STATEMENT:
+        check_INEXEC();
         if(CTL_TYPE(ctl_top) == CTL_SELECT  ||
            CTL_TYPE(ctl_top) == CTL_CASE) {
             expr const_name = EXPR_ARG2(x);
@@ -1272,6 +1273,7 @@ compile_statement1(int st_no, expr x)
         }
         break;
     case F_ENDSELECT_STATEMENT:
+        check_INEXEC();
         if (CTL_TYPE(ctl_top) == CTL_SELECT ||
             CTL_TYPE(ctl_top) == CTL_SELECT_TYPE) {
             expr const_name = EXPR_HAS_ARG1(x)?EXPR_ARG1(x):NULL;
@@ -3028,12 +3030,11 @@ end_declaration()
             if (TYPE_IS_OPTIONAL(tp) && !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "OPTIONAL is applied only "
                               "to dummy argument");
-            } else if ((TYPE_IS_INTENT_IN(tp) ||
-                        TYPE_IS_INTENT_OUT(tp) ||
-                        TYPE_IS_INTENT_INOUT(tp)) &&
-                       !(ID_IS_DUMMY_ARG(ip))) {
-                warning_at_id(ip, "INTENT is applied only "
-                              "to dummy argument");
+            } else if ((TYPE_IS_INTENT_IN(tp) || TYPE_IS_INTENT_OUT(tp) ||
+                        TYPE_IS_INTENT_INOUT(tp)) 
+                        && !(ID_IS_DUMMY_ARG(ip)) && ID_CLASS(ip) != CL_PROC)
+            {
+                warning_at_id(ip, "INTENT is applied only to dummy argument");
             } else if (TYPE_IS_VALUE(tp) &&
                        !(ID_IS_DUMMY_ARG(ip))) {
                 warning_at_id(ip, "VALUE is applied only "
@@ -6224,14 +6225,18 @@ compile_INTERFACE_statement(expr x)
                 ID_STORAGE(iid) = STG_EXT;
                 ID_CLASS(iid) = CL_PROC;
             } else if(ID_IS_OFMODULE(iid)) {
-                if(!IS_GENERIC_PROCEDURE_TYPE(ID_TYPE((iid))))
+                ep = PROC_EXT_ID(iid);
+                if(!IS_GENERIC_PROCEDURE_TYPE(ID_TYPE(iid)) 
+                    && !(ep != NULL && EXT_PROC_CLASS(ep) == EP_INTERFACE))
+                {
                     error_at_node(x,
                                   "'%s' is already defined"
                                   " as a generic procedure in module '%s'",
                                   SYM_NAME(s), 
                                   SYM_NAME(iid->use_assoc->module_name));
-                else
+                } else {
                     use_associated_ep = PROC_EXT_ID(iid);
+                }
             }
             break;
         case F95_ASSIGNOP: {

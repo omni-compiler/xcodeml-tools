@@ -2,6 +2,7 @@ MODULE mod1
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: init_will3_test
+  PUBLIC :: symmetric_u_velo
 
   CONTAINS
 
@@ -21,6 +22,8 @@ MODULE mod1
       END FUNCTION func
     END INTERFACE
     REAL :: p_hh
+
+    p_hh =  symmetric_u_velo(2.0, 2.0)
   END FUNCTION geostr_balance
 
   FUNCTION symmetric_u_velo(p_rlatd, u0) RESULT (p_usres)
