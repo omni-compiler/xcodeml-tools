@@ -26,8 +26,8 @@ CONTAINS
     DO ip = 1 , ipend , 1
     END DO
    END DO
-  CASE ( 4 )
 !$ACC end parallel
+  CASE ( 4 )
 !$ACC parallel
    DO k = 1 , ke , 1
 !$ACC loop gang vector
