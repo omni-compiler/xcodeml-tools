@@ -27,10 +27,10 @@ CONTAINS
     CASE(3) 
       !$acc parallel
       DO k=1,ke
-      !$acc loop gang vector
-         DO ip=1,ipend
-         END DO
-       END DO
+        !$acc loop gang vector
+        DO ip=1,ipend
+        END DO
+      END DO
       !$acc end parallel
     CASE(4)  
      !$acc parallel
