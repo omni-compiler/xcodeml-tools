@@ -52,7 +52,7 @@ XfDecompileDomVisitor {
     static final int PRIO_HIGH = 13;
 
     static boolean in_interface = false;
-  
+
     static public String nodeToString(Node n) {
         String ret = null;
         if (n != null) {
@@ -226,8 +226,8 @@ XfDecompileDomVisitor {
         for (Node basicTypeNode : basicTypeNodeArray) {
             String bind = XmDomUtil.getAttr(basicTypeNode, "bind");
             String bind_name = XmDomUtil.getAttr(basicTypeNode, "bind_name");
-            if (XfUtilForDom.isNullOrEmpty(bind) == false 
-                && XfUtilForDom.isNullOrEmpty(bind_name) == false) 
+            if (XfUtilForDom.isNullOrEmpty(bind) == false
+                && XfUtilForDom.isNullOrEmpty(bind_name) == false)
             {
                 basicTypeAttrs.add("BIND( " + bind.toUpperCase() + ", NAME='" + bind_name + "' )");
                 break;
@@ -746,7 +746,7 @@ XfDecompileDomVisitor {
         boolean isExternal = XmDomUtil.getAttrBool(topTypeChoice, "is_external");
 	boolean isOptional = XmDomUtil.getAttrBool(topTypeChoice, "is_optional");
 	boolean isSubroutine = (typeId == XfType.VOID);
-      
+
         // ================
         // Top type element
         // ================
@@ -1395,10 +1395,18 @@ XfDecompileDomVisitor {
      *            Grouping flag.
      */
     private void _writeBinaryExpr(Node leftExpr, Node rightExpr,
-                                  String operation, boolean grouping) {
+                                  String operation, boolean grouping)
+    {
+
         XmfWriter writer = _context.getWriter();
         boolean need_paren;
         int op_prio = operator_priority(operation);
+
+        if (XmOption.isAddParEnabled() && (operation == "+" || operation == "-"
+          || operation == "*" || operation == "/" || operation == "**"))
+        {
+            grouping = true;
+        }
 
         if (grouping) writer.writeToken("(");
 
@@ -4082,7 +4090,7 @@ XfDecompileDomVisitor {
             _writeLineDirective(n);
 
 	    in_interface = true;
-	    
+
             XmfWriter writer = _context.getWriter();
 
             String interfaceName = XmDomUtil.getAttr(n, "name");
@@ -4148,7 +4156,7 @@ XfDecompileDomVisitor {
             writer.setupNewLine();
 
 	    in_interface = false;
-	    
+
 	    XfTypeManagerForDom typeManager = _context.getTypeManagerForDom();
 
 	    // The OPTIONAL attribute should be exceptionally handled.
@@ -4718,7 +4726,7 @@ XfDecompileDomVisitor {
 		  clauseName = XmDomUtil.getContentText(clause);
 		  arg = clause.getNextSibling();
 		}
-		
+
 		while (arg != null && arg.getNodeType() != Node.ELEMENT_NODE) arg = arg.getNextSibling();
 
                 String operator = "";
@@ -4832,7 +4840,7 @@ XfDecompileDomVisitor {
             writer.incrementIndentLevel();
 
 	    if (body.getNodeName().equals("list")){
-	    
+
 	      NodeList list2 = body.getChildNodes();
 	      for (int i = 0; i < list2.getLength(); i++){
 		Node childNode = list2.item(i);
@@ -6174,7 +6182,7 @@ XfDecompileDomVisitor {
 		  writer.writeToken(":");
 		  invokeEnter(step);
 		}
-		
+
                 return;
             }
 
