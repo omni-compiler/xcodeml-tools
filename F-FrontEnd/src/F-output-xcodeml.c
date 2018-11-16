@@ -6466,7 +6466,7 @@ output_module_file(struct module * mod, const char * filename)
         print_fp = stdout;
     } else {
         if ((print_fp = fopen(filename, "w")) == NULL) {
-            fatal("could'nt open module file to write.");
+            fatal("couldn't open module file to write: %s", filename);
             return FALSE;
         }
     }
