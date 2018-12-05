@@ -1118,14 +1118,15 @@ declare_function(ID id)
             error("identifier '%s' is used as a function", ID_NAME(id));
             return NULL;
         }
-    } else if(ID_CLASS(id) == CL_PROC 
-        && PROC_CLASS(id) == P_UNKNOWN && ID_TYPE(id) == NULL) 
-    {   
-        // Fix xcodeml-tools#14
-        TYPE_DESC tp = function_type(new_type_desc());
-        TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
-        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
-        ID_TYPE(id) = tp;
+    } else if(ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_UNKNOWN) {
+        if (ID_TYPE(id) == NULL) {   
+            // Fix xcodeml-tools#14
+            TYPE_DESC tp = function_type(new_type_desc());
+            TYPE_SET_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp));
+            TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(tp)) = TYPE_GNUMERIC_ALL;
+            ID_TYPE(id) = tp;
+        }
+        // Fix xcodeml-tools#14 and xcodeml-tools#121
         PROC_CLASS(id) = P_UNDEFINEDPROC;
     }
 
