@@ -1094,6 +1094,25 @@ type_is_parent_type(TYPE_DESC parent, TYPE_DESC child)
     return FALSE;
 }
 
+/**
+ * Check `ext` type is a derived type extending base.
+ */
+int
+type_is_extension(TYPE_DESC ext, TYPE_DESC base) {
+    if(ext == NULL || base == NULL) {
+        return FALSE;
+    }
+
+    TYPE_DESC tp = get_bottom_ref_type(ext);
+
+    if(TYPE_PARENT(base) == NULL && tp != base) {
+        return FALSE;
+    } else if (tp == base) {
+        return TRUE;
+    }
+    type_is_extension(ext, TYPE_PARENT_TYPE(base));
+}
+
 
 static int
 derived_type_parameter_values_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
