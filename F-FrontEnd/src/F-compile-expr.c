@@ -3577,7 +3577,8 @@ compile_type_bound_procedure_call(expv memberRef, expr args) {
         ID bind;
         ID bindto;
         FOREACH_ID(bind, TYPE_BOUND_GENERIC_TYPE_GENERICS(ftp)) {
-            bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
+            bindto = 
+                find_struct_member_allow_private(stp, ID_SYM(bind), TRUE, TRUE);
             if (TYPE_REF(ID_TYPE(bindto)) &&
                 function_type_is_appliable(TYPE_REF(ID_TYPE(bindto)), a, TRUE))
             {
