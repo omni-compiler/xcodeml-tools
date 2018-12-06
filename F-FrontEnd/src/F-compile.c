@@ -4147,7 +4147,8 @@ check_type_bound_procedures()
              * If the parent type exists, check override.
              */
             if (parent) {
-                ID parent_tbp = find_struct_member_allow_private(tp, ID_SYM(tbp), TRUE);
+                ID parent_tbp = find_struct_member_allow_private(tp, 
+                    ID_SYM(tbp), TRUE, TRUE);
                 if (ID_CLASS(tbp) != CL_TYPE_BOUND_PROC) {
                     /* never reached */
                     error_at_id(tbp, "should not override member");
@@ -4254,19 +4255,21 @@ check_final_subroutines()
             continue;
         }
 
-        if ((final = find_struct_member(tp, sym)) != NULL) {
+        if ((final = find_struct_member_allow_private(tp, sym, FALSE, FALSE)) 
+            != NULL) 
+        {
             ID fin, fin1, fin2;
 
             FOREACH_ID(binding, TBP_BINDING(final)) {
                 if ((fin = find_ident(ID_SYM(binding))) == NULL) {
-                    error("FINAL subroutine %s does not exist",
-                          SYM_NAME(ID_SYM(binding)));
+                    error("FINAL subroutine %s does not exist for derived-type %s",
+                          SYM_NAME(ID_SYM(binding)), ID_NAME(TYPE_TAGNAME(tp)));
                     return;
                 }
                 /* DIRTY CODE, use type attribute for type-bound procedure as a flag */
                 if (TBP_BINDING_ATTRS(fin) & TYPE_BOUND_PROCEDURE_IS_FINAL) {
-                    error("FINAL subroutine %s used duplicately",
-                          SYM_NAME(ID_SYM(fin)));
+                    error("FINAL subroutine %s used duplicately in derived-type %s",
+                          SYM_NAME(ID_SYM(fin)), ID_NAME(TYPE_TAGNAME(tp)));
                     return;
                 }
                 if (!check_final_subroutine_is_valid(fin, tp)) {
@@ -7364,7 +7367,8 @@ compile_CALL_member_procedure_statement(expr x)
         ID bindto;
         tp = NULL;
         FOREACH_ID(bind, TBP_BINDING(mem)) {
-            bindto = find_struct_member_allow_private(stp, ID_SYM(bind), TRUE);
+            bindto = 
+                find_struct_member_allow_private(stp, ID_SYM(bind), TRUE, TRUE);
             if (bindto && function_type_is_appliable(ID_TYPE(bindto), a, TRUE)) 
             {
                 tp = ID_TYPE(bindto);
