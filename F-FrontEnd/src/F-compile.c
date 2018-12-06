@@ -4444,31 +4444,15 @@ end_procedure()
         TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
     }
 
-    /* expand CL_MULTI */
-    FOREACH_ID(id, LOCAL_SYMBOLS) {
-        if (ID_CLASS(id) == CL_MULTI && MULTI_ID_LIST(id) != NULL) {
-            ID ip, iq;
-            ID next;
-            SAFE_FOREACH_ID(ip, iq, MULTI_ID_LIST(id)) {
-                next = ID_NEXT(id);
-                ID_NEXT(id) = ip;
-                ID_NEXT(ip) = next;
-            }
-        }
-    }
-
-
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
-        if(ID_CLASS(id) == CL_UNKNOWN){
+        if(ID_CLASS(id) == CL_UNKNOWN || ID_CLASS(id) == CL_VAR) {
 #if 0 // to be solved
             warning("variable '%s' is defined, but never used",ID_NAME(id));
 #endif
             declare_variable(id);
         }
-        if (ID_CLASS(id) == CL_VAR) {
-            declare_variable(id);
-        }
+        
 
         if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
             ID_CLASS(id) == CL_ENTRY ||
