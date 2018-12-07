@@ -4460,40 +4460,46 @@ end_procedure()
      *           (ID2-2)
      * 
      * After
-     * ------
-     * (ID1) --> (ID2-1) --> (ID2-2) --> (ID3) --> (ID4) --> (NULL)
+     * -----
+     *                      copy        copy
+     * (ID1) --> (ID2) --> (ID2-1) --> (ID2-2) --> (ID3) --> (ID4) --> (NULL)
+     *             |
+     *           (ID2-1) kept original
+     *             |
+     *           (ID2-2) kept original
      * 
-     * 
-     * The original multi id is discarded as otherwise, its internal linked list
-     * is wrong and leads to internal error (xcodeml-tools#127).
+     * (xcodeml-tools#127).
      */
-    ID hook = NULL; // Where to insert the expanded CL_MULTI
-    ID hook_next = NULL;
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if (ID_CLASS(id) == CL_MULTI && MULTI_ID_LIST(id) != NULL) {
             ID ip, iq;
-            ID next; // Where to link the last ID of the MULTI_ID_LIST
-            next = ID_NEXT(id);
+            // Where to link the last ID of the internal list
+            ID next = ID_NEXT(id); 
+            ID_NEXT(id) = NULL;
             
-            if(hook == NULL) { // First ID in the list was a CL_MULTI
-                hook = LOCAL_SYMBOLS; // Hook point is head
-            }
-
-            ID_NEXT(hook) = MULTI_ID_LIST(id);
-
+            ID hook = NULL;
             SAFE_FOREACH_ID(ip, iq, MULTI_ID_LIST(id)) {
+                ID copied_id = XMALLOC(ID, sizeof(*ip));
+                *copied_id = *ip;
+                ID_NEXT(copied_id) = NULL;
                 if(ID_NEXT(ip) == NULL) { 
-                    // End of the internal list is connected to the main list
-                    ID_NEXT(ip) = next;
-                    id = next;
+                    // End of internal list has to be connected to main list
+                    ID_NEXT(copied_id) = next;
                 }
+                // First element of the multi list as to be connected
+                if(ID_NEXT(id) == NULL) {
+                    ID_NEXT(id) = copied_id;
+                }
+                // Rewire correctly the copied IDs
+                if(hook != NULL) {
+                    ID_NEXT(hook) = copied_id;
+                }
+                hook = copied_id;
             }
-        }
-        
-        if(ID_NEXT(id) != NULL && ID_CLASS(ID_NEXT(id)) == CL_MULTI) {
-            hook = id;
         }
     }
+
+   
 
 
     /* check undefined variable */
