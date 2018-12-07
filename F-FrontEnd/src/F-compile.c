@@ -4444,6 +4444,58 @@ end_procedure()
         TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
     }
 
+    /**
+     * Expand CL_MULTI
+     * 
+     * Local symbols are stored in a linked list. Identifier with multiple
+     * definition have their own linked list as shown below for ID2. In this
+     * step, the multi id is expanded and inserted in the main linked list.
+     * 
+     * Before
+     * ------
+     * (ID1) --> (ID2) --> (ID3) --> (ID4) --> (NULL)
+     *             |
+     *           (ID2-1)
+     *             |
+     *           (ID2-2)
+     * 
+     * After
+     * ------
+     * (ID1) --> (ID2-1) --> (ID2-2) --> (ID3) --> (ID4) --> (NULL)
+     * 
+     * 
+     * The original multi id is discarded as otherwise, its internal linked list
+     * is wrong and leads to internal error (xcodeml-tools#127).
+     */
+    ID hook = NULL; // Where to insert the expanded CL_MULTI
+    ID hook_next = NULL;
+    FOREACH_ID(id, LOCAL_SYMBOLS) {
+        if (ID_CLASS(id) == CL_MULTI && MULTI_ID_LIST(id) != NULL) {
+            ID ip, iq;
+            ID next; // Where to link the last ID of the MULTI_ID_LIST
+            next = ID_NEXT(id);
+            
+            if(hook == NULL) { // First ID in the list was a CL_MULTI
+                hook = LOCAL_SYMBOLS; // Hook point is head
+            }
+
+            ID_NEXT(hook) = MULTI_ID_LIST(id);
+
+            SAFE_FOREACH_ID(ip, iq, MULTI_ID_LIST(id)) {
+                if(ID_NEXT(ip) == NULL) { 
+                    // End of the internal list is connected to the main list
+                    ID_NEXT(ip) = next;
+                    id = next;
+                }
+            }
+        }
+        
+        if(ID_NEXT(id) != NULL && ID_CLASS(ID_NEXT(id)) == CL_MULTI) {
+            hook = id;
+        }
+    }
+
+
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if(ID_CLASS(id) == CL_UNKNOWN || ID_CLASS(id) == CL_VAR) {
