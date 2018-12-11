@@ -2831,7 +2831,7 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
                 ID_CLASS(id) = CL_ENTRY;
         }
 
-        // if type of id st the deribed type, set tagname
+        // if type of id st the derived type, set tagname
         if (IS_STRUCT_TYPE(ID_TYPE(id))) {
             TYPE_TAGNAME(ID_TYPE(id)) = id;
         }

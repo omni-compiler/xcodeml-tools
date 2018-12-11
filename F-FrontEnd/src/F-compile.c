@@ -4443,31 +4443,73 @@ end_procedure()
         TYPE_SET_FOR_FUNC_SELF(EXT_PROC_TYPE(CURRENT_EXT_ID));
     }
 
-    /* expand CL_MULTI */
+    /**
+     * Expand CL_MULTI
+     * 
+     * Local symbols are stored in a linked list. Identifier with multiple
+     * definition have their own linked list as shown below for ID2. In this
+     * step, the multi id is expanded and inserted in the main linked list.
+     * 
+     * Before
+     * ------
+     * (ID1) --> (ID2) --> (ID3) --> (ID4) --> (NULL)
+     *             |
+     *           (ID2-1)
+     *             |
+     *           (ID2-2)
+     * 
+     * After
+     * -----
+     *                      copy        copy
+     * (ID1) --> (ID2) --> (ID2-1) --> (ID2-2) --> (ID3) --> (ID4) --> (NULL)
+     *             |
+     *           (ID2-1) kept original
+     *             |
+     *           (ID2-2) kept original
+     * 
+     * (xcodeml-tools#127).
+     */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
         if (ID_CLASS(id) == CL_MULTI && MULTI_ID_LIST(id) != NULL) {
             ID ip, iq;
-            ID next;
+            // Where to link the last ID of the internal list
+            ID next = ID_NEXT(id); 
+            ID_NEXT(id) = NULL;
+            
+            ID hook = NULL;
             SAFE_FOREACH_ID(ip, iq, MULTI_ID_LIST(id)) {
-                next = ID_NEXT(id);
-                ID_NEXT(id) = ip;
-                ID_NEXT(ip) = next;
+                ID copied_id = XMALLOC(ID, sizeof(*ip));
+                *copied_id = *ip;
+                ID_NEXT(copied_id) = NULL;
+                if(ID_NEXT(ip) == NULL) { 
+                    // End of internal list has to be connected to main list
+                    ID_NEXT(copied_id) = next;
+                }
+                // First element of the multi list as to be connected
+                if(ID_NEXT(id) == NULL) {
+                    ID_NEXT(id) = copied_id;
+                }
+                // Rewire correctly the copied IDs
+                if(hook != NULL) {
+                    ID_NEXT(hook) = copied_id;
+                }
+                hook = copied_id;
             }
         }
     }
 
+   
+
 
     /* check undefined variable */
     FOREACH_ID(id, LOCAL_SYMBOLS) {
-        if(ID_CLASS(id) == CL_UNKNOWN){
+        if(ID_CLASS(id) == CL_UNKNOWN || ID_CLASS(id) == CL_VAR) {
 #if 0 // to be solved
             warning("variable '%s' is defined, but never used",ID_NAME(id));
 #endif
             declare_variable(id);
         }
-        if (ID_CLASS(id) == CL_VAR) {
-            declare_variable(id);
-        }
+        
 
         if ((ID_CLASS(id) == CL_PROC && PROC_CLASS(id) == P_THISPROC) ||
             ID_CLASS(id) == CL_ENTRY ||
