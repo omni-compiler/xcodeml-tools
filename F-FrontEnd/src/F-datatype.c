@@ -679,11 +679,12 @@ current_struct()
 ID
 find_struct_member(TYPE_DESC struct_td, SYMBOL sym)
 {
-    return find_struct_member_allow_private(struct_td, sym, FALSE);
+    return find_struct_member_allow_private(struct_td, sym, FALSE, TRUE);
 }
 
 ID
-find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_private_member)
+find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, 
+    int allow_private_member, int allow_parent)
 {
     ID member = NULL;
 
@@ -720,13 +721,16 @@ find_struct_member_allow_private(TYPE_DESC struct_td, SYMBOL sym, int allow_priv
         }
     }
 
-    if (TYPE_PARENT(struct_td)) {
+    if (TYPE_PARENT(struct_td) && allow_parent) {
         ID parent = TYPE_PARENT(struct_td);
-        if (ID_SYM(parent) != NULL && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) {
+        if (ID_SYM(parent) != NULL 
+            && (strcmp(ID_NAME(parent), SYM_NAME(sym)) == 0)) 
+        {
             return TYPE_PARENT(struct_td);
         }
         if (member == NULL) {
-            return find_struct_member_allow_private(ID_TYPE(parent), sym, allow_private_member);
+            return find_struct_member_allow_private(ID_TYPE(parent), sym, 
+                allow_private_member, TRUE);
         }
     }
 

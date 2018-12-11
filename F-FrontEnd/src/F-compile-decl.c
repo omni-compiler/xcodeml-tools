@@ -4182,8 +4182,10 @@ check_no_abstract_type_bound_procedure(const TYPE_DESC stp)
     for (tp = stp; tp != NULL; tp = TYPE_PARENT(tp)?TYPE_PARENT_TYPE(tp):NULL) {
         if (TYPE_IS_ABSTRACT(tp)) {
             FOREACH_TYPE_BOUND_PROCEDURE(mem, tp) {
-                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC && TBP_IS_DEFERRED(mem)) {
-                    p = find_struct_member_allow_private(stp, ID_SYM(mem), TRUE);
+                if (ID_CLASS(mem) == CL_TYPE_BOUND_PROC && TBP_IS_DEFERRED(mem)) 
+                {
+                    p = find_struct_member_allow_private(stp, 
+                        ID_SYM(mem), TRUE, TRUE);
                     if (TBP_IS_DEFERRED(p)) {
                         error("%s is not implemented", SYM_NAME(ID_SYM(mem)));
                     }
