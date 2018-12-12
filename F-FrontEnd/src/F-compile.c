@@ -6,6 +6,9 @@
 #include "F-module-procedure.h"
 #include "module-manager.h"
 
+// Hashtable implementation
+#include "external/klib/khash.h"
+
 #include <sys/wait.h>
 
 /* program unit control stack */
@@ -38,7 +41,7 @@ extern long prelast_initial_line_pos;
 
 extern char xmodule_path[MAX_PATH_LEN];
 extern char *myName;
-extern int  flag_module_compile;
+extern int flag_module_compile;
 extern char *original_source_file_name;
 extern int fixed_line_len_kind;
 extern int auto_save_attr_kb;
@@ -5402,39 +5405,44 @@ shallow_copy_ext_id(EXT_ID original) {
        TYPE_BASIC_TYPE(TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id)))))     \
          == TYPE_GNUMERIC_ALL)))
 
-struct replicated_type {
-  TYPE_DESC original;
-  TYPE_DESC replica;
-  struct replicated_type * next;
-};
+typedef struct {
+    TYPE_DESC original;
+    TYPE_DESC replica;
+} replicated_type;
 
-struct replicated_type * replicated_type_list = NULL;
+const int replicated_type_ht = 32;
+KHASH_MAP_INIT_STR(replicated_type_ht, replicated_type*);
+khash_t(replicated_type_ht) *h;
 
-static void
-initialize_replicated_type_list() {
-    replicated_type_list = NULL;
+static void initialize_replicated_type_ht() {
+    h = kh_init(replicated_type_ht);
 }
 
-static void
-finalize_replicated_type_list() {
-    struct replicated_type * lp;
-    while(replicated_type_list != NULL) {
-        lp = replicated_type_list->next;
-        free(replicated_type_list);
-        replicated_type_list = lp;
-    }
+static void finalize_replicated_type_ht() {
+    replicated_type *current, *tmp;
+    kh_destroy(replicated_type_ht, h);
 }
 
-static void
-append_replicated_type_list(const TYPE_DESC original,
-                            const TYPE_DESC replica) {
-    struct replicated_type * lp;
+static void add_replicated_type(const TYPE_DESC original,
+                                const TYPE_DESC replica)
+{
     if(original != NULL && replica != NULL) {
-        lp = XMALLOC(struct replicated_type *,sizeof(struct replicated_type));
-        lp->original = original;
-        lp->replica = replica;
-        lp->next = replicated_type_list;
-        replicated_type_list = lp;
+        khiter_t k;
+        int ret;
+        k = kh_get(replicated_type_ht, h, original->imported_id);
+        if(k == kh_end(h)) {
+            if(original->imported_id != NULL) {
+                replicated_type* replica_type = 
+                    XMALLOC(replicated_type *, sizeof(replicated_type));
+                replica_type->original = original;
+                replica_type->replica = replica;
+
+                k = kh_put(replicated_type_ht, h, original->imported_id, &ret);
+                kh_value(h, k) = replica_type;
+            }
+        } else {
+            (kh_value(h, k))->replica = replica;
+        }
     }
 }
 
@@ -5443,17 +5451,19 @@ append_replicated_type_list(const TYPE_DESC original,
  *
  * @param replica if tp has the replica, then set replica to it.
  */
-static int
-type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
-    struct replicated_type * lp;
+static int type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
     if (tp != NULL) {
-        for(lp = replicated_type_list; lp != NULL; lp = lp->next) {
-            if(tp == lp->original) {
-                if(replica != NULL) {
-                    *replica = lp->replica;
-                }
-                return TRUE;
+        khiter_t k;
+        int ret;
+        if(tp->imported_id == NULL) {
+            return FALSE;
+        }
+        k = kh_get(replicated_type_ht, h, tp->imported_id);
+        if(k != kh_end(h)) {
+            if(replica != NULL) {
+                *replica = (kh_value(h, k))->replica;
             }
+            return TRUE;
         }
     }
     return FALSE;
@@ -5462,14 +5472,16 @@ type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
 /**
  * Checks if a type is the replicated one.
  */
-static int
-type_is_replica(const TYPE_DESC tp) {
-    struct replicated_type * lp;
+static int type_is_replica(const TYPE_DESC tp) {
     if(tp != NULL) {
-        for(lp = replicated_type_list; lp != NULL; lp = lp->next) {
-            if(tp == lp->replica) {
-                return TRUE;
-            }
+        khiter_t k;
+        int ret;
+        if(tp->imported_id == NULL) {
+            return TRUE;
+        }
+        k = kh_get(replicated_type_ht, h, tp->imported_id);
+        if(k != kh_end(h)) {
+            return TRUE;
         }
     }
     return FALSE;
@@ -5478,8 +5490,7 @@ type_is_replica(const TYPE_DESC tp) {
 /**
  * Creates the type which is shallow copied for the module id.
  */
-static TYPE_DESC
-shallow_copy_type_for_module_id(TYPE_DESC original) {
+static TYPE_DESC shallow_copy_type_for_module_id(TYPE_DESC original) {
     TYPE_DESC new_tp;
 
     new_tp = new_type_desc();
@@ -5491,13 +5502,12 @@ shallow_copy_type_for_module_id(TYPE_DESC original) {
     TYPE_UNSET_PUBLIC(new_tp);
     TYPE_UNSET_PRIVATE(new_tp);
 
-    append_replicated_type_list(original, new_tp);
+    add_replicated_type(original, new_tp);
 
     return new_tp;
 }
 
-static void
-deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
+static void deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
 
 
 /**
@@ -5507,8 +5517,7 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
  *
  * Note: Require shallow copy before apply this function
  */
-static void
-deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
+static void deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     ID id;
     ID last_ip = NULL;
     ID new_members = NULL;
@@ -5582,7 +5591,7 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp) {
     }
 
     if (type_is_replica(*ptp)) {
-        ;  /* do nothing */
+       return;  /* do nothing */
     } else if (type_has_replica(*ptp, &tp)) {
         /* overwrite the type with replicated one */
         *ptp = tp;
@@ -5874,26 +5883,26 @@ deep_copy_id_types(ID mids)
           expv v;
           list lp;
 
-          if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
-              continue;
-          }
+            if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
+                continue;
+            }
 
-          EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
-          deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
+            EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
+            deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
 
-          /*
-           * copy the arguments of the function type
-           *
-           * NOTE:
-           *  It may be required to deep-copy whole of the EXT_ID.
-           */
-          if (EXT_PROC_ARGS(mep) != NULL) {
-              EXT_PROC_ARGS(mep) = copy_function_args(EXT_PROC_ARGS(mep));
-              FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(mep)) {
-                  v = EXPR_ARG1(LIST_ITEM(lp));
-                  deep_copy_and_overwrite_for_module_id_type(&(EXPV_TYPE(v)));
-              }
-          }
+            /*
+             * copy the arguments of the function type
+             *
+             * NOTE:
+             *  It may be required to deep-copy whole of the EXT_ID.
+             */
+            if (EXT_PROC_ARGS(mep) != NULL) {
+                EXT_PROC_ARGS(mep) = copy_function_args(EXT_PROC_ARGS(mep));
+                FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(mep)) {
+                    v = EXPR_ARG1(LIST_ITEM(lp));
+                    deep_copy_and_overwrite_for_module_id_type(&(EXPV_TYPE(v)));
+                }
+            }
         }
     }
 }
@@ -5909,7 +5918,7 @@ import_module_ids(struct module *mod, struct use_argument * args,
     int ret = TRUE;
     int wrap_type = TRUE;
 
-    initialize_replicated_type_list();
+    initialize_replicated_type_ht();
 
     if (debug_flag) {
         if (!fromParentModule) {
@@ -5972,7 +5981,7 @@ import_module_ids(struct module *mod, struct use_argument * args,
     first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
     deep_copy_id_types(first_mid);
 
-    finalize_replicated_type_list();
+    finalize_replicated_type_ht();
 
     if(debug_flag) {
         if (!fromParentModule) {
