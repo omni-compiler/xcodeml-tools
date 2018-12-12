@@ -5426,7 +5426,7 @@ static void finalize_replicated_type_ht() {
 static void add_replicated_type(const TYPE_DESC original,
                                 const TYPE_DESC replica)
 {
-    if(original != NULL && replica != NULL) {
+    if(original != NULL && replica != NULL && original->imported_id != NULL) {
         khiter_t k;
         int ret;
         k = kh_get(replicated_type_ht, h, original->imported_id);
