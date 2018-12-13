@@ -2362,6 +2362,20 @@ type_is_linked(TYPE_DESC tp, TYPE_DESC tlist)
     return FALSE;
 }
 
+/*
+ * Add type descriptor to the list of types and adjust the tail. If the added
+ * type is linked with other types already in the list, the link is broken. 
+ * 
+ * tlist                         ttail
+ *   |                             |
+ * (TD1) --> (TD2) --> (TD3) --> (TD4) --> NULL
+ * 
+ * 
+ * Add (TD5) --> (TD2)
+ * tlist                                   ttail
+ *   |                                       |
+ * (TD1) --> (TD2) --> (TD3) --> (TD4) --> (TD5) --> NULL
+ */
 TYPE_DESC
 type_link_add(TYPE_DESC tp, TYPE_DESC tlist, TYPE_DESC ttail)
 {

@@ -6,6 +6,7 @@
 #include "F-output-xcodeml.h"
 #include "module-manager.h"
 #include <limits.h>
+#include "external/klib/khash.h"
 
 #define CHAR_BUF_SIZE 65536
 
@@ -73,6 +74,12 @@ typedef struct type_ext_id {
       else (tail)->next = (te); \
       (tail) = (te); }
 
+const int type_desc_set = 33;
+KHASH_SET_INIT_INT64(type_desc_set);
+
+khash_t(type_desc_set) *type_set;
+khash_t(type_desc_set) *tbp_set;
+
 static TYPE_DESC    type_list,type_list_tail;
 static TYPE_DESC    tbp_list,tbp_list_tail;
 static TYPE_EXT_ID  type_module_proc_list, type_module_proc_last;
@@ -86,6 +93,19 @@ static int          is_outputed_module = FALSE;
     EXT_PROC_ID_LIST(ep) ? ID_LINE(EXT_PROC_ID_LIST(ep)) : NULL)
 
 static int is_emitting_module = FALSE;
+
+static void init_sets() {
+    type_set = kh_init(type_desc_set);
+    tbp_set = kh_init(type_desc_set);
+}
+
+static void reset_sets() {
+    kh_destroy(type_desc_set, type_set);
+    kh_destroy(type_desc_set, tbp_set);
+
+    type_set = kh_init(type_desc_set);
+    tbp_set = kh_init(type_desc_set);
+}
 
 static void
 set_module_emission_mode(int mode) {
@@ -4195,6 +4215,51 @@ static void mark_type_desc_in_structure_skip_tbp(TYPE_DESC tp, int skip_tbp);
 
 static void mark_type_desc(TYPE_DESC tp);
 
+/*
+ * Add type descriptor to the list of types and adjust the tail. If the added
+ * type is linked with other types already in the list, the link is broken. 
+ * 
+ * This function is using a hash set in order to track the type in the list. 
+ * Huge performance improvement against the original type_link_add in 
+ * F-datatype.c.
+ * 
+ * tlist                         ttail
+ *   |                             |
+ * (TD1) --> (TD2) --> (TD3) --> (TD4) --> NULL
+ * 
+ * 
+ * Add (TD5) --> (TD2)
+ * tlist                                   ttail
+ *   |                                       |
+ * (TD1) --> (TD2) --> (TD3) --> (TD4) --> (TD5) --> NULL
+ */
+static TYPE_DESC type_link_add_with_set(TYPE_DESC tp, TYPE_DESC list, 
+                                        TYPE_DESC tail, 
+                                        khash_t(type_desc_set) *set) 
+{
+    khiter_t k;
+    int ret;
+    if(tail == NULL) {    
+        k = kh_get(type_desc_set, set, (uint64_t)tp);
+        if(k == kh_end(set)) {
+            k = kh_put(type_desc_set, set, (uint64_t)tp, &ret);
+        }
+        return tp;
+    }
+    TYPE_LINK(tail) = tp;
+    tail = tp;
+    while(tail != TYPE_LINK(tail) && TYPE_LINK(tail) != NULL) {
+        k = kh_get(type_desc_set, set, (uint64_t)TYPE_LINK(tail));
+        if(k != kh_end(set)) {
+            break;
+        }
+        k = kh_put(type_desc_set, set, (uint64_t)TYPE_LINK(tail), &ret);
+        tail = TYPE_LINK(tail);
+    }
+    TYPE_LINK(tail) = NULL;
+    return tail;
+}
+
 static void
 mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
@@ -4208,7 +4273,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
          */
         TYPE_LINK(tp) = NULL;
         TYPE_IS_REFERENCED(tp) = TRUE;
-        TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
+        TYPE_LINK_ADD_WITH_SET(tp, tbp_list, tbp_list_tail, tbp_set);
         return;
     }
 
@@ -4234,7 +4299,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     collect_type_desc(TYPE_DIM_LOWER(tp));
     collect_type_desc(TYPE_DIM_STEP(tp));
 
-    TYPE_LINK_ADD(tp, type_list, type_list_tail);
+    TYPE_LINK_ADD_WITH_SET(tp, type_list, type_list_tail, type_set);
     TYPE_IS_REFERENCED(tp) = TRUE;
 
     if (IS_PROCEDURE_TYPE(tp)) {
@@ -6473,6 +6538,8 @@ output_module_file(struct module * mod, const char * filename)
 
     is_emitting_for_submodule = MODULE_IS_FOR_SUBMODULE(mod);
 
+    init_sets();
+
     oEmitMode = is_emitting_xmod();
     set_module_emission_mode(TRUE);
 
@@ -6539,6 +6606,8 @@ output_module_file(struct module * mod, const char * filename)
     }
 
     is_emitting_for_submodule = FALSE;
+
+    reset_sets();
 
     return TRUE;
 }

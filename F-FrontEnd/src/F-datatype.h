@@ -227,6 +227,12 @@ extern TYPE_DESC basic_type_desc[];
     { if((tlist) == NULL) (tlist) = (tp); \
       ttail = type_link_add(tp, tlist, ttail);  \
     }
+
+#define TYPE_LINK_ADD_WITH_SET(tp, tlist, ttail, set) \
+    { if((tlist) == NULL) (tlist) = (tp); \
+      ttail = type_link_add_with_set(tp, tlist, ttail, set);  \
+    }
+
 #define TYPE_SLINK_ADD(tp, tlist, ttail) \
     { if((tlist) == NULL) (tlist) = (tp); \
       else TYPE_SLINK(ttail) = (tp); \
