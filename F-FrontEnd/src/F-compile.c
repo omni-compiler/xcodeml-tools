@@ -5419,8 +5419,10 @@ static void initialize_replicated_type_ht() {
 }
 
 static void finalize_replicated_type_ht() {
-    replicated_type *current, *tmp;
-    kh_destroy(replicated_type_ht, h);
+    if(h != NULL && kh_size(h) > 0) {
+        khint_t k;
+        kh_destroy(replicated_type_ht, h);
+    }
 }
 
 static void add_replicated_type(const TYPE_DESC original,
