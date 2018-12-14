@@ -5411,17 +5411,17 @@ typedef struct {
 } replicated_type;
 
 const int replicated_type_ht = 32;
-KHASH_MAP_INIT_STR(replicated_type_ht, replicated_type*);
-khash_t(replicated_type_ht) *h;
+KHASH_MAP_INIT_INT64(replicated_type_ht, replicated_type*);
+khash_t(replicated_type_ht) *replica_ht;
 
 static void initialize_replicated_type_ht() {
-    h = kh_init(replicated_type_ht);
+    replica_ht = kh_init(replicated_type_ht);
 }
 
 static void finalize_replicated_type_ht() {
-    if(h != NULL && kh_size(h) > 0) {
+    if(replica_ht != NULL && kh_size(replica_ht) > 0) {
         khint_t k;
-        kh_destroy(replicated_type_ht, h);
+        kh_destroy(replicated_type_ht, replica_ht);
     }
 }
 
@@ -5431,19 +5431,20 @@ static void add_replicated_type(const TYPE_DESC original,
     if(original != NULL && replica != NULL && original->imported_id != NULL) {
         khiter_t k;
         int ret;
-        k = kh_get(replicated_type_ht, h, original->imported_id);
-        if(k == kh_end(h)) {
+        k = kh_get(replicated_type_ht, replica_ht, (uint64_t)original);
+        if(k == kh_end(replica_ht)) {
             if(original->imported_id != NULL) {
                 replicated_type* replica_type = 
                     XMALLOC(replicated_type *, sizeof(replicated_type));
                 replica_type->original = original;
                 replica_type->replica = replica;
 
-                k = kh_put(replicated_type_ht, h, original->imported_id, &ret);
-                kh_value(h, k) = replica_type;
+                k = kh_put(replicated_type_ht, replica_ht, 
+                    (uint64_t)original, &ret);
+                kh_value(replica_ht, k) = replica_type;
             }
         } else {
-            (kh_value(h, k))->replica = replica;
+            (kh_value(replica_ht, k))->replica = replica;
         }
     }
 }
@@ -5460,10 +5461,10 @@ static int type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
         if(tp->imported_id == NULL) {
             return FALSE;
         }
-        k = kh_get(replicated_type_ht, h, tp->imported_id);
-        if(k != kh_end(h)) {
+        k = kh_get(replicated_type_ht, replica_ht, (uint64_t)tp);
+        if(k != kh_end(replica_ht)) {
             if(replica != NULL) {
-                *replica = (kh_value(h, k))->replica;
+                *replica = (kh_value(replica_ht, k))->replica;
             }
             return TRUE;
         }
@@ -5481,8 +5482,8 @@ static int type_is_replica(const TYPE_DESC tp) {
         if(tp->imported_id == NULL) {
             return TRUE;
         }
-        k = kh_get(replicated_type_ht, h, tp->imported_id);
-        if(k != kh_end(h)) {
+        k = kh_get(replicated_type_ht, replica_ht, (uint64_t)tp);
+        if(k != kh_end(replica_ht)) {
             return TRUE;
         }
     }
