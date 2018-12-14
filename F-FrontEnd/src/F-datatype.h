@@ -110,7 +110,8 @@ typedef struct type_descriptor
 
     int is_access_inferred;    /* boolean flag that tell if the access-spec is
                                   inferred or clearly stated */
-    int is_assumed_type;       /* TYPE(*) */                                     
+    int is_assumed_type;       /* TYPE(*) */    
+    int is_replica;            /* Used while doing deep_copy of type */
     struct type_attr {
 #define TYPE_ATTR_PARAMETER         0x00000001
 #define TYPE_ATTR_ALLOCATABLE       0x00000002

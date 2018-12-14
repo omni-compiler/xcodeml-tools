@@ -5414,10 +5414,16 @@ const int replicated_type_ht = 32;
 KHASH_MAP_INIT_INT64(replicated_type_ht, replicated_type*);
 khash_t(replicated_type_ht) *replica_ht;
 
+/**
+ * @brief Initialize the hash map for replicated type.
+ */
 static void initialize_replicated_type_ht() {
     replica_ht = kh_init(replicated_type_ht);
 }
 
+/**
+ * @brief Delete and clean the hash map for replicated type.
+ */
 static void finalize_replicated_type_ht() {
     if(replica_ht != NULL && kh_size(replica_ht) > 0) {
         khint_t k;
@@ -5425,42 +5431,50 @@ static void finalize_replicated_type_ht() {
     }
 }
 
-static void add_replicated_type(const TYPE_DESC original,
-                                const TYPE_DESC replica)
+/**
+ * @brief Add or update replica information
+ * 
+ * If the original type desc if not in the hash map yet, a new replicated_type
+ * containing the orginal type desc and the replica type desc is added. Key is
+ * the integer representation of the original type desc pointer address.
+ * 
+ * @param original Original type descriptor.
+ * @param replica  Type descriptor replicating the original.
+ */
+static void add_or_update_replicated_type(const TYPE_DESC original,
+                                          const TYPE_DESC replica)
 {
-    if(original != NULL && replica != NULL && original->imported_id != NULL) {
-        khiter_t k;
-        int ret;
-        k = kh_get(replicated_type_ht, replica_ht, (uint64_t)original);
-        if(k == kh_end(replica_ht)) {
-            if(original->imported_id != NULL) {
-                replicated_type* replica_type = 
-                    XMALLOC(replicated_type *, sizeof(replicated_type));
-                replica_type->original = original;
-                replica_type->replica = replica;
+    if(original == NULL || replica == NULL) {
+        return;
+    }
 
-                k = kh_put(replicated_type_ht, replica_ht, 
-                    (uint64_t)original, &ret);
-                kh_value(replica_ht, k) = replica_type;
-            }
-        } else {
-            (kh_value(replica_ht, k))->replica = replica;
-        }
+    khiter_t k;
+    int ret;
+    k = kh_get(replicated_type_ht, replica_ht, (uint64_t)original);
+    replica->is_replica = TRUE;
+    if(k == kh_end(replica_ht)) {
+        replicated_type* replica_type = 
+            XMALLOC(replicated_type *, sizeof(replicated_type));
+        replica_type->original = original;
+        replica_type->replica = replica;
+        k = kh_put(replicated_type_ht, replica_ht, (uint64_t)original, &ret);
+        kh_value(replica_ht, k) = replica_type;
+    } else {
+        (kh_value(replica_ht, k))->replica = replica;
     }
 }
 
 /**
- * Checks if a type has the replica of itself.
+ * @brief Checks if a type has the replica of itself.
  *
- * @param replica if tp has the replica, then set replica to it.
+ * @param tp      Type descriptor to check for replica.
+ * @param replica Replicated type if tp has one.
+ * @return True if the replica has been found. False otherwise.
  */
 static int type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
     if (tp != NULL) {
         khiter_t k;
         int ret;
-        if(tp->imported_id == NULL) {
-            return FALSE;
-        }
         k = kh_get(replicated_type_ht, replica_ht, (uint64_t)tp);
         if(k != kh_end(replica_ht)) {
             if(replica != NULL) {
@@ -5473,19 +5487,14 @@ static int type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
 }
 
 /**
- * Checks if a type is the replicated one.
+ * @brief Check if a type descriptor is a replica.
+ * 
+ * @param tp Type descriptor to be checked.
+ * @return True if type descriptor is a replica.
  */
 static int type_is_replica(const TYPE_DESC tp) {
-    if(tp != NULL) {
-        khiter_t k;
-        int ret;
-        if(tp->imported_id == NULL) {
-            return TRUE;
-        }
-        k = kh_get(replicated_type_ht, replica_ht, (uint64_t)tp);
-        if(k != kh_end(replica_ht)) {
-            return TRUE;
-        }
+    if(tp != NULL && tp->is_replica == TRUE) {
+        return TRUE;
     }
     return FALSE;
 }
@@ -5505,7 +5514,7 @@ static TYPE_DESC shallow_copy_type_for_module_id(TYPE_DESC original) {
     TYPE_UNSET_PUBLIC(new_tp);
     TYPE_UNSET_PRIVATE(new_tp);
 
-    add_replicated_type(original, new_tp);
+    add_or_update_replicated_type(original, new_tp);
 
     return new_tp;
 }
