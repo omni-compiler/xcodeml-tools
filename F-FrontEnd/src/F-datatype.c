@@ -1114,7 +1114,7 @@ type_is_extension(TYPE_DESC ext, TYPE_DESC base) {
     } else if (tp == base) {
         return TRUE;
     }
-    type_is_extension(ext, TYPE_PARENT_TYPE(base));
+    return type_is_extension(ext, TYPE_PARENT_TYPE(base));
 }
 
 
