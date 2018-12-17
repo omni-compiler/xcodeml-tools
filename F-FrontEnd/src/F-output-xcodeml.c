@@ -4292,20 +4292,19 @@ static TYPE_DESC type_link_add_with_set(TYPE_DESC tp, TYPE_DESC list,
                                         TYPE_DESC tail, 
                                         khash_t(type_desc_set) *set) 
 {
-    int ret;
     if(tail == NULL) {    
-        ret = add_in_set_if_not_present(tp, set);
+        add_in_set_if_not_present(tp, set);
         return tp;
     }
     TYPE_LINK(tail) = tp;
-    ret = add_in_set_if_not_present(tp, set);
+    add_in_set_if_not_present(tp, set);
     tail = tp;
     while(tail != TYPE_LINK(tail) && TYPE_LINK(tail) != NULL) {
         if(is_type_desc_in_set(TYPE_LINK(tail), set)) {
             break;
         }
         tail = TYPE_LINK(tail);
-        ret = add_in_set_if_not_present(tail, set);
+        add_in_set_if_not_present(tail, set);
     }
     TYPE_LINK(tail) = NULL;
     return tail;

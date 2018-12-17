@@ -5425,7 +5425,6 @@ static void initialize_replicated_type_ht() {
  */
 static void finalize_replicated_type_ht() {
     if(replica_ht != NULL && kh_size(replica_ht) > 0) {
-        khint_t k;
         kh_destroy(replicated_type_ht, replica_ht);
     }
 }
@@ -5473,7 +5472,6 @@ static void add_or_update_replicated_type(const TYPE_DESC original,
 static int type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
     if (tp != NULL) {
         khiter_t k;
-        int ret;
         k = kh_get(replicated_type_ht, replica_ht, (uint64_t)tp);
         if(k != kh_end(replica_ht)) {
             if(replica != NULL) {
