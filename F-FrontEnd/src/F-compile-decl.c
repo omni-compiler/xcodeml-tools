@@ -4048,21 +4048,21 @@ compile_struct_decl(expr ident, expr type, expr type_params)
                 break;
             case F03_EXTENDS_SPEC:
                 if (has_extends_spec) {
-                    error("Dupulicate EXTENDS spec");
+                    error("Duplicate EXTENDS spec");
                 } else {
                     has_extends_spec = TRUE;
                 }
                 break;
             case F03_ABSTRACT_SPEC:
                 if (has_abstract_spec) {
-                    error("Dupulicate ABSTRACT spec");
+                    error("Duplicate ABSTRACT spec");
                 } else {
                     has_abstract_spec = TRUE;
                 }
                 break;
             case F03_BIND_SPEC:
                 if (has_bind_spec) {
-                    error("Dupulicate BIND spec");
+                    error("Duplicate BIND spec");
                 } else {
                     has_bind_spec = TRUE;
                 }
