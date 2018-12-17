@@ -4201,9 +4201,8 @@ check_final_subroutine_is_valid(ID id, TYPE_DESC stp)
     }
 
     tp = ID_TYPE(arg);
-    if (tp == NULL || get_bottom_ref_type(tp) != stp) {
-        error("FINAL subroutine's argument should "
-              "be the derived type");
+    if (tp == NULL || !type_is_extension(tp, stp)) {
+        error("FINAL subroutine's argument should be the derived type");
         return FALSE;
     }
 
