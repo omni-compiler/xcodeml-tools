@@ -4,8 +4,7 @@
 
 #include "F-front.h"
 
-void
-compile_EQUIVALENCE_decl(expr x)
+void compile_EQUIVALENCE_decl(expr x)
 {
     list lp;
     list lp1;
@@ -22,7 +21,7 @@ compile_EQUIVALENCE_decl(expr x)
         fatal("paser error in equivalence??");
     }
 
-    FOR_ITEMS_IN_LIST(lp, x) {
+    FOR_ITEMS_IN_LIST (lp, x) {
         int has_volatile = FALSE;
         int has_not_volatile = FALSE;
 
@@ -33,7 +32,7 @@ compile_EQUIVALENCE_decl(expr x)
 
         refVarV = NULL;
         listVarV = list0(LIST);
-        FOR_ITEMS_IN_LIST(lp1, spec) {
+        FOR_ITEMS_IN_LIST (lp1, spec) {
             vX = LIST_ITEM(lp1);
             vS = NULL;
 
@@ -54,7 +53,8 @@ compile_EQUIVALENCE_decl(expr x)
 
             id = find_ident(vS);
             if (id == NULL) {
-                // vS should be treated as being implicitly declared. (Hitoshi Murai)
+                // vS should be treated as being implicitly declared. (Hitoshi
+                // Murai)
                 id = declare_ident(vS, CL_VAR);
                 implicit_declaration(id);
                 // error_at_node(vX, "'%s' is not declared.", SYM_NAME(vS));
@@ -63,16 +63,14 @@ compile_EQUIVALENCE_decl(expr x)
 
             v = compile_lhs_expression(vX);
 
-            if(v == NULL)
+            if (v == NULL)
                 return;
 
             switch (EXPV_CODE(v)) {
                 case F_VAR:
                 case ARRAY_REF: {
-                    if (ID_CLASS(id) == CL_PARAM ||
-                        TYPE_IS_PARAMETER(id)) {
-                        error_at_node(vX, "'%s' is a parameter.",
-                                      SYM_NAME(vS));
+                    if (ID_CLASS(id) == CL_PARAM || TYPE_IS_PARAMETER(id)) {
+                        error_at_node(vX, "'%s' is a parameter.", SYM_NAME(vS));
                         return;
                     }
                     if (TYPE_IS_ALLOCATABLE(id)) {
@@ -81,8 +79,7 @@ compile_EQUIVALENCE_decl(expr x)
                         return;
                     }
                     if (TYPE_IS_POINTER(id)) {
-                        error_at_node(vX, "'%s' is an pointer.",
-                                      SYM_NAME(vS));
+                        error_at_node(vX, "'%s' is an pointer.", SYM_NAME(vS));
                         return;
                     }
                     /*
@@ -105,9 +102,8 @@ compile_EQUIVALENCE_decl(expr x)
             }
 
             if (has_volatile == TRUE && has_not_volatile == TRUE) {
-                error_at_node(x,
-                              "VOLATILE objects and non-VOLATILE objects "
-                              "in EQUIVALENCE.");
+                error_at_node(x, "VOLATILE objects and non-VOLATILE objects "
+                                 "in EQUIVALENCE.");
             }
 
             if (refVarV == NULL) {

@@ -17,8 +17,9 @@ typedef enum {
     INTR_TYPE_CHAR,
     INTR_TYPE_LOGICAL,
     INTR_TYPE_ANY,
-    INTR_TYPE_NUMERICS,         /* INTR_TYPE_INT, INTR_TYPE_REAL or INTR_TYPE_DREAL. */
-    INTR_TYPE_ALL_NUMERICS,     /* INTR_TYPE_INT, INTR_TYPE_REAL, INTR_TYPE_DREAL or INTR_TYPE_COMPLEX. */
+    INTR_TYPE_NUMERICS, /* INTR_TYPE_INT, INTR_TYPE_REAL or INTR_TYPE_DREAL. */
+    INTR_TYPE_ALL_NUMERICS, /* INTR_TYPE_INT, INTR_TYPE_REAL, INTR_TYPE_DREAL or
+                               INTR_TYPE_COMPLEX. */
     INTR_TYPE_INT_ARRAY,
     INTR_TYPE_REAL_ARRAY,
     INTR_TYPE_DREAL_ARRAY,
@@ -307,10 +308,10 @@ typedef enum {
     INTR_BESSEL_Y0,
     INTR_BESSEL_Y1,
     INTR_BESSEL_YN,
-    
-    INTR_COARRAY_MALLOC_BYTES,       // hidden interface
-    INTR_COARRAY_ALLOCATED_BYTES,    // hidden interface
-    INTR_COARRAY_GARBAGE_BYTES,      // hidden interface
+
+    INTR_COARRAY_MALLOC_BYTES,    // hidden interface
+    INTR_COARRAY_ALLOCATED_BYTES, // hidden interface
+    INTR_COARRAY_GARBAGE_BYTES,   // hidden interface
 
 #ifdef GNU_INTRINSIC_EXTENSION
     INTR_GNU_ABORT,
@@ -398,7 +399,7 @@ typedef enum {
     INTR_GNU_UMASK,
     INTR_GNU_UNLINK,
     INTR_GNU_XOR,
-#endif       
+#endif
 
     /* XMP/F */
     INTR_DESC_OF,
@@ -438,7 +439,6 @@ typedef enum {
 
 } INTR_OPS;
 
-
 typedef enum {
     INTR_NAME_GENERIC = 0,
     INTR_NAME_SPECIFIC,
@@ -453,101 +453,101 @@ typedef struct {
     INTR_DATA_TYPE returnType;
     int nArgs;
 
-    int retTypeSameAs;  /* greater than/equals zero (n) : return type
-                         * is equals to (n)th arg's type. */
+    int retTypeSameAs; /* greater than/equals zero (n) : return type
+                        * is equals to (n)th arg's type. */
 
-                        /* -1 : return type completely differs to any
-                            args. */
+    /* -1 : return type completely differs to any
+        args. */
 
-                        /* -2 : return type is the BASIC_TYPE of the
-                            first arg. */
+    /* -2 : return type is the BASIC_TYPE of the
+        first arg. */
 
-                        /* -3 : return type is a single dimension
-                            array of integer, in which having elements
-                            equals to the first arg's dimension. */
+    /* -3 : return type is a single dimension
+        array of integer, in which having elements
+        equals to the first arg's dimension. */
 
-                        /* -4 : return type is transpose of the first
-                           arg (two dimension/matrix). */
+    /* -4 : return type is transpose of the first
+       arg (two dimension/matrix). */
 
-                        /* -5 : BASIC_TYPE of return type is 'returnType'
-                            and kind of return type is same as first
-                            arg. */
+    /* -5 : BASIC_TYPE of return type is 'returnType'
+        and kind of return type is same as first
+        arg. */
 
-                        /* -6 : return type completely differs to any
-                            args and always scalar type. */
+    /* -6 : return type completely differs to any
+        args and always scalar type. */
 
-                        /* -7 : return type always comforms to the
-                            left hand. */
+    /* -7 : return type always comforms to the
+        left hand. */
 
-                        /* -8 : return type is external. XMP original 
-                            intrinsic functions need to use this value. */
+    /* -8 : return type is external. XMP original
+        intrinsic functions need to use this value. */
 
-                        /* -9 : return type is anything. returnType 
-                            may assume INTR_TYPE_INT. */
+    /* -9 : return type is anything. returnType
+        may assume INTR_TYPE_INT. */
 
     int langSpec;
     int intrinsicClass;
-#define INTRINSIC_CLASS_NONE           0x0000
-#define INTRINSIC_CLASS_ATOMIC         0x0001
-#define INTRINSIC_CLASS_ELEMENTAL_FUN  0x0002
-#define INTRINSIC_CLASS_ELEMENTAL_SUB  0x0004
-#define INTRINSIC_CLASS_INQUIRY        0x0008
-#define INTRINSIC_CLASS_PURE_SUB       0x0010
-#define INTRINSIC_CLASS_SUB            0x0020
-#define INTRINSIC_CLASS_TRANS          0x0040
+#define INTRINSIC_CLASS_NONE 0x0000
+#define INTRINSIC_CLASS_ATOMIC 0x0001
+#define INTRINSIC_CLASS_ELEMENTAL_FUN 0x0002
+#define INTRINSIC_CLASS_ELEMENTAL_SUB 0x0004
+#define INTRINSIC_CLASS_INQUIRY 0x0008
+#define INTRINSIC_CLASS_PURE_SUB 0x0010
+#define INTRINSIC_CLASS_SUB 0x0020
+#define INTRINSIC_CLASS_TRANS 0x0040
 
-#define INTR_CLASS_N       INTRINSIC_CLASS_NONE
-#define INTR_CLASS_A       INTRINSIC_CLASS_ATOMIC
-#define INTR_CLASS_E       INTRINSIC_CLASS_ELEMENTAL_FUN
-#define INTR_CLASS_ES      INTRINSIC_CLASS_ELEMENTAL_SUB
-#define INTR_CLASS_I       INTRINSIC_CLASS_INQUIRY
-#define INTR_CLASS_PS      INTRINSIC_CLASS_PURE_SUB
-#define INTR_CLASS_S       INTRINSIC_CLASS_SUB
-#define INTR_CLASS_T       INTRINSIC_CLASS_TRANS
+#define INTR_CLASS_N INTRINSIC_CLASS_NONE
+#define INTR_CLASS_A INTRINSIC_CLASS_ATOMIC
+#define INTR_CLASS_E INTRINSIC_CLASS_ELEMENTAL_FUN
+#define INTR_CLASS_ES INTRINSIC_CLASS_ELEMENTAL_SUB
+#define INTR_CLASS_I INTRINSIC_CLASS_INQUIRY
+#define INTR_CLASS_PS INTRINSIC_CLASS_PURE_SUB
+#define INTR_CLASS_S INTRINSIC_CLASS_SUB
+#define INTR_CLASS_T INTRINSIC_CLASS_TRANS
 
-  const int mandatoryArgsFlag;
-  const char *argsName[10];
-  
+    const int mandatoryArgsFlag;
+    const char *argsName[10];
+
 } intrinsic_entry;
-#define INTR_OP(ep)             ((ep)->ops)
-#define INTR_NAMETYPE(ep)       ((ep)->nameType)
-#define INTR_IS_GENERIC(ep)     (INTR_NAMETYPE(ep) == INTR_NAME_GENERIC)
-#define INTR_NAME(ep)           ((ep)->name)
-#define INTR_ARG_TYPE(ep)       ((ep)->argsType)
-#define INTR_RETURN_TYPE(ep)    ((ep)->returnType)
-#define INTR_N_ARGS(ep)         ((ep)->nArgs)
-#define INTR_RETURN_TYPE_SAME_AS(ep)    ((ep)->retTypeSameAs)
-#define INTR_CLASS(ep)          ((ep)->intrinsicClass)
+#define INTR_OP(ep) ((ep)->ops)
+#define INTR_NAMETYPE(ep) ((ep)->nameType)
+#define INTR_IS_GENERIC(ep) (INTR_NAMETYPE(ep) == INTR_NAME_GENERIC)
+#define INTR_NAME(ep) ((ep)->name)
+#define INTR_ARG_TYPE(ep) ((ep)->argsType)
+#define INTR_RETURN_TYPE(ep) ((ep)->returnType)
+#define INTR_N_ARGS(ep) ((ep)->nArgs)
+#define INTR_RETURN_TYPE_SAME_AS(ep) ((ep)->retTypeSameAs)
+#define INTR_CLASS(ep) ((ep)->intrinsicClass)
 #define INTR_MANDATORY_ARGS_FLAG(ep) ((ep)->mandatoryArgsFlag)
-#define INTR_ARG_NAME(ep)       ((ep)->argsName)
+#define INTR_ARG_NAME(ep) ((ep)->argsName)
 
-#define INTR_IS_RETURN_TYPE_DYNAMIC(ep) \
-    (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_REAL_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_DREAL_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_ALL_REAL_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_COMPLEX_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_DCOMPLEX_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_ALL_COMPLEX_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_CHAR_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_LOGICAL_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_ANY_DYNAMIC_ARRAY || \
-     INTR_RETURN_TYPE(ep) == INTR_TYPE_NUMERICS_DYNAMIC_ARRAY || \
+#define INTR_IS_RETURN_TYPE_DYNAMIC(ep)                                        \
+    (INTR_RETURN_TYPE(ep) == INTR_TYPE_INT_DYNAMIC_ARRAY ||                    \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_REAL_DYNAMIC_ARRAY ||                   \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_DREAL_DYNAMIC_ARRAY ||                  \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_ALL_REAL_DYNAMIC_ARRAY ||               \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_COMPLEX_DYNAMIC_ARRAY ||                \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_DCOMPLEX_DYNAMIC_ARRAY ||               \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_ALL_COMPLEX_DYNAMIC_ARRAY ||            \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_CHAR_DYNAMIC_ARRAY ||                   \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_LOGICAL_DYNAMIC_ARRAY ||                \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_ANY_DYNAMIC_ARRAY ||                    \
+     INTR_RETURN_TYPE(ep) == INTR_TYPE_NUMERICS_DYNAMIC_ARRAY ||               \
      INTR_RETURN_TYPE(ep) == INTR_TYPE_ALL_NUMERICS_DYNAMIC_ARRAY)
 
-#define INTR_IS_ARG_TYPE0_ARRAY(ep) \
-    (INTR_ARG_TYPE(ep)[0] == INTR_TYPE_INT_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_REAL_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_DREAL_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ALL_REAL_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_COMPLEX_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_DCOMPLEX_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ALL_COMPLEX_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_CHAR_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_LOGICAL_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ANY_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_NUMERICS_ARRAY || \
-    INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ALL_NUMERICS_ARRAY)
+#define INTR_IS_ARG_TYPE0_ARRAY(ep)                                            \
+    (INTR_ARG_TYPE(ep)[0] == INTR_TYPE_INT_ARRAY ||                            \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_REAL_ARRAY ||                           \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_DREAL_ARRAY ||                          \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ALL_REAL_ARRAY ||                       \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_COMPLEX_ARRAY ||                        \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_DCOMPLEX_ARRAY ||                       \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ALL_COMPLEX_ARRAY ||                    \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_CHAR_ARRAY ||                           \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_LOGICAL_ARRAY ||                        \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ANY_ARRAY ||                            \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_NUMERICS_ARRAY ||                       \
+     INTR_ARG_TYPE(ep)[0] == INTR_TYPE_ALL_NUMERICS_ARRAY)
 
 /*
  * NOTE:
@@ -569,6 +569,5 @@ extern intrinsic_entry intrinsic_table[];
 #define ARG7 0x0000080
 #define ARG8 0x0000100
 #define ARG9 0x0000200
-
 
 #endif /* _F_INTRINSICS_TYPES_H_ */
