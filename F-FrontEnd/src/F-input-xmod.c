@@ -11,8 +11,8 @@ typedef struct type_entry {
     int hasExtID;
     EXT_ID ep;
     TYPE_DESC tp;
-    char * parent_type_id;
-    char * type_ref;
+    char *parent_type_id;
+    char *type_ref;
 } * TYPE_ENTRY;
 
 static int input_FfunctionDecl(xmlTextReaderPtr, HashTable *, EXT_ID, ID);
@@ -20,8 +20,7 @@ static int input_value(xmlTextReaderPtr, HashTable *, expv *);
 static int input_varRef(xmlTextReaderPtr, HashTable *, expv *);
 static int input_expv(xmlTextReaderPtr, HashTable *, expv *);
 
-static int
-xmlSkipWhiteSpace(xmlTextReaderPtr reader) 
+static int xmlSkipWhiteSpace(xmlTextReaderPtr reader)
 {
     int type;
 
@@ -40,56 +39,51 @@ xmlSkipWhiteSpace(xmlTextReaderPtr reader)
     return TRUE;
 }
 
-static int
-xmlSkipUntil(xmlTextReaderPtr reader, int type, const char * name, int depth)
+static int xmlSkipUntil(xmlTextReaderPtr reader, int type, const char *name,
+                        int depth)
 {
     int current_type;
     int current_depth;
-    const char * current_name;
+    const char *current_name;
 
     do {
-        if (!xmlTextReaderRead(reader)){
+        if (!xmlTextReaderRead(reader)) {
             return FALSE;
         }
 
         current_type = xmlTextReaderNodeType(reader);
-        current_name = (const char *) xmlTextReaderConstName(reader);
+        current_name = (const char *)xmlTextReaderConstName(reader);
         current_depth = xmlTextReaderDepth(reader);
-    } while (current_type != type ||
-             strcmp(current_name, name) != 0 ||
+    } while (current_type != type || strcmp(current_name, name) != 0 ||
              current_depth != depth);
 
     return TRUE;
 }
 
-static int
-xmlMatchNodeType(xmlTextReaderPtr reader, int type)
+static int xmlMatchNodeType(xmlTextReaderPtr reader, int type)
 {
     return (xmlTextReaderNodeType(reader) == type);
 }
 
-static int
-xmlMatchNode(xmlTextReaderPtr reader, int type, const char* name)
+static int xmlMatchNode(xmlTextReaderPtr reader, int type, const char *name)
 {
     if (!xmlMatchNodeType(reader, type))
         return FALSE;
 
-    if (strcmp((const char *) xmlTextReaderConstName(reader) , name) != 0)
+    if (strcmp((const char *)xmlTextReaderConstName(reader), name) != 0)
         return FALSE;
 
     return TRUE;
 }
 
-static int
-xmlExpectNode(xmlTextReaderPtr reader, int type, const char* name)
+static int xmlExpectNode(xmlTextReaderPtr reader, int type, const char *name)
 {
     if (!xmlMatchNode(reader, type, name)) {
-        fprintf(stderr, "On line %d, expected node type: %d, name: %s, "
-                        "but was type: %d, name: %s\n",
-                        xmlTextReaderGetParserLineNumber(reader),
-                        type, name,
-                        xmlTextReaderNodeType(reader),
-                        xmlTextReaderConstName(reader));
+        fprintf(stderr,
+                "On line %d, expected node type: %d, name: %s, "
+                "but was type: %d, name: %s\n",
+                xmlTextReaderGetParserLineNumber(reader), type, name,
+                xmlTextReaderNodeType(reader), xmlTextReaderConstName(reader));
         fflush(stderr);
         return FALSE;
     }
@@ -100,11 +94,11 @@ xmlExpectNode(xmlTextReaderPtr reader, int type, const char* name)
     return TRUE;
 }
 
-static TYPE_ENTRY
-getTypeEntry(HashTable * ht, const char * typeId) {
+static TYPE_ENTRY getTypeEntry(HashTable *ht, const char *typeId)
+{
     TYPE_ENTRY tep = NULL;
     TYPE_DESC tp = NULL;
-    HashEntry * e;
+    HashEntry *e;
     int isNew = 0;
 
     e = FindHashEntry(ht, typeId);
@@ -143,8 +137,8 @@ getTypeEntry(HashTable * ht, const char * typeId) {
     return tep;
 }
 
-static TYPE_DESC
-getTypeDesc(HashTable * ht, const char * typeId) {
+static TYPE_DESC getTypeDesc(HashTable *ht, const char *typeId)
+{
     TYPE_ENTRY tep = NULL;
 
     tep = getTypeEntry(ht, typeId);
@@ -152,8 +146,7 @@ getTypeDesc(HashTable * ht, const char * typeId) {
     return tep->tp;
 }
 
-static void
-setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
+static void setReturnType(HashTable *ht, TYPE_DESC ftp, const char *rtid)
 {
     if (strcmp(rtid, "Fvoid") == 0) {
         TYPE_BASIC_TYPE(ftp) = TYPE_SUBR;
@@ -177,73 +170,71 @@ setReturnType(HashTable * ht, TYPE_DESC ftp, const char * rtid)
     }
 }
 
-const char *
-get_tagname_from_code(enum expr_code c)
+const char *get_tagname_from_code(enum expr_code c)
 {
-    switch(c) {
-    case PLUS_EXPR:
-        return "plusExpr";
-    case MINUS_EXPR:
-        return "minusExpr";
-    case UNARY_MINUS_EXPR:
-        return "unaryMinusExpr";
-    case MUL_EXPR:
-        return "mulExpr";
-    case DIV_EXPR:
-        return "divExpr";
-    case POWER_EXPR:
-        return "FpowerExpr";
-    case LOG_EQ_EXPR:
-        return "logEQExpr";
-    case LOG_NEQ_EXPR:
-        return "logNEQExpr";
-    case LOG_GE_EXPR:
-        return "logGEExpr";
-    case LOG_GT_EXPR:
-        return "logGTExpr";
-    case LOG_LE_EXPR:
-        return "logLEExpr";
-    case LOG_LT_EXPR:
-        return "logLTExpr";
-    case LOG_AND_EXPR:
-        return "logAndExpr";
-    case LOG_OR_EXPR:
-        return "logOrExpr";
-    case LOG_NOT_EXPR:
-        return "logNotExpr";
-    case F_EQV_EXPR:
-        return "logEQVExpr";
-    case F_NEQV_EXPR:
-        return "logNEQVExpr";
-    case F_CONCAT_EXPR:
-        return "FconcatExpr";
-    case F95_ARRAY_CONSTRUCTOR:
-    case F03_TYPED_ARRAY_CONSTRUCTOR:
-        return "FarrayConstructor";
-    case F95_STRUCT_CONSTRUCTOR:
-        return "FstructConstructor";
-    default:
-        return NULL;
+    switch (c) {
+        case PLUS_EXPR:
+            return "plusExpr";
+        case MINUS_EXPR:
+            return "minusExpr";
+        case UNARY_MINUS_EXPR:
+            return "unaryMinusExpr";
+        case MUL_EXPR:
+            return "mulExpr";
+        case DIV_EXPR:
+            return "divExpr";
+        case POWER_EXPR:
+            return "FpowerExpr";
+        case LOG_EQ_EXPR:
+            return "logEQExpr";
+        case LOG_NEQ_EXPR:
+            return "logNEQExpr";
+        case LOG_GE_EXPR:
+            return "logGEExpr";
+        case LOG_GT_EXPR:
+            return "logGTExpr";
+        case LOG_LE_EXPR:
+            return "logLEExpr";
+        case LOG_LT_EXPR:
+            return "logLTExpr";
+        case LOG_AND_EXPR:
+            return "logAndExpr";
+        case LOG_OR_EXPR:
+            return "logOrExpr";
+        case LOG_NOT_EXPR:
+            return "logNotExpr";
+        case F_EQV_EXPR:
+            return "logEQVExpr";
+        case F_NEQV_EXPR:
+            return "logNEQVExpr";
+        case F_CONCAT_EXPR:
+            return "FconcatExpr";
+        case F95_ARRAY_CONSTRUCTOR:
+        case F03_TYPED_ARRAY_CONSTRUCTOR:
+            return "FarrayConstructor";
+        case F95_STRUCT_CONSTRUCTOR:
+            return "FstructConstructor";
+        default:
+            return NULL;
     }
 }
 
-static int
-input_name_as_string(xmlTextReaderPtr reader, char ** name)
+static int input_name_as_string(xmlTextReaderPtr reader, char **name)
 {
-    const char * str;
+    const char *str;
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "name"))
-       return FALSE;
+        return FALSE;
 
     if (!xmlMatchNodeType(reader, XML_READER_TYPE_TEXT))
-       return FALSE;
+        return FALSE;
 
-    str = (const char*) xmlTextReaderConstValue(reader);
+    str = (const char *)xmlTextReaderConstValue(reader);
     if (str == NULL)
         return FALSE;
 
     *name = strdup(str);
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
@@ -255,13 +246,12 @@ input_name_as_string(xmlTextReaderPtr reader, char ** name)
 /**
  * input <name> node
  */
-static int
-input_name(xmlTextReaderPtr reader, SYMBOL * s)
+static int input_name(xmlTextReaderPtr reader, SYMBOL *s)
 {
-    char * name = NULL;
+    char *name = NULL;
 
     if (!input_name_as_string(reader, &name))
-       return FALSE;
+        return FALSE;
 
     *s = find_symbol(name);
 
@@ -273,26 +263,26 @@ input_name(xmlTextReaderPtr reader, SYMBOL * s)
 /**
  * input type and attribute at node
  */
-static int
-input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
-                    TYPE_DESC * tp)
+static int input_type_and_attr(xmlTextReaderPtr reader, HashTable *ht,
+                               char **retTypeId, TYPE_DESC *tp)
 {
-    char * str;
-    char * typeId;
-    char * importedId;
+    char *str;
+    char *typeId;
+    char *importedId;
 
-    typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    typeId = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "type");
     if (typeId == NULL)
         return FALSE;
 
     *tp = getTypeDesc(ht, typeId);
-    importedId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "imported_id");
+    importedId =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "imported_id");
     if (importedId != NULL) {
         (*tp)->imported_id = strdup(importedId);
         free(importedId);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "intent");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "intent");
     if (str != NULL) {
         if (strcmp(str, "in") == 0)
             TYPE_SET_INTENT_IN(*tp);
@@ -304,74 +294,73 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_pointer");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_pointer");
     if (str != NULL) {
         TYPE_SET_POINTER(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_target");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_target");
     if (str != NULL) {
         TYPE_SET_TARGET(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_optional");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_optional");
     if (str != NULL) {
         TYPE_SET_OPTIONAL(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_save");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_save");
     if (str != NULL) {
         TYPE_SET_SAVE(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_parameter");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_parameter");
     if (str != NULL) {
         TYPE_SET_PARAMETER(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader,
-                        BAD_CAST "is_allocatable");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_allocatable");
     if (str != NULL) {
         TYPE_SET_ALLOCATABLE(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_sequence");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_sequence");
     if (str != NULL) {
         TYPE_SET_SEQUENCE(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader,
-                        BAD_CAST "is_internal_private");
+    str = (char *)xmlTextReaderGetAttribute(reader,
+                                            BAD_CAST "is_internal_private");
     if (str != NULL) {
         TYPE_SET_INTERNAL_PRIVATE(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_intrinsic");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_intrinsic");
     if (str != NULL) {
         TYPE_SET_INTRINSIC(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_volatile");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_volatile");
     if (str != NULL) {
         TYPE_SET_VOLATILE(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "extends");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "extends");
     if (str != NULL) {
         TYPE_DESC parent_type = getTypeDesc(ht, str);
         if (parent_type != NULL) {
             TYPE_ENTRY tep = NULL;
-            HashEntry * e;
+            HashEntry *e;
 
             // TO BE FIXED lately
             TYPE_PARENT(*tp) = new_ident_desc(NULL);
@@ -385,7 +374,7 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         }
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
     if (str != NULL) {
         FUNCTION_TYPE_HAS_PASS_ARG(*tp) = TRUE;
         if (strcmp("pass", str) == 0) {
@@ -399,7 +388,7 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
     if (str != NULL) {
         ID pass_arg;
         pass_arg = new_ident_desc(find_symbol(str));
@@ -407,38 +396,38 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_class");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_class");
     if (str != NULL) {
         TYPE_SET_CLASS(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_procedure");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_procedure");
     if (str != NULL) {
         TYPE_SET_PROCEDURE(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_abstract");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_abstract");
     if (str != NULL) {
         TYPE_SET_ABSTRACT(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_contiguous");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_contiguous");
     if (str != NULL) {
         TYPE_SET_CONTIGUOUS(*tp);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed");
     if (str != NULL) {
         TYPE_SET_ASSUMED(*tp);
         free(str);
     }
 
     if (retTypeId != NULL)
-        *retTypeId = typeId;    /* return typeId */
+        *retTypeId = typeId; /* return typeId */
     else
         free(typeId);
 
@@ -448,11 +437,10 @@ input_type_and_attr(xmlTextReaderPtr reader, HashTable * ht, char ** retTypeId,
 /**
  * input <name> node with type attribute
  */
-static int
-input_name_with_type(xmlTextReaderPtr reader, HashTable * ht,
-                     int type_is_optional, SYMBOL * s, TYPE_DESC * tp)
+static int input_name_with_type(xmlTextReaderPtr reader, HashTable *ht,
+                                int type_is_optional, SYMBOL *s, TYPE_DESC *tp)
 {
-    const char * name;
+    const char *name;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "name"))
         return FALSE;
@@ -462,16 +450,16 @@ input_name_with_type(xmlTextReaderPtr reader, HashTable * ht,
             return FALSE;
     }
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!xmlMatchNodeType(reader, XML_READER_TYPE_TEXT))
-       return FALSE;
+        return FALSE;
 
-    name = (const char*) xmlTextReaderConstValue(reader);
+    name = (const char *)xmlTextReaderConstValue(reader);
     *s = find_symbol(name);
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "name"))
@@ -483,10 +471,10 @@ input_name_with_type(xmlTextReaderPtr reader, HashTable * ht,
 /**
  * input <depends> node
  */
-static int
-input_depends(xmlTextReaderPtr reader, struct module * mod) {
+static int input_depends(xmlTextReaderPtr reader, struct module *mod)
+{
     SYMBOL name;
-    struct depend_module * depmod;
+    struct depend_module *depmod;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "depends"))
         return FALSE;
@@ -503,11 +491,11 @@ input_depends(xmlTextReaderPtr reader, struct module * mod) {
         depmod->module_name = name;
 
         if (mod->depend.head == NULL) {
-             mod->depend.head = depmod;
-             mod->depend.last = depmod;
+            mod->depend.head = depmod;
+            mod->depend.last = depmod;
         } else {
-             mod->depend.last->next = depmod;
-             mod->depend.last = depmod;
+            mod->depend.last->next = depmod;
+            mod->depend.last = depmod;
         }
     }
 
@@ -520,11 +508,10 @@ input_depends(xmlTextReaderPtr reader, struct module * mod) {
 /**
  * input FintConstant node
  */
-static int
-input_FintConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FintConstant(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
-    char * typeId = NULL;
-    const char * value = NULL;
+    char *typeId = NULL;
+    const char *value = NULL;
     TYPE_DESC tp = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FintConstant"))
@@ -536,7 +523,7 @@ input_FintConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    value = (const char*) xmlTextReaderConstValue(reader);
+    value = (const char *)xmlTextReaderConstValue(reader);
     if (value == NULL)
         return FALSE;
 
@@ -559,11 +546,10 @@ input_FintConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FrealConstant node
  */
-static int
-input_FrealConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FrealConstant(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
-    char * typeId = NULL;
-    const char * value = NULL;
+    char *typeId = NULL;
+    const char *value = NULL;
     TYPE_DESC tp = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FrealConstant"))
@@ -575,7 +561,7 @@ input_FrealConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    value = (const char*) xmlTextReaderConstValue(reader);
+    value = (const char *)xmlTextReaderConstValue(reader);
     if (value == NULL)
         return FALSE;
 
@@ -598,11 +584,11 @@ input_FrealConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FlogicalConstant node
  */
-static int
-input_FlogicalConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FlogicalConstant(xmlTextReaderPtr reader, HashTable *ht,
+                                  expv *v)
 {
-    char * typeId = NULL;
-    const char * value = NULL;
+    char *typeId = NULL;
+    const char *value = NULL;
     TYPE_DESC tp = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FlogicalConstant"))
@@ -614,12 +600,12 @@ input_FlogicalConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    value = (const char*) xmlTextReaderConstValue(reader);
+    value = (const char *)xmlTextReaderConstValue(reader);
     if (value == NULL)
         return FALSE;
 
     *v = expv_int_term(INT_CONSTANT, tp,
-             strcmp(value, ".TRUE.") == 0 ? TRUE : FALSE);
+                       strcmp(value, ".TRUE.") == 0 ? TRUE : FALSE);
 
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
@@ -633,11 +619,11 @@ input_FlogicalConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FcharacterConstant node
  */
-static int
-input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FcharacterConstant(xmlTextReaderPtr reader, HashTable *ht,
+                                    expv *v)
 {
-    char * typeId = NULL;
-    const char * value = NULL;
+    char *typeId = NULL;
+    const char *value = NULL;
     TYPE_DESC tp = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcharacterConstant"))
@@ -646,9 +632,10 @@ input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!input_type_and_attr(reader, ht, &typeId, &tp))
         return FALSE;
 
-    if (xmlTextReaderRead(reader) != 1) return FALSE;
+    if (xmlTextReaderRead(reader) != 1)
+        return FALSE;
 
-    value = (const char*) xmlTextReaderConstValue(reader);
+    value = (const char *)xmlTextReaderConstValue(reader);
 
     // FIXME: do we need this?
     // to be solved
@@ -657,15 +644,16 @@ input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         TYPE_CHAR_LEN(tp) = 1;
     }
 
-    if (value){
-      *v = expv_str_term(STRING_CONSTANT, tp, (char *)value);
-      if (xmlTextReaderRead(reader) != 1) return FALSE;
-    }
-    else {
-      *v = expv_str_term(STRING_CONSTANT, tp, "");
+    if (value) {
+        *v = expv_str_term(STRING_CONSTANT, tp, (char *)value);
+        if (xmlTextReaderRead(reader) != 1)
+            return FALSE;
+    } else {
+        *v = expv_str_term(STRING_CONSTANT, tp, "");
     }
 
-    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FcharacterConstant"))
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
+                       "FcharacterConstant"))
         return FALSE;
 
     return TRUE;
@@ -674,10 +662,10 @@ input_FcharacterConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FcomplexConstant node
  */
-static int
-input_FcomplexConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FcomplexConstant(xmlTextReaderPtr reader, HashTable *ht,
+                                  expv *v)
 {
-    char * typeId = NULL;
+    char *typeId = NULL;
     TYPE_DESC tp = NULL;
     expv i = NULL;
     expv r = NULL;
@@ -709,11 +697,10 @@ input_FcomplexConstant(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input Var node
  */
-static int
-input_Var(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_Var(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
-    char * typeId = NULL;
-    const char * name = NULL;
+    char *typeId = NULL;
+    const char *name = NULL;
     TYPE_DESC tp = NULL;
     SYMBOL s;
 
@@ -726,7 +713,7 @@ input_Var(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    name = (const char*) xmlTextReaderConstValue(reader);
+    name = (const char *)xmlTextReaderConstValue(reader);
     if (name == NULL)
         return FALSE;
 
@@ -745,14 +732,13 @@ input_Var(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input unary expression node
  */
-static int
-input_unaryExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
-    expv * v)
+static int input_unaryExpr(xmlTextReaderPtr reader, HashTable *ht,
+                           enum expr_code c, expv *v)
 {
     expv operand;
     TYPE_DESC tp = NULL;
-    const char * tag = get_tagname_from_code(c);
-    char * typeId = NULL;
+    const char *tag = get_tagname_from_code(c);
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, tag))
         return FALSE;
@@ -777,14 +763,13 @@ input_unaryExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
 /**
  * input binary expression node
  */
-static int
-input_binaryExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
-    expv * v)
+static int input_binaryExpr(xmlTextReaderPtr reader, HashTable *ht,
+                            enum expr_code c, expv *v)
 {
     expv lt, rt;
     TYPE_DESC tp = NULL;
-    const char * tag = get_tagname_from_code(c);
-    char * typeId = NULL;
+    const char *tag = get_tagname_from_code(c);
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, tag))
         return FALSE;
@@ -812,15 +797,14 @@ input_binaryExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
 /**
  * input multiple(zero or more) expression node
  */
-static int
-input_multipleExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
-    expv * v)
+static int input_multipleExpr(xmlTextReaderPtr reader, HashTable *ht,
+                              enum expr_code c, expv *v)
 {
     expv operand;
     expv list;
     TYPE_DESC tp = NULL;
-    const char * tag = get_tagname_from_code(c);
-    char * typeId = NULL;
+    const char *tag = get_tagname_from_code(c);
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, tag))
         return FALSE;
@@ -847,8 +831,8 @@ input_multipleExpr(xmlTextReaderPtr reader, HashTable * ht, enum expr_code c,
     return TRUE;
 }
 
-static int
-input_typeParamValues(xmlTextReaderPtr reader, HashTable * ht, expv * typeParamValues)
+static int input_typeParamValues(xmlTextReaderPtr reader, HashTable *ht,
+                                 expv *typeParamValues)
 {
     expv value;
 
@@ -860,9 +844,11 @@ input_typeParamValues(xmlTextReaderPtr reader, HashTable * ht, expv * typeParamV
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "typeParamValues")) {
+    while (
+        !xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "typeParamValues")) {
         if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "namedValue")) {
-            char * name = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+            char *name =
+                (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "name");
             if (name == NULL)
                 return FALSE;
 
@@ -875,7 +861,8 @@ input_typeParamValues(xmlTextReaderPtr reader, HashTable * ht, expv * typeParamV
             EXPV_KWOPT_NAME(value) = strdup(name);
             free(name);
 
-            if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "namedValue"))
+            if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT,
+                              "namedValue"))
                 return FALSE;
 
             if (!xmlSkipWhiteSpace(reader))
@@ -898,18 +885,17 @@ input_typeParamValues(xmlTextReaderPtr reader, HashTable * ht, expv * typeParamV
     return TRUE;
 }
 
-
 /**
  * input multiple(zero or more) expression node
  */
-static int
-input_FstructConstructor(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FstructConstructor(xmlTextReaderPtr reader, HashTable *ht,
+                                    expv *v)
 {
     expv operand;
     expv typeParamValues = NULL;
     expv components;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FstructConstructor"))
         return FALSE;
@@ -927,7 +913,8 @@ input_FstructConstructor(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 
     components = list0(LIST);
 
-    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructConstructor")) {
+    while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT,
+                         "FstructConstructor")) {
         if (!input_expv(reader, ht, &operand))
             return FALSE;
         list_put_last(components, operand);
@@ -935,7 +922,8 @@ input_FstructConstructor(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 
     *v = expv_cons(F95_STRUCT_CONSTRUCTOR, tp, typeParamValues, components);
 
-    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FstructConstructor"))
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
+                       "FstructConstructor"))
         return FALSE;
 
     return TRUE;
@@ -944,13 +932,12 @@ input_FstructConstructor(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input user binary expression node
  */
-static int
-input_userBinaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_userBinaryExpr(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv lt, rt;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
-    char * name = NULL;
+    char *typeId = NULL;
+    char *name = NULL;
     SYMBOL s;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "userBinaryExpr"))
@@ -973,8 +960,8 @@ input_userBinaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return FALSE;
 
     s = find_symbol(name);
-    *v = list3(F95_USER_DEFINED_BINARY_EXPR,
-               expv_sym_term(IDENT, NULL, s), lt, rt);
+    *v = list3(F95_USER_DEFINED_BINARY_EXPR, expv_sym_term(IDENT, NULL, s), lt,
+               rt);
     EXPV_TYPE(*v) = tp;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "userBinaryExpr"))
@@ -986,13 +973,12 @@ input_userBinaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input user unary expression node
  */
-static int
-input_userUnaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_userUnaryExpr(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv operand;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
-    char * name = NULL;
+    char *typeId = NULL;
+    char *name = NULL;
     SYMBOL s;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "userUnaryExpr"))
@@ -1012,8 +998,8 @@ input_userUnaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         return FALSE;
 
     s = find_symbol(name);
-    *v = list2(F95_USER_DEFINED_UNARY_EXPR,
-               expv_sym_term(IDENT, NULL, s), operand);
+    *v = list2(F95_USER_DEFINED_UNARY_EXPR, expv_sym_term(IDENT, NULL, s),
+               operand);
     EXPV_TYPE(*v) = tp;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "userUnaryExpr"))
@@ -1025,13 +1011,12 @@ input_userUnaryExpr(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FmemberRef node
  */
-static int
-input_FmemberRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FmemberRef(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv v1, v2;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
-    const char * member = NULL;
+    char *typeId = NULL;
+    const char *member = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FmemberRef"))
         return FALSE;
@@ -1039,7 +1024,7 @@ input_FmemberRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!input_type_and_attr(reader, ht, &typeId, &tp))
         return FALSE;
 
-    member = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "member");
+    member = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "member");
     if (member == NULL)
         return FALSE;
 
@@ -1061,12 +1046,11 @@ input_FmemberRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input functionCall node
  */
-static int
-input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_functionCall(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
-    char * name;
-    const char * tagName;
-    char * typeId = NULL;
+    char *name;
+    const char *tagName;
+    char *typeId = NULL;
     SYMBOL s;
     ID id;
     TYPE_DESC tp = NULL;
@@ -1083,7 +1067,6 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
-
 
     tagName = (const char *)xmlTextReaderConstName(reader);
     if (strcmp(tagName, "name") == 0) {
@@ -1107,7 +1090,8 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
         if (!xmlSkipWhiteSpace(reader))
             return FALSE;
 
-        while (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "arguments")) {
+        while (
+            !xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "arguments")) {
             if (!input_expv(reader, ht, &arg))
                 return FALSE;
             list_put_last(args, arg);
@@ -1118,7 +1102,7 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     }
 
     // Function is defined by a name
-    if(name) {
+    if (name) {
         s = find_symbol(name);
         SYM_TYPE(s) = TYPE_IS_INTRINSIC(tp) ? S_INTR : S_IDENT;
         id = new_ident_desc(s);
@@ -1128,7 +1112,8 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
             *v = compile_intrinsic_call0(id, args, TRUE);
         } else {
             ID_ADDR(id) = expv_sym_term(IDENT, NULL, s);
-            *v = list3(FUNCTION_CALL, ID_ADDR(id), args, expv_any_term(F_EXTFUNC, id));
+            *v = list3(FUNCTION_CALL, ID_ADDR(id), args,
+                       expv_any_term(F_EXTFUNC, id));
             EXPV_TYPE(*v) = getTypeDesc(ht, typeId);
         }
     } else {
@@ -1146,15 +1131,14 @@ input_functionCall(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input <kind> node
  */
-static int
-input_kind(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
+static int input_kind(xmlTextReaderPtr reader, HashTable *ht, TYPE_DESC tp)
 {
     expv v;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "kind"))
         return TRUE;
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!input_expv(reader, ht, &v))
@@ -1171,12 +1155,11 @@ input_kind(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 /**
  * input <len> node
  */
-static int
-input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
+static int input_len(xmlTextReaderPtr reader, HashTable *ht, TYPE_DESC tp)
 {
     expv v = NULL;
-    char * is_assumed_size;
-    char * is_assumed_shape;
+    char *is_assumed_size;
+    char *is_assumed_shape;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "len"))
         return TRUE;
@@ -1184,12 +1167,11 @@ input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
     if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
-                                   BAD_CAST "is_assumed_size");
+    is_assumed_size =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed_size");
 
-    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
-                                    BAD_CAST "is_assumed_shape");
-
+    is_assumed_shape =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed_shape");
 
     if (xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "len")) {
         /* if <len> tag is empty, size is unfixed */
@@ -1219,8 +1201,7 @@ input_len(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 /**
  * input <lowerBound> node
  */
-static int
-input_lowerBound(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_lowerBound(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound"))
         return FALSE;
@@ -1237,8 +1218,7 @@ input_lowerBound(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input <upperBound> node
  */
-static int
-input_upperBound(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_upperBound(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "upperBound"))
         return FALSE;
@@ -1255,8 +1235,7 @@ input_upperBound(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input <step> node
  */
-static int
-input_step(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_step(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "step"))
         return FALSE;
@@ -1273,13 +1252,13 @@ input_step(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input <indexRange> node
  */
-static int
-input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
+static int input_indexRange(xmlTextReaderPtr reader, HashTable *ht,
+                            TYPE_DESC tp)
 {
     TYPE_DESC bottom, base;
     expv v;
-    char * is_assumed_size;
-    char * is_assumed_shape;
+    char *is_assumed_size;
+    char *is_assumed_shape;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "indexRange"))
         return FALSE;
@@ -1289,18 +1268,18 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
     *base = *bottom;
     TYPE_BASIC_TYPE(bottom) = TYPE_ARRAY;
     TYPE_REF(bottom) = base;
-    TYPE_N_DIM(bottom) = TYPE_N_DIM(base)+1;
-    
+    TYPE_N_DIM(bottom) = TYPE_N_DIM(base) + 1;
+
     /* fix allocatable attribute set in input_FbasicType() */
     if (TYPE_IS_ALLOCATABLE(bottom)) {
         TYPE_SET_ALLOCATABLE(base);
     }
 
-    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
-                                   BAD_CAST "is_assumed_size");
+    is_assumed_size =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed_size");
 
-    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
-                                    BAD_CAST "is_assumed_shape");
+    is_assumed_shape =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed_shape");
 
     if (is_assumed_size != NULL) {
         TYPE_ARRAY_ASSUME_KIND(bottom) = ASSUMED_SIZE;
@@ -1312,7 +1291,7 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
         TYPE_ARRAY_ASSUME_KIND(bottom) = ASSUMED_NONE;
     }
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "lowerBound")) {
@@ -1345,11 +1324,11 @@ input_indexRange(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 /**
  * input <indexRange> node in <coShape> node
  */
-static int
-input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
+static int input_indexRange_coShape(xmlTextReaderPtr reader, HashTable *ht,
+                                    TYPE_DESC tp)
 {
-    char * is_assumed_size;
-    char * is_assumed_shape;
+    char *is_assumed_size;
+    char *is_assumed_shape;
     ARRAY_ASSUME_KIND assumeKind;
     expv cobound = NULL;
     expv lower = NULL;
@@ -1359,11 +1338,11 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "indexRange"))
         return FALSE;
 
-    is_assumed_size = (char *) xmlTextReaderGetAttribute(reader,
-                                   BAD_CAST "is_assumed_size");
+    is_assumed_size =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed_size");
 
-    is_assumed_shape = (char *) xmlTextReaderGetAttribute(reader,
-                                    BAD_CAST "is_assumed_shape");
+    is_assumed_shape =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assumed_shape");
 
     if (is_assumed_size != NULL) {
         assumeKind = ASSUMED_SIZE;
@@ -1387,7 +1366,7 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
         if (!input_step(reader, ht, &step))
             return FALSE;
 
-    if(upper == NULL && assumeKind == ASSUMED_SIZE){
+    if (upper == NULL && assumeKind == ASSUMED_SIZE) {
         upper = expv_any_term(F_ASTERISK, NULL);
     }
 
@@ -1404,10 +1383,9 @@ input_indexRange_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 /**
  * input <coShape> node
  */
-static int
-input_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
+static int input_coShape(xmlTextReaderPtr reader, HashTable *ht, TYPE_DESC tp)
 {
-    codims_desc * codims;
+    codims_desc *codims;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "coShape"))
         return FALSE;
@@ -1430,8 +1408,7 @@ input_coShape(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC tp)
 /**
  * input indexRange or arrayIndex in FarrayRef, FcoArrayRef node
  */
-static int
-input_arraySpec(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_arraySpec(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv lower = NULL;
     expv upper = NULL;
@@ -1475,12 +1452,11 @@ input_arraySpec(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FarrayRef node
  */
-static int
-input_FarrayRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FarrayRef(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv v1, v2, v3;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FarrayRef"))
         return FALSE;
@@ -1513,12 +1489,11 @@ input_FarrayRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FcoArrayRef node
  */
-static int
-input_FcoArrayRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FcoArrayRef(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv v1, v2, v3;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcoArrayRef"))
         return FALSE;
@@ -1551,12 +1526,11 @@ input_FcoArrayRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FcharacterRef node
  */
-static int
-input_FcharacterRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FcharacterRef(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv v1, v2;
     TYPE_DESC tp = NULL;
-    char * typeId = NULL;
+    char *typeId = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FcharacterRef"))
         return FALSE;
@@ -1588,11 +1562,10 @@ input_FcharacterRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input varRef node
  */
-static int
-input_varRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_varRef(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     int ret = FALSE;
-    const char * name;
+    const char *name;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "varRef"))
         return FALSE;
@@ -1621,8 +1594,7 @@ input_varRef(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input FdoLoop node
  */
-static int
-input_FdoLoop(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_FdoLoop(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     expv v1, v2;
     expv var, lower, upper, step;
@@ -1669,13 +1641,13 @@ input_FdoLoop(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     return TRUE;
 }
 
-static TYPE_ENTRY
-has_ext_id_in_types(HashTable* ht, TYPE_ENTRY base) {
-    if(base->type_ref) {
+static TYPE_ENTRY has_ext_id_in_types(HashTable *ht, TYPE_ENTRY base)
+{
+    if (base->type_ref) {
         TYPE_ENTRY ref = getTypeEntry(ht, base->type_ref);
-        if(!base->hasExtID && ref->hasExtID) {
+        if (!base->hasExtID && ref->hasExtID) {
             return ref;
-        } else if(ref->type_ref) {
+        } else if (ref->type_ref) {
             return has_ext_id_in_types(ht, ref);
         }
     }
@@ -1685,14 +1657,13 @@ has_ext_id_in_types(HashTable* ht, TYPE_ENTRY base) {
 /**
  * input <FbasicType> node
  */
-static int
-input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
+static int input_FbasicType(xmlTextReaderPtr reader, HashTable *ht)
 {
     TYPE_DESC tp = NULL;
     TYPE_ENTRY baseTep;
     TYPE_ENTRY refTep;
-    char * typeId = NULL;
-    char * ref;
+    char *typeId = NULL;
+    char *ref;
     int isEmpty;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FbasicType"))
@@ -1703,14 +1674,14 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     if (!input_type_and_attr(reader, ht, &typeId, &tp))
         return FALSE;
 
-    ref = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
+    ref = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "ref");
     if (ref != NULL) {
         TYPE_REF(tp) = getTypeDesc(ht, ref);
         baseTep = getTypeEntry(ht, typeId);
         baseTep->type_ref = ref;
 
         refTep = has_ext_id_in_types(ht, baseTep);
-        if(refTep) {
+        if (refTep) {
             baseTep->hasExtID = TRUE;
             baseTep->ep = refTep->ep;
         }
@@ -1718,7 +1689,7 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         TYPE_BASIC_TYPE(tp) = TYPE_BASIC_TYPE(TYPE_REF(tp));
         shrink_type(tp);
 
-        if (IS_CHAR(tp))  {
+        if (IS_CHAR(tp)) {
             TYPE_CHAR_LEN(tp) = TYPE_CHAR_LEN(TYPE_REF(tp));
         }
 
@@ -1737,17 +1708,17 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
         return FALSE;
 
     if (isEmpty)
-        return TRUE;	/* case FbasicType node has no child */
+        return TRUE; /* case FbasicType node has no child */
 
     /* <kind> */
-    if (!input_kind(reader, ht, TYPE_REF(tp)))    /* kind should be set to ref */
+    if (!input_kind(reader, ht, TYPE_REF(tp))) /* kind should be set to ref */
         return FALSE;
 
     /* <len> */
     if (!input_len(reader, ht, tp))
         return FALSE;
 
-    if (IS_CHAR(tp) && TYPE_LENG(tp))  {
+    if (IS_CHAR(tp) && TYPE_LENG(tp)) {
         if (EXPR_CODE(TYPE_LENG(tp)) == INT_CONSTANT) {
             TYPE_CHAR_LEN(tp) = EXPV_INT_VALUE(TYPE_LENG(tp));
         } else {
@@ -1787,7 +1758,7 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
     /*
      * Remove a character basic type which is genereted from 'ref="Fcharacter"'
      */
-    if (IS_CHAR(tp))  {
+    if (IS_CHAR(tp)) {
         if (TYPE_REF(TYPE_REF(tp)) == NULL &&
             TYPE_CHAR_LEN(TYPE_REF(tp)) == 1) {
             TYPE_REF(tp) = NULL;
@@ -1800,8 +1771,8 @@ input_FbasicType(xmlTextReaderPtr reader, HashTable * ht)
 /**
  * input <name> node with type attribute appears in <params>
  */
-static int
-input_param(xmlTextReaderPtr reader, HashTable * ht, EXT_ID ep, TYPE_DESC ftp)
+static int input_param(xmlTextReaderPtr reader, HashTable *ht, EXT_ID ep,
+                       TYPE_DESC ftp)
 {
     TYPE_DESC tp = NULL;
     SYMBOL s;
@@ -1843,13 +1814,12 @@ input_param(xmlTextReaderPtr reader, HashTable * ht, EXT_ID ep, TYPE_DESC ftp)
 /**
  * input <FfunctionType> node
  */
-static int
-input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
+static int input_FfunctionType(xmlTextReaderPtr reader, HashTable *ht)
 {
     TYPE_ENTRY tep;
     TYPE_DESC ftp = NULL;
-    char * typeId;
-    char * attr;
+    char *typeId;
+    char *attr;
     int isEmpty;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FfunctionType"))
@@ -1857,7 +1827,7 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
 
     isEmpty = xmlTextReaderIsEmptyElement(reader);
 
-    typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    typeId = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "type");
     tep = getTypeEntry(ht, typeId);
     tep->hasExtID = TRUE;
     /* SYMBOL is set later in <id> */
@@ -1869,29 +1839,29 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
     EXT_IS_OFMODULE(tep->ep) = FALSE;
     EXT_TAG(tep->ep) = STG_EXT;
 
-    setReturnType(ht, ftp,
-                  (char *) xmlTextReaderGetAttribute(reader,
-                                                     BAD_CAST "return_type"));
+    setReturnType(
+        ht, ftp,
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "return_type"));
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_program");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_program");
     if (attr != NULL) {
         EXT_PROC_CLASS(tep->ep) = EP_PROGRAM;
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_intrinsic");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_intrinsic");
     if (attr != NULL) {
         EXT_PROC_CLASS(tep->ep) = EP_INTRINSIC;
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_recursive");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_recursive");
     if (attr != NULL) {
         TYPE_SET_RECURSIVE(ftp);
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_pure");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_pure");
     if (attr != NULL) {
         if (strncmp(attr, "true", 4)) {
             TYPE_SET_PURE(ftp);
@@ -1901,36 +1871,35 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_elemental");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_elemental");
     if (attr != NULL) {
         TYPE_SET_ELEMENTAL(ftp);
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_module");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_module");
     if (attr != NULL) {
         TYPE_SET_MODULE(ftp);
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_external");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_external");
     if (attr != NULL) {
         TYPE_SET_EXTERNAL(ftp);
         free(attr);
     }
 
-    attr = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined");
+    attr = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined");
     if (attr != NULL) {
         FUNCTION_TYPE_SET_DEFINED(ftp);
         free(attr);
     }
 
-
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (isEmpty)
-        return TRUE;	/* case FfunctionType node has no child */
+        return TRUE; /* case FfunctionType node has no child */
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "params"))
         return FALSE;
@@ -1946,10 +1915,10 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
             return FALSE;
     }
 
-    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "params")) 
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "params"))
         return FALSE;
 
-    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FfunctionType")) 
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FfunctionType"))
         return FALSE;
 
     return TRUE;
@@ -1958,8 +1927,8 @@ input_FfunctionType(xmlTextReaderPtr reader, HashTable * ht)
 /**
  * input <id> node which appears in <symbols>
  */
-static int
-input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tail)
+static int input_symbol(xmlTextReaderPtr reader, HashTable *ht,
+                        TYPE_DESC parent, ID *tail)
 {
     ID id;
     SYMBOL s;
@@ -1968,7 +1937,7 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))
         return FALSE;
-    
+
     if (!input_type_and_attr(reader, ht, NULL, &tp))
         return FALSE;
 
@@ -1980,7 +1949,7 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
 
     id = new_ident_desc(s);
     ID_TYPE(id) = tp;
-    if(type_is_omissible(tp, 0, 0))
+    if (type_is_omissible(tp, 0, 0))
         ID_TYPE(id) = TYPE_REF(tp);
 
     ID_LINK_ADD(id, TYPE_MEMBER_LIST(parent), *tail);
@@ -1997,27 +1966,25 @@ input_symbol(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC parent, ID * tai
     return TRUE;
 }
 
-
 /**
  * input <typeParam> node
  */
-static int
-input_typeParam(xmlTextReaderPtr reader, HashTable * ht, ID * id)
+static int input_typeParam(xmlTextReaderPtr reader, HashTable *ht, ID *id)
 {
     TYPE_DESC tp;
     SYMBOL s;
-    char * str = NULL;
-    char * name = NULL;
+    char *str = NULL;
+    char *name = NULL;
     *id = NULL;
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "type");
     if (str == NULL)
         return FALSE;
 
     tp = getTypeDesc(ht, str);
     free(str);
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "attr");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "attr");
     if (str == NULL)
         return FALSE;
 
@@ -2082,8 +2049,8 @@ input_typeParam(xmlTextReaderPtr reader, HashTable * ht, ID * id)
 /**
  * input <typeParams> node
  */
-static int
-input_typeParams(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
+static int input_typeParams(xmlTextReaderPtr reader, HashTable *ht,
+                            TYPE_DESC struct_tp)
 {
     ID id, last = NULL;
 
@@ -2109,23 +2076,21 @@ input_typeParams(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
     return TRUE;
 }
 
-
-static int
-input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
+static int input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable *ht,
+                                    ID *id)
 {
-    char * name;
-    char * typeId;
-    char * str;
+    char *name;
+    char *typeId;
+    char *str;
     ID binding = NULL;
     ID pass_arg = NULL;
     TYPE_ENTRY tep;
     TYPE_DESC ftp;
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                       "typeBoundProcedure"))
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "typeBoundProcedure"))
         return FALSE;
 
-    typeId = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    typeId = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "type");
     if (typeId == NULL)
         return FALSE;
 
@@ -2151,7 +2116,7 @@ input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
     ID_TYPE(*id) = type_bound_procedure_type();
     TYPE_REF(ID_TYPE(*id)) = ftp;
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "pass");
     if (str != NULL) {
         if (strcmp("pass", str) == 0) {
             TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_PASS;
@@ -2164,27 +2129,28 @@ input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "pass_arg_name");
     if (str != NULL) {
         pass_arg = new_ident_desc(find_symbol(str));
         free(str);
     }
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_non_overridable");
+    str = (char *)xmlTextReaderGetAttribute(reader,
+                                            BAD_CAST "is_non_overridable");
     if (str != NULL) {
         TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_NON_OVERRIDABLE;
         free(str);
     }
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_deferred");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_deferred");
     if (str != NULL) {
         TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_DEFERRED;
         free(str);
     }
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
     if (str != NULL) {
         TYPE_SET_PUBLIC(*id);
         free(str);
     }
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
     if (str != NULL) {
         TYPE_SET_PRIVATE(*id);
         free(str);
@@ -2193,7 +2159,7 @@ input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
     TBP_PASS_ARG(*id) = pass_arg;
     TBP_BINDING(*id) = binding;
     TYPE_BOUND_PROCEDURE_TYPE_HAS_PASS_ARG(ID_TYPE(*id)) =
-            TBP_BINDING_ATTRS(*id) & TYPE_BOUND_PROCEDURE_PASS;
+        TBP_BINDING_ATTRS(*id) & TYPE_BOUND_PROCEDURE_PASS;
     TYPE_BOUND_PROCEDURE_TYPE_PASS_ARG(ID_TYPE(*id)) = pass_arg;
 
     if (!xmlSkipWhiteSpace(reader))
@@ -2229,19 +2195,18 @@ input_typeBoundProcedure(xmlTextReaderPtr reader, HashTable * ht, ID * id)
     return TRUE;
 }
 
-
-static int
-input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
+static int input_typeBoundGenericProcedure(xmlTextReaderPtr reader,
+                                           HashTable *ht, ID *id)
 {
-    char * name = NULL;
-    char * str;
+    char *name = NULL;
+    char *str;
     ID binding = NULL;
     ID pass_arg = NULL;
     ID last_ip = NULL;
     uint32_t binding_attr_flags = TYPE_BOUND_PROCEDURE_IS_GENERIC;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                       "typeBoundGenericProcedure"))
+                      "typeBoundGenericProcedure"))
         return FALSE;
 
     if (!xmlSkipWhiteSpace(reader))
@@ -2264,56 +2229,45 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     ID_TYPE(*id) = type_bound_procedure_type();
     TBP_BINDING_ATTRS(*id) |= TYPE_BOUND_PROCEDURE_IS_GENERIC;
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_public");
     if (str != NULL) {
         TYPE_SET_PUBLIC(*id);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_private");
     if (str != NULL) {
         TYPE_SET_PRIVATE(*id);
         free(str);
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
     if (str != NULL) {
         if (strcmp(".not", name) == 0) {
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_UNARY_OPERATOR;
-        } else if (
-            strcmp(".", name) == 0 ||
-            strcmp("**", name) == 0 ||
-            strcmp("*", name) == 0 ||
-            strcmp("/", name) == 0 ||
-            strcmp("==", name) == 0 ||
-            strcmp("/=", name) == 0 ||
-            strcmp("<", name) == 0 ||
-            strcmp("<=", name) == 0 ||
-            strcmp(">", name) == 0 ||
-            strcmp(">=", name) == 0 ||
-            strcmp(".eq.", name) == 0 ||
-            strcmp("/=", name) == 0 ||
-            strcmp(".lt.", name) == 0 ||
-            strcmp(".le.", name) == 0 ||
-            strcmp(".gt.", name) == 0 ||
-            strcmp(".ge.", name) == 0 ||
-            strcmp(".and.", name) == 0 ||
-            strcmp(".or.", name) == 0 ||
-            strcmp(".eqv.", name) == 0 ||
-            strcmp(".neqv.", name) == 0 ||
-            strcmp("//", name) == 0) {
+        } else if (strcmp(".", name) == 0 || strcmp("**", name) == 0 ||
+                   strcmp("*", name) == 0 || strcmp("/", name) == 0 ||
+                   strcmp("==", name) == 0 || strcmp("/=", name) == 0 ||
+                   strcmp("<", name) == 0 || strcmp("<=", name) == 0 ||
+                   strcmp(">", name) == 0 || strcmp(">=", name) == 0 ||
+                   strcmp(".eq.", name) == 0 || strcmp("/=", name) == 0 ||
+                   strcmp(".lt.", name) == 0 || strcmp(".le.", name) == 0 ||
+                   strcmp(".gt.", name) == 0 || strcmp(".ge.", name) == 0 ||
+                   strcmp(".and.", name) == 0 || strcmp(".or.", name) == 0 ||
+                   strcmp(".eqv.", name) == 0 || strcmp(".neqv.", name) == 0 ||
+                   strcmp("//", name) == 0) {
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_BINARY_OPERATOR;
         } else {
             binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_OPERATOR;
         }
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
     if (str != NULL) {
         binding_attr_flags |= TYPE_BOUND_PROCEDURE_IS_ASSIGNMENT;
     }
 
-    str = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
+    str = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
     if (str != NULL) {
 
         if (strcmp("WRITE(FORMATTED)", str) == 0) {
@@ -2388,12 +2342,10 @@ input_typeBoundGenericProcedure(xmlTextReaderPtr reader, HashTable * ht, ID *id)
     return TRUE;
 }
 
-
-static int
-input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp, 
-                     ID *id)
+static int input_finalProcedure(xmlTextReaderPtr reader, HashTable *ht,
+                                TYPE_DESC stp, ID *id)
 {
-    char * name = NULL;
+    char *name = NULL;
     ID binding;
     ID mem;
     ID last_ip = NULL;
@@ -2413,7 +2365,7 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp,
     }
 
     binding = new_ident_desc(find_symbol(name));
-    FOREACH_ID(mem, TBP_BINDING(*id)) {
+    FOREACH_ID (mem, TBP_BINDING(*id)) {
         last_ip = mem;
     }
     ID_LINK_ADD(binding, TBP_BINDING(*id), last_ip);
@@ -2427,9 +2379,8 @@ input_finalProcedure(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC stp,
     return TRUE;
 }
 
-
-static int
-input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC struct_tp)
+static int input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable *ht,
+                                     TYPE_DESC struct_tp)
 {
     ID mem = NULL;
     ID last_ip = NULL;
@@ -2437,9 +2388,7 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "typeBoundProcedures"))
         return FALSE;
 
-    FOREACH_MEMBER(mem, struct_tp) {
-        last_ip = mem;
-    }
+    FOREACH_MEMBER(mem, struct_tp) { last_ip = mem; }
 
     while (TRUE) {
         if (xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT))
@@ -2455,11 +2404,10 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
             if (!input_typeBoundGenericProcedure(reader, ht, &mem))
                 return FALSE;
         } else if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-                                "finalProcedure")) 
-        {
+                                "finalProcedure")) {
             // Init special member _final if not already there
-            mem = find_struct_member(struct_tp, 
-                find_symbol(FINALIZER_PROCEDURE));
+            mem =
+                find_struct_member(struct_tp, find_symbol(FINALIZER_PROCEDURE));
             if (mem == NULL) {
                 mem = new_ident_desc(find_symbol(FINALIZER_PROCEDURE));
                 ID_CLASS(mem) = CL_TYPE_BOUND_PROC;
@@ -2470,11 +2418,10 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
             if (!input_finalProcedure(reader, ht, struct_tp, &mem))
                 return FALSE;
         }
-        if(mem) {
+        if (mem) {
             ID_LINK_ADD(mem, TYPE_MEMBER_LIST(struct_tp), last_ip);
         }
     }
-
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
                        "typeBoundProcedures"))
@@ -2483,12 +2430,10 @@ input_typeBoundProcedures(xmlTextReaderPtr reader, HashTable * ht, TYPE_DESC str
     return TRUE;
 }
 
-
 /**
  * input <FstructType> node
  */
-static int
-input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
+static int input_FstructType(xmlTextReaderPtr reader, HashTable *ht)
 {
     TYPE_DESC tp;
     ID tail = NULL;
@@ -2538,8 +2483,7 @@ input_FstructType(xmlTextReaderPtr reader, HashTable * ht)
 /**
  * input <value> node
  */
-static int
-input_value(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_value(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "value"))
         return FALSE;
@@ -2556,13 +2500,12 @@ input_value(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input <namedValue> node
  */
-static int
-input_namedValue(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_namedValue(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "namedValue"))
         return FALSE;
-    
-    char * name = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+
+    char *name = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "name");
     if (name == NULL)
         return FALSE;
 
@@ -2578,7 +2521,7 @@ input_namedValue(xmlTextReaderPtr reader, HashTable * ht, expv * v)
     if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "namedValue"))
         return FALSE;
 
-   if (!xmlSkipWhiteSpace(reader))
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     return TRUE;
@@ -2587,10 +2530,9 @@ input_namedValue(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input expv node
  */
-static int
-input_expv(xmlTextReaderPtr reader, HashTable * ht, expv * v)
+static int input_expv(xmlTextReaderPtr reader, HashTable *ht, expv *v)
 {
-    const char * name;
+    const char *name;
     name = (const char *)xmlTextReaderConstName(reader);
 
     if (strcmp(name, "FintConstant") == 0)
@@ -2674,10 +2616,9 @@ input_expv(xmlTextReaderPtr reader, HashTable * ht, expv * v)
 /**
  * input <typeTable> node
  */
-static int
-input_typeTable(xmlTextReaderPtr reader, HashTable * ht)
+static int input_typeTable(xmlTextReaderPtr reader, HashTable *ht)
 {
-    const char * name;
+    const char *name;
     int succeeded;
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "typeTable"))
@@ -2711,8 +2652,7 @@ input_typeTable(xmlTextReaderPtr reader, HashTable * ht)
     return TRUE;
 }
 
-static void
-set_sclass(ID id, const char* sclass)
+static void set_sclass(ID id, const char *sclass)
 {
     TYPE_DESC tp = ID_TYPE(id);
     if (tp != NULL) {
@@ -2754,33 +2694,31 @@ set_sclass(ID id, const char* sclass)
 /**
  * input <id> node
  */
-static int
-input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
+static int input_id(xmlTextReaderPtr reader, HashTable *ht, struct module *mod)
 {
-    char * type;
-    char * original_name;
-    char * declared_in;
-    char * is_ambiguous;
-    char * sclass;
+    char *type;
+    char *original_name;
+    char *declared_in;
+    char *is_ambiguous;
+    char *sclass;
     TYPE_ENTRY tep;
     SYMBOL name;
     ID id, last = NULL;
     ID cid = NULL, pid = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "id"))
-       return FALSE;
+        return FALSE;
 
-    type = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "type");
-    original_name = (char *) xmlTextReaderGetAttribute(reader,
-                                 BAD_CAST "original_name");
-    declared_in = (char *) xmlTextReaderGetAttribute(reader,
-                               BAD_CAST "declared_in");
-    is_ambiguous = (char *) xmlTextReaderGetAttribute(reader,
-                               BAD_CAST "is_ambiguous");
-    sclass = (char *) xmlTextReaderGetAttribute(reader,
-                          BAD_CAST "sclass");
+    type = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "type");
+    original_name =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "original_name");
+    declared_in =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "declared_in");
+    is_ambiguous =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_ambiguous");
+    sclass = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "sclass");
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     if (!input_name(reader, &name))
@@ -2839,22 +2777,21 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 
     set_sclass(id, sclass);
 
-
     // Look for previously defined identifier
-    FOREACH_ID(cid, mod->head) {
-        if(strcmp(ID_NAME(cid), ID_NAME(id)) == 0) {
+    FOREACH_ID (cid, mod->head) {
+        if (strcmp(ID_NAME(cid), ID_NAME(id)) == 0) {
             pid = cid;
             break;
         }
     }
 
-    if(pid != NULL) {
+    if (pid != NULL) {
         // If id was declared before, multize it
-        if(ID_CLASS(pid) != CL_MULTI) {
+        if (ID_CLASS(pid) != CL_MULTI) {
             id_multilize(pid);
             ID_NEXT(MULTI_ID_LIST(pid)) = id;
         } else {
-            FOREACH_ID(pid, MULTI_ID_LIST(pid)) {
+            FOREACH_ID (pid, MULTI_ID_LIST(pid)) {
                 last = pid;
             }
             ID_NEXT(last) = id;
@@ -2869,8 +2806,6 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
             mod->last = id;
         }
     }
-
-    
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "id"))
         return FALSE;
@@ -2887,10 +2822,9 @@ input_id(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 /**
  * Update the parent of types.
  */
-static void
-update_parent_type(HashTable * ht)
+static void update_parent_type(HashTable *ht)
 {
-    HashEntry * e;
+    HashEntry *e;
     HashSearch s;
     TYPE_ENTRY tep;
     TYPE_DESC tp;
@@ -2909,12 +2843,11 @@ update_parent_type(HashTable * ht)
     }
 }
 
-
 /**
  * input <identifiers> node
  */
-static int
-input_identifiers(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
+static int input_identifiers(xmlTextReaderPtr reader, HashTable *ht,
+                             struct module *mod)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "identifiers"))
         return FALSE;
@@ -2939,9 +2872,8 @@ input_identifiers(xmlTextReaderPtr reader, HashTable * ht, struct module * mod)
 /**
  * input <FmoduleProcedureDecl> node
  */
-static int
-input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
-                           EXT_ID parent)
+static int input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
+                                      EXT_ID parent)
 {
     SYMBOL s;
     TYPE_ENTRY tep;
@@ -2950,12 +2882,11 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
     char *is_module_specified = NULL;
     int ret = TRUE;
 
-    if (!xmlMatchNode(reader,
-                       XML_READER_TYPE_ELEMENT, "FmoduleProcedureDecl"))
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FmoduleProcedureDecl"))
         return FALSE;
 
-    is_module_specified =
-        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_module_specified");
+    is_module_specified = (char *)xmlTextReaderGetAttribute(
+        reader, BAD_CAST "is_module_specified");
 
     xmlSkipWhiteSpace(reader);
 
@@ -2991,10 +2922,8 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
             goto loopEnd;
         }
 
-        if (typeId != NULL &&
-            (tep = getTypeEntry(ht, typeId)) != NULL &&
-            tep->hasExtID == TRUE &&
-            tep->ep != NULL) {
+        if (typeId != NULL && (tep = getTypeEntry(ht, typeId)) != NULL &&
+            tep->hasExtID == TRUE && tep->ep != NULL) {
             EXT_ID new_ep;
 
             EXT_PROC_CLASS(tep->ep) = EP_MODULE_PROCEDURE;
@@ -3021,12 +2950,12 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
             ret = FALSE;
         }
 
-        loopEnd:
+    loopEnd:
         free(typeId);
         free(name);
     }
 
-    if (!xmlExpectNode(reader,XML_READER_TYPE_END_ELEMENT,
+    if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT,
                        "FmoduleProcedureDecl"))
         return FALSE;
 
@@ -3036,8 +2965,7 @@ input_FmoduleProcedureDecl(xmlTextReaderPtr reader, HashTable *ht,
 /**
  * input <varDecl> node
  */
-static int
-input_varDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent)
+static int input_varDecl(xmlTextReaderPtr reader, HashTable *ht, EXT_ID parent)
 {
     SYMBOL s;
     TYPE_DESC tp;
@@ -3072,8 +3000,7 @@ input_varDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent)
 /**
  * input <FuseDecl> node
  */
-static int
-input_FuseDecl(xmlTextReaderPtr reader)
+static int input_FuseDecl(xmlTextReaderPtr reader)
 {
     int depth;
 
@@ -3084,7 +3011,7 @@ input_FuseDecl(xmlTextReaderPtr reader)
         depth = xmlTextReaderDepth(reader);
 
         /* skip until corresponding close tag */
-        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT,"FuseDecl",
+        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT, "FuseDecl",
                           depth))
             return FALSE;
     }
@@ -3098,8 +3025,7 @@ input_FuseDecl(xmlTextReaderPtr reader)
 /**
  * input <FuseOnlyDecl> node
  */
-static int
-input_FuseOnlyDecl(xmlTextReaderPtr reader)
+static int input_FuseOnlyDecl(xmlTextReaderPtr reader)
 {
     int depth;
 
@@ -3110,7 +3036,7 @@ input_FuseOnlyDecl(xmlTextReaderPtr reader)
         depth = xmlTextReaderDepth(reader);
 
         /* skip until corresponding close tag */
-        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT,"FuseOnlyDecl",
+        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT, "FuseOnlyDecl",
                           depth))
             return FALSE;
     }
@@ -3124,8 +3050,7 @@ input_FuseOnlyDecl(xmlTextReaderPtr reader)
 /**
  * input <FuseDecl> node
  */
-static int
-input_FimportDecl(xmlTextReaderPtr reader)
+static int input_FimportDecl(xmlTextReaderPtr reader)
 {
     int depth;
 
@@ -3136,7 +3061,7 @@ input_FimportDecl(xmlTextReaderPtr reader)
         depth = xmlTextReaderDepth(reader);
 
         /* skip until corresponding close tag */
-        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT,"FimportDecl",
+        if (!xmlSkipUntil(reader, XML_READER_TYPE_END_ELEMENT, "FimportDecl",
                           depth))
             return FALSE;
     }
@@ -3150,27 +3075,27 @@ input_FimportDecl(xmlTextReaderPtr reader)
 /**
  * input <FinterfaceDecl> node in Ffunctiondecl/declarations
  */
-static int
-input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
-                                     EXT_ID parent, ID id_list)
+static int input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader,
+                                                HashTable *ht, EXT_ID parent,
+                                                ID id_list)
 {
     EXT_ID ep, child;
-    char * name = NULL;
-    char * is_operator = NULL;
-    char * is_assignment = NULL;
-    char * is_defined_io = NULL;
-    char * is_abstract = NULL;
+    char *name = NULL;
+    char *is_operator = NULL;
+    char *is_assignment = NULL;
+    char *is_defined_io = NULL;
+    char *is_abstract = NULL;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FinterfaceDecl"))
         return FALSE;
 
-    name = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "name");
-    is_operator = (char *) xmlTextReaderGetAttribute(reader,
-                               BAD_CAST "is_operator");
-    is_assignment = (char *) xmlTextReaderGetAttribute(reader,
-                                 BAD_CAST "is_assignment");
-    is_abstract = (char *) xmlTextReaderGetAttribute(reader,
-                                 BAD_CAST "is_abstract");
+    name = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+    is_operator =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
+    is_assignment =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
+    is_abstract =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_abstract");
 
     if (name != NULL) {
         ep = new_external_id(find_symbol(name));
@@ -3197,7 +3122,8 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
         free(is_abstract);
     }
 
-    is_defined_io = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
+    is_defined_io =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
     if (is_defined_io != NULL) {
         if (strcmp("WRITE(FORMATTED)", is_defined_io) == 0) {
             EXT_PROC_INTERFACE_CLASS(ep) = INTF_GENERIC_WRITE_FORMATTED;
@@ -3249,7 +3175,7 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "FinterfaceDecl"))
         return FALSE;
 
-    FOREACH_EXT_ID(child, EXT_PROC_INTR_DEF_EXT_IDS(ep)) {
+    FOREACH_EXT_ID (child, EXT_PROC_INTR_DEF_EXT_IDS(ep)) {
         if (INTF_IS_ABSTRACT(EXT_PROC_INTERFACE_INFO(ep))) {
             TYPE_SET_ABSTRACT(EXT_PROC_TYPE(child));
         }
@@ -3261,9 +3187,8 @@ input_FinterfaceDecl_in_declarations(xmlTextReaderPtr reader, HashTable * ht,
 /**
  * input <declarations> node
  */
-static int
-input_declarations(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
-                   ID id_list)
+static int input_declarations(xmlTextReaderPtr reader, HashTable *ht,
+                              EXT_ID parent, ID id_list)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "declarations"))
         return FALSE;
@@ -3305,9 +3230,8 @@ input_declarations(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
 /**
  * input <FfunctionDecl> node
  */
-static int
-input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
-                    ID id_list)
+static int input_FfunctionDecl(xmlTextReaderPtr reader, HashTable *ht,
+                               EXT_ID parent, ID id_list)
 {
     ID id;
     ID tail = NULL;
@@ -3350,7 +3274,7 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "symbols"))
         return FALSE;
-    
+
     if (!input_declarations(reader, ht, ep, id_list))
         return FALSE;
 
@@ -3363,33 +3287,33 @@ input_FfunctionDecl(xmlTextReaderPtr reader, HashTable * ht, EXT_ID parent,
 /**
  * input <FinterfaceDecl> node
  */
-static int
-input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
+static int input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable *ht,
+                                ID id_list)
 {
     ID id;
     EXT_ID ep;
-    char * name = NULL;
-    char * is_operator = NULL;
-    char * is_assignment = NULL;
-    char * is_defined_io = NULL;
+    char *name = NULL;
+    char *is_operator = NULL;
+    char *is_assignment = NULL;
+    char *is_defined_io = NULL;
     int interface_class = 0;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FinterfaceDecl"))
         return FALSE;
 
-    name = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "name");
-    is_operator = (char *) xmlTextReaderGetAttribute(reader,
-                               BAD_CAST "is_operator");
-    is_assignment = (char *) xmlTextReaderGetAttribute(reader,
-                                 BAD_CAST "is_assignment");
-    is_defined_io = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
-
+    name = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "name");
+    is_operator =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_operator");
+    is_assignment =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_assignment");
+    is_defined_io =
+        (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "is_defined_io");
 
     if (is_defined_io == NULL && name != NULL) {
         id = find_ident_head(find_symbol(name), id_list);
         if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
             id = find_ident_head(ID_SYM(id), ID_NEXT(id));
-        } else if(ID_CLASS(id) == CL_MULTI) {
+        } else if (ID_CLASS(id) == CL_MULTI) {
             id = multi_find_class(id, CL_PROC);
             PROC_CLASS(id) = P_UNDEFINEDPROC;
         }
@@ -3455,9 +3379,8 @@ input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable * ht, ID id_list)
 /**
  * input <declarations> node in .xmod
  */
-static int
-input_module_declarations(xmlTextReaderPtr reader, HashTable * ht,
-			  struct module * mod)
+static int input_module_declarations(xmlTextReaderPtr reader, HashTable *ht,
+                                     struct module *mod)
 {
     SYMBOL s;
     TYPE_DESC tp;
@@ -3471,25 +3394,27 @@ input_module_declarations(xmlTextReaderPtr reader, HashTable * ht,
     xmlSkipWhiteSpace(reader);
 
     while (!xmlMatchNodeType(reader, XML_READER_TYPE_END_ELEMENT)) {
-      if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "varDecl"))
-        return FALSE;
+        if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "varDecl"))
+            return FALSE;
 
-      if (!input_name_with_type(reader, ht, FALSE, &s, &tp))
-        return FALSE;
+        if (!input_name_with_type(reader, ht, FALSE, &s, &tp))
+            return FALSE;
 
-      // search paramter symbol
-      FOREACH_ID(id,mod->head){
-	if(ID_SYM(id) == s) break;
-      }
-      if(id == NULL)  return FALSE;
-      
-      if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
-        if (!input_value(reader, ht, &v))
-	  return FALSE;
-        VAR_INIT_VALUE(id) = v;
-      }
-      if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "varDecl"))
-        return FALSE;
+        // search paramter symbol
+        FOREACH_ID (id, mod->head) {
+            if (ID_SYM(id) == s)
+                break;
+        }
+        if (id == NULL)
+            return FALSE;
+
+        if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "value")) {
+            if (!input_value(reader, ht, &v))
+                return FALSE;
+            VAR_INIT_VALUE(id) = v;
+        }
+        if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "varDecl"))
+            return FALSE;
     }
 
     if (!xmlExpectNode(reader, XML_READER_TYPE_END_ELEMENT, "declarations"))
@@ -3501,9 +3426,8 @@ input_module_declarations(xmlTextReaderPtr reader, HashTable * ht,
 /**
  * input <interfaceDecls> node
  */
-static int
-input_interfaceDecls(xmlTextReaderPtr reader, HashTable * ht,
-                     struct module * mod)
+static int input_interfaceDecls(xmlTextReaderPtr reader, HashTable *ht,
+                                struct module *mod)
 {
     if (!xmlExpectNode(reader, XML_READER_TYPE_ELEMENT, "interfaceDecls"))
         return FALSE;
@@ -3519,10 +3443,9 @@ input_interfaceDecls(xmlTextReaderPtr reader, HashTable * ht,
     return TRUE;
 }
 
-static int
-update_struct_type(HashTable * ht)
+static int update_struct_type(HashTable *ht)
 {
-    HashEntry * e;
+    HashEntry *e;
     HashSearch s;
     TYPE_ENTRY tep;
     TYPE_DESC tp;
@@ -3532,32 +3455,37 @@ update_struct_type(HashTable * ht)
         tep = GetHashValue(e);
         tp = tep->tp;
         if (TYPE_BASIC_TYPE(tp) == TYPE_STRUCT) {
-            FOREACH_MEMBER(mem, tp) {
+            FOREACH_MEMBER(mem, tp)
+            {
                 if (IS_PROCEDURE_TYPE(ID_TYPE(mem))) {
                     if (TYPE_REF(ID_TYPE(mem)) &&
                         TYPE_BASIC_TYPE(ID_TYPE(mem)) !=
-                        TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)))) {
-                        TYPE_BASIC_TYPE(ID_TYPE(mem)) = TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)));
+                            TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)))) {
+                        TYPE_BASIC_TYPE(ID_TYPE(mem)) =
+                            TYPE_BASIC_TYPE(TYPE_REF(ID_TYPE(mem)));
                     }
                 }
             }
 
-            FOREACH_TYPE_BOUND_GENERIC(mem, tp) {
+            FOREACH_TYPE_BOUND_GENERIC(mem, tp)
+            {
                 /*
                  * generic type bound procedure
                  */
                 ID binding;
                 ID bindto;
-                FOREACH_ID(binding, TBP_BINDING(mem)) {
+                FOREACH_ID (binding, TBP_BINDING(mem)) {
                     bindto = find_struct_member(tp, ID_SYM(binding));
                     if (bindto == NULL ||
                         ID_CLASS(bindto) != CL_TYPE_BOUND_PROC ||
-                        TBP_BINDING_ATTRS(bindto) & TYPE_BOUND_PROCEDURE_IS_GENERIC) {
+                        TBP_BINDING_ATTRS(bindto) &
+                            TYPE_BOUND_PROCEDURE_IS_GENERIC) {
                         return FALSE;
                     }
                     ID_TYPE(binding) = ID_TYPE(bindto);
                 }
-                TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(mem)) = TBP_BINDING(mem);
+                TYPE_BOUND_GENERIC_TYPE_GENERICS(ID_TYPE(mem)) =
+                    TBP_BINDING(mem);
             }
         }
     }
@@ -3565,42 +3493,42 @@ update_struct_type(HashTable * ht)
     return TRUE;
 }
 
-
 /**
  * input <OmniFortranModule> node
  */
-static int
-input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
+static int input_module(xmlTextReaderPtr reader, struct module *mod,
+                        int is_intrinsic)
 {
-    char * version;
+    char *version;
     SYMBOL mod_name;
     HashTable ht;
 
     InitHashTable(&ht, HASH_STRING_KEYS);
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,
-        "OmniFortranModule"))
+    if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "OmniFortranModule"))
         return FALSE;
 
-    version = (char *) xmlTextReaderGetAttribute(reader, BAD_CAST "version");
+    version = (char *)xmlTextReaderGetAttribute(reader, BAD_CAST "version");
     if (version == NULL || strcmp(version, "1.0") != 0) {
         if (version != NULL)
             free(version);
         return FALSE;
     }
 
-    if (!xmlSkipWhiteSpace(reader)) 
+    if (!xmlSkipWhiteSpace(reader))
         return FALSE;
 
     /* <name> node */
     if (!input_name(reader, &mod_name))
         return FALSE;
     if (mod_name != mod->name) {
-        fprintf(stderr, "module name '%s' in .xmod does'nt match to "
-                "filename '%s.xmod'.", SYM_NAME(mod_name), SYM_NAME(mod->name));
+        fprintf(stderr,
+                "module name '%s' in .xmod does'nt match to "
+                "filename '%s.xmod'.",
+                SYM_NAME(mod_name), SYM_NAME(mod->name));
         fflush(stderr);
     }
 
@@ -3617,24 +3545,26 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
         return FALSE;
 
     /* <declarations> node */
-    input_module_declarations(reader,&ht,mod); /* optional */
+    input_module_declarations(reader, &ht, mod); /* optional */
 
     /* <interfaceDecls> node */
     if (!input_interfaceDecls(reader, &ht, mod))
         return FALSE;
 
-    if(xmlMatchNode(reader, XML_READER_TYPE_ELEMENT,"aux_info")){
-	while(1){
-	    if (!xmlTextReaderRead(reader)) return FALSE;
-	    if(xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT,"aux_info"))
-		break;
-	}
-	if (!xmlTextReaderRead(reader)) return FALSE;
-	if (!xmlSkipWhiteSpace(reader)) return FALSE;
+    if (xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "aux_info")) {
+        while (1) {
+            if (!xmlTextReaderRead(reader))
+                return FALSE;
+            if (xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "aux_info"))
+                break;
+        }
+        if (!xmlTextReaderRead(reader))
+            return FALSE;
+        if (!xmlSkipWhiteSpace(reader))
+            return FALSE;
     }
 
-    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT,
-        "OmniFortranModule"))
+    if (!xmlMatchNode(reader, XML_READER_TYPE_END_ELEMENT, "OmniFortranModule"))
         return FALSE;
 
     MODULE_IS_INTRINSIC(mod) = is_intrinsic;
@@ -3644,7 +3574,7 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
          * so remove initial value of thems.
          */
         ID id;
-        FOREACH_ID(id, MODULE_ID_LIST(mod)) {
+        FOREACH_ID (id, MODULE_ID_LIST(mod)) {
             VAR_INIT_VALUE(id) = NULL;
         }
     }
@@ -3669,11 +3599,10 @@ input_module(xmlTextReaderPtr reader, struct module * mod, int is_intrinsic)
 #define _XMPMOD_LEN 10
 #endif
 
-const char *
-search_intrinsic_include_path(const char * filename)
+const char *search_intrinsic_include_path(const char *filename)
 {
     static char path[MAX_PATH_LEN];
-    FILE * fp;
+    FILE *fp;
 
     if (xmoduleIncludeDirv) {
         strcpy(path, xmoduleIncludeDirv);
@@ -3695,15 +3624,12 @@ search_intrinsic_include_path(const char * filename)
 /**
  * input data from the module intermediate file
  */
-int
-input_intermediate_file(const SYMBOL mod_name,
-                        const SYMBOL submod_name,
-                        struct module **pmod,
-                        const char * extension)
+int input_intermediate_file(const SYMBOL mod_name, const SYMBOL submod_name,
+                            struct module **pmod, const char *extension)
 {
     int ret;
     char filename[FILE_NAME_LEN];
-    const char * filepath;
+    const char *filepath;
     xmlTextReaderPtr reader;
     int is_intrinsic = FALSE;
 
@@ -3714,13 +3640,11 @@ input_intermediate_file(const SYMBOL mod_name,
     /* search for "xxx.xmod" */
     bzero(filename, sizeof(filename));
     if (!submod_name) {
-        snprintf(filename, sizeof(filename), "%s.%s",
-                 SYM_NAME(mod_name),
+        snprintf(filename, sizeof(filename), "%s.%s", SYM_NAME(mod_name),
                  extension);
     } else {
-        snprintf(filename, sizeof(filename), "%s:%s.%s",
-                 SYM_NAME(mod_name), SYM_NAME(submod_name),
-                 extension);
+        snprintf(filename, sizeof(filename), "%s:%s.%s", SYM_NAME(mod_name),
+                 SYM_NAME(submod_name), extension);
     }
 
     filepath = search_include_path(filename);
@@ -3728,35 +3652,37 @@ input_intermediate_file(const SYMBOL mod_name,
 
 #if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
-    if (reader == NULL){
+    if (reader == NULL) {
 
         char command2[6 + _XMPMOD_LEN];
         bzero(command2, 6 + _XMPMOD_LEN);
         strcpy(command2, "which ");
-	strcat(command2, _XMPMOD_NAME);
-        if (system(command2) != 0){
-	  warning("No module translator found.");
-	  return FALSE;
-	}
+        strcat(command2, _XMPMOD_NAME);
+        if (system(command2) != 0) {
+            warning("No module translator found.");
+            return FALSE;
+        }
 
         char filename2[FILE_NAME_LEN];
-        const char * filepath2;
+        const char *filepath2;
 
         bzero(filename2, sizeof(filename));
         strcpy(filename2, SYM_NAME(mod_name));
         strcat(filename2, ".mod");
         filepath2 = search_include_path(filename2);
 
-        if (!filepath2) return FALSE;
+        if (!filepath2)
+            return FALSE;
 
         char command[FILE_NAME_LEN + 9];
         bzero(command, sizeof(filename2) + 9);
         strcpy(command, _XMPMOD_NAME);
         strcat(command, " ");
         strcat(command, filepath2);
-        if (system(command) != 0) return FALSE;
+        if (system(command) != 0)
+            return FALSE;
 
-	filepath = search_include_path(filename);
+        filepath = search_include_path(filename);
         reader = xmlNewTextReaderFilename(filepath);
     }
 #endif
