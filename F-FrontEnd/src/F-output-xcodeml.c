@@ -6,6 +6,7 @@
 #include "F-output-xcodeml.h"
 #include "module-manager.h"
 #include <limits.h>
+#include "external/klib/khash.h"
 
 #define CHAR_BUF_SIZE 65536
 
@@ -73,6 +74,12 @@ typedef struct type_ext_id {
       else (tail)->next = (te); \
       (tail) = (te); }
 
+// Set containing int representation of type descriptor addresses
+const int type_desc_set = 33;
+KHASH_SET_INIT_INT64(type_desc_set);
+khash_t(type_desc_set) *type_set;
+khash_t(type_desc_set) *tbp_set;
+
 static TYPE_DESC    type_list,type_list_tail;
 static TYPE_DESC    tbp_list,tbp_list_tail;
 static TYPE_EXT_ID  type_module_proc_list, type_module_proc_last;
@@ -86,6 +93,33 @@ static int          is_outputed_module = FALSE;
     EXT_PROC_ID_LIST(ep) ? ID_LINE(EXT_PROC_ID_LIST(ep)) : NULL)
 
 static int is_emitting_module = FALSE;
+
+/**
+ * @brief Initialize sets.
+ */
+static void init_sets() {
+    if(type_set == NULL) {
+        type_set = kh_init(type_desc_set);
+    }
+   
+    if(tbp_set == NULL) {
+        tbp_set = kh_init(type_desc_set);
+    }
+}
+
+/**
+ * @brief Reset sets if they were used.
+ */
+static void reset_sets() {
+    if(tbp_set != NULL && kh_size(tbp_set) > 0) {
+        kh_destroy(type_desc_set, tbp_set);
+        tbp_set = kh_init(type_desc_set);
+    }
+    if(type_set != NULL && kh_size(type_set) > 0) {
+        kh_destroy(type_desc_set, type_set);
+        type_set = kh_init(type_desc_set);
+    }
+}
 
 static void
 set_module_emission_mode(int mode) {
@@ -4195,6 +4229,88 @@ static void mark_type_desc_in_structure_skip_tbp(TYPE_DESC tp, int skip_tbp);
 
 static void mark_type_desc(TYPE_DESC tp);
 
+
+/**
+ * @brief Add type descriptor in set
+ * 
+ * Address of type descriptor is convert to int to be added into the given set.
+ * @param tp  Type descriptor to insert in the set.
+ * @param set Set in which inserting.
+ * @return kh_put return value.
+ */
+static int add_in_set_if_not_present(TYPE_DESC tp, khash_t(type_desc_set) *set) 
+{
+    int ret;
+    khiter_t k = kh_get(type_desc_set, set, (uint64_t)tp);
+    if(k == kh_end(set)) {
+        k = kh_put(type_desc_set, set, (uint64_t)tp, &ret);
+    }
+    return ret;
+}
+
+/**
+ * @brief Check if type descriptor is contained in given set.
+ * 
+ * @param tp  Type descriptor to check for existence.
+ * @param set Set in which inserting.
+ * @return 1 if type descriptor is contained. 0 Otherwise.
+ */
+static int is_type_desc_in_set(TYPE_DESC tp, khash_t(type_desc_set) *set) {
+    khiter_t k = kh_get(type_desc_set, set, (uint64_t)tp);
+    if(k != kh_end(set)) {
+        return TRUE;
+    } 
+    return FALSE;
+}
+
+/**
+ * @brief Add type descriptor at end of a list.
+ * 
+ * Add type descriptor to the list of types and adjust the tail. If the added
+ * type is linked with other types already in the list, the link is broken. 
+ * 
+ * This function is using a hash set in order to track the type in the list. 
+ * Huge performance improvement against the original type_link_add in 
+ * F-datatype.c.
+ * 
+ * tlist                         ttail
+ *   |                             |
+ * (TD1) --> (TD2) --> (TD3) --> (TD4) --> NULL
+ * 
+ * 
+ * Add (TD5) --> (TD2)
+ * tlist                                   ttail
+ *   |                                       |
+ * (TD1) --> (TD2) --> (TD3) --> (TD4) --> (TD5) --> NULL
+ * 
+ * @param tp   Type descriptor to insert.
+ * @param list List in which type descriptor is inserted.
+ * @param tail Current tail of the list.
+ * @return New tail of the list.
+ */
+static TYPE_DESC type_link_add_with_set(TYPE_DESC tp, TYPE_DESC list, 
+                                        TYPE_DESC tail, 
+                                        khash_t(type_desc_set) *set) 
+{
+    if(tail == NULL) {    
+        add_in_set_if_not_present(tp, set);
+        return tp;
+    }
+    TYPE_LINK(tail) = tp;
+    add_in_set_if_not_present(tp, set);
+    tail = tp;
+    while(tail != TYPE_LINK(tail) && TYPE_LINK(tail) != NULL) {
+        if(is_type_desc_in_set(TYPE_LINK(tail), set)) {
+            break;
+        }
+        tail = TYPE_LINK(tail);
+        add_in_set_if_not_present(tail, set);
+    }
+    TYPE_LINK(tail) = NULL;
+    return tail;
+}
+
+
 static void
 mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
 {
@@ -4208,7 +4324,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
          */
         TYPE_LINK(tp) = NULL;
         TYPE_IS_REFERENCED(tp) = TRUE;
-        TYPE_LINK_ADD(tp, tbp_list, tbp_list_tail);
+        TYPE_LINK_ADD_WITH_SET(tp, tbp_list, tbp_list_tail, tbp_set);
         return;
     }
 
@@ -4234,7 +4350,7 @@ mark_type_desc_skip_tbp(TYPE_DESC tp, int skip_tbp)
     collect_type_desc(TYPE_DIM_LOWER(tp));
     collect_type_desc(TYPE_DIM_STEP(tp));
 
-    TYPE_LINK_ADD(tp, type_list, type_list_tail);
+    TYPE_LINK_ADD_WITH_SET(tp, type_list, type_list_tail, type_set);
     TYPE_IS_REFERENCED(tp) = TRUE;
 
     if (IS_PROCEDURE_TYPE(tp)) {
@@ -6214,6 +6330,8 @@ output_XcodeML_file()
 
     type_list = NULL;
 
+    init_sets();
+
     type_module_proc_list = NULL;
     type_module_proc_last = NULL;
     type_ext_id_list = NULL;
@@ -6243,6 +6361,8 @@ output_XcodeML_file()
     outx_globalDeclarations(l1);
 
     outx_close(l, "XcodeProgram");
+
+    reset_sets();
 }
 
 /*
@@ -6472,6 +6592,8 @@ output_module_file(struct module * mod, const char * filename)
     }
 
     is_emitting_for_submodule = MODULE_IS_FOR_SUBMODULE(mod);
+
+    init_sets();
 
     oEmitMode = is_emitting_xmod();
     set_module_emission_mode(TRUE);

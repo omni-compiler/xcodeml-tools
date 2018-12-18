@@ -6,6 +6,9 @@
 #include "F-module-procedure.h"
 #include "module-manager.h"
 
+// Hashtable implementation
+#include "external/klib/khash.h"
+
 #include <sys/wait.h>
 
 /* program unit control stack */
@@ -38,7 +41,7 @@ extern long prelast_initial_line_pos;
 
 extern char xmodule_path[MAX_PATH_LEN];
 extern char *myName;
-extern int  flag_module_compile;
+extern int flag_module_compile;
 extern char *original_source_file_name;
 extern int fixed_line_len_kind;
 extern int auto_save_attr_kb;
@@ -5401,75 +5404,94 @@ shallow_copy_ext_id(EXT_ID original) {
        TYPE_BASIC_TYPE(TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id)))))     \
          == TYPE_GNUMERIC_ALL)))
 
-struct replicated_type {
-  TYPE_DESC original;
-  TYPE_DESC replica;
-  struct replicated_type * next;
-};
+typedef struct {
+    TYPE_DESC original;
+    TYPE_DESC replica;
+} replicated_type;
 
-struct replicated_type * replicated_type_list = NULL;
+const int replicated_type_ht = 32;
+KHASH_MAP_INIT_INT64(replicated_type_ht, replicated_type*);
+khash_t(replicated_type_ht) *replica_ht;
 
-static void
-initialize_replicated_type_list() {
-    replicated_type_list = NULL;
+/**
+ * @brief Initialize the hash map for replicated type.
+ */
+static void initialize_replicated_type_ht() {
+    replica_ht = kh_init(replicated_type_ht);
 }
 
-static void
-finalize_replicated_type_list() {
-    struct replicated_type * lp;
-    while(replicated_type_list != NULL) {
-        lp = replicated_type_list->next;
-        free(replicated_type_list);
-        replicated_type_list = lp;
-    }
-}
-
-static void
-append_replicated_type_list(const TYPE_DESC original,
-                            const TYPE_DESC replica) {
-    struct replicated_type * lp;
-    if(original != NULL && replica != NULL) {
-        lp = XMALLOC(struct replicated_type *,sizeof(struct replicated_type));
-        lp->original = original;
-        lp->replica = replica;
-        lp->next = replicated_type_list;
-        replicated_type_list = lp;
+/**
+ * @brief Delete and clean the hash map for replicated type.
+ */
+static void finalize_replicated_type_ht() {
+    if(replica_ht != NULL && kh_size(replica_ht) > 0) {
+        kh_destroy(replicated_type_ht, replica_ht);
     }
 }
 
 /**
- * Checks if a type has the replica of itself.
- *
- * @param replica if tp has the replica, then set replica to it.
+ * @brief Add or update replica information
+ * 
+ * If the original type desc if not in the hash map yet, a new replicated_type
+ * containing the orginal type desc and the replica type desc is added. Key is
+ * the integer representation of the original type desc pointer address.
+ * 
+ * @param original Original type descriptor.
+ * @param replica  Type descriptor replicating the original.
  */
-static int
-type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
-    struct replicated_type * lp;
+static void add_or_update_replicated_type(const TYPE_DESC original,
+                                          const TYPE_DESC replica)
+{
+    if(original == NULL || replica == NULL) {
+        return;
+    }
+
+    khiter_t k;
+    int ret;
+    k = kh_get(replicated_type_ht, replica_ht, (uint64_t)original);
+    replica->is_replica = TRUE;
+    if(k == kh_end(replica_ht)) {
+        replicated_type* replica_type = 
+            XMALLOC(replicated_type *, sizeof(replicated_type));
+        replica_type->original = original;
+        replica_type->replica = replica;
+        k = kh_put(replicated_type_ht, replica_ht, (uint64_t)original, &ret);
+        kh_value(replica_ht, k) = replica_type;
+    } else {
+        (kh_value(replica_ht, k))->replica = replica;
+    }
+}
+
+/**
+ * @brief Checks if a type has the replica of itself.
+ *
+ * @param tp      Type descriptor to check for replica.
+ * @param replica Replicated type if tp has one.
+ * @return True if the replica has been found. False otherwise.
+ */
+static int type_has_replica(const TYPE_DESC tp, TYPE_DESC * replica) {
     if (tp != NULL) {
-        for(lp = replicated_type_list; lp != NULL; lp = lp->next) {
-            if(tp == lp->original) {
-                if(replica != NULL) {
-                    *replica = lp->replica;
-                }
-                return TRUE;
+        khiter_t k;
+        k = kh_get(replicated_type_ht, replica_ht, (uint64_t)tp);
+        if(k != kh_end(replica_ht)) {
+            if(replica != NULL) {
+                *replica = (kh_value(replica_ht, k))->replica;
             }
+            return TRUE;
         }
     }
     return FALSE;
 }
 
 /**
- * Checks if a type is the replicated one.
+ * @brief Check if a type descriptor is a replica.
+ * 
+ * @param tp Type descriptor to be checked.
+ * @return True if type descriptor is a replica.
  */
-static int
-type_is_replica(const TYPE_DESC tp) {
-    struct replicated_type * lp;
-    if(tp != NULL) {
-        for(lp = replicated_type_list; lp != NULL; lp = lp->next) {
-            if(tp == lp->replica) {
-                return TRUE;
-            }
-        }
+static int type_is_replica(const TYPE_DESC tp) {
+    if(tp != NULL && tp->is_replica == TRUE) {
+        return TRUE;
     }
     return FALSE;
 }
@@ -5477,8 +5499,7 @@ type_is_replica(const TYPE_DESC tp) {
 /**
  * Creates the type which is shallow copied for the module id.
  */
-static TYPE_DESC
-shallow_copy_type_for_module_id(TYPE_DESC original) {
+static TYPE_DESC shallow_copy_type_for_module_id(TYPE_DESC original) {
     TYPE_DESC new_tp;
 
     new_tp = new_type_desc();
@@ -5490,13 +5511,12 @@ shallow_copy_type_for_module_id(TYPE_DESC original) {
     TYPE_UNSET_PUBLIC(new_tp);
     TYPE_UNSET_PRIVATE(new_tp);
 
-    append_replicated_type_list(original, new_tp);
+    add_or_update_replicated_type(original, new_tp);
 
     return new_tp;
 }
 
-static void
-deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
+static void deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
 
 
 /**
@@ -5506,8 +5526,7 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp);
  *
  * Note: Require shallow copy before apply this function
  */
-static void
-deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
+static void deep_ref_copy_for_module_id_type(TYPE_DESC tp) {
     ID id;
     ID last_ip = NULL;
     ID new_members = NULL;
@@ -5581,7 +5600,7 @@ deep_copy_and_overwrite_for_module_id_type(TYPE_DESC * ptp) {
     }
 
     if (type_is_replica(*ptp)) {
-        ;  /* do nothing */
+       return;  /* do nothing */
     } else if (type_has_replica(*ptp, &tp)) {
         /* overwrite the type with replicated one */
         *ptp = tp;
@@ -5873,26 +5892,26 @@ deep_copy_id_types(ID mids)
           expv v;
           list lp;
 
-          if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
-              continue;
-          }
+            if (type_has_replica(EXT_PROC_TYPE(mep), &EXT_PROC_TYPE(mep))) {
+                continue;
+            }
 
-          EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
-          deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
+            EXT_PROC_TYPE(mep) = shallow_copy_type_for_module_id(EXT_PROC_TYPE(mep));
+            deep_ref_copy_for_module_id_type(EXT_PROC_TYPE(mep));
 
-          /*
-           * copy the arguments of the function type
-           *
-           * NOTE:
-           *  It may be required to deep-copy whole of the EXT_ID.
-           */
-          if (EXT_PROC_ARGS(mep) != NULL) {
-              EXT_PROC_ARGS(mep) = copy_function_args(EXT_PROC_ARGS(mep));
-              FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(mep)) {
-                  v = EXPR_ARG1(LIST_ITEM(lp));
-                  deep_copy_and_overwrite_for_module_id_type(&(EXPV_TYPE(v)));
-              }
-          }
+            /*
+             * copy the arguments of the function type
+             *
+             * NOTE:
+             *  It may be required to deep-copy whole of the EXT_ID.
+             */
+            if (EXT_PROC_ARGS(mep) != NULL) {
+                EXT_PROC_ARGS(mep) = copy_function_args(EXT_PROC_ARGS(mep));
+                FOR_ITEMS_IN_LIST(lp, EXT_PROC_ARGS(mep)) {
+                    v = EXPR_ARG1(LIST_ITEM(lp));
+                    deep_copy_and_overwrite_for_module_id_type(&(EXPV_TYPE(v)));
+                }
+            }
         }
     }
 }
@@ -5908,7 +5927,7 @@ import_module_ids(struct module *mod, struct use_argument * args,
     int ret = TRUE;
     int wrap_type = TRUE;
 
-    initialize_replicated_type_list();
+    initialize_replicated_type_ht();
 
     if (debug_flag) {
         if (!fromParentModule) {
@@ -5971,7 +5990,7 @@ import_module_ids(struct module *mod, struct use_argument * args,
     first_mid = prev_mid ? ID_NEXT(prev_mid) : NULL;
     deep_copy_id_types(first_mid);
 
-    finalize_replicated_type_list();
+    finalize_replicated_type_ht();
 
     if(debug_flag) {
         if (!fromParentModule) {
