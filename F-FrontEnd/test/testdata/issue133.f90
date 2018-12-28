@@ -5,6 +5,7 @@ contains
   elemental function rteta(ptime)
     real(kind=jprb)             :: rteta
     real(kind=jprb), intent(in) :: ptime
-    rteta = ptime/(rday*365.25_jprb)
+    rteta = rday * 365.25_jprb
+    rteta = rteta * ptime
   end function rteta
 end module mod1
