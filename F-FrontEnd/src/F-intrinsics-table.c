@@ -1313,8 +1313,10 @@ intrinsic_entry intrinsic_table[] = {
      {"string", "substring", "back", "kind"}},
     //  { INTR_INDEX,       INTR_NAME_SPECIFIC,     "", {INTR_TYPE_CHAR,
     //  INTR_TYPE_CHAR,
-    //							       INTR_TYPE_LOGICAL, INTR_TYPE_INT},
-    //INTR_TYPE_INT,          4, -1, LANGSPEC_F77,    INTR_CLASS_E, ARG0|ARG1,
+    //							       INTR_TYPE_LOGICAL,
+    // INTR_TYPE_INT}, INTR_TYPE_INT,          4, -1, LANGSPEC_F77,
+    // INTR_CLASS_E,
+    // ARG0|ARG1,
     //{"string", "substring", "back", "kind"} },
 
     // LGE (STRING_A, STRING_B)

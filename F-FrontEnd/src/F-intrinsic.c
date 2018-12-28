@@ -216,7 +216,8 @@ expv compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch)
                             /* 			       ((isVarArgs == 0) ? */
                             /* 				INTR_ARG_TYPE(ep)[j] :
                              */
-                            /* 				INTR_ARG_TYPE(ep)[0])) == 0){
+                            /* 				INTR_ARG_TYPE(ep)[0]))
+                             * == 0){
                              */
                             if (compare_intrinsic_arg_type(
                                     a, tp, INTR_ARG_TYPE(ep)[j]) == 0) {

@@ -1284,12 +1284,9 @@ expv compile_ident_expression(expr x)
             } else if (EXPV_CODE(VAR_INIT_VALUE(id)) !=
                        F95_STRUCT_CONSTRUCTOR) {
 
-                // expv kind = TYPE_KIND(EXPV_TYPE(VAR_INIT_VALUE(id)));
                 TYPE_DESC tp_value = EXPV_TYPE(VAR_INIT_VALUE(id));
-
-                // TODO go through TYPE_REF to find kind
-
-                // Only constant from external module can be replaced safely.
+                // Only constant from external module can be replaced safely
+                // if they have no kind.
                 if ((EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT ||
                      EXPV_CODE(VAR_INIT_VALUE(id)) == INT_CONSTANT ||
                      EXPV_CODE(VAR_INIT_VALUE(id)) == FLOAT_CONSTANT ||
