@@ -1077,6 +1077,27 @@ int type_is_extension(TYPE_DESC ext, TYPE_DESC base)
     return type_is_extension(ext, TYPE_PARENT_TYPE(base));
 }
 
+/**
+ * Check if `tp` or its references has a kind defined.
+ * @param tp TYPE_DESC to check.
+ * @return 1 if type has kind defined. 0 otherwise.
+ */
+int type_has_kind(TYPE_DESC tp)
+{
+    if (tp == NULL) {
+        return FALSE;
+    }
+
+    if (TYPE_HAVE_KIND(tp)) {
+        return TRUE;
+    }
+
+    if (TYPE_REF(tp)) {
+        return type_has_kind(TYPE_REF(tp));
+    }
+    return FALSE;
+}
+
 static int derived_type_parameter_values_is_compatible_for_assignment(
     TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
 {
