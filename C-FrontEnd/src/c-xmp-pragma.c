@@ -412,19 +412,27 @@ CExpr* parse_DISTRIBUTE_clause()
 CExpr* parse_ALIGN_clause()
 {
   CExpr* arrayNameList = NULL;
+  CExpr* structureNameList = NULL;
   CExpr* alignSourceList, *alignSubscriptList, *templateName;
 
   // parse <array-name>
   if (pg_tok == PG_IDENT) {
     arrayNameList = XMP_LIST1(pg_tok_val);
     pg_get_token();
-  } 
+  }
+
+  if(pg_tok == '.'){
+    structureNameList = arrayNameList;
+    pg_get_token();
+    arrayNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
 
   // parse [align-source] ...
   if (pg_tok != '['){
     XMP_Error0("'[' is expected");
     goto err;
-    }
+  }
   else 
     alignSourceList = parse_XMP_align_source_list();
 
@@ -456,8 +464,13 @@ CExpr* parse_ALIGN_clause()
   if (arrayNameList == NULL) 
     arrayNameList = parse_COL2_name_list();
 
-  return XMP_LIST4(arrayNameList, alignSourceList, 
-		   templateName, alignSubscriptList);
+  if(structureNameList == NULL)
+    return XMP_LIST4(arrayNameList, alignSourceList, 
+		     templateName, alignSubscriptList);
+  else
+    return XMP_LIST5(arrayNameList, alignSourceList,
+		     templateName, alignSubscriptList, structureNameList);
+
  err:
   XMP_has_err = 1;
   return NULL;
@@ -1186,8 +1199,8 @@ CExpr *parse_XMP_align_source_list()
 
     list = EMPTY_LIST;
 
-    if (pg_tok != '['){
-	addFatal(NULL,"parse_XMP_align_source_list: first token != '['");
+    if (pg_tok != '[' && pg_tok != '.'){
+	addFatal(NULL,"parse_XMP_align_source_list: first token != '[' or '.'");
     }
 
     while (1){
