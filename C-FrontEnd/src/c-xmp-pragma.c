@@ -421,6 +421,7 @@ CExpr* parse_ALIGN_clause()
     pg_get_token();
   }
 
+  // for structure
   if(pg_tok == '.'){
     structureNameList = arrayNameList;
     pg_get_token();
@@ -479,6 +480,7 @@ CExpr* parse_ALIGN_clause()
 CExpr* parse_SHADOW_clause()
 {
   CExpr* arrayNameList = NULL;
+  CExpr* structureNameList = NULL;
   CExpr* shadowWidthList;
 
   // parse <array-name>
@@ -487,6 +489,14 @@ CExpr* parse_SHADOW_clause()
     pg_get_token();
   } 
 
+  // for structure
+  if(pg_tok == '.'){
+    structureNameList = arrayNameList;
+    pg_get_token();
+    arrayNameList = XMP_LIST1(pg_tok_val);
+    pg_get_token();
+  }
+    
   // parse [shadow-width] ...
   if (pg_tok != '['){
     XMP_Error0("'[' is expected");
@@ -497,8 +507,11 @@ CExpr* parse_SHADOW_clause()
   
   if (arrayNameList == NULL) 
     arrayNameList = parse_COL2_name_list();
-  
-  return XMP_LIST2(arrayNameList, shadowWidthList);
+
+  if(structureNameList == NULL)
+    return XMP_LIST2(arrayNameList, shadowWidthList);
+  else
+    return XMP_LIST3(arrayNameList, shadowWidthList, structureNameList);
   
  err:
   XMP_has_err = 1;
@@ -1545,11 +1558,21 @@ CExpr *parse_name_list()
 	while(pg_tok == PG_IDENT){
 	  CExpr *v = pg_tok_val;
 	  pg_get_token();
-	  if(pg_tok != '[')
-	    list = exprListAdd(list, v);
-	  else
-	    list = exprListAdd(list, XMP_LIST2(v, parse_XMP_C_subscript_list()));
-
+	  if(pg_tok == '.'){  // #pragma xmp reflect (a.c) // structure member
+	    CExpr* structureName = v;
+	    pg_get_token();
+	    CExpr* memberName = pg_tok_val;
+	    pg_get_token();
+	    list = exprListAdd(list, XMP_LIST2(structureName, memberName));
+	  }
+	  else{
+	    if(pg_tok != '['){
+	      list = exprListAdd(list, v);
+	    }
+	    else
+	      list = exprListAdd(list, XMP_LIST2(v, parse_XMP_C_subscript_list()));
+	  }
+	  
 	  if(pg_tok != ',') break;
 	  pg_get_token();
 	}
@@ -1963,10 +1986,11 @@ static CExpr *parse_TASKS_clause()
 static CExpr* parse_REFLECT_clause()
 {
   CExpr *arrayNameList = parse_name_list();
-  CExpr *widthList = parse_WIDTH_list();
+  CExpr *widthList     = parse_WIDTH_list();
   CExpr *async, *acc_or_host, *profile;
-  
+
   parse_ASYNC_ACC_or_HOST_PROFILE(&async, &acc_or_host, &profile);
+
   return XMP_LIST5(arrayNameList, widthList, async, acc_or_host, profile);
 }
 
