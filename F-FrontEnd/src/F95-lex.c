@@ -2121,6 +2121,29 @@ static int get_keyword_optional_blank(int class)
                 return KW_DCOMPLEX;
         } break;
 
+        case KW_COMPLEX: {
+            while (isspace(*bufptr)) {
+                bufptr++; /* skip white space */
+            }
+            if(*bufptr == '*') {
+                ++bufptr;
+                while (isspace(*bufptr)) {
+                    ++bufptr; /* skip white space */
+                }
+                if(*bufptr == '8') { // COMPLEX*8
+                    ++bufptr;
+                    return KW_COMPLEX;
+                } else if(*bufptr == '1') { // COMPLEX*16
+                    ++bufptr;
+                    if(*bufptr == '6') {
+                        ++bufptr;
+                        return KW_DCOMPLEX;
+                    }
+                }
+            }
+            bufptr = save2;
+        } break;
+
         case ELSE:
             cl = get_keyword(keywords);
             if (cl == LOGIF)
