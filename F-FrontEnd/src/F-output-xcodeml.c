@@ -816,7 +816,7 @@ static int has_attribute(TYPE_DESC tp)
 
 static int has_attribute_except_private_public(TYPE_DESC tp)
 {
-    int ret;
+    int ret = -1;
     int is_public = TYPE_IS_PUBLIC(tp);
     int is_private = TYPE_IS_PRIVATE(tp);
     int is_protected = TYPE_IS_PROTECTED(tp);
@@ -4508,7 +4508,7 @@ static void mark_type_desc(TYPE_DESC tp);
  */
 static int add_in_set_if_not_present(TYPE_DESC tp, khash_t(type_desc_set) * set)
 {
-    int ret;
+    int ret = -1;
     khiter_t k = kh_get(type_desc_set, set, (uint64_t)tp);
     if (k == kh_end(set)) {
         k = kh_put(type_desc_set, set, (uint64_t)tp, &ret);
