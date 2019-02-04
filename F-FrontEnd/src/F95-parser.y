@@ -1354,7 +1354,7 @@ type_spec1:
                             GEN_NODE(INT_CONSTANT, 8)); }
         | KW_DCOMPLEX
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
-                            GEN_NODE(INT_CONSTANT, 16)); }
+                            GEN_NODE(INT_CONSTANT, 8)); }
         ;
 
 /*
