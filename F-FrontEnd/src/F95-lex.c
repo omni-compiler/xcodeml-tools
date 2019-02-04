@@ -2141,7 +2141,6 @@ static int get_keyword_optional_blank(int class)
                     }
                 }
             }
-            bufptr = save2;
         } break;
 
         case ELSE:
