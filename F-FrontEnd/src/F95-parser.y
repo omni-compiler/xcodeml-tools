@@ -2827,7 +2827,10 @@ xmp_align_clause:
 	  | '(' xmp_subscript_list ')' xmp_WITH
   	    IDENTIFIER '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list4(LIST,$10,$2,$5,$7); }
-	  ;
+          | IDENTIFIER '%' IDENTIFIER '(' xmp_subscript_list ')' xmp_WITH
+              IDENTIFIER '(' xmp_subscript_list ')'
+	  { $$ = list4(LIST,list1(LIST,list2(LIST,$1,$3)),$5,$8,$10); }
+         ;
 
 xmp_shadow_clause:
 	    IDENTIFIER '(' xmp_subscript_list ')'
