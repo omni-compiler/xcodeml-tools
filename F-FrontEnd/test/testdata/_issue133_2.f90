@@ -3,4 +3,5 @@ module issue133_2
   implicit none
   public
   real(wp), parameter :: rdaylen=86400._wp
+  real(wp), parameter :: rdaylen2=86400._8
 end module issue133_2
