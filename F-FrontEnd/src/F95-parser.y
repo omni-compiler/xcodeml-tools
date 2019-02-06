@@ -988,6 +988,8 @@ prefix_spec:
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
+        | type_keyword '*' 
+        { $$ = list2(LIST, $1, GEN_NODE(INT_CONSTANT, 8)); need_keyword = TRUE; }
         | type_spec
         ;
 
