@@ -13,10 +13,13 @@ end function
 character*8 function cfct8()
 end function
 
+real*4 function rfct4()
+end function
+
 real*8 function rfct8()
 end function
 
-real*8 function rfct16()
+real*16 function rfct16()
 end function
 
 integer*8 function ifct8()
