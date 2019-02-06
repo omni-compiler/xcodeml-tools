@@ -1295,7 +1295,10 @@ expv compile_ident_expression(expr x)
                      EXPV_CODE(VAR_INIT_VALUE(id)) == F_FALSE_CONSTANT ||
                      EXPV_CODE(VAR_INIT_VALUE(id)) == F_DOUBLE_CONSTANT ||
                      EXPV_CODE(VAR_INIT_VALUE(id)) == F_QUAD_CONSTANT) &&
-                    !type_has_kind(tp_value)) {
+                    // Only value with constant kind are reduced #133
+                    (!type_has_kind(tp_value) ||
+                     (type_has_kind(tp_value) &&
+                      type_kind_is_constant(tp_value)))) {
                     return VAR_INIT_VALUE(id);
                 }
             }
