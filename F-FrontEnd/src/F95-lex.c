@@ -490,7 +490,7 @@ int is_function_statement_context()
         /*
          * If i reaches the current token like:
          *
-         *  ELENTAL TYPE(t) . FUNCTION
+         *  ELEMENTAL TYPE(t) . FUNCTION
          *  INTEGER ELEMENTAL IMPURE . FUNCTION
          *
          */

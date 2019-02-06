@@ -988,19 +988,7 @@ prefix_spec:
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
-        | type_keyword '*' const
-        { 
-          if($3->v.e_llval && $3->v.e_llval == 4) {
-            $$ = list2(LIST, $1, GEN_NODE(INT_CONSTANT, 4)); 
-          } else if ($3->v.e_llval && $3->v.e_llval == 8) {
-            $$ = list2(LIST, $1, GEN_NODE(INT_CONSTANT, 8)); 
-          } else if ($3->v.e_llval && $3->v.e_llval == 16) {
-            $$ = list2(LIST, $1, GEN_NODE(INT_CONSTANT, 16)); 
-          } else {
-            error("Only values 4, 8 and 16 are accepted with <type>* declaration");
-          }
-        }
-        | type_spec
+        | type_spec 
         ;
 
 name:  IDENTIFIER;
