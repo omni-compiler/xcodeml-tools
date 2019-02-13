@@ -1283,15 +1283,22 @@ expv compile_ident_expression(expr x)
                 }
             } else if (EXPV_CODE(VAR_INIT_VALUE(id)) !=
                        F95_STRUCT_CONSTRUCTOR) {
-                // Only constant from external module can be replaced safely.
-                if (EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == INT_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == FLOAT_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == COMPLEX_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == F_TRUE_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == F_FALSE_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == F_DOUBLE_CONSTANT ||
-                    EXPV_CODE(VAR_INIT_VALUE(id)) == F_QUAD_CONSTANT) {
+
+                TYPE_DESC tp_value = EXPV_TYPE(VAR_INIT_VALUE(id));
+                // Only constant from external module can be replaced safely
+                // if they have no kind.
+                if ((EXPV_CODE(VAR_INIT_VALUE(id)) == STRING_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == INT_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == FLOAT_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == COMPLEX_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == F_TRUE_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == F_FALSE_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == F_DOUBLE_CONSTANT ||
+                     EXPV_CODE(VAR_INIT_VALUE(id)) == F_QUAD_CONSTANT) &&
+                    // Only value with constant kind are reduced #133
+                    (!type_has_kind(tp_value) ||
+                     (type_has_kind(tp_value) &&
+                      type_kind_is_constant(tp_value)))) {
                     return VAR_INIT_VALUE(id);
                 }
             }
