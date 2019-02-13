@@ -700,6 +700,9 @@ extern int type_is_extension _ANSI_ARGS_((TYPE_DESC ext, TYPE_DESC base));
 extern int type_is_unlimited_class _ANSI_ARGS_((TYPE_DESC tp));
 extern int type_is_class_of _ANSI_ARGS_((TYPE_DESC class,
                                          TYPE_DESC derived_type));
+extern int type_has_kind _ANSI_ARGS_((TYPE_DESC tp));
+extern expv type_get_kind _ANSI_ARGS_((TYPE_DESC tp));
+extern int type_kind_is_constant _ANSI_ARGS_((TYPE_DESC tp));
 extern int compare_derived_type_name _ANSI_ARGS_((TYPE_DESC tp1,
                                                   TYPE_DESC tp2));
 extern int type_is_nopolymorphic_abstract _ANSI_ARGS_((TYPE_DESC tp));

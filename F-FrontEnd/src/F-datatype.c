@@ -1077,6 +1077,74 @@ int type_is_extension(TYPE_DESC ext, TYPE_DESC base)
     return type_is_extension(ext, TYPE_PARENT_TYPE(base));
 }
 
+/**
+ * Check if `tp` or its references has a kind defined.
+ * @param tp TYPE_DESC to check.
+ * @return 1 if type has kind defined. 0 otherwise.
+ */
+int type_has_kind(TYPE_DESC tp)
+{
+    if (tp == NULL) {
+        return FALSE;
+    }
+
+    if (TYPE_HAVE_KIND(tp)) {
+        return TRUE;
+    }
+
+    if (TYPE_REF(tp)) {
+        return type_has_kind(TYPE_REF(tp));
+    }
+    return FALSE;
+}
+
+/**
+ * Get kind of a type description.
+ * @param tp TYPE_DESC to check.
+ * @return Kind if it's defined NULL otherwise.
+ */
+expv type_get_kind(TYPE_DESC tp)
+{
+    if (tp == NULL) {
+        return FALSE;
+    }
+
+    if (TYPE_HAVE_KIND(tp)) {
+        return TYPE_KIND(tp);
+    }
+
+    if (TYPE_REF(tp)) {
+        return type_get_kind(TYPE_REF(tp));
+    }
+    return FALSE;
+}
+
+/**
+ * Check if `tp` has a kind and its a constant.
+ * @param tp TYPE_DESC to check.
+ * @return 1 if type has kind defined and its a constant. 0 otherwise.
+ */
+int type_kind_is_constant(TYPE_DESC tp)
+{
+    if (type_has_kind(tp)) {
+        expv kind = type_get_kind(tp);
+        switch (EXPR_CODE(kind)) {
+            case STRING_CONSTANT:
+	        case INT_CONSTANT:
+            case FLOAT_CONSTANT:
+	        case COMPLEX_CONSTANT:
+	        case F_TRUE_CONSTANT:
+	        case F_FALSE_CONSTANT:
+	        case F_DOUBLE_CONSTANT:
+	        case F_QUAD_CONSTANT:
+                return TRUE;
+            default:
+                return FALSE;
+        }
+    }
+    return FALSE;
+}
+
 static int derived_type_parameter_values_is_compatible_for_assignment(
     TYPE_DESC tp1, TYPE_DESC tp2, int is_pointer_set)
 {

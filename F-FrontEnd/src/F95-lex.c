@@ -396,7 +396,9 @@ static void switch_need_keyword(int t) { need_keyword = t; }
 
 static expr auxIdentX = NULL;
 
-static void type_spec_done() { /* printf("type_spec_done!\n"); */ }
+static void type_spec_done()
+{ /* printf("type_spec_done!\n"); */
+}
 
 int is_function_statement_context()
 {

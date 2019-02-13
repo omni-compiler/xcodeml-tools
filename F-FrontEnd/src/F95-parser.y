@@ -2837,6 +2837,8 @@ xmp_shadow_clause:
 	    { $$ = list2(LIST,list1(LIST,$1),$3); }
 	  |  '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list2(LIST,$5,$2); }
+          | IDENTIFIER '%' IDENTIFIER '(' xmp_subscript_list ')'
+	    { $$ = list2(LIST,list1(LIST,list2(LIST,$1,$3)),$5); }
           ;
 
 xmp_template_fix_clause:

@@ -179,9 +179,9 @@ typedef struct type_descriptor {
         int is_internal; /* for internal subprograms (function/subroutine in the
                             contain block)*/
         int is_module_procedure;
-            /* used as a module procedure */ /* may not be required */
+        /* used as a module procedure */ /* may not be required */
         int is_visible_intrinsic; /* TRUE if non standard intrinsic */
-        int is_interface;         /* TRUE if the function is a interface */
+        int is_interface; /* TRUE if the function is a interface */
 
         int has_binding_arg;
         int has_pass_arg; /* for the function type of procedure variable OR

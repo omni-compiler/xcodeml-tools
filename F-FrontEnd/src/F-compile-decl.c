@@ -4468,7 +4468,8 @@ void fix_array_dimensions(TYPE_DESC tp)
              * 1; */
             /* 	      if(s < 0) */
             /* 		error_at_node(TYPE_DIM_UPPER(tp), */
-            /* 			      "upper bound must be larger than lower bound");
+            /* 			      "upper bound must be larger than lower
+             * bound");
              */
             /* 	      size = expv_int_term(INT_CONSTANT, type_INT, s); */
             /* 	    } else { */
