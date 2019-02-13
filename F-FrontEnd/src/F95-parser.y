@@ -988,7 +988,7 @@ prefix_spec:
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
-        | type_spec
+        | type_spec 
         ;
 
 name:  IDENTIFIER;
@@ -1352,11 +1352,9 @@ type_spec1:
         | KW_DOUBLE
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
                             GEN_NODE(INT_CONSTANT, 8)); }
-        //                    gen_default_real_kind()); }
         | KW_DCOMPLEX
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
                             GEN_NODE(INT_CONSTANT, 8)); }
-        //                    gen_default_real_kind()); }
         ;
 
 /*

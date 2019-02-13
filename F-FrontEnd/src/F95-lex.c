@@ -404,6 +404,7 @@ int is_function_statement_context()
 {
     int i = 0;
     int paran_level;
+    int prev = 0;
 
     for (i = 0; i < token_history_count - 1;) {
         switch (token_history_buf[i]) {
@@ -424,6 +425,7 @@ int is_function_statement_context()
             case KW_INTEGER:
             case KW_LOGICAL:
             case KW_REAL:
+                prev = token_history_buf[i];
                 i++;
                 paran_level = 0;
                 /* SET_KIND and SET_LEN include a left parenthesis directly */
@@ -445,6 +447,11 @@ int is_function_statement_context()
                         /* parenthesis is not closed! */
                         return FALSE;
                     }
+                } else if ((prev == KW_COMPLEX || prev == KW_INTEGER // fix #136
+                    || prev == KW_REAL) && token_history_buf[i] == '*') 
+                {
+                    // for a type_spec like 'compley*8'
+                    i += 2;
                 }
                 continue;
             case KW_CHARACTER:
@@ -485,7 +492,7 @@ int is_function_statement_context()
         /*
          * If i reaches the current token like:
          *
-         *  ELENTAL TYPE(t) . FUNCTION
+         *  ELEMENTAL TYPE(t) . FUNCTION
          *  INTEGER ELEMENTAL IMPURE . FUNCTION
          *
          */
@@ -2122,7 +2129,6 @@ static int get_keyword_optional_blank(int class)
             if (get_keyword(keywords) == KW_COMPLEX)
                 return KW_DCOMPLEX;
         } break;
-
         case ELSE:
             cl = get_keyword(keywords);
             if (cl == LOGIF)
