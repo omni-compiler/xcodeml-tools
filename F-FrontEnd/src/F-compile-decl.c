@@ -4326,6 +4326,15 @@ compile_dimensions(TYPE_DESC tp, expr dims)
 
         TYPE_REF(tq) = tp;
         tp = tq;
+
+        // Make sure assume kind if present at this stage.
+        if(TYPE_DIM_UPPER(tp) == NULL) {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_SHAPE;
+        } else if (EXPR_CODE(TYPE_DIM_UPPER(tp)) == F_ASTERISK) {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_SIZE;
+        } else {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_NONE;
+        }
     }
 
     return tp;
