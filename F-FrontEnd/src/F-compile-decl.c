@@ -4310,6 +4310,9 @@ compile_dimensions(TYPE_DESC tp, expr dims)
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ALLOCATABLE(tp);
+            /*TYPE_ATTR_FLAGS(tq) |= TYPE_IS_INTENT_IN(tp);
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_INTENT_OUT(tp);
+            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_INTENT_INOUT(tp);*/
         }
 
         reduce_subscript(&lower);
@@ -4326,9 +4329,16 @@ compile_dimensions(TYPE_DESC tp, expr dims)
 
         TYPE_REF(tq) = tp;
         tp = tq;
-    }
 
-    fix_array_dimensions(tp);
+        // Make sure assume kind if present at this stage.
+        if(TYPE_DIM_UPPER(tp) == NULL) {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_SHAPE;
+        } else if (EXPR_CODE(TYPE_DIM_UPPER(tp)) == F_ASTERISK) {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_SIZE;
+        } else {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_NONE;
+        }
+    }
 
     return tp;
 }
