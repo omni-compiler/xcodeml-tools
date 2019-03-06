@@ -4328,6 +4328,8 @@ compile_dimensions(TYPE_DESC tp, expr dims)
         tp = tq;
     }
 
+    fix_array_dimensions(tp);
+
     return tp;
 }
 
