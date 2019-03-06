@@ -4310,9 +4310,6 @@ compile_dimensions(TYPE_DESC tp, expr dims)
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_POINTER(tp);
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_TARGET(tp);
             TYPE_ATTR_FLAGS(tq) |= TYPE_IS_ALLOCATABLE(tp);
-            /*TYPE_ATTR_FLAGS(tq) |= TYPE_IS_INTENT_IN(tp);
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_INTENT_OUT(tp);
-            TYPE_ATTR_FLAGS(tq) |= TYPE_IS_INTENT_INOUT(tp);*/
         }
 
         reduce_subscript(&lower);
