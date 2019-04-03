@@ -2861,6 +2861,15 @@ intrinsic_entry intrinsic_table[] = {
      -3,
      LANGSPEC_F90,
      INTR_CLASS_I},
+    {INTR_SHAPE,
+     INTR_NAME_GENERIC,
+     "",
+     {INTR_TYPE_ANY},
+     INTR_TYPE_INT_ARRAY,
+     1,
+     -3,
+     LANGSPEC_F90,
+     INTR_CLASS_I},
 
     // SIZE (ARRAY [, DIM])
     {INTR_SIZE,
