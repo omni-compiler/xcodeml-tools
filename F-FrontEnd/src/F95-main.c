@@ -36,6 +36,7 @@ int auto_save_attr_kb = -1;
 int endlineno_flag = 0;
 int ocl_flag = 0;
 int cdir_flag = 0;
+int pgi_flag = 0;
 int max_name_len = -1;
 int dollar_ok = 0; // accept '$' in identifier or not.
 
@@ -121,6 +122,7 @@ static void usage()
         "-fopenmp                  enable openmp translation.",
         "-facc                     enable OpenACC translation.",
         "-fxmp                     enable XcalableMP translation.",
+	"-pgi                      keep PGI directives",
         "-fno-xmp-coarray          disable translation coarray statements to "
         "XcalableMP subroutin calls.",
         "-fintrinsic-xmodules-path specify a xmod path for the intrinsic "
@@ -390,6 +392,8 @@ char *argv[];
             ocl_flag = 1;
         } else if (strcmp(argv[0], "-cdir") == 0) {
             cdir_flag = 1;
+        } else if (strcmp(argv[0], "-pgi") == 0) {
+            pgi_flag = 1;
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
             exit(0);
