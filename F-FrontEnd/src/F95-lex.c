@@ -71,6 +71,7 @@ extern struct keyword_token do_keywords[];
 
 extern int ocl_flag;
 extern int cdir_flag;
+extern int pgi_flag;
 extern int max_name_len; //  maximum identifier name length
 extern int dollar_ok;    // accept '$' in identifier or not.
 
@@ -147,6 +148,7 @@ int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
 int st_comment_line_flag;
+int st_PGI_flag;
 
 enum lex_state lexstate;
 
@@ -164,6 +166,7 @@ sentinel_list sentinels;
 #define ACC_SENTINEL "!$acc"
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
+#define PGI_SENTINEL "!pgi$"
 
 /* sentinel list functions */
 static void init_sentinel_list(sentinel_list *p);
@@ -332,6 +335,8 @@ void initialize_lex()
         add_sentinel(&sentinels, OCL_SENTINEL);
     if (cdir_flag)
         add_sentinel(&sentinels, CDIR_SENTINEL);
+    if (pgi_flag)
+        add_sentinel(&sentinels, PGI_SENTINEL);
 }
 
 void finalize_lex()
@@ -2392,7 +2397,7 @@ static int find_last_ampersand(char *buf, int *len)
         for (; l > 0; l--) {
             if (buf[l] == '!' &&
                 (st_PRAGMA_flag | st_ACC_flag | st_OMP_flag | st_XMP_flag |
-                 st_CONDCOMPL_flag | st_OCL_flag)) {
+                 st_CONDCOMPL_flag | st_OCL_flag | st_PGI_flag)) {
                 flag = FALSE;
                 break;
             }
@@ -2481,6 +2486,7 @@ again:
     st_OCL_flag = FALSE;       /* flag for "!OCL" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
     st_comment_line_flag = FALSE;
+    st_PGI_flag = FALSE;
 
     if (flag_force_c_comment) {
         if ((p[0] == 'c') || (p[0] == 'C') || (p[0] == '*')) {
@@ -2522,6 +2528,12 @@ again:
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   CDIR_SENTINEL) == 0) {
                 char buff[256] = "cdir";
+                strcat(buff, p);
+                set_pragma_str(buff);
+                st_PRAGMA_flag = TRUE;
+            } else if (strcasecmp(sentinel_name(&sentinels, index),
+                                  PGI_SENTINEL) == 0) {
+                char buff[256] = "pgi$";
                 strcat(buff, p);
                 set_pragma_str(buff);
                 st_PRAGMA_flag = TRUE;
@@ -2932,6 +2944,14 @@ top:
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
+        } else if (strcasecmp(sentinel_name(&sentinels, index), PGI_SENTINEL) ==
+                   0) {
+            st_PRAGMA_flag = TRUE;
+            st_PGI_flag = TRUE;
+            set_pragma_str(&(sentinel_name(&sentinels, index)[1]));
+            append_pragma_str(" ");
+            append_pragma_str(line_buffer);
+            goto copy_body;
         } else {
             st_PRAGMA_flag = TRUE;
             set_pragma_str(&(sentinel_name(&sentinels, index)[2]));
@@ -3046,6 +3066,10 @@ copy_body:
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   OCL_SENTINEL) == 0) {
                 // no continutation line for ocl
+                break;
+            } else if (strcasecmp(sentinel_name(&sentinels, index),
+                                  PGI_SENTINEL) == 0) {
+                // no continutation line for pgi
                 break;
             } else {
                 if (st_PRAGMA_flag) {
@@ -3179,6 +3203,7 @@ static int readline_fixed_format()
     int local_OCL_flag = FALSE;
     int local_CONDCOMPL_flag = FALSE;
     int local_SENTINEL_flag = FALSE;
+    int local_PGI_flag = FALSE;
 
     /* line # counter for each file in cpp.  */
 next_line:
@@ -3295,6 +3320,9 @@ next_line0:
         } else if (strcasecmp(sentinel_name(&sentinels, index), OCL_SENTINEL) ==
                    0) {
             local_OCL_flag = TRUE;
+        } else if (strcasecmp(sentinel_name(&sentinels, index), PGI_SENTINEL) ==
+                   0) {
+            local_PGI_flag = TRUE;
         }
     } else if (is_cond_compilation(&sentinels, line_buffer)) {
         local_SENTINEL_flag = TRUE;
@@ -3568,6 +3596,8 @@ KeepOnGoin:
             return (ST_INIT);
         }
         if (st_OCL_flag && local_OCL_flag)
+            return (ST_INIT); // no continuation line for ocl
+        if (st_PGI_flag && local_PGI_flag)
             return (ST_INIT); // no continuation line for ocl
     }
 
