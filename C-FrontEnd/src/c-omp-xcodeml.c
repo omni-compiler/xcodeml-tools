@@ -64,6 +64,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_DIR_IF:
   case OMP_DIR_NUM_THREADS:
+  case OMP_COLLAPSE:
       outxContext(fp,indent1+1,arg);
       break;
 
