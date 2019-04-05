@@ -209,7 +209,7 @@ char *accClauseName(int c)
   case ACC_DEVICEPTR: return "DEVICEPTR";
   case ACC_USE_DEVICE: return "USE_DEVICE";
   case ACC_DEV_RESIDENT: return "DEV_RESIDENT";
-	  
+
   case ACC_PRIVATE: return "PRIVATE";
   case ACC_FIRSTPRIVATE: return "FIRSTPRIVATE";
   case ACC_LASTPRIVATE: return "LASTPRIVATE";
