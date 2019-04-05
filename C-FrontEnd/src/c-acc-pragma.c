@@ -388,7 +388,7 @@ static CExpr* parse_ACC_clauses()
 	    pg_get_token();
 		if((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
 		c = ACC_PG_LIST(ACC_DEVICE_TYPE, v);
-    } else if(PG_IS_IDENT("seq")){
+	} else if(PG_IS_IDENT("seq")){
 	    pg_get_token();
 	    c = ACC_PG_LIST(ACC_SEQ,NULL);
 	} else if(PG_IS_IDENT("independent")){
