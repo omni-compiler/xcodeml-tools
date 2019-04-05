@@ -4326,6 +4326,15 @@ compile_dimensions(TYPE_DESC tp, expr dims)
 
         TYPE_REF(tq) = tp;
         tp = tq;
+
+        // Make sure assume kind if present at this stage.
+        if(TYPE_DIM_UPPER(tp) == NULL) {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_SHAPE;
+        } else if (EXPR_CODE(TYPE_DIM_UPPER(tp)) == F_ASTERISK) {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_SIZE;
+        } else {
+            TYPE_ARRAY_ASSUME_KIND(tp) = ASSUMED_NONE;
+        }
     }
 
     return tp;
@@ -4468,7 +4477,8 @@ void fix_array_dimensions(TYPE_DESC tp)
              * 1; */
             /* 	      if(s < 0) */
             /* 		error_at_node(TYPE_DIM_UPPER(tp), */
-            /* 			      "upper bound must be larger than lower bound");
+            /* 			      "upper bound must be larger than lower
+             * bound");
              */
             /* 	      size = expv_int_term(INT_CONSTANT, type_INT, s); */
             /* 	    } else { */

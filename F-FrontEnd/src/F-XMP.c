@@ -833,8 +833,8 @@ expv XMP_compile_subscript_list(expr l, xmp_list_context context)
                     /* 	case F_PLUS_EXPR: */
                     /* 	case F_MINUS_EXPR: */
                     /* 	    if(EXPR_CODE(EXPR_ARG1(x)) != IDENT) */
-                    /* 		error("left expression must be identifier in align
-                     * target"); */
+                    /* 		error("left expression must be identifier in
+                     * align target"); */
                     /* 	    v = expv_cons(EXPR_CODE(x) == F_PLUS_EXPR ? */
                     /* 			  PLUS_EXPR:MINUS_EXPR, */
                     /* 			  type_INT, */
