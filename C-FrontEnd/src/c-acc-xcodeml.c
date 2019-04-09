@@ -88,6 +88,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case ACC_VECTOR:
   case ACC_VECT_LEN:
   case ACC_COLLAPSE:
+  case ACC_DEVICE_TYPE:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -199,6 +200,7 @@ char *accClauseName(int c)
   case ACC_GANG: return "GANG";
   case ACC_WORKER: return "WORKER";
   case ACC_VECTOR: return "VECTOR";
+  case ACC_DEVICE_TYPE: return "DEVICE_TYPE";
   case ACC_SEQ: return "SEQ";
   case ACC_INDEPENDENT: return "INDEPENDENT";
 

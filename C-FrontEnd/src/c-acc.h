@@ -71,6 +71,7 @@ enum ACC_pragma_clause {
     ACC_GANG,
     ACC_WORKER,
     ACC_VECTOR,
+    ACC_DEVICE_TYPE,
     ACC_SEQ,
     ACC_INDEPENDENT,
 
