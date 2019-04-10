@@ -5335,14 +5335,15 @@ static EXT_ID shallow_copy_ext_id(EXT_ID original)
 }
 
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                          \
-    (ID_TYPE((id)) != NULL &&                                                  \
+   ((ID_TYPE((id)) != NULL &&						\
      FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                       \
      ((ID_CLASS((id)) == CL_PROC && TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE( \
                                         ID_TYPE((id)))) == TYPE_GENERIC) ||    \
       (TYPE_BASIC_TYPE(ID_TYPE((id))) == TYPE_FUNCTION &&                      \
        TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id)))) != NULL &&           \
        TYPE_BASIC_TYPE(TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))) ==  \
-           TYPE_GNUMERIC_ALL)))
+           TYPE_GNUMERIC_ALL))) ||                                             \
+    (ID_TYPE((id)) != NULL && ID_CLASS((id)) == CL_PROC && FUNCTION_TYPE_IS_GENERIC(ID_TYPE((id)))))
 
 typedef struct {
     TYPE_DESC original;
