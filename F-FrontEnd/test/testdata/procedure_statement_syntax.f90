@@ -36,8 +36,9 @@
           COMPLEX :: h, a
           h = a
         END FUNCTION h
-        FUNCTION i(a)
+        FUNCTION i(a, y)
           TYPE(t) :: i, a
+          INTEGER :: y
           i%v = a%v
         END FUNCTION i
         

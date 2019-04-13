@@ -2920,7 +2920,7 @@ public class XmcXcodeToXcTranslator {
 	  ident = _getIdent(tc, XcSymbolKindEnum.VAR, arrayAddrNode);
 	  arrayObj = new XcVarObj(ident);
         }
-	else if (nodeName.equals("memberArrayRef")){
+	else if (nodeName.equals("memberArrayRef") || nodeName.equals("memberRef")){
 	  ident = _getIdentCompositeTypeMember(tc, arrayAddrNode);
 	  arrayObj = new XcRefObj.MemberRef(ident);
 	  enterNodes(tc, arrayObj, getContent(arrayAddrNode));

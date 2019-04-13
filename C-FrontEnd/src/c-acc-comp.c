@@ -81,6 +81,7 @@ compile_acc_clause(CExpr *clause, CExpr *parent)
     case ACC_NUM_WORKERS:
     case ACC_VECTOR:
     case ACC_VECT_LEN:
+    case ACC_DEVICE_TYPE:
     case ACC_COLLAPSE:
         compile1(arg, parent);
         return;

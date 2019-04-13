@@ -104,3 +104,5 @@ install: $(F_FRONT)
 clean:
 	rm -f *.o $(CREATE_FILES) $(F_FRONT)
 
+format:
+	clang-format -i *.c *.h

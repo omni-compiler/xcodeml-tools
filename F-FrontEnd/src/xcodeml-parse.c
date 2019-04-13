@@ -1,7 +1,7 @@
 #include "xcodeml.h"
 
-static char *
-sanitizeText(char *str) {
+static char *sanitizeText(char *str)
+{
     char *p = str;
 
     bool foundNonSpaces = false;
@@ -20,9 +20,8 @@ sanitizeText(char *str) {
     }
 }
 
-
-static bool
-xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
+static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr)
+{
     bool ret = false;
 
     if (ndPtr != NULL) {
@@ -30,9 +29,7 @@ xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
         xmlNode *curNode;
         XcodeMLNode *me = NULL;
 
-        for (curNode = ndPtr;
-             curNode != NULL;
-             curNode = curNode->next) {
+        for (curNode = ndPtr; curNode != NULL; curNode = curNode->next) {
 
             me = NULL;
             isComment = false;
@@ -63,10 +60,10 @@ xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
                 }
 
                 default: {
-                    fprintf(stderr, "%s: Error: unknown node type "
+                    fprintf(stderr,
+                            "%s: Error: unknown node type "
                             "%d.\n",
-                            fileName,
-                            curNode->type);
+                            fileName, curNode->type);
                     break;
                 }
             }
@@ -81,8 +78,7 @@ xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
                 break;
             }
 
-            if (curNode->children == NULL &&
-                curNode->properties == NULL) {
+            if (curNode->children == NULL && curNode->properties == NULL) {
                 goto AddMe;
             } else if (XCODEML_TYPE(me) == XcodeML_Value) {
                 fprintf(stderr, "%s: Error: a value node has child.\n",
@@ -91,29 +87,27 @@ xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
             }
 
             if (curNode->properties != NULL) {
-                if (xcParse((xmlNode *)(curNode->properties),
-                            fileName, &me) == false) {
+                if (xcParse((xmlNode *)(curNode->properties), fileName, &me) ==
+                    false) {
                     fprintf(stderr, "%s: XML error: properties error(s).\n",
                             fileName);
                     break;
                 }
             }
             if (curNode->children != NULL) {
-                if (xcParse(curNode->children,
-                            fileName, &me) == false) {
+                if (xcParse(curNode->children, fileName, &me) == false) {
                     fprintf(stderr, "%s: XML error: children error(s).\n",
                             fileName);
                     break;
                 }
             }
 
-            AddMe:
+        AddMe:
             if (*pnPtr == NULL) {
                 *pnPtr = me;
                 continue;
             }
             *pnPtr = xcodeml_AppendNode(*pnPtr, me);
-
         }
         if (curNode == NULL) {
             ret = true;
@@ -125,9 +119,8 @@ xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr) {
     return ret;
 }
 
-
-char *
-xcodeml_GetAttributeValue(XcodeMLNode *ndPtr) {
+char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr)
+{
     if (XCODEML_TYPE(ndPtr) == XcodeML_Attribute) {
         if (XCODEML_TYPE(XCODEML_ARG1(ndPtr)) == XcodeML_Value) {
             return XCODEML_VALUE(XCODEML_ARG1(ndPtr));
@@ -136,13 +129,12 @@ xcodeml_GetAttributeValue(XcodeMLNode *ndPtr) {
     return "";
 }
 
-
-char *
-xcodeml_GetElementValue(XcodeMLNode *ndPtr) {
+char *xcodeml_GetElementValue(XcodeMLNode *ndPtr)
+{
     if (XCODEML_TYPE(ndPtr) == XcodeML_Element) {
         XcodeMLNode *x1;
         XcodeMLList *lp;
-        FOR_ITEMS_IN_XCODEML_LIST(lp, ndPtr) {
+        FOR_ITEMS_IN_XCODEML_LIST (lp, ndPtr) {
             x1 = XCODEML_LIST_NODE(lp);
             if (XCODEML_TYPE(x1) == XcodeML_Value) {
                 return XCODEML_VALUE(x1);
@@ -154,8 +146,8 @@ xcodeml_GetElementValue(XcodeMLNode *ndPtr) {
 
 #include "F-front.h"
 
-XcodeMLNode *
-xcodeml_ParseFile(const char *fileName) {
+XcodeMLNode *xcodeml_ParseFile(const char *fileName)
+{
 
     char buff[MAX_PATH_LEN];
     xmlDocPtr doc;
@@ -168,44 +160,48 @@ xcodeml_ParseFile(const char *fileName) {
     xmlNode *rootNode = NULL;
     bool succeeded = false;
 
-    doc = xmlReadFile(fileName, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
+    doc =
+        xmlReadFile(fileName, NULL,
+                    XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
 
-    if (!doc){
+    if (!doc) {
 
-      if (modincludeDirv){
+        if (modincludeDirv) {
 
-	strcpy(buff, modincludeDirv);
-	strcat(buff, "/");
-	strcat(buff, fileName);
+            strcpy(buff, modincludeDirv);
+            strcat(buff, "/");
+            strcat(buff, fileName);
 
-	doc = xmlReadFile(buff, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
-      }
-	
+            doc = xmlReadFile(buff, NULL,
+                              XML_PARSE_NOBLANKS | XML_PARSE_NONET |
+                                  XML_PARSE_NOWARNING);
+        }
     }
 
-    if (!doc){
+    if (!doc) {
 
-      for (i = 0; i < includeDirvI; i++) {
+        for (i = 0; i < includeDirvI; i++) {
 
-	strcpy(buff, includeDirv[i]);
-	strcat(buff, "/");
-	strcat(buff, fileName);
+            strcpy(buff, includeDirv[i]);
+            strcat(buff, "/");
+            strcat(buff, fileName);
 
-	doc = xmlReadFile(buff, NULL, XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
-	if (doc) break;
-	
-      }
+            doc = xmlReadFile(buff, NULL,
+                              XML_PARSE_NOBLANKS | XML_PARSE_NONET |
+                                  XML_PARSE_NOWARNING);
+            if (doc)
+                break;
+        }
     }
 
     if (doc == NULL) {
-      fprintf(stderr, "Can't parse \"%s\".\n", fileName);
-      goto Done;
+        fprintf(stderr, "Can't parse \"%s\".\n", fileName);
+        goto Done;
     }
 
     rootNode = xmlDocGetRootElement(doc);
     if (rootNode == NULL) {
-        fprintf(stderr, "Can't get a root node of \"%s\".\n",
-                doc->name);
+        fprintf(stderr, "Can't get a root node of \"%s\".\n", doc->name);
         goto Done;
     }
 
@@ -214,7 +210,7 @@ xcodeml_ParseFile(const char *fileName) {
         ret = NULL;
     }
 
-    Done:
+Done:
     if (doc != NULL) {
         (void)xmlFreeDoc(doc);
     }
@@ -222,9 +218,8 @@ xcodeml_ParseFile(const char *fileName) {
     return ret;
 }
 
-
-static void
-lvlFprintf(int lvl, FILE *fd, const char *fmt, ...) {
+static void lvlFprintf(int lvl, FILE *fd, const char *fmt, ...)
+{
     va_list args;
     va_start(args, fmt);
 
@@ -238,9 +233,8 @@ lvlFprintf(int lvl, FILE *fd, const char *fmt, ...) {
     va_end(args);
 }
 
-
-void
-xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl) {
+void xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl)
+{
     lvlFprintf(lvl, fd, "(");
 
     switch (XCODEML_TYPE(ndPtr)) {
@@ -255,14 +249,12 @@ xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl) {
             XcodeMLList *lp;
 
             if (strlen(v) > 0) {
-                fprintf(fd, "TAG (\"%s\" \"%s\")",
-                        XCODEML_NAME(ndPtr), v);
+                fprintf(fd, "TAG (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
             } else {
-                fprintf(fd, "TAG (\"%s\")", 
-                        XCODEML_NAME(ndPtr));
+                fprintf(fd, "TAG (\"%s\")", XCODEML_NAME(ndPtr));
             }
 
-            FOR_ITEMS_IN_XCODEML_LIST(lp, ndPtr) {
+            FOR_ITEMS_IN_XCODEML_LIST (lp, ndPtr) {
                 x1 = XCODEML_LIST_NODE(lp);
                 if (XCODEML_TYPE(x1) != XcodeML_Value) {
                     fprintf(fd, "\n");
@@ -277,11 +269,9 @@ xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl) {
         case XcodeML_Attribute: {
             char *v = xcodeml_GetAttributeValue(ndPtr);
             if (strlen(v) > 0) {
-                fprintf(fd, "PROP (\"%s\" \"%s\")",
-                        XCODEML_NAME(ndPtr), v);
+                fprintf(fd, "PROP (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
             } else {
-                fprintf(fd, "PROP (\"%s\")",
-                        XCODEML_NAME(ndPtr));
+                fprintf(fd, "PROP (\"%s\")", XCODEML_NAME(ndPtr));
             }
             fprintf(fd, ")");
             break;

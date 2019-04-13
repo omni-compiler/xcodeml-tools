@@ -4,34 +4,29 @@
 
 #include "F-front.h"
 
-#define IOTYPE_SEQUENTIAL       0
-#define IOTYPE_DIRECT           1
-#define IOTYPE_UNITONLY         2
-#define IOTYPE_INTERNAL         3
-#define IOTYPE_NAMELIST         4
+#define IOTYPE_SEQUENTIAL 0
+#define IOTYPE_DIRECT 1
+#define IOTYPE_UNITONLY 2
+#define IOTYPE_INTERNAL 3
+#define IOTYPE_NAMELIST 4
 
 static char fmtVBuf[1024];
 
-
-#define COND_ERR        0
-#define COND_END        1
+#define COND_ERR 0
+#define COND_END 1
 
 extern int order_sequence;
 
-static char *
-StatusLineToFormatVariableName(n)
-     int n;
+static char *StatusLineToFormatVariableName(n) int n;
 {
     sprintf(fmtVBuf, "Fmt_%06d", n);
     return strdup(fmtVBuf);
 }
 
-static char *
-FormatVariableNameToStatusLineStr(name)
-     char *name;
+static char *FormatVariableNameToStatusLineStr(name) char *name;
 {
     char *s = strstr(name, "Fmt_");
-    
+
     if (s == NULL) {
         return name;
     } else {
@@ -43,10 +38,9 @@ FormatVariableNameToStatusLineStr(name)
     }
 }
 
-static SYMBOL nml = (struct symbol []){{NULL, "nml", 0, 0}};
+static SYMBOL nml = (struct symbol[]){{NULL, "nml", 0, 0}};
 
-static expv
-compile_io_arguments(enum expr_code code, expr args)
+static expv compile_io_arguments(enum expr_code code, expr args)
 {
     list lp;
     expr arg;
@@ -59,16 +53,16 @@ compile_io_arguments(enum expr_code code, expr args)
         return vargs;
     }
 
-    FOR_ITEMS_IN_LIST(lp, args) {
+    FOR_ITEMS_IN_LIST (lp, args) {
         arg = LIST_ITEM(lp);
 
-        if(arg == NULL) {
+        if (arg == NULL) {
             varg = NULL;
-        } else if(EXPR_CODE(arg) != F_SET_EXPR) {
+        } else if (EXPR_CODE(arg) != F_SET_EXPR) {
             /* Don't check type of arguments. */
             varg = expv_reduce(compile_expression(arg), FALSE);
             ID id = find_ident(EXPR_SYM(varg));
-            if(id != NULL && ID_CLASS(id) == CL_NAMELIST) {
+            if (id != NULL && ID_CLASS(id) == CL_NAMELIST) {
                 varg = list2(F_SET_EXPR, make_enode(IDENT, nml), varg);
             }
         } else {
@@ -81,13 +75,13 @@ compile_io_arguments(enum expr_code code, expr args)
             if (rval && (EXPR_CODE(rval) == IDENT)) {
                 vval = rval;
 
-            } else if(rval == NULL) {
+            } else if (rval == NULL) {
                 vval = NULL;
 
             } else {
                 vval = expv_reduce(compile_expression(rval), FALSE);
 
-                if(vval == NULL) {
+                if (vval == NULL) {
                     return NULL;
                 }
             }
@@ -96,10 +90,11 @@ compile_io_arguments(enum expr_code code, expr args)
                 unit_arg = vval;
 
             } else if (strcmp("iostat", SYM_NAME(EXPR_SYM(vkey))) == 0 ||
-                       strcmp("size",   SYM_NAME(EXPR_SYM(vkey))) == 0 ||
-                       strcmp("iomsg",  SYM_NAME(EXPR_SYM(vkey))) == 0) {
+                       strcmp("size", SYM_NAME(EXPR_SYM(vkey))) == 0 ||
+                       strcmp("iomsg", SYM_NAME(EXPR_SYM(vkey))) == 0) {
                 if (vval && EXPV_TYPE(vval) &&
-                    TYPE_IS_PROTECTED(EXPV_TYPE(vval)) && TYPE_IS_READONLY(EXPV_TYPE(vval))) {
+                    TYPE_IS_PROTECTED(EXPV_TYPE(vval)) &&
+                    TYPE_IS_READONLY(EXPV_TYPE(vval))) {
                     error("an argument is PROTECTED");
                 }
             }
@@ -107,7 +102,8 @@ compile_io_arguments(enum expr_code code, expr args)
             if (code == F_OPEN_STATEMENT) {
                 if (strcmp("newopen", SYM_NAME(EXPR_SYM(vkey))) == 0) {
                     if (vval && EXPV_TYPE(vval) &&
-                        TYPE_IS_PROTECTED(EXPV_TYPE(vval)) && TYPE_IS_READONLY(EXPV_TYPE(vval))) {
+                        TYPE_IS_PROTECTED(EXPV_TYPE(vval)) &&
+                        TYPE_IS_READONLY(EXPV_TYPE(vval))) {
                         error("an argument is PROTECTED");
                     }
                 }
@@ -115,10 +111,11 @@ compile_io_arguments(enum expr_code code, expr args)
 
             if (code == F_INQUIRE_STATEMENT) {
                 if (strcmp("file", SYM_NAME(EXPR_SYM(vkey))) != 0 &&
-                    strcmp("id",   SYM_NAME(EXPR_SYM(vkey))) != 0 &&
+                    strcmp("id", SYM_NAME(EXPR_SYM(vkey))) != 0 &&
                     strcmp("unit", SYM_NAME(EXPR_SYM(vkey))) != 0) {
                     if (vval && EXPV_TYPE(vval) &&
-                        TYPE_IS_PROTECTED(EXPV_TYPE(vval)) && TYPE_IS_READONLY(EXPV_TYPE(vval))) {
+                        TYPE_IS_PROTECTED(EXPV_TYPE(vval)) &&
+                        TYPE_IS_READONLY(EXPV_TYPE(vval))) {
                         error("an argument is PROTECTED");
                     }
                 }
@@ -131,9 +128,8 @@ compile_io_arguments(enum expr_code code, expr args)
     }
 
     if (unit_arg == NULL) {
-        FOR_ITEMS_IN_LIST(lp, vargs) {
-            if (LIST_ITEM(lp) &&
-                EXPR_CODE(LIST_ITEM(lp)) != F_SET_EXPR) {
+        FOR_ITEMS_IN_LIST (lp, vargs) {
+            if (LIST_ITEM(lp) && EXPR_CODE(LIST_ITEM(lp)) != F_SET_EXPR) {
                 unit_arg = LIST_ITEM(lp);
                 break;
             }
@@ -144,7 +140,8 @@ compile_io_arguments(enum expr_code code, expr args)
         ID id = find_ident(EXPR_SYM(unit_arg));
         if (id != NULL) {
             if (code == F_WRITE_STATEMENT) {
-                if (TYPE_IS_PROTECTED(ID_TYPE(id)) && TYPE_IS_READONLY(ID_TYPE(id))) {
+                if (TYPE_IS_PROTECTED(ID_TYPE(id)) &&
+                    TYPE_IS_READONLY(ID_TYPE(id))) {
                     error("an argument is PROTECTED");
                 }
             }
@@ -154,17 +151,13 @@ compile_io_arguments(enum expr_code code, expr args)
     return vargs;
 }
 
-
-void
-compile_FORMAT_decl(st_no, x)
-     int st_no;
-     expr x;
+void compile_FORMAT_decl(st_no, x) int st_no;
+expr x;
 {
     ID fId;
     SYMBOL sym = NULL;
 
-    if (CURRENT_PROC_CLASS == CL_MODULE ||
-        CURRENT_PROC_CLASS == CL_SUBMODULE) {
+    if (CURRENT_PROC_CLASS == CL_MODULE || CURRENT_PROC_CLASS == CL_SUBMODULE) {
         error("misplaced format statement");
         return;
     }
@@ -178,15 +171,15 @@ compile_FORMAT_decl(st_no, x)
          */
         fId = declare_ident(sym, CL_FORMAT);
     } else if (ID_CLASS(fId) != CL_FORMAT) {
-        fatal("compile_FORMAT_decl: format type label is declared as other type??");
+        fatal("compile_FORMAT_decl: format type label is declared as other "
+              "type??");
     }
 
     if (FORMAT_STR(fId) == NULL) {
         switch (EXPR_CODE(EXPR_ARG1(x))) {
             case STRING_CONSTANT: {
                 int len = strlen(EXPR_STR(EXPR_ARG1(x)));
-                FORMAT_STR(fId) = expv_str_term(STRING_CONSTANT,
-                                                type_char(len),
+                FORMAT_STR(fId) = expv_str_term(STRING_CONSTANT, type_char(len),
                                                 strdup(EXPR_STR(EXPR_ARG1(x))));
                 break;
             }
@@ -196,17 +189,15 @@ compile_FORMAT_decl(st_no, x)
             }
         }
     }
-    output_statement(list1(F_FORMAT_DECL,FORMAT_STR(fId)));
+    output_statement(list1(F_FORMAT_DECL, FORMAT_STR(fId)));
     return;
 }
 
-
-void
-FinalizeFormat()
+void FinalizeFormat()
 {
     ID id;
 
-    FOREACH_ID(id, LOCAL_SYMBOLS) {
+    FOREACH_ID (id, LOCAL_SYMBOLS) {
         if (ID_CLASS(id) == CL_FORMAT) {
             if (FORMAT_STR(id) == NULL) {
                 error("missing statement number %s (format).",
@@ -216,9 +207,7 @@ FinalizeFormat()
     }
 }
 
-void
-compile_IO_statement(x)
-     expr x;
+void compile_IO_statement(x) expr x;
 {
     list lp;
     expv v = NULL, x2;
@@ -231,7 +220,7 @@ compile_IO_statement(x)
     }
 
     expv v2 = list0(LIST);
-    FOR_ITEMS_IN_LIST(lp,EXPR_ARG2(x)){
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(x)) {
         x2 = LIST_ITEM(lp);
         if (x2 == NULL)
             list_put_last(v2, NULL);
@@ -240,7 +229,7 @@ compile_IO_statement(x)
     }
 
     if (EXPR_CODE(x) == F_READ_STATEMENT) {
-        FOR_ITEMS_IN_LIST(lp, v2) {
+        FOR_ITEMS_IN_LIST (lp, v2) {
             if (TYPE_IS_PROTECTED(EXPV_TYPE(LIST_ITEM(lp)))) {
                 error("an input item is PROTECTED");
                 break;
@@ -270,10 +259,7 @@ compile_IO_statement(x)
     return;
 }
 
-
-void
-compile_OPEN_statement(x)
-     expr x;
+void compile_OPEN_statement(x) expr x;
 {
     expr v, callArgs;
 
@@ -287,10 +273,7 @@ compile_OPEN_statement(x)
     return;
 }
 
-
-void
-compile_CLOSE_statement(x)
-     expr x;
+void compile_CLOSE_statement(x) expr x;
 {
     expr v, callArgs;
 
@@ -304,18 +287,15 @@ compile_CLOSE_statement(x)
     return;
 }
 
-#define GEN_NODE(TYPE, VALUE) \
-  make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
-
-
+#define GEN_NODE(TYPE, VALUE)                                                  \
+    make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 
 /*
  * BACKSPACE
  * ENDFILE
  * REWIND
  */
-void
-compile_FPOS_statement(expr x)
+void compile_FPOS_statement(expr x)
 {
     expr v = NULL, callArgs;
 
@@ -349,10 +329,7 @@ compile_FPOS_statement(expr x)
     return;
 }
 
-
-void
-compile_INQUIRE_statement(x)
-     expr x;
+void compile_INQUIRE_statement(x) expr x;
 {
     list lp;
     expv v, callArgs;
@@ -365,12 +342,13 @@ compile_INQUIRE_statement(x)
     callArgs = compile_io_arguments(EXPR_CODE(x), EXPR_ARG1(x));
 
     outputList = list0(LIST);
-    FOR_ITEMS_IN_LIST(lp,EXPR_ARG2(x)){
+    FOR_ITEMS_IN_LIST (lp, EXPR_ARG2(x)) {
         expv x2 = LIST_ITEM(lp);
         if (x2 == NULL)
             list_put_last(outputList, NULL);
         else
-            list_put_last(outputList, expv_reduce(compile_expression(x2), FALSE));
+            list_put_last(outputList,
+                          expv_reduce(compile_expression(x2), FALSE));
     }
 
     v = expv_cons(F_INQUIRE_STATEMENT, NULL, callArgs, outputList);
@@ -378,10 +356,7 @@ compile_INQUIRE_statement(x)
     return;
 }
 
-
-void
-compile_NAMELIST_decl(x)
-     expr x;
+void compile_NAMELIST_decl(x) expr x;
 {
     ID nlId;
     list lp, lq;
@@ -390,7 +365,7 @@ compile_NAMELIST_decl(x)
     expr idList;
     expr nlVX;
 
-    FOR_ITEMS_IN_LIST(lp, x) {
+    FOR_ITEMS_IN_LIST (lp, x) {
         nlName = EXPR_ARG1(LIST_ITEM(lp));
         idList = EXPR_ARG2(LIST_ITEM(lp));
 
@@ -416,7 +391,7 @@ compile_NAMELIST_decl(x)
             }
         }
 
-        FOR_ITEMS_IN_LIST(lq, idList) {
+        FOR_ITEMS_IN_LIST (lq, idList) {
             nlVX = LIST_ITEM(lq);
             if (EXPR_CODE(nlVX) != IDENT) {
                 error("invalid type in namelist.");
@@ -427,9 +402,7 @@ compile_NAMELIST_decl(x)
     }
 }
 
-
-void
-compile_WAIT_statement(expr x)
+void compile_WAIT_statement(expr x)
 {
     expr v, callArgs;
 
@@ -443,8 +416,7 @@ compile_WAIT_statement(expr x)
     return;
 }
 
-void
-compile_FLUSH_statement(expr x)
+void compile_FLUSH_statement(expr x)
 {
     expv v, callArgs;
 

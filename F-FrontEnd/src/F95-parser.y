@@ -988,7 +988,7 @@ prefix_spec:
         { $$ = list0(F95_ELEMENTAL_SPEC); }
         | MODULE
         { $$ = list0(F08_MODULE_SPEC); }
-        | type_spec
+        | type_spec 
         ;
 
 name:  IDENTIFIER;
@@ -1352,11 +1352,9 @@ type_spec1:
         | KW_DOUBLE
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_REAL),
                             GEN_NODE(INT_CONSTANT, 8)); }
-        //                    gen_default_real_kind()); }
         | KW_DCOMPLEX
         { $$ = list2 (LIST, GEN_NODE(F_TYPE_NODE, TYPE_COMPLEX),
                             GEN_NODE(INT_CONSTANT, 8)); }
-        //                    gen_default_real_kind()); }
         ;
 
 /*
@@ -2829,13 +2827,18 @@ xmp_align_clause:
 	  | '(' xmp_subscript_list ')' xmp_WITH
   	    IDENTIFIER '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list4(LIST,$10,$2,$5,$7); }
-	  ;
+          | IDENTIFIER '%' IDENTIFIER '(' xmp_subscript_list ')' xmp_WITH
+              IDENTIFIER '(' xmp_subscript_list ')'
+	  { $$ = list4(LIST,list1(LIST,list2(LIST,$1,$3)),$5,$8,$10); }
+         ;
 
 xmp_shadow_clause:
 	    IDENTIFIER '(' xmp_subscript_list ')'
 	    { $$ = list2(LIST,list1(LIST,$1),$3); }
 	  |  '(' xmp_subscript_list ')' COL2 xmp_name_list
             { $$ = list2(LIST,$5,$2); }
+          | IDENTIFIER '%' IDENTIFIER '(' xmp_subscript_list ')'
+	    { $$ = list2(LIST,list1(LIST,list2(LIST,$1,$3)),$5); }
           ;
 
 xmp_template_fix_clause:

@@ -1,4 +1,4 @@
-/* 
+/*
  * $TSUKUBA_Release: Omni OpenMP Compiler 3 $
  * $TSUKUBA_Copyright:
  *  PLEASE DESCRIBE LICENSE AGREEMENT HERE
@@ -24,12 +24,12 @@ extern int output_module_file(struct module *, const char *);
 
 #define CEXPR_OPTVAL_CHARLEN 128
 
-#define C_SYM_NAME(X)  (SYM_NAME(X))
+#define C_SYM_NAME(X) (SYM_NAME(X))
 
 #define F_FRONTEND_NAME "XcodeML/Fortran-FrontEnd"
-#define F_TARGET_LANG   "Fortran"
-#define F_FRONTEND_VER  "1.0"
-#define F_MODULE_VER  "1.0"
+#define F_TARGET_LANG "Fortran"
+#define F_FRONTEND_VER "1.0"
+#define F_MODULE_VER "1.0"
 
 extern char s_timestamp[];
 extern char s_xmlIndent[];

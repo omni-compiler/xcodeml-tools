@@ -38,22 +38,25 @@ public class XmOption
     /** if debug output is enabled */
     private static boolean _debugOutput = false;
 
+    /** ensure left to right evaluation of mathematical expression **/
+    private static boolean _addPar = false;
+
     /** target language ID */
     private static XmLanguage _language = XmLanguage.C;
 
     /** Name of tht main function */
     private static String _mainName = "";
-    
+
     /** if transforming Fortran IO statement as atomic operation */
     private static boolean _isAtomicIO = false;
 
     /** backend compiler vendor */
     private static int _compilerVendor = COMP_VENDOR_GNU;
-    
+
     /** if supressing generation of USE statement for coarray runtime
      *  (TEMPORARY)
      */
-    private static boolean _coarrayUseStatement = false;  
+    private static boolean _coarrayUseStatement = false;
     private static ArrayList<String> _coarrayEntryNames = new ArrayList<>();
 
     private XmOption()
@@ -183,7 +186,7 @@ public class XmOption
     {
         return _Fonesided;
     }
-  
+
     /**
      * Checks does compiler use tlog for MPI.
      */
@@ -231,7 +234,7 @@ public class XmOption
     {
         return _openMPonlyTarget;
     }
-    
+
     /**
      * Sets compiler to or not to translate coarrays
      *
@@ -295,7 +298,7 @@ public class XmOption
     {
         _language = lang;
     }
-    
+
     /**
      * Get language
      */
@@ -311,7 +314,7 @@ public class XmOption
     {
         _mainName = main_name;
     }
-    
+
     /**
      * Get name of the main function
      */
@@ -319,7 +322,7 @@ public class XmOption
     {
         return _mainName;
     }
-    
+
     /**
      * Return if the language is C
      */
@@ -379,6 +382,27 @@ public class XmOption
     public static boolean coarrayUseStatement()
     {
         return _coarrayUseStatement;
+    }
+
+    /**
+     * Sets compiler to ensure left to right evaluation of mathematical
+     * expression.
+     *
+     * @param enable true then compiler add parenthesis to ensure evaluation.
+     */
+    public static void setAddPar(boolean enable)
+    {
+        _addPar = enable;
+    }
+
+    /**
+     * Checks if the add parenthesis options is enabled.
+     *
+     * @return true if add parenthesis option is enabled.
+     */
+    public static boolean isAddParEnabled()
+    {
+        return _addPar;
     }
 
 }
