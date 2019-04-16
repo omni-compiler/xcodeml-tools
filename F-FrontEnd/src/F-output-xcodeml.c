@@ -748,6 +748,7 @@ static const char *getRawString(expv v)
         case F_VAR:
         case F_PARAM:
         case F_FUNC:
+        case F95_USER_DEFINED:
             snprintf(buf, CHAR_BUF_SIZE, "%s",
                      getXmlEscapedStr(SYM_NAME(EXPV_NAME(v))));
             break;
@@ -3650,7 +3651,7 @@ static void outx_useRenamable(int l, int expr_code, expv local, expv use)
 
     outx_printi(l, "<renamable");
 
-    if (expr_code == F95_GENERIC_SPEC) {
+    if (expr_code == F95_GENERIC_SPEC || expr_code == F95_USER_DEFINED) {
         outx_true(TRUE, "is_operator");
     }
 
