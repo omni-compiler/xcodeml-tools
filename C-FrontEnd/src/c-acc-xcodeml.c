@@ -37,6 +37,9 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
 
     switch(pragma_code){
     case ACC_WAIT:
+    case ACC_SYNC:
+    case ACC_FLUSH:
+    case ACC_YIELD:
     outxChildren(fp,indent1,(CExpr *)clauseList);
     goto end;
     case ACC_CACHE:
@@ -184,6 +187,9 @@ char *accDirectiveName(int c)
   case ACC_EXIT_DATA: return "EXIT_DATA";
   case ACC_ATOMIC: return "ATOMIC";
   case ACC_ROUTINE: return "ROUTINE";
+  case ACC_SYNC: return "SYNC";
+  case ACC_FLUSH: return "FLUSH";
+  case ACC_YIELD: return "YIELD";
   default: return "??ACC??";
   }
 }

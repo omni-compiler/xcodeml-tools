@@ -247,6 +247,41 @@ int parse_ACC_pragma()
       goto chk_end;
     }
 
+    // for PEZY
+    if(PG_IS_IDENT("sync")){
+        pg_ACC_pragma = ACC_SYNC;
+        pg_get_token();
+        if(pg_tok == '('){
+            CExpr *x;
+            if((x = parse_ACC_clause_arg()) == NULL)
+                goto syntax_err;
+            pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
+        } else pg_ACC_list = NULL;
+        ret= PRAGMA_EXEC;
+        goto chk_end;
+    }
+
+    if(PG_IS_IDENT("flush")){
+        pg_ACC_pragma = ACC_FLUSH;
+        pg_get_token();
+        if(pg_tok == '('){
+            CExpr *x;
+            if((x = parse_ACC_clause_arg()) == NULL)
+                goto syntax_err;
+            pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
+        } else pg_ACC_list = NULL;
+        ret= PRAGMA_EXEC;
+        goto chk_end;
+    }
+
+    if(PG_IS_IDENT("yield") || PG_IS_IDENT("chgthread")){
+        pg_ACC_pragma = ACC_YIELD;
+        pg_get_token();
+        pg_ACC_list = NULL;
+        ret= PRAGMA_EXEC;
+        goto chk_end;
+    }
+
     addError(NULL,"ACC: unknown ACC directive, '%s'",pg_tok_buf);
   syntax_err:
     return 0;

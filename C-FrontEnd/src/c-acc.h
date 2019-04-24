@@ -26,6 +26,9 @@ enum ACC_pragma {
     ACC_ATOMIC          = 213, 
     ACC_ROUTINE         = 214,
 
+    ACC_SYNC            = 290,
+    ACC_FLUSH           = 291,
+    ACC_YIELD           = 292,
     ACC_DIR_END
 };
 
