@@ -39,7 +39,18 @@ public final class XmStringUtil
      */
     public static int getAsCInt(String str)
     {
-        return (int)getAsCLong(str, Radix.ALL);
+        return (int)getAsCLong(str, Radix.ALL, false);
+    }
+
+    /**
+     * Gets unsigned integer from string represents decimal/hex number.
+     *
+     * @param str represents decimal/hex number.
+     * @return integer repereseted by the string
+     */
+    public static int getAsCUnsignedInt(String str)
+    {
+        return (int)getAsCLong(str, Radix.ALL, true);
     }
 
     /**
@@ -50,9 +61,31 @@ public final class XmStringUtil
      */
     public static long getAsCLong(String str)
     {
-        return getAsCLong(str, Radix.ALL);
+        return getAsCLong(str, Radix.ALL, false);
+    }
+
+    /**
+     * Gets long integer from string represents some radix number.
+     *
+     * @param str represents decimal/hex number.
+     * @return long integer repereseted by the string.
+     */
+    public static long getAsCLong(String str, Radix radix)
+    {
+        return getAsCLong(str, radix, false);
     }
     
+    /**
+     * Gets unsigned long integer from string represents some radix number.
+     *
+     * @param str represents decimal/hex number.
+     * @return long integer repereseted by the string.
+     */
+    public static long getAsCUnsignedLong(String str)
+    {
+        return getAsCLong(str, Radix.ALL, true);
+    }
+
     /**
      * Gets long integer from string represents some radix number.
      *
@@ -60,7 +93,7 @@ public final class XmStringUtil
      * @param radix indicates a number base.
      * @return long integer repereseted by the string.
      */
-    public static long getAsCLong(String str, Radix radix)
+    public static long getAsCLong(String str, Radix radix, boolean isUnsigned)
     {
         str = trim(str);
         if(str == null)
@@ -73,7 +106,8 @@ public final class XmStringUtil
                     break;
                 
                 try {
-                    return Long.parseLong(str.substring(2, str.length()), 16);
+                    if (!isUnsigned) return Long.parseLong(str.substring(2, str.length()), 16);
+		    else return Long.parseUnsignedLong(str.substring(2, str.length()), 16);
                 } catch(Exception e) {
                     break;
                 }
@@ -82,7 +116,8 @@ public final class XmStringUtil
             
             if(radix == Radix.ALL || radix == Radix.DEC) {
                 try {
-                    return Long.parseLong(str);
+                    if (!isUnsigned) return Long.parseLong(str);
+		    else return Long.parseUnsignedLong(str);
                 } catch(Exception e) {
                     break;
                 }
