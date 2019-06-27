@@ -3088,7 +3088,7 @@ copy_body:
                 break;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   DIR_SENTINEL) == 0) {
-                // no continutation line for pgi
+                // no continutation line for dir
                 break;
             } else {
                 if (st_PRAGMA_flag) {
