@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 #include <sys/param.h>
 #include <ctype.h>
 #include <string.h>
@@ -54,12 +55,19 @@ static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
 
+static int parse_OMP_target_pragma(void);
+static int parse_OMP_teams_pragma(void);
+static int parse_OMP_distribute_pragma(void);
+static int parse_OMP_parallel_for_SIMD_pragma(void);
+
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
+
 #define OMP_DATA_MAP_TO    0
 #define OMP_DATA_MAP_LINK  1
 #define OMP_DATA_MAP_ALLOC 2
 #define OMP_CLAUSE_DEVICE  0
 #define OMP_CLAUSE_SHADOW  1
+
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
   CExprOfList *lp;
@@ -101,6 +109,7 @@ lexParsePragmaOMP(char *p, int *token) // p is buffer
 int parse_OMP_pragma()
 {
   int ret = PRAGMA_PREFIX; /* default */
+  pg_OMP_pragma = OMP_NONE;
   pg_OMP_list = NULL;
 
   pg_get_token();
@@ -113,6 +122,14 @@ int parse_OMP_pragma()
       if(PG_IS_IDENT("for")){	/* parallel for */
 	pg_OMP_pragma = OMP_PARALLEL_FOR;
 	pg_get_token();
+        if(pg_tok == PG_IDENT){
+          if(PG_IS_IDENT("simd")){  /* parallel for simd */
+            pg_OMP_pragma = OMP_PARALLEL_LOOP_SIMD;
+            pg_get_token();
+            if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+            goto chk_end;
+          }
+        }
 	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
 	goto chk_end;
       }
@@ -131,6 +148,14 @@ int parse_OMP_pragma()
   if(PG_IS_IDENT("for")){
     pg_OMP_pragma = OMP_FOR;
     pg_get_token();
+    if(pg_tok == PG_IDENT){
+        if(PG_IS_IDENT("simd")){  /* for simd */
+          pg_OMP_pragma = OMP_LOOP_SIMD;
+          pg_get_token();
+          if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+          goto chk_end;
+        }
+    }
     if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
     goto chk_end;
   }
@@ -209,10 +234,10 @@ int parse_OMP_pragma()
       goto chk_end;
   }
 
-  if(PG_IS_IDENT("declare")){
+  if(PG_IS_IDENT("declare")){ /* declare */
     pg_get_token();
     if(pg_tok == PG_IDENT){
-      if(PG_IS_IDENT("target")){
+        if(PG_IS_IDENT("target")){  /* declare target */
 	pg_OMP_pragma = OMP_DECLARE_TARGET;
 	pg_get_token();
 	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
@@ -221,69 +246,287 @@ int parse_OMP_pragma()
       }
     }
   }
-  
-  if(PG_IS_IDENT("target")){
-    pg_OMP_pragma = OMP_TARGET;
+
+  if(PG_IS_IDENT("simd")){
+    pg_OMP_pragma = OMP_SIMD;
     pg_get_token();
-    if(pg_tok == PG_IDENT){
-      if(PG_IS_IDENT("enter")){
-	pg_get_token();
-	if(pg_tok == PG_IDENT){
-          if(PG_IS_IDENT("data")){
-	    pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
-	    pg_get_token();
-	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	    ret = PRAGMA_EXEC;
-            goto chk_end;
-	  }
-	}
-      }
-      else if(PG_IS_IDENT("teams")){
-	pg_OMP_pragma = OMP_TEAMS;
-	pg_get_token();
-	if(pg_tok == PG_IDENT){
-	  if(PG_IS_IDENT("distribute")){
-	    pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE;
-	    pg_get_token();
-	    if(pg_tok == PG_IDENT){
-	      if(PG_IS_IDENT("parallel")){
-		pg_get_token();
-		if(pg_tok == PG_IDENT){
-		  if(PG_IS_IDENT("for")){
-		    pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP;
-		    pg_get_token();
-		    if(pg_tok == PG_IDENT){
-		      if(PG_IS_IDENT("simd")){
-			pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD;
-			pg_get_token();
-			if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-			goto chk_end;
-		      }
-		    }
-		    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-		    goto chk_end;
-		  }
-		}
-	      }
-	    }
-	    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	    goto chk_end;
-	  }
-	}
-	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	goto chk_end;
-      }
-    }
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
     goto chk_end;
   }
-    
-  addError(NULL,"OMP:unknown OMP directive, '%s'",pg_tok_buf);
+
+  if(PG_IS_IDENT("task")){
+    pg_OMP_pragma = OMP_TASK;
+    pg_get_token();
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
+  }
+
+  if(PG_IS_IDENT("target")){  /* target */
+    pg_get_token();
+    if(pg_tok == PG_IDENT){
+      if((ret = parse_OMP_target_pragma()) == 0) goto syntax_err;
+      goto chk_end;
+    }
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
+  }
+
+  if(PG_IS_IDENT("teams")){  /* teams */
+    pg_get_token();
+    if(pg_tok == PG_IDENT){
+      if((ret = parse_OMP_teams_pragma()) == 0) goto syntax_err;
+      goto chk_end;
+    }
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
+  }
+
+  if(PG_IS_IDENT("distribute")){  /* distribute */
+    if((ret = parse_OMP_distribute_pragma()) == 0) goto syntax_err;
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
+  }
+  
+  if(PG_IS_IDENT("taskloop")){
+    pg_OMP_pragma = OMP_TASKLOOP;
+    pg_get_token();
+    if(pg_tok == PG_IDENT){
+        if(PG_IS_IDENT("simd")){  /* taskloop simd */
+          pg_OMP_pragma = OMP_TASKLOOP_SIMD;
+          pg_get_token();
+          if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+          goto chk_end;
+        }
+    }
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    goto chk_end;
+  }
+
+  if(PG_IS_IDENT("taskwait")){
+    pg_OMP_pragma = OMP_TASKWAIT;
+    pg_get_token();
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    ret = PRAGMA_EXEC;
+    goto chk_end;
+  }
+
+  if(PG_IS_IDENT("taskgroup")){
+    pg_OMP_pragma = OMP_TASKGROUP;
+    pg_get_token();
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    ret = PRAGMA_EXEC;
+    goto chk_end;
+  }
+
+  if(PG_IS_IDENT("taskyield")){
+    pg_OMP_pragma = OMP_TASKYIELD;
+    pg_get_token();
+    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    ret = PRAGMA_EXEC;
+    goto chk_end;
+  }
+
+  addError(NULL,"OMP: unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
     return 0;
 
  chk_end:
     if(pg_tok != 0) addError(NULL,"OMP:extra arguments for OMP directive");
     return ret;
+}
+
+int parse_OMP_target_pragma()
+{
+  if(PG_IS_IDENT("data")){ /* target data */
+    pg_OMP_pragma = OMP_TARGET_DATA;
+    pg_get_token();
+    goto chk_end;
+  }
+  else if(PG_IS_IDENT("enter")){ 
+    pg_get_token();
+    if(pg_tok == PG_IDENT && PG_IS_IDENT("data")){  /* target enter data */
+      pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
+      pg_get_token();
+      goto chk_end;
+    }
+    goto syntax_err;
+  }
+  else if(PG_IS_IDENT("exit")){ 
+    pg_get_token();
+    if(pg_tok == PG_IDENT && PG_IS_IDENT("data")){ /* target exit data */
+        pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
+        pg_get_token();
+        goto chk_end;
+    }
+    goto syntax_err;
+  }
+  else if(PG_IS_IDENT("update")){ 
+    pg_OMP_pragma = OMP_TARGET_UPDATE;
+    pg_get_token();
+    goto chk_end;
+  }
+
+  if(parse_OMP_teams_pragma() == 0) goto syntax_err;
+
+ switch(pg_OMP_pragma){
+ case OMP_TEAMS:
+   pg_OMP_pragma = OMP_TARGET_TEAMS;
+    break;
+ case OMP_TEAMS_DISTRIBUTE:
+   pg_OMP_pragma = OMP_TARGET_TEAMS_DISTRIBUTE;
+    break;
+ case OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP:
+    pg_OMP_pragma = OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP;
+    break;
+  case OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD:
+    pg_OMP_pragma = OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD;
+    break;
+  case OMP_TEAMS_DISTRIBUTE_SIMD:
+    pg_OMP_pragma = OMP_TARGET_TEAMS_DISTRIBUTE_SIMD;
+    break;
+
+  case OMP_PARALLEL:
+    pg_OMP_pragma = OMP_TARGET_PARALLEL;
+    break;
+  case OMP_PARALLEL_LOOP:
+    pg_OMP_pragma = OMP_TARGET_PARALLEL_LOOP;
+    break;
+  case OMP_PARALLEL_LOOP_SIMD:
+    pg_OMP_pragma = OMP_TARGET_PARALLEL_LOOP_SIMD;
+    break;
+  case OMP_SIMD:
+    pg_OMP_pragma = OMP_TARGET_SIMD;
+    break;
+
+  case OMP_NONE:
+    pg_OMP_pragma = OMP_TARGET;
+    break;
+
+  case OMP_DISTRIBUTE_PARALLEL_LOOP:
+  case OMP_DISTRIBUTE_PARALLEL_LOOP_SIMD:
+  case OMP_DISTRIBUTE_SIMD:
+  default:
+    goto syntax_err;
+  }
+  return PRAGMA_EXEC;
+  
+ chk_end:
+  if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+  return PRAGMA_EXEC;
+
+ syntax_err:
+  return 0;
+}
+
+int parse_OMP_teams_pragma()
+{
+  int have_teams = FALSE;
+
+  if(pg_tok == PG_IDENT && PG_IS_IDENT("teams")){ /* teams ... */
+    have_teams = TRUE;
+    pg_get_token();
+  }
+
+  if(parse_OMP_distribute_pragma() == 0) goto syntax_err;
+
+  if(have_teams){
+    switch(pg_OMP_pragma){
+    case OMP_NONE:
+      pg_OMP_pragma = OMP_TEAMS;
+      break;
+
+    case OMP_DISTRIBUTE:
+      pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE;
+      break;
+    case OMP_DISTRIBUTE_PARALLEL_LOOP:
+      pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP;
+      break;
+    case OMP_DISTRIBUTE_PARALLEL_LOOP_SIMD:
+      pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD;
+      break;
+    case OMP_DISTRIBUTE_SIMD:
+      pg_OMP_pragma = OMP_TEAMS_DISTRIBUTE_SIMD;
+      break;
+
+    case OMP_PARALLEL_LOOP:
+    case OMP_PARALLEL_LOOP_SIMD:
+    case OMP_SIMD:
+    default:
+      goto syntax_err;
+    }
+  }
+  return PRAGMA_EXEC;
+
+ syntax_err:
+   return 0;
+}
+
+int parse_OMP_distribute_pragma()
+{
+  int have_distribute = FALSE;
+  
+  if(pg_tok == PG_IDENT && PG_IS_IDENT("distribute")){ /* distribute ... */
+    have_distribute = TRUE;
+    pg_get_token();
+  }
+
+  if(parse_OMP_parallel_for_SIMD_pragma() == 0) goto syntax_err;
+
+  if(have_distribute){
+    switch(pg_OMP_pragma){
+    case OMP_NONE:
+      pg_OMP_pragma = OMP_DISTRIBUTE;
+      break;
+
+    case OMP_PARALLEL_LOOP:
+      pg_OMP_pragma = OMP_DISTRIBUTE_PARALLEL_LOOP;
+      break;
+    case OMP_PARALLEL_LOOP_SIMD:
+      pg_OMP_pragma = OMP_DISTRIBUTE_PARALLEL_LOOP_SIMD;
+      break;
+    case OMP_SIMD:
+      pg_OMP_pragma = OMP_DISTRIBUTE_SIMD;
+      break;
+
+    default:
+      goto syntax_err;
+    }
+  }
+  return PRAGMA_EXEC;
+
+ syntax_err:
+   return 0;
+}
+
+int parse_OMP_parallel_for_SIMD_pragma()
+{
+  if(pg_tok == PG_IDENT){
+    if(PG_IS_IDENT("parallel")){
+      pg_OMP_pragma = OMP_PARALLEL;
+      pg_get_token();
+      if(pg_tok == PG_IDENT && PG_IS_IDENT("for")){ /* parallel for */
+        pg_OMP_pragma = OMP_PARALLEL_LOOP;
+        pg_get_token();
+        if(pg_tok == PG_IDENT && PG_IS_IDENT("simd")){ /* parallel for simd */
+          pg_OMP_pragma = OMP_PARALLEL_LOOP_SIMD;
+          pg_get_token();
+        }
+        goto chk_end;
+      } 
+    } 
+    else if(PG_IS_IDENT("simd")){  /* simd */
+      pg_get_token();
+      pg_OMP_pragma = OMP_SIMD;
+      goto chk_end;
+    }
+  }
+
+ chk_end:
+  if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+  return PRAGMA_EXEC;
+
+ syntax_err:
+  return 0;
 }
 
 CExpr *parse_range_expr(int clause)
