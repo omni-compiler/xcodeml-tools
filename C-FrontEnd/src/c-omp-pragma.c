@@ -704,6 +704,12 @@ static CExpr* parse_array_list()
     else if(PG_IS_IDENT("alloc")){
       args = exprListAdd(args, pg_parse_expr());
     }
+    else if(PG_IS_IDENT("release")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("delete")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
     else if(PG_IS_IDENT("link"))
       goto not_implemented;
     else
