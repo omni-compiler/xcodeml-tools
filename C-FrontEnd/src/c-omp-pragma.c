@@ -695,6 +695,15 @@ static CExpr* parse_array_list()
     if(PG_IS_IDENT("to")){
       args = exprListAdd(args, pg_parse_expr());
     }
+    else if(PG_IS_IDENT("from")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("tofrom")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("alloc")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
     else if(PG_IS_IDENT("link"))
       goto not_implemented;
     else
