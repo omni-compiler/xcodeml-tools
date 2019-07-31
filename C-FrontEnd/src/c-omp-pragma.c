@@ -63,8 +63,7 @@ static int parse_OMP_parallel_for_SIMD_pragma(void);
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
 #define OMP_DATA_MAP_TO    0
-#define OMP_DATA_MAP_LINK  1
-#define OMP_DATA_MAP_ALLOC 2
+#define OMP_DATA_MAP_ALLOC 1
 #define OMP_CLAUSE_DEVICE  0
 #define OMP_CLAUSE_SHADOW  1
 
@@ -692,11 +691,8 @@ static CExpr* parse_array_list()
     return NULL;
   }
   else{
-    if(PG_IS_IDENT("to")){
+    if(PG_IS_IDENT("to"))
       args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("link"))
-      goto not_implemented;
     else
       goto err;
   }
@@ -727,10 +723,6 @@ static CExpr* parse_array_list()
   
  err:
   addError(NULL,"OMP: syntax error in OpenMP pragma clause");
-  return NULL;
-
- not_implemented:
-  addError(NULL,"OMP: Not implement yet");
   return NULL;
 }
 
