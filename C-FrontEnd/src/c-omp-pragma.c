@@ -62,10 +62,14 @@ static int parse_OMP_parallel_for_SIMD_pragma(void);
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
-#define OMP_DATA_MAP_TO    0
-#define OMP_DATA_MAP_ALLOC 1
-#define OMP_CLAUSE_DEVICE  0
-#define OMP_CLAUSE_SHADOW  1
+#define OMP_DATA_MAP_TO      0
+#define OMP_DATA_MAP_FROM    1
+#define OMP_DATA_MAP_TOFROM  2
+#define OMP_DATA_MAP_ALLOC   3
+#define OMP_DATA_MAP_RELEASE 4
+#define OMP_DATA_MAP_DELETE  5
+#define OMP_CLAUSE_DEVICE    0
+#define OMP_CLAUSE_SHADOW    1
 
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
@@ -691,8 +695,24 @@ static CExpr* parse_array_list()
     return NULL;
   }
   else{
-    if(PG_IS_IDENT("to"))
+    if(PG_IS_IDENT("to")){
       args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("from")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("tofrom")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("alloc")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("release")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("delete")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
     else
       goto err;
   }
