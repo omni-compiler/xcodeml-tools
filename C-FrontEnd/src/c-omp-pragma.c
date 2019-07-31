@@ -63,12 +63,11 @@ static int parse_OMP_parallel_for_SIMD_pragma(void);
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
 #define OMP_DATA_MAP_TO      0
-#define OMP_DATA_MAP_LINK    1
-#define OMP_DATA_MAP_ALLOC   2
-#define OMP_DATA_MAP_FROM    3
-#define OMP_DATA_MAP_TOFROM  4
-#define OMP_DATA_MAP_RELEASE 5
-#define OMP_DATA_MAP_DELETE  6
+#define OMP_DATA_MAP_FROM    1
+#define OMP_DATA_MAP_TOFROM  2
+#define OMP_DATA_MAP_ALLOC   3
+#define OMP_DATA_MAP_RELEASE 4
+#define OMP_DATA_MAP_DELETE  5
 #define OMP_CLAUSE_DEVICE    0
 #define OMP_CLAUSE_SHADOW    1
 
