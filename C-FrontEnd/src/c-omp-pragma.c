@@ -713,8 +713,6 @@ static CExpr* parse_array_list()
     else if(PG_IS_IDENT("delete")){
       args = exprListAdd(args, pg_parse_expr());
     }
-    else if(PG_IS_IDENT("link"))
-      goto not_implemented;
     else
       goto err;
   }
@@ -745,10 +743,6 @@ static CExpr* parse_array_list()
   
  err:
   addError(NULL,"OMP: syntax error in OpenMP pragma clause");
-  return NULL;
-
- not_implemented:
-  addError(NULL,"OMP: Not implement yet");
   return NULL;
 }
 
