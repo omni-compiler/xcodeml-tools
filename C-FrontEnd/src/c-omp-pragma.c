@@ -270,6 +270,7 @@ int parse_OMP_pragma()
       if((ret = parse_OMP_target_pragma()) == 0) goto syntax_err;
       goto chk_end;
     }
+    pg_OMP_pragma = OMP_TARGET;
     if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
     goto chk_end;
   }
