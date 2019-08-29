@@ -222,6 +222,7 @@ char *ompClauseName(int c)
   case OMP_TARGET_SHADOW:         return "TARGET_SHADOW";
   case OMP_TARGET_LAYOUT:         return "TARGET_LAYOUT";
   case OMP_TARGET_DATA_MAP:       return "TARGET_DATA_MAP";
+  case OMP_DEPEND:                return "DEPEND";
   default:                        return "???OMP???";
   }
 }

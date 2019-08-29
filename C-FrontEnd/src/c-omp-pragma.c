@@ -747,6 +747,75 @@ static CExpr* parse_array_list()
   return NULL;
 }
 
+static CExpr* parse_depend_expr()
+{
+
+  CExpr* args = EMPTY_LIST;
+
+  if(pg_tok != '('){
+    addError(NULL,"OMP: OpenMP directive clause requires name list");
+    return NULL;
+  }
+  pg_get_token();
+
+ next:
+  if(pg_tok != PG_IDENT){
+    addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
+    return NULL;
+  }
+  else{
+    if(PG_IS_IDENT("in")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("out")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("inout")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("mutexinoutset")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else if(PG_IS_IDENT("depobj")){
+      args = exprListAdd(args, pg_parse_expr());
+    }
+    else {
+      goto err;
+    }
+  }
+
+
+  if(pg_tok != ':')
+    goto err;
+
+  pg_get_token();
+  CExpr* v = pg_tok_val;
+  pg_get_token();
+  if(pg_tok != '['){
+    args = exprListAdd(args, v);
+  }
+  else{
+    CExpr *list     = parse_OMP_C_subscript_list();
+    CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+    args = exprListAdd(args, arrayRef);
+  }
+
+  if(pg_tok == ','){
+    pg_get_token();
+    goto next;
+  }
+  else if(pg_tok == ')'){
+    pg_get_token();
+    return args;
+  }
+  
+ err:
+  addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+  return NULL;
+
+}
+  
+
 
 static CExpr* parse_OMP_clauses()
 {
@@ -876,6 +945,11 @@ static CExpr* parse_OMP_clauses()
       if(pg_tok != '(') goto syntax_err;
       if((v = parse_layout_expr()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_LAYOUT,v);
+    } else if (PG_IS_IDENT("depend")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      if((v = parse_depend_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DEPEND, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
