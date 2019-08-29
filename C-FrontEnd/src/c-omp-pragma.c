@@ -763,6 +763,12 @@ static CExpr* parse_depend_expr()
     addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
     return NULL;
   }
+
+  // todo: implement depend-modifier introduced in OpenMP 5.0
+
+  // in, out, inout is introduced in OpenMP 4.0
+  // mutexinoutset, depobj is introduced in OpenMP 5.0
+  
   else{
     if(PG_IS_IDENT("in")){
       args = exprListAdd(args, pg_parse_expr());
