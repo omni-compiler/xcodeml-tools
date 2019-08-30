@@ -771,25 +771,24 @@ static CExpr* parse_depend_expr()
 
   // in, out, inout is introduced in OpenMP 4.0
   // mutexinoutset, depobj is introduced in OpenMP 5.0
-  else{
-    if(PG_IS_IDENT("in")){
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("out")){
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("inout")){
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("mutexinoutset")){
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("depobj")){
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else {
-      goto err;
-    }
+  if(PG_IS_IDENT("in")){
+    args = exprListAdd(args, pg_parse_expr());
+
+  }
+  else if(PG_IS_IDENT("out")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else if(PG_IS_IDENT("inout")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else if(PG_IS_IDENT("mutexinoutset")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else if(PG_IS_IDENT("depobj")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else {
+    goto err;
   }
 
 
