@@ -90,10 +90,10 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_DEPEND:
     /*
-      <String>DEPEND</String>
+      <string>DEPEND</string>
       <list>
           <list>...</list> // depend-modifier
-          <String>in</String>
+          <string>in</string>
           <list> // locator-list
             <Var>i</Var>
             <PointerRef>...</PointerRef>
@@ -110,14 +110,14 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     // depend-modifier
     outxPrint(fp,indent1,"<list></list>\n"); 
     // dependence-type
-    outxPrint(fp,indent1,"<String>%s</String>\n",
+    outxPrint(fp,indent1,"<string>%s</string>\n",
               ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(namelist, 0)))->e_symName);
     // locator list
     out_OMP_name_list(fp, indent1, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 1)));
     break;
 	  
   case OMP_DATA_DEFAULT:
-      outxPrint(fp,indent1+1,"<String>%s</String>\n",
+      outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
       break;
 
