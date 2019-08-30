@@ -768,6 +768,12 @@ static CExpr* parse_depend_expr()
   }
 
   // todo: implement depend-modifier introduced in OpenMP 5.0
+  if (PG_IS_IDENT("iterator")) {
+    addError(NULL, "depend-modifier in depend clause is not implemented yet");
+    return NULL;
+  } else {
+    args = exprListAdd(args, NULL);
+  }
 
   // in, out, inout is introduced in OpenMP 4.0
   // mutexinoutset, depobj is introduced in OpenMP 5.0
