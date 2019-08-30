@@ -102,9 +102,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       </list> 
     */
 
-
     namelist = (CExprOfList *)arg;
-    
     if (EXPR_L_SIZE(namelist) == 0) {
       break;
     }
@@ -114,7 +112,6 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     // dependence-type
     outxPrint(fp,indent1,"<String>%s</String>\n",
               ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(namelist, 0)))->e_symName);
-    
     // locator list
     out_OMP_name_list(fp, indent1, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 1)));
     break;
