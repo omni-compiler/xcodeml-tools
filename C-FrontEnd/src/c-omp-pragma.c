@@ -747,6 +747,10 @@ static CExpr* parse_array_list()
   return NULL;
 }
 
+
+/*
+  depend([depend-modifier,] dependency-type : locator-list)
+*/
 static CExpr* parse_depend_expr()
 {
 
@@ -758,7 +762,6 @@ static CExpr* parse_depend_expr()
   }
   pg_get_token();
 
- next:
   if(pg_tok != PG_IDENT){
     addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
     return NULL;
@@ -768,7 +771,6 @@ static CExpr* parse_depend_expr()
 
   // in, out, inout is introduced in OpenMP 4.0
   // mutexinoutset, depobj is introduced in OpenMP 5.0
-  
   else{
     if(PG_IS_IDENT("in")){
       args = exprListAdd(args, pg_parse_expr());
@@ -795,23 +797,33 @@ static CExpr* parse_depend_expr()
     goto err;
 
   pg_get_token();
-  CExpr* v = pg_tok_val;
+
+  CExpr* v; 
+  CExpr *locatorList = EMPTY_LIST;
+
+nextLocator:
+  v = pg_tok_val;
   pg_get_token();
   if(pg_tok != '['){
-    args = exprListAdd(args, v);
+    // not array expression
+    locatorList = exprListAdd(locatorList, v);
   }
   else{
+    // array expression
     CExpr *list     = parse_OMP_C_subscript_list();
     CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
-    args = exprListAdd(args, arrayRef);
+    locatorList = exprListAdd(locatorList, arrayRef);
   }
+
 
   if(pg_tok == ','){
     pg_get_token();
-    goto next;
+    goto nextLocator;
   }
   else if(pg_tok == ')'){
     pg_get_token();
+
+    args = exprListAdd(args, locatorList);
     return args;
   }
   
