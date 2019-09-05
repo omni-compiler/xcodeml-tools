@@ -4629,6 +4629,7 @@ XfDecompileDomVisitor {
             String content = XmDomUtil.getContentText(n);
 	    if (content.startsWith("cdir") == true ||
 		content.startsWith("ocl") == true ||
+		content.startsWith("dir") == true ||
 		content.startsWith("pgi") == true ){
 	      content = "!" + content;
 	    }

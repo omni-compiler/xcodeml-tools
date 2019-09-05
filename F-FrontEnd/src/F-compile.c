@@ -6119,6 +6119,13 @@ static void compile_USE_ONLY_decl(expr x, expr x_args, int is_intrinsic)
                 use_arg->use = NULL;
                 use_arg->is_operator = TRUE;
             }
+        } else if(EXPV_CODE(a) == F95_USER_DEFINED) { // #147
+            assert(EXPR_HAS_ARG1(a));
+            args = list_put_last(args,
+                list2(F95_USER_DEFINED, NULL, EXPR_ARG1(a)));
+            use_arg->local = EXPV_NAME(EXPR_ARG1(a));
+            use_arg->use = NULL;
+            use_arg->is_operator = TRUE;
         } else if (EXPV_CODE(a) == LIST) {
             useExpr = EXPR_ARG1(a);
             localExpr = EXPR_ARG2(a);

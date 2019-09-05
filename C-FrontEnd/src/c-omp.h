@@ -1,61 +1,73 @@
 #ifndef _C_OMP_H
 #define _C_OMP_H
 
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
+
 enum OMP_pragma {
-    OMP_PARALLEL = 0, 		/* parallel <clause_list> */
-    OMP_FOR = 1,		/* loop <clause_list> */
-    OMP_SECTIONS = 2,		/* sections <clause_list> */
-    OMP_SECTION = 3,		/* section */
-    OMP_SINGLE = 4,		/* single <clause list> */
-    OMP_MASTER = 5,		/* master */
-    OMP_CRITICAL = 6,		/* critical <name> <hint> */
-    OMP_BARRIER = 7,		/* barrier */
-    OMP_ATOMIC = 8,		/* atomic */
-    OMP_FLUSH = 9,		/* flush <namelist> */
-    OMP_ORDERED = 10,		/* ordered <clause> */
-    OMP_THREADPRIVATE = 11,	/* threadprivate <namelist> */
+    OMP_NONE = 0,
+    OMP_PARALLEL = 1, 		/* parallel <clause_list> */
+    OMP_FOR = 2,		/* loop <clause_list> */
+    OMP_SECTIONS = 3,		/* sections <clause_list> */
+    OMP_SECTION = 4,		/* section */
+    OMP_SINGLE = 5,		/* single <clause list> */
+    OMP_MASTER = 6,		/* master */
+    OMP_CRITICAL = 7,		/* critical <name> <hint> */
+    OMP_BARRIER = 8,		/* barrier */
+    OMP_ATOMIC = 9,		/* atomic */
+    OMP_FLUSH = 10,		/* flush <namelist> */
+    OMP_ORDERED = 11,		/* ordered <clause> */
+    OMP_THREADPRIVATE = 12,	/* threadprivate <namelist> */
 
-    OMP_PARALLEL_FOR = 12, 	/* parallel <clause_list> */
-    OMP_PARALLEL_SECTIONS = 13,	/* parallel <clause_list> */
+    OMP_PARALLEL_FOR = 13, 	/* parallel for <clause_list> */
+    OMP_PARALLEL_LOOP = 13,
+    OMP_PARALLEL_SECTIONS = 14,	/* parallel sections <clause_list> */
 
-    OMP_SIMD = 14,		/* simd <clause_list> */
-    OMP_DECLARE_SIMD = 15,	/* declare simd <clause_list> */
-    OMP_LOOP_SIMD = 16,		/* for simd <clause_list> */
-    OMP_TASK = 17,		/* task <clause_list> */
-    OMP_TASKLOOP = 18,		/* taskloop <clause_list> */
-    OMP_TASKLOOP_SIMD = 19,	/* taskloop simd <clause_list> */
-    OMP_TASKYIELD = 20,		/* taskyield */
-    OMP_TARGET_DATA = 21,	/* target data <clause_list> */
-    OMP_TARGET_ENTER_DATA = 22,	/* target enter data <clause_list> */
-    OMP_TARGET_EXIT_DATA = 23,	/* target exit data <clause_list> */
-    OMP_TARGET = 24,		/* target <clause_list> */
-    OMP_TARGET_UPDATE = 25,	/* target update <clause_list> */
-    OMP_DECLARE_TARGET = 26,	/* declare target <extended-list> <clause_list> */
-    OMP_TEAMS = 27,		/* teams <clause_list> */
-    OMP_DISTRIBUTE = 28,	/* distribute <clause_list> */
-    OMP_DISTRIBUTE_SIMD = 29,	/* distribute simd <clause_list> */
-    OMP_DISTRIBUTE_PARALLEL_LOOP = 30,			/* distribute parallel for <clause_list> */
-    OMP_DISTRIBUTE_PARALLEL_LOOP_SIMD = 31,		/* distribute parallel for simd <clause_list> */
-    OMP_PARALLEL_LOOP_SIMD = 32,			/* parallel for simd <clause_list> */
-    OMP_TARGET_PARALLEL = 33,				/* target parallel <clause_list> */
-    OMP_TARGET_PARALLEL_LOOP = 34,			/* target parallel for <clause_list> */
-    OMP_TARGET_PARALLEL_LOOP_SIMD = 35,			/* target parallel for simd <clause_list> */
-    OMP_TARGET_SIMD = 36,				/* target simd <clause_list> */
-    OMP_TARGET_TEAMS = 37,				/* target teams <clause_list> */
-    OMP_TEAMS_DISTRIBUTE = 38,				/* teams distribute <clause_list> */
-    OMP_TEAMS_DISTRIBUTE_SIMD = 39,			/* teams distribute simd <clause_list> */
-    OMP_TARGET_TEAMS_DISTRIBUTE = 40,			/* target teams distribute <clause_list> */
-    OMP_TARGET_TEAMS_DISTRIBUTE_SIMD = 41,		/* target teams distribute simd <clause_list> */
-    OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP = 42,		/* teams distribute parallel for <clause_list> */
-    OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP = 43,	/* target teams distribute parallel for <clause_list> */
+    OMP_SIMD = 20,		/* simd <clause_list> */
+    OMP_LOOP_SIMD = 21,		/* for simd <clause_list> */
+    OMP_PARALLEL_LOOP_SIMD = 22,/* parallel for simd <clause_list> */
+    OMP_DECLARE_SIMD = 23,	/* declare simd <clause_list> */
+
+    OMP_DISTRIBUTE = 30,	/* distribute <clause_list> */
+    OMP_DISTRIBUTE_SIMD = 31,	/* distribute simd <clause_list> */
+    OMP_DISTRIBUTE_PARALLEL_LOOP = 32,			/* distribute parallel for <clause_list> */
+    OMP_DISTRIBUTE_PARALLEL_LOOP_SIMD = 33,		/* distribute parallel for simd <clause_list> */
+
+    OMP_TEAMS = 40,		/* teams <clause_list> */
+    OMP_TEAMS_DISTRIBUTE = 41,				/* teams distribute <clause_list> */
+    OMP_TEAMS_DISTRIBUTE_SIMD = 42,			/* teams distribute simd <clause_list> */
+    OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP = 43,		/* teams distribute parallel for <clause_list> */
     OMP_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD = 44,	/* teams distribute parallel for simd <clause_list> */
-    OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD = 45,/* target teams distribute parallel for simd <clause_list> */
 
-    OMP_TASKWAIT = 46,		/* taskwait */
-    OMP_TASKGROUP = 47,		/* taskgroup */
-    OMP_CANCEL= 48,		/* cancel <type> <if-clause> */
-    OMP_CANCELLATION_POINT= 49,	/* cancellation point <type> */
-    OMP_DECLARE_REDUCTION= 50,	/* declare reduction <id> <type-list> <combiner> <init-clause> */
+    OMP_TARGET = 50,		/* target <clause_list> */
+    OMP_TARGET_DATA = 51,	/* target data <clause_list> */
+    OMP_TARGET_ENTER_DATA = 52,	/* target enter data <clause_list> */
+    OMP_TARGET_EXIT_DATA = 53,	/* target exit data <clause_list> */
+    OMP_TARGET_UPDATE = 54,	/* target update <clause_list> */
+
+    OMP_TARGET_SIMD = 55,				/* target simd <clause_list> */
+    OMP_TARGET_PARALLEL = 56,				/* target parallel <clause_list> */
+    OMP_TARGET_PARALLEL_LOOP = 57,			/* target parallel for <clause_list> */
+    OMP_TARGET_PARALLEL_LOOP_SIMD = 58,			/* target parallel for simd <clause_list> */
+
+    OMP_TARGET_TEAMS = 59,				/* target teams <clause_list> */
+    OMP_TARGET_TEAMS_DISTRIBUTE = 60,			/* target teams distribute <clause_list> */
+    OMP_TARGET_TEAMS_DISTRIBUTE_SIMD = 61,		/* target teams distribute simd <clause_list> */
+    OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP = 62,	/* target teams distribute parallel for <clause_list> */
+    OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_LOOP_SIMD = 63,/* target teams distribute parallel for simd <clause_list> */
+    OMP_DECLARE_TARGET = 64,	/* declare target <extended-list> <clause_list> */
+
+    OMP_TASK = 70,		/* task <clause_list> */
+    OMP_TASKLOOP = 71,		/* taskloop <clause_list> */
+    OMP_TASKLOOP_SIMD = 72,	/* taskloop simd <clause_list> */
+    OMP_TASKYIELD = 73,		/* taskyield */
+    OMP_TASKWAIT = 74,		/* taskwait */
+    OMP_TASKGROUP = 75,		/* taskgroup */
+    OMP_CANCEL= 77,		/* cancel <type> <if-clause> */
+    OMP_CANCELLATION_POINT= 78,	/* cancellation point <type> */
+    OMP_DECLARE_REDUCTION= 79,	/* declare reduction <id> <type-list> <combiner> <init-clause> */
 };
 
 #define IS_OMP_PRAGMA_CODE(code) (((int)(code)) < 100)

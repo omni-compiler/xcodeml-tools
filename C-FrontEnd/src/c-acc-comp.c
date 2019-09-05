@@ -113,6 +113,8 @@ compile_acc_pragma(CExpr *expr, CExpr *parent)
 
     switch(pragma_code){
     case ACC_WAIT:
+    case ACC_SYNC:
+    case ACC_FLUSH:
 	if(! EXPR_L_ISNULL(clauseList)){
 	  compile1(exprListHeadData((CExpr*)clauseList), expr);
 	}
