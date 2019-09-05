@@ -512,7 +512,6 @@ int parse_OMP_distribute_pragma()
 
 int parse_OMP_parallel_for_SIMD_pragma()
 {
-
   int ret = PRAGMA_PREFIX; /* default */
 
   if(pg_tok == PG_IDENT){
