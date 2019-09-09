@@ -167,6 +167,7 @@ sentinel_list sentinels;
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
 #define PGI_SENTINEL "!pgi$"
+#define DIR_SENTINEL "!dir$"
 
 /* sentinel list functions */
 static void init_sentinel_list(sentinel_list *p);
@@ -331,6 +332,7 @@ void initialize_lex()
     add_sentinel(&sentinels, OMP_SENTINEL);
     add_sentinel(&sentinels, XMP_SENTINEL);
     add_sentinel(&sentinels, ACC_SENTINEL);
+    add_sentinel(&sentinels, DIR_SENTINEL);
     if (ocl_flag)
         add_sentinel(&sentinels, OCL_SENTINEL);
     if (cdir_flag)
@@ -2537,6 +2539,12 @@ again:
                 strcat(buff, p);
                 set_pragma_str(buff);
                 st_PRAGMA_flag = TRUE;
+            } else if (strcasecmp(sentinel_name(&sentinels, index),
+                                  DIR_SENTINEL) == 0) {
+                char buff[256] = "dir$";
+                strcat(buff, p);
+                set_pragma_str(buff);
+                st_PRAGMA_flag = TRUE;
             } else {
                 set_pragma_str(&(sentinel_name(&sentinels, index)[2]));
                 st_PRAGMA_flag = TRUE;
@@ -2952,6 +2960,13 @@ top:
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
+        } else if (strcasecmp(sentinel_name(&sentinels, index), DIR_SENTINEL) ==
+                   0) {
+            st_PRAGMA_flag = TRUE;
+            set_pragma_str(&(sentinel_name(&sentinels, index)[1]));
+            append_pragma_str(" ");
+            append_pragma_str(line_buffer);
+            goto copy_body;
         } else {
             st_PRAGMA_flag = TRUE;
             set_pragma_str(&(sentinel_name(&sentinels, index)[2]));
@@ -3070,6 +3085,10 @@ copy_body:
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   PGI_SENTINEL) == 0) {
                 // no continutation line for pgi
+                break;
+            } else if (strcasecmp(sentinel_name(&sentinels, index),
+                                  DIR_SENTINEL) == 0) {
+                // no continutation line for dir
                 break;
             } else {
                 if (st_PRAGMA_flag) {

@@ -341,12 +341,16 @@ int parse_OMP_pragma()
 
 int parse_OMP_target_pragma()
 {
+  int ret = PRAGMA_PREFIX; /* default */
+
   if(PG_IS_IDENT("data")){ /* target data */
+    ret = PRAGMA_EXEC;
     pg_OMP_pragma = OMP_TARGET_DATA;
     pg_get_token();
     goto chk_end;
   }
   else if(PG_IS_IDENT("enter")){ 
+    ret = PRAGMA_EXEC;
     pg_get_token();
     if(pg_tok == PG_IDENT && PG_IS_IDENT("data")){  /* target enter data */
       pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
@@ -356,6 +360,7 @@ int parse_OMP_target_pragma()
     goto syntax_err;
   }
   else if(PG_IS_IDENT("exit")){ 
+    ret = PRAGMA_EXEC;
     pg_get_token();
     if(pg_tok == PG_IDENT && PG_IS_IDENT("data")){ /* target exit data */
         pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
@@ -365,6 +370,7 @@ int parse_OMP_target_pragma()
     goto syntax_err;
   }
   else if(PG_IS_IDENT("update")){ 
+    ret = PRAGMA_EXEC;
     pg_OMP_pragma = OMP_TARGET_UPDATE;
     pg_get_token();
     goto chk_end;
@@ -412,11 +418,11 @@ int parse_OMP_target_pragma()
   default:
     goto syntax_err;
   }
-  return PRAGMA_EXEC;
+ return ret;
   
  chk_end:
   if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-  return PRAGMA_EXEC;
+  return ret;
 
  syntax_err:
   return 0;
@@ -425,6 +431,7 @@ int parse_OMP_target_pragma()
 int parse_OMP_teams_pragma()
 {
   int have_teams = FALSE;
+  int ret = PRAGMA_PREFIX; /* default */
 
   if(pg_tok == PG_IDENT && PG_IS_IDENT("teams")){ /* teams ... */
     have_teams = TRUE;
@@ -459,7 +466,7 @@ int parse_OMP_teams_pragma()
       goto syntax_err;
     }
   }
-  return PRAGMA_EXEC;
+  return ret;
 
  syntax_err:
    return 0;
@@ -468,7 +475,8 @@ int parse_OMP_teams_pragma()
 int parse_OMP_distribute_pragma()
 {
   int have_distribute = FALSE;
-  
+  int ret = PRAGMA_PREFIX; /* default */  
+
   if(pg_tok == PG_IDENT && PG_IS_IDENT("distribute")){ /* distribute ... */
     have_distribute = TRUE;
     pg_get_token();
@@ -496,7 +504,7 @@ int parse_OMP_distribute_pragma()
       goto syntax_err;
     }
   }
-  return PRAGMA_EXEC;
+  return ret;
 
  syntax_err:
    return 0;
@@ -504,6 +512,8 @@ int parse_OMP_distribute_pragma()
 
 int parse_OMP_parallel_for_SIMD_pragma()
 {
+  int ret = PRAGMA_PREFIX; /* default */
+
   if(pg_tok == PG_IDENT){
     if(PG_IS_IDENT("parallel")){
       pg_OMP_pragma = OMP_PARALLEL;
@@ -527,7 +537,7 @@ int parse_OMP_parallel_for_SIMD_pragma()
 
  chk_end:
   if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-  return PRAGMA_EXEC;
+  return ret;
 
  syntax_err:
   return 0;
