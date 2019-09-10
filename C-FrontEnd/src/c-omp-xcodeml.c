@@ -96,7 +96,10 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
           <string>in</string>
           <list> // locator-list
             <Var>i</Var>
-            <PointerRef>...</PointerRef>
+            <list>
+              <Var>a</Var>
+              <Var type="int">i</Var>
+            <list>
           </list>
         </list> // end of locator-list
       </list> 
