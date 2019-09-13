@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 #ifndef _C_OMP_H
 #define _C_OMP_H
 
