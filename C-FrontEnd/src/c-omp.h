@@ -69,6 +69,8 @@ enum OMP_pragma {
     OMP_CANCEL= 77,		/* cancel <type> <if-clause> */
     OMP_CANCELLATION_POINT= 78,	/* cancellation point <type> */
     OMP_DECLARE_REDUCTION= 79,	/* declare reduction <id> <type-list> <combiner> <init-clause> */
+
+    OMP_DECLARE_VARIANT=80,
 };
 
 #define IS_OMP_PRAGMA_CODE(code) (((int)(code)) < 100)
@@ -112,7 +114,7 @@ enum OMP_pragma_clause {
     OMP_TARGET_SHADOW=34,
     OMP_TARGET_LAYOUT=35,
 
-    OMP_DECLARE_VARIANT=36,
+
 };
 
 enum OMP_sched_clause {
