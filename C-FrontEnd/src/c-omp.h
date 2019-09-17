@@ -1,4 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
+
 #ifndef _C_OMP_H
 #define _C_OMP_H
 
@@ -114,7 +115,8 @@ enum OMP_pragma_clause {
     OMP_TARGET_SHADOW=34,
     OMP_TARGET_LAYOUT=35,
 
-
+    OMP_DECLARE_VARIANT_FUNC_ID=36, // internal expression
+    OMP_DECLARE_VARIANT_MATCH=37,
 };
 
 enum OMP_sched_clause {

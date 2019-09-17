@@ -118,6 +118,50 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     // for locator list
     out_OMP_name_list(fp, indent1, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 2)));
     break;
+
+  case OMP_DECLARE_VARIANT_FUNC_ID:
+  {
+    CCOL_DListNode *ite = NULL;
+    namelist = (CExprOfList *)arg;
+    if (EXPR_L_SIZE(namelist) == 0) {
+      break;
+    }
+
+    outxPrint(fp,indent1,"<string>%s</string>\n",
+              ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(namelist, 0)))->e_symName);
+    outxPrint(fp,indent1,"<string>%s</string>\n",
+              ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(namelist, 1)))->e_symName);
+
+    outxPrint(fp,indent1,"<list>\n");
+    EXPR_FOREACH(ite, EXPR_L_DATA(EXPR_L_AT(namelist, 2))) {
+      CExpr *node = EXPR_L_DATA(ite);
+      out_OMP_name_list(fp, indent1, (CExprOfList *)node);
+    }
+    outxPrint(fp,indent1,"</list>\n");
+    break;
+  }
+
+  case OMP_DECLARE_VARIANT_MATCH:
+  {
+    CCOL_DListNode *ite = NULL;
+    namelist = (CExprOfList *)arg;
+    if (EXPR_L_SIZE(namelist) == 0) {
+      break;
+    }
+
+    outxPrint(fp,indent1,"<list>\n");
+    EXPR_FOREACH(ite, namelist) {
+      CExpr *node = EXPR_L_DATA(ite);
+      outxPrint(fp,indent1+1,"<list>\n");
+      outxPrint(fp,indent1+2,"<string>%s</string>\n",
+                ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(node, 0)))->e_symName);
+      out_OMP_name_list(fp, indent1+2, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(node, 1)));
+      outxPrint(fp,indent1+1,"</list>\n");
+    }
+    outxPrint(fp,indent1,"</list>\n");
+
+    break;
+  }  
 	  
   case OMP_DATA_DEFAULT:
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
@@ -216,6 +260,7 @@ char *ompDirectiveName(int c)
   case OMP_CANCEL: return "CANCEL";
   case OMP_CANCELLATION_POINT: return "CANCELLATION_POINT";
   case OMP_DECLARE_REDUCTION: return "DECLARE_REDUCTION";
+  case OMP_DECLARE_VARIANT:       return "DECLARE_VARIANT";
 
   default:
     return "OMP???";
@@ -253,8 +298,11 @@ char *ompClauseName(int c)
   case OMP_TARGET_DEVICE:         return "TARGET_DEVICE";
   case OMP_TARGET_SHADOW:         return "TARGET_SHADOW";
   case OMP_TARGET_LAYOUT:         return "TARGET_LAYOUT";
+
   case OMP_TARGET_DATA_MAP:       return "TARGET_DATA_MAP";
   case OMP_DEPEND:                return "DEPEND";
+  case OMP_DECLARE_VARIANT_FUNC_ID:  return "VARIANT_FUNC_ID";
+  case OMP_DECLARE_VARIANT_MATCH: return "VARIANT_MATCH";
   default:                        return "???OMP???";
   }
 }

@@ -54,11 +54,12 @@ static int parse_OMP_pragma(void);
 static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
-
+static CExpr* parse_OMP_declare_variant_pragma(void);
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
 static int parse_OMP_distribute_pragma(void);
 static int parse_OMP_parallel_for_SIMD_pragma(void);
+
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
@@ -241,12 +242,18 @@ int parse_OMP_pragma()
     pg_get_token();
     if(pg_tok == PG_IDENT){
         if(PG_IS_IDENT("target")){  /* declare target */
-	pg_OMP_pragma = OMP_DECLARE_TARGET;
-	pg_get_token();
-	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	ret = PRAGMA_EXEC;
-	goto chk_end;
-      }
+          pg_OMP_pragma = OMP_DECLARE_TARGET;
+          pg_get_token();
+          if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+          ret = PRAGMA_EXEC;
+          goto chk_end;
+        }
+        else if (PG_IS_IDENT("variant")) {
+          pg_OMP_pragma = OMP_DECLARE_VARIANT;
+          ret = PRAGMA_EXEC;
+          if((pg_OMP_list = parse_OMP_declare_variant_pragma()) == NULL) goto syntax_err;
+          goto chk_end;
+        }
     }
   }
 
@@ -330,9 +337,10 @@ int parse_OMP_pragma()
     goto chk_end;
   }
 
-  addError(NULL,"OMP: unknown OMP directive, '%s'",pg_tok_buf);
+
  syntax_err:
-    return 0;
+  addError(NULL,"OMP: unknown OMP directive, '%s'",pg_tok_buf);
+  return 0;
 
  chk_end:
     if(pg_tok != 0) addError(NULL,"OMP:extra arguments for OMP directive");
@@ -541,6 +549,87 @@ int parse_OMP_parallel_for_SIMD_pragma()
 
  syntax_err:
   return 0;
+}
+
+CExpr* parse_OMP_declare_variant_pragma()
+{
+
+  CExpr *list = EMPTY_LIST, *v = EMPTY_LIST, *args = EMPTY_LIST, *c;
+  CExpr *funcType;
+
+  pg_get_token();
+  if (pg_tok != '(') {
+    goto syntax_err;
+  } 
+  pg_get_token();
+
+  /*
+    <list>
+      <string>VARIANT_FUNC_ID</string>
+      <string>funcName</string> // function Name
+      <string>void</string> // function return type
+      <list>
+          // function arguments
+      </list>
+    </list>
+   */
+
+  funcType = pg_tok_val;
+  pg_get_token();
+  v = exprListAdd(v, pg_tok_val); // function name
+  v = exprListAdd(v, funcType);;  // function return type
+
+  pg_get_token();
+  if (pg_tok != '(') {
+    goto syntax_err;
+  }
+
+  pg_get_token();
+
+  while (pg_tok != ')') {
+    CExpr *arg = EMPTY_LIST;
+
+    arg = exprListAdd(arg, pg_tok_val);
+    pg_get_token();
+    arg = exprListAdd(arg, pg_tok_val);
+    pg_get_token();
+
+    args = exprListAdd(args, arg);
+
+    if (pg_tok != ',') {
+      break;
+    }
+    pg_get_token();
+
+  }
+
+  v = exprListAdd(v, args);
+
+  if (pg_tok != ')') {
+    goto syntax_err;
+  }
+  pg_get_token();
+
+  if (pg_tok != ')') {
+    goto syntax_err;
+  }
+  
+  pg_get_token();
+
+  // add FUNC_ID internal clause to clause list
+  c = OMP_PG_LIST(OMP_DECLARE_VARIANT_FUNC_ID, v);
+  list = exprListAdd(list, c);
+
+  if ((pg_OMP_list = parse_OMP_clauses()) == NULL) {
+    goto syntax_err;
+  }
+
+  list = exprListJoin(list, pg_OMP_list);
+  
+  return list;
+  
+syntax_err:
+  return NULL;    
 }
 
 CExpr *parse_range_expr(int clause)
@@ -849,6 +938,60 @@ nextLocator:
 }
   
 
+static CExpr* parse_variant_match_expr()
+{
+  CExpr *args = EMPTY_LIST;
+
+
+  pg_get_token();  
+  
+  while (1) {
+    CExpr* context = EMPTY_LIST;
+    CExpr* list = EMPTY_LIST;
+    if (pg_tok == ')') {
+      pg_get_token();
+      break;
+    }
+
+    context = exprListAdd(context, pg_tok_val);
+    pg_get_token();
+    
+    if (pg_tok != '=') {
+      goto syntax_err;
+    }
+
+    pg_get_token();
+
+    if (pg_tok != '(') {
+      goto syntax_err;
+    }
+
+    while (1) {
+
+      pg_get_token();
+
+      if (pg_tok == ')') {
+        context = exprListAdd(context, list);
+        break;
+      }
+      
+      if (pg_tok == ',') {
+        continue;
+      }
+      
+      list = exprListAdd(list, pg_tok_val);
+    }
+      
+    pg_get_token();
+    args = exprListAdd(args, context);
+      
+  }
+
+  return args;
+
+  syntax_err:
+  return NULL;
+}
 
 static CExpr* parse_OMP_clauses()
 {
@@ -983,6 +1126,11 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != '(') goto syntax_err;
       if((v = parse_depend_expr()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_DEPEND, v);
+    } else if (PG_IS_IDENT("match")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      if ((v = parse_variant_match_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DECLARE_VARIANT_MATCH, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
