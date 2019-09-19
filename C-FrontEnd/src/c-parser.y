@@ -35,7 +35,7 @@ PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssign
 
  /* PRAGMA_ARG???*/
 %token PRAGMA      PRAGMA_ARG   DIRECTIVE       PRAGMA_PACK
-%token PRAGMA_EXEC PRAGMA_PREFIX PRAGMA_DECLARE
+%token PRAGMA_EXEC PRAGMA_PREFIX
 %token <expr> XMP_COARRAY_DECLARATION   XMP_CRITICAL    XMP_FUNC_CALL
 %token XMP_DESC_OF
 
@@ -71,7 +71,7 @@ PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssign
 %type <expr> IDENTIFIER CONSTANT STRING TYPENAME SCSPEC TYPEQUAL TYPESPEC
 %type <expr> STATIC STRUCT UNION ENUM LABEL DEFAULT
 %type <expr> DIRECTIVE PRAGMA_ARG PRAGMA_PACK
-%type <expr> PRAGMA_EXEC PRAGMA_PREFIX PRAGMA_DECLARE
+%type <expr> PRAGMA_EXEC PRAGMA_PREFIX
 
 %type <expr> ident idents string
 %type <expr> typename label_idents
@@ -167,8 +167,6 @@ ext_def:
     | PRAGMA_EXEC
             { STAT_TRACE(("{ext_def#6}")); 
 	      $$ = exprList(EC_COMP_STMT);((CExprOfList *)$$)->e_aux_info=$1; }
-    | PRAGMA_DECLARE ext_def
-        { $$ = exprList1(EC_COMP_STMT,$2);((CExprOfList *)$$)->e_aux_info=$1;}
     ;
 
 data_def:
