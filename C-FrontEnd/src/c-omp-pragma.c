@@ -553,7 +553,6 @@ int parse_OMP_parallel_for_SIMD_pragma()
 
 CExpr* parse_OMP_declare_variant_pragma()
 {
-
   CExpr *list = EMPTY_LIST, *v = EMPTY_LIST, *args = EMPTY_LIST, *c;
   CExpr *funcType;
 
@@ -593,14 +592,12 @@ CExpr* parse_OMP_declare_variant_pragma()
     pg_get_token();
     arg = exprListAdd(arg, pg_tok_val);
     pg_get_token();
-
     args = exprListAdd(args, arg);
 
     if (pg_tok != ',') {
       break;
     }
     pg_get_token();
-
   }
 
   v = exprListAdd(v, args);
@@ -608,12 +605,11 @@ CExpr* parse_OMP_declare_variant_pragma()
   if (pg_tok != ')') {
     goto syntax_err;
   }
-  pg_get_token();
 
+  pg_get_token();
   if (pg_tok != ')') {
     goto syntax_err;
   }
-  
   pg_get_token();
 
   // add FUNC_ID internal clause to clause list
@@ -623,9 +619,7 @@ CExpr* parse_OMP_declare_variant_pragma()
   if ((pg_OMP_list = parse_OMP_clauses()) == NULL) {
     goto syntax_err;
   }
-
   list = exprListJoin(list, pg_OMP_list);
-
 
   // TODO : fix below lazy parsing
   int identLen = 0;
@@ -635,7 +629,6 @@ CExpr* parse_OMP_declare_variant_pragma()
       pg_cp++;
       continue;
     }
-
     identLen++;
     pg_cp++;
   }
