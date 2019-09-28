@@ -162,7 +162,14 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
     break;
   }  
-	  
+
+  case OMP_DECLARE_VARIANT_NAME:
+  {
+    outxPrint(fp,indent1,"<Var>%s</Var>\n",
+              ((CExprOfSymbol *)arg)->e_symName);
+    break;
+  }
+
   case OMP_DATA_DEFAULT:
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
@@ -303,6 +310,7 @@ char *ompClauseName(int c)
   case OMP_DEPEND:                return "DEPEND";
   case OMP_DECLARE_VARIANT_FUNC_ID:  return "VARIANT_FUNC_ID";
   case OMP_DECLARE_VARIANT_MATCH: return "VARIANT_MATCH";
+  case OMP_DECLARE_VARIANT_NAME:  return "VARIANT_NAME";
   default:                        return "???OMP???";
   }
 }

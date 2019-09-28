@@ -117,6 +117,7 @@ enum OMP_pragma_clause {
 
     OMP_DECLARE_VARIANT_FUNC_ID=36, // internal expression
     OMP_DECLARE_VARIANT_MATCH=37,
+    OMP_DECLARE_VARIANT_NAME=38,    // internal expression
 };
 
 enum OMP_sched_clause {

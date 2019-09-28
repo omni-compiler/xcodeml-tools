@@ -625,7 +625,28 @@ CExpr* parse_OMP_declare_variant_pragma()
   }
 
   list = exprListJoin(list, pg_OMP_list);
+
+
+  // TODO : fix below lazy parsing
+  int identLen = 0;
+  while (*pg_cp != '(') {
+    if (*pg_cp == ' ') {
+      identLen = 0;
+      pg_cp++;
+      continue;
+    }
+
+    identLen++;
+    pg_cp++;
+  }
   
+  CExprOfSymbol* variantName = (CExprOfSymbol *)malloc(sizeof(CExprOfSymbol));
+  variantName->e_symName = (char *)malloc(identLen+1);
+  variantName->e_symName[identLen] = '\0';
+  memcpy(variantName->e_symName, (pg_cp-identLen), identLen);
+  c = OMP_PG_LIST(OMP_DECLARE_VARIANT_NAME, (CExpr *)variantName);
+  list = exprListAdd(list, c);
+
   return list;
   
 syntax_err:
