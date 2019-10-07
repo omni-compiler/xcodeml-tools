@@ -236,7 +236,7 @@ getPragmaKind(char *p)
         return PK_OMP;
     else if(s_useXMP && equals_tokenP("xmp", p)) /* XcalableMP */
         return PK_XMP;
-    else if(s_useACC && equals_tokenP("acc", p)) /* OpenACC */
+    else if(s_useACC && (equals_tokenP("acc", p) || equals_tokenP("accomn", p))) /* OpenACC */
         return PK_ACC;
     else
         return PK_NOT_PARSABLE;
