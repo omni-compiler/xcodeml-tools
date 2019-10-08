@@ -282,6 +282,13 @@ int parse_ACC_pragma()
         goto chk_end;
     }
 
+    if(PG_IS_IDENT("ondevice")){
+	pg_ACC_pragma = ACC_DATA;
+	pg_get_token();
+	if((pg_ACC_list = parse_ACC_clauses()) == NULL) goto syntax_err;
+	goto chk_end;
+    }
+
     addError(NULL,"ACC: unknown ACC directive, '%s'",pg_tok_buf);
   syntax_err:
     return 0;
