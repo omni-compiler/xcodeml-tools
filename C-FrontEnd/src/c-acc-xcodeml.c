@@ -42,6 +42,7 @@ out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
     case ACC_YIELD:
     outxChildren(fp,indent1,(CExpr *)clauseList);
     goto end;
+    case ACC_ONDEVICE:
     case ACC_CACHE:
       if(EXPR_L_SIZE(clauseList) != 0)
 	  out_ACC_name_list(fp, indent1, clauseList);
