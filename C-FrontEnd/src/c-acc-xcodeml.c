@@ -190,6 +190,7 @@ char *accDirectiveName(int c)
   case ACC_SYNC: return "SYNC";
   case ACC_FLUSH: return "FLUSH";
   case ACC_YIELD: return "YIELD";
+  case ACC_ONDEVICE: return "ONDEVICE";
   default: return "??ACC??";
   }
 }
