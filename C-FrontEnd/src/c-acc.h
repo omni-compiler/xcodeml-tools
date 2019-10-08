@@ -29,6 +29,7 @@ enum ACC_pragma {
     ACC_SYNC            = 290,
     ACC_FLUSH           = 291,
     ACC_YIELD           = 292,
+    ACC_ONDEVICE        = 300,
     ACC_DIR_END
 };
 
