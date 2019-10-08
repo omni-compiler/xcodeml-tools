@@ -115,11 +115,11 @@ compile_acc_pragma(CExpr *expr, CExpr *parent)
     case ACC_WAIT:
     case ACC_SYNC:
     case ACC_FLUSH:
+    case ACC_ONDEVICE:
 	if(! EXPR_L_ISNULL(clauseList)){
 	  compile1(exprListHeadData((CExpr*)clauseList), expr);
 	}
         break;
-    case ACC_ONDEVICE:
     case ACC_CACHE:
         compile_acc_name_list(clauseList, expr);
         break;
