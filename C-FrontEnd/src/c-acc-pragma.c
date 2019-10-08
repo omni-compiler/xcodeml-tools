@@ -283,7 +283,7 @@ int parse_ACC_pragma()
     }
 
     if(PG_IS_IDENT("ondevice")){
-	pg_ACC_pragma = ACC_DATA;
+	pg_ACC_pragma = ACC_ONDEVICE;
 	pg_get_token();
 	if(pg_tok == '('){
 	    if((pg_ACC_list = parse_ACC_namelist()) == NULL) goto syntax_err;
