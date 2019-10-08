@@ -119,6 +119,7 @@ compile_acc_pragma(CExpr *expr, CExpr *parent)
 	  compile1(exprListHeadData((CExpr*)clauseList), expr);
 	}
         break;
+    case ACC_ONDEVICE:
     case ACC_CACHE:
         compile_acc_name_list(clauseList, expr);
         break;
