@@ -247,6 +247,16 @@ int parse_ACC_pragma()
       goto chk_end;
     }
 
+	// accomn extention directive
+    if(PG_IS_IDENT("ondevice")){
+	pg_ACC_pragma = ACC_ONDEVICE;
+	pg_get_token();
+	if(pg_tok == '('){
+	    if((pg_ACC_list = parse_ACC_namelist()) == NULL) goto syntax_err;
+	} else pg_ACC_list = NULL;
+	goto chk_end;
+	}
+	
     // for PEZY
     if(PG_IS_IDENT("sync")){
         pg_ACC_pragma = ACC_SYNC;
@@ -281,16 +291,6 @@ int parse_ACC_pragma()
         ret= PRAGMA_EXEC;
         goto chk_end;
     }
-
-    if(PG_IS_IDENT("ondevice")){
-	pg_ACC_pragma = ACC_ONDEVICE;
-	pg_get_token();
-	if(pg_tok == '('){
-	    if((pg_ACC_list = parse_ACC_namelist()) == NULL) goto syntax_err;
-	} else pg_ACC_list = NULL;
-	ret= PRAGMA_EXEC;
-	goto chk_end;
-	}
 
     addError(NULL,"ACC: unknown ACC directive, '%s'",pg_tok_buf);
   syntax_err:

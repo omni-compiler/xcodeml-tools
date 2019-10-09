@@ -26,7 +26,7 @@ enum ACC_pragma {
     ACC_ATOMIC          = 213, 
     ACC_ROUTINE         = 214,
 
-    ACC_ONDEVICE        = 250, //Extention directive
+    ACC_ONDEVICE        = 250, // accomn extention directive
 
     ACC_SYNC            = 290,
     ACC_FLUSH           = 291,
