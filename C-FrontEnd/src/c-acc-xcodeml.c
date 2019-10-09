@@ -119,8 +119,13 @@ void out_ACC_name_list(FILE *fp,int indent, CExprOfList *list)
 	if(EXPR_CODE(node) == EC_ARRAY_REF){
 	  out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
 	}else{
-	outxPrint(fp,indent1,"<Var>%s</Var>\n",
-		  ((CExprOfSymbol *)node)->e_symName);
+    if(PG_IS_IDENT("ondevice")){
+      outxPrint(fp,indent1,"<Var>%s</Var>\n", (CExpr *)node);
+    }
+    else {
+      outxPrint(fp,indent1,"<Var>%s</Var>\n",
+          ((CExprOfSymbol *)node)->e_symName);
+    }
 	}
     }
     outxPrint(fp,indent,"</list>\n");
