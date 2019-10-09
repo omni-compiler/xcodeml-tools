@@ -286,10 +286,7 @@ int parse_ACC_pragma()
 	pg_ACC_pragma = ACC_ONDEVICE;
 	pg_get_token();
 	if(pg_tok == '('){
-	    CExpr *x;
-	    if((x = parse_ACC_clause_arg()) == NULL) 
-		goto syntax_err;
-	    pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
+	    if((pg_ACC_list = parse_ACC_namelist()) == NULL) goto syntax_err;
 	} else pg_ACC_list = NULL;
 	ret= PRAGMA_EXEC;
 	goto chk_end;
