@@ -185,6 +185,10 @@ public final class XcProgramObj extends XcObj
         w.add(" * Compiler Version : ").add(_version).lf();
         w.add(" */").lf();
 
+        if(_compilerInfo.equals("AccHybridTranslator")) {
+            w.add("/*").lf();
+        }
+        
         appendCode(w);
     }
 
