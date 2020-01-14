@@ -758,6 +758,98 @@ static CExpr* parse_array_list()
 }
 
 
+/*
+  depend([depend-modifier,] dependency-type : locator-list)
+*/
+static CExpr* parse_depend_expr()
+{
+
+  CExpr* args = EMPTY_LIST;
+
+  if(pg_tok != '('){
+    addError(NULL,"OMP: OpenMP directive clause requires name list");
+    return NULL;
+  }
+  pg_get_token();
+
+  if(pg_tok != PG_IDENT){
+    addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
+    return NULL;
+  }
+
+  // todo: implement depend-modifier introduced in OpenMP 5.0
+  if (PG_IS_IDENT("iterator")) {
+    addError(NULL, "depend-modifier in depend clause is not implemented yet");
+    return NULL;
+  } else {
+    args = exprListAdd(args, NULL);
+  }
+
+  // in, out, inout is introduced in OpenMP 4.0
+  // mutexinoutset, depobj is introduced in OpenMP 5.0
+  if(PG_IS_IDENT("in")){
+    args = exprListAdd(args, pg_parse_expr());
+
+  }
+  else if(PG_IS_IDENT("out")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else if(PG_IS_IDENT("inout")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else if(PG_IS_IDENT("mutexinoutset")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else if(PG_IS_IDENT("depobj")){
+    args = exprListAdd(args, pg_parse_expr());
+  }
+  else {
+    goto err;
+  }
+
+
+  if(pg_tok != ':')
+    goto err;
+
+  pg_get_token();
+
+  CExpr* v; 
+  CExpr *locatorList = EMPTY_LIST;
+
+nextLocator:
+  v = pg_tok_val;
+  pg_get_token();
+  if(pg_tok != '['){
+    // not array expression
+    locatorList = exprListAdd(locatorList, v);
+  }
+  else{
+    // array expression
+    CExpr *list     = parse_OMP_C_subscript_list();
+    CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+    locatorList = exprListAdd(locatorList, arrayRef);
+  }
+
+
+  if(pg_tok == ','){
+    pg_get_token();
+    goto nextLocator;
+  }
+  else if(pg_tok == ')'){
+    pg_get_token();
+
+    args = exprListAdd(args, locatorList);
+    return args;
+  }
+  
+ err:
+  addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+  return NULL;
+
+}
+  
+
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -886,6 +978,11 @@ static CExpr* parse_OMP_clauses()
       if(pg_tok != '(') goto syntax_err;
       if((v = parse_layout_expr()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_LAYOUT,v);
+    } else if (PG_IS_IDENT("depend")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      if((v = parse_depend_expr()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DEPEND, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

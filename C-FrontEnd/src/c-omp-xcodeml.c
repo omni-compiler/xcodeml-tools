@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:2 ; indent-tabs-mode:nil ; -*- */
 #include <stdlib.h>
 #include <stdarg.h> 
 #include <wchar.h>
@@ -87,11 +88,42 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       outxPrint(fp,indent1,"</list>\n");
       break;
 
+  case OMP_DEPEND:
+    /*
+      <string>DEPEND</string>
+      <list>
+          <list>...</list> // depend-modifier, tentative expression
+          <string>in</string>
+          <list> // locator-list
+            <Var>i</Var>
+            <list>
+              <Var>a</Var>
+              <Var type="int">i</Var>
+            <list>
+          </list>
+        </list> // end of locator-list
+      </list> 
+    */
+
+    namelist = (CExprOfList *)arg;
+    if (EXPR_L_SIZE(namelist) == 0) {
+      break;
+    }
+
+    // for depend-modifier, currently it is not implemented
+    outxPrint(fp,indent1,"<list></list>\n"); 
+    // for dependence-type
+    outxPrint(fp,indent1,"<string>%s</string>\n",
+              ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(namelist, 1)))->e_symName);
+    // for locator list
+    out_OMP_name_list(fp, indent1, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 2)));
+    break;
+	  
   case OMP_DATA_DEFAULT:
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
       break;
-      
+
   default:
     namelist = (CExprOfList *)arg;
     if(EXPR_L_SIZE(namelist) != 0)
@@ -222,6 +254,7 @@ char *ompClauseName(int c)
   case OMP_TARGET_SHADOW:         return "TARGET_SHADOW";
   case OMP_TARGET_LAYOUT:         return "TARGET_LAYOUT";
   case OMP_TARGET_DATA_MAP:       return "TARGET_DATA_MAP";
+  case OMP_DEPEND:                return "DEPEND";
   default:                        return "???OMP???";
   }
 }
