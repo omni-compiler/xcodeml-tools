@@ -16,7 +16,7 @@ CONTAINS
       CLASS(distrib), INTENT(IN) :: this
       INTEGER :: lsize
       lsize = 10
-    END FUNCTION localize
+    END FUNCTION localsize
 
     SUBROUTINE sub1(nproma, distribution)
       INTEGER, INTENT(IN) :: nproma
