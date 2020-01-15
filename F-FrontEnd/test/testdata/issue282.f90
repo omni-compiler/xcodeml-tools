@@ -1,6 +1,7 @@
 module mod1
+  use mo_issue282 ! R504 use statement must be here
   implicit none
-  use mo_issue282
+
 
   real(kind=wp), parameter :: c1 = 0._wp
 contains
