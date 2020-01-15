@@ -27,7 +27,7 @@
           INTEGER :: f2
           CLASS(t) :: a
           f2 = a%v * 3
-        END FUNCTION f
+        END FUNCTION f2
         FUNCTION g(a)
           REAL :: g, a
           g = a
@@ -41,9 +41,8 @@
           INTEGER :: y
           i%v = a%v
         END FUNCTION i
-        
+
         MODULE PROCEDURE mf
           mf = 1
         END PROCEDURE
       END MODULE m
-      
