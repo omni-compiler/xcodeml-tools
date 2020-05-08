@@ -5182,11 +5182,11 @@ static void outx_structType(int l, TYPE_DESC tp)
                 outx_true(TYPE_IS_PRIVATE(id), "is_private");
                 outx_printi(0, ">\n");
                 if (!is_defined_io) {
-                    outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                    outx_tagText(l3, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
                 }
                 outx_tag(l3, "binding");
                 FOREACH_ID (binding, TBP_BINDING(id)) {
-                    outx_tagText(l4, "name", SYM_NAME(ID_SYM(binding)));
+                    outx_tagText(l4, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(binding))));
                 }
                 outx_close(l3, "binding");
                 outx_close(l2, "typeBoundGenericProcedure");
@@ -5221,9 +5221,9 @@ static void outx_structType(int l, TYPE_DESC tp)
 
                 outx_printi(0, ">\n");
 
-                outx_tagText(l3, "name", SYM_NAME(ID_SYM(id)));
+                outx_tagText(l3, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
                 outx_tag(l3, "binding");
-                outx_tagText(l4, "name", SYM_NAME(ID_SYM(TBP_BINDING(id))));
+                outx_tagText(l4, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(TBP_BINDING(id)))));
                 outx_close(l3, "binding");
 
                 outx_close(l2, "typeBoundProcedure");
