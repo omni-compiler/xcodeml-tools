@@ -12,7 +12,7 @@ public class XmTranslationException extends RuntimeException {
      * Creates XmTranslationException.
      *
      * @param node    a XcodeML node object which has fault description.
-     * @param case    the cause
+     * @param cause    the cause
      */
     public XmTranslationException(Node node, String msg, Throwable cause) {
         super(String.format("<%s> %s", node.getNodeName(), msg), cause);
@@ -31,7 +31,7 @@ public class XmTranslationException extends RuntimeException {
      * Creates XmTranslationException.
      *
      * @param node    a XcodeML node object which has fault description.
-     * @param case    the cause
+     * @param cause    the cause
      */
     public XmTranslationException(Node node, Throwable cause) {
         super(String.format("<%s>", node.getNodeName()), cause);
@@ -40,7 +40,7 @@ public class XmTranslationException extends RuntimeException {
     /**
      * Creates XmTranslationException.
      *
-     * @param case    the cause
+     * @param cause    the cause
      */
     public XmTranslationException(Throwable cause) {
         super(cause);
