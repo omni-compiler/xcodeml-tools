@@ -11,7 +11,6 @@ public class XmLongLongConst
      * 
      * @param high a forward 32 bit value of long long constant.
      * @param low a backward 32 bit value of long long constant.
-     * @param typeEnum indicates type of value.
      */
     public XmLongLongConst(long high, long low)
     {
@@ -22,9 +21,8 @@ public class XmLongLongConst
     /**
      * Creates XmLongLongConst
      * 
-     * @param high a forward 32 bit value of long long constant.
-     * @param low a backward 32 bit value of long long constant.
-     * @param typeEnum indicates type of value.
+     * @param hvalue a forward 32 bit value of long long constant.
+     * @param lvalue a backward 32 bit value of long long constant.
      * @throws XmException thrown if a value does not represent integer.
      */
     public XmLongLongConst(String hvalue, String lvalue) throws XmException
