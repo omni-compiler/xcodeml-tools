@@ -9,6 +9,7 @@ MKDIR_P = @MKDIR_P@
 INSTALL = @INSTALL@
 BINDIR  = @OMNI_HOME@/bin
 AWK     = @AWK@
+YACC    = @YACC@
 XMODDIR = @OMNI_HOME@/fincludes
 INTRMOD = fincludes/iso_fortran_env.xmod fincludes/iso_c_binding.xmod
 
