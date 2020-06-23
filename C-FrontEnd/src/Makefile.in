@@ -8,6 +8,7 @@ INSTALL = @INSTALL@
 BINDIR  = @OMNI_HOME@/bin
 PERL5   = @PERL5@
 LEX     = @LEX@
+YACC    = @YACC@
 
 OBJECTS = c-parser.o c-lexer.o c-expr.o c-token.o c-exprcode.o c-dump.o c-comp.o c-reduce.o \
 	  c-xcodeml.o c-const.o c-gcctype.o c-option.o c-type.o c-convert.o \
