@@ -30,11 +30,17 @@ def get_file_as_str(path: str):
         return s
 
 
+class NativeCompiler(Enum):
+    GFORTRAN = 1
+    PGFORTRAN = 2
+    UNKNOWN = 3
+
 class TesterArgs(NamedTuple):
     num_parallel_tests : int
     frontend : str
     backend : str
     xmodules_dir : str
+    native_compiler_type : NativeCompiler
     native_compiler : str
     errors_log : str
     test_data_dir : str
@@ -83,7 +89,18 @@ class TestRunner:
             return False
         else:
             raise argparse.ArgumentTypeError('Boolean value expected')
-
+    @staticmethod
+    def get_native_compiler_type(native_compiler : str) -> NativeCompiler:
+        native_compiler_type = None
+        p = subprocess.run(args=[native_compiler, '--version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        assert p.returncode == 0, 'Native compiler check failed'
+        info = p.stdout.decode('utf-8').lower()
+        if 'gnu fortran' in info:
+            return NativeCompiler.GFORTRAN
+        elif 'pgfortran' in info:
+            return NativeCompiler.PGFORTRAN
+        else:
+            return NativeCompiler.UNKNOWN
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Test runner for xcodeml-tools Fortran frontend and backend')
         parser.add_argument('-f', '--frontend-bin', type=str, required=True,
@@ -115,13 +132,15 @@ class TestRunner:
         assert parsed_args.number_of_parallel_tests >= 1, 'Number of parallel test should be at least 1'
         native_compiler = shutil.which(parsed_args.native_compiler)
         assert native_compiler is not None, 'native compiler not found'
+        native_compiler_type = self.get_native_compiler_type(native_compiler)
         obj_sym_reader = shutil.which('nm')
-        assert obj_sym_reader is not None, 'Utility for reaing object files not found'
+        assert obj_sym_reader is not None, 'Utility for reading object files not found'
         args = TesterArgs(num_parallel_tests=min(parsed_args.number_of_parallel_tests, multiprocessing.cpu_count()),
                           frontend=parsed_args.frontend_bin,
                           backend=parsed_args.backend_bin,
                           xmodules_dir=parsed_args.xmodules_dir,
                           native_compiler=native_compiler,
+                          native_compiler_type=native_compiler_type,
                           errors_log=os.path.abspath(parsed_args.error_log),
                           test_data_dir=parsed_args.input_test_dir,
                           verbose_output=parsed_args.verbose,
@@ -139,12 +158,11 @@ class TestRunner:
             k = 1
             for test_case in test_cases:
                 res = TestRunner.run_test_case(test_case, self.args, tmp_dir)
+                print(k, ' ', test_case)
+                k = k + 1
                 if not res.result:
                     print(res)
                     return 1
-                else:
-                    print(k, ' ', test_case)
-                    k = k + 1
             end_time= time.time()
             print('Elapsed time: ', end_time - start_time)
         return 0
@@ -159,7 +177,9 @@ class TestRunner:
         try:
             locale.setlocale(locale.LC_ALL, 'C')
             frontend_opts = ['-fintrinsic-xmodules-path', args.xmodules_dir]
-            native_comp_opts = ['-fcoarray=single']
+            native_comp_opts = []
+            if args.native_compiler_type != NativeCompiler.PGFORTRAN:
+                native_comp_opts += ['-fcoarray=single']
             frontend_opts += ['-fno-xmp-coarray']
             loc = locale.getlocale()
             test_case_basename = os.path.basename(test_case)
