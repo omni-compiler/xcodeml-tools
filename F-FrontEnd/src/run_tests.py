@@ -68,10 +68,18 @@ class TestingStageInfo(NamedTuple):
     error_log: Optional[str]
 
 
+class TerminalColor:
+    BLACK = '\033[30m'
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+
 def to_paragraph(p: Union[str, bytes], prefix: str = ''):
     if isinstance(p, bytes):
         p = p.decode('utf-8')
     return '\n'.join([prefix + l for l in wrap(p, width=100)])
+
+def error_text(s: str):
+    return TerminalColor.RED + s + TerminalColor.BLACK
 
 class TestResult(NamedTuple):
     def text_summary(self) -> str:
@@ -82,9 +90,9 @@ class TestResult(NamedTuple):
                 if s.args is not None:
                     txt += 'Args:\n%s\n' % to_paragraph(s.args, '\t')
                 if s.error_log is not None:
-                    txt += 'Output:\n%s\n' % to_paragraph(s.error_log, '\t')
+                    txt += error_text('Output:\n%s\n' % to_paragraph(s.error_log, '\t'))
         if self.exception is not None:
-            txt += 'Exception:\n' + to_paragraph(self.exception, '\t')
+            txt += error_text('Exception:\n' + to_paragraph(self.exception, '\t'))
         return txt
     stages: List[TestingStageInfo]
     result: bool
@@ -97,7 +105,6 @@ class ReturnCode(Enum):
 
 
 RC = ReturnCode
-
 
 class TestRunner:
 
