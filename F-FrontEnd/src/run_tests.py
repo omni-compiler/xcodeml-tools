@@ -8,7 +8,8 @@ assert sys.version_info[0] >= 3 and sys.version_info[1] >= 6, 'Python >= 3.6 is 
 import argparse, os, locale, shutil, pathlib, tempfile, multiprocessing, subprocess, traceback, time, re
 from os.path import join as join_path, realpath as real_path
 from enum import Enum
-from typing import Tuple, NamedTuple, List, Optional, Dict
+from typing import Tuple, NamedTuple, List, Optional, Dict, Union
+from textwrap import wrap
 
 THIS_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 TEST_DATA_DEFAULT_RELATIVE_PATH = '../../F-FrontEnd/test/testdata'
@@ -44,6 +45,7 @@ class TesterArgs(NamedTuple):
     native_compiler : str
     errors_log : str
     test_data_dir : str
+    test_case : Optional[str]
     verbose_output : bool
     obj_sym_reader : str
 
@@ -60,19 +62,45 @@ class TestingStage(Enum):
 
 
 class TestingStageInfo(NamedTuple):
-    type : TestingStage
-    result : bool
-    args : Optional[str]
-    error_log : Optional[str]
+    type: TestingStage
+    result: bool
+    args: Optional[str]
+    error_log: Optional[str]
 
+
+def to_paragraph(p: Union[str, bytes], prefix: str = ''):
+    if isinstance(p, bytes):
+        p = p.decode('utf-8')
+    return '\n'.join([prefix + l for l in wrap(p, width=100)])
 
 class TestResult(NamedTuple):
-    stages : List[TestingStageInfo]
-    result : bool
-    exception : Optional[str]
+    def text_summary(self) -> str:
+        txt = ''
+        for s in self.stages:
+            txt += '%s\n' % s.type
+            if not s.result:
+                if s.args is not None:
+                    txt += 'Args:\n%s\n' % to_paragraph(s.args, '\t')
+                if s.error_log is not None:
+                    txt += 'Output:\n%s\n' % to_paragraph(s.error_log, '\t')
+        if self.exception is not None:
+            txt += 'Exception:\n' + to_paragraph(self.exception, '\t')
+        return txt
+    stages: List[TestingStageInfo]
+    result: bool
+    exception: Optional[str]
+
+
+class ReturnCode(Enum):
+    SUCCESS = 0
+    FAILURE = 1
+
+
+RC = ReturnCode
 
 
 class TestRunner:
+
     @property
     def args(self):
         return self.__args
@@ -115,54 +143,71 @@ class TestRunner:
         parser.add_argument('-d', '--input-test-dir', type=str,
                             default=real_path(join_path(THIS_DIR_PATH, TEST_DATA_DEFAULT_RELATIVE_PATH)),
                             help='Input test data directory (default: %s)' % TEST_DATA_DEFAULT_RELATIVE_PATH)
+        parser.add_argument('-i', '--input-test', type=str, default=None,
+                            help='Specific input test file basename.')
+        #gfortran version is important! Currently some of the tests fail with gfortran 9 and 10
         parser.add_argument('-n', '--native-compiler', type=str, default='gfortran-7',
                             help='Path to fortran compiler (currently only gfortran is supported)')
-        #gfortran version is important! Currently some of the tests fail with gfortran 9 and 10
         parser.add_argument('-e', '--error-log', type=str, default=DEFAULT_ERROR_LOG_FILENAME,
                             help='Output error log (default: %s in current working dir )' % DEFAULT_ERROR_LOG_FILENAME)
         parser.add_argument('-p', '--number-of-parallel-tests', type=int, default=1,
                             help='Maximum number of tests allowed to run in parallel')
         parser.add_argument('-t', '--enable-coarray-to-xmp-transform', type=TestRunner.bool_str, default=False,
                             help='Transform coarray statement to xmp subroutine call statement')
-        parsed_args = parser.parse_args()
-        assert file_exists(parsed_args.frontend_bin), 'Frontend executable  not found'
-        assert file_exists(parsed_args.backend_bin), 'Backend executable not found'
-        assert dir_exists(parsed_args.input_test_dir), 'Intrinsic modules directory not found'
-        assert dir_exists(parsed_args.xmodules_dir), 'Input test data directory not found'
-        assert not parsed_args.enable_coarray_to_xmp_transform, '--enable-coarray-to-xmp-transform is currently unsupported'
-        assert parsed_args.number_of_parallel_tests >= 1, 'Number of parallel test should be at least 1'
-        native_compiler = shutil.which(parsed_args.native_compiler)
+        p_args = parser.parse_args()
+        assert file_exists(p_args.frontend_bin), 'Frontend executable  not found'
+        assert file_exists(p_args.backend_bin), 'Backend executable not found'
+        assert dir_exists(p_args.input_test_dir), 'Intrinsic modules directory not found'
+        if p_args.input_test is not None:
+            test_path = join_path(p_args.input_test_dir, p_args.input_test)
+            assert file_exists(test_path), 'Input test "%s" does not exist not found in test directory "%s"' % \
+                                           (p_args.input_test_dir, p_args.input_test)
+        assert dir_exists(p_args.xmodules_dir), 'Input test data directory not found'
+        assert not p_args.enable_coarray_to_xmp_transform, '--enable-coarray-to-xmp-transform is currently unsupported'
+        assert p_args.number_of_parallel_tests >= 1, 'Number of parallel test should be at least 1'
+        native_compiler = shutil.which(p_args.native_compiler)
         assert native_compiler is not None, 'native compiler not found'
         native_compiler_type = self.get_native_compiler_type(native_compiler)
         obj_sym_reader = shutil.which('nm')
         assert obj_sym_reader is not None, 'Utility for reading object files not found'
-        args = TesterArgs(num_parallel_tests=min(parsed_args.number_of_parallel_tests, multiprocessing.cpu_count()),
-                          frontend=parsed_args.frontend_bin,
-                          backend=parsed_args.backend_bin,
-                          xmodules_dir=parsed_args.xmodules_dir,
+        args = TesterArgs(num_parallel_tests=min(p_args.number_of_parallel_tests, multiprocessing.cpu_count()),
+                          frontend=p_args.frontend_bin,
+                          backend=p_args.backend_bin,
+                          xmodules_dir=p_args.xmodules_dir,
                           native_compiler=native_compiler,
                           native_compiler_type=native_compiler_type,
-                          errors_log=os.path.abspath(parsed_args.error_log),
-                          test_data_dir=parsed_args.input_test_dir,
-                          verbose_output=parsed_args.verbose,
+                          errors_log=os.path.abspath(p_args.error_log),
+                          test_data_dir=p_args.input_test_dir,
+                          test_case=p_args.input_test,
+                          verbose_output=p_args.verbose,
                           obj_sym_reader=obj_sym_reader)
         return args
 
     def run(self) -> int:
         test_cases , testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
-        with open(self.args.errors_log, 'w') as errors_log, tempfile.TemporaryDirectory(dir=TMPFS_DIR) as tmp_dir:
-            start_time = time.time()
-            k = 1
-            for test_case in test_cases:
-                res = TestRunner.run_test_case(test_case, self.args, tmp_dir, testcase_deps[test_case])
-                print(k, ' ', test_case)
-                k = k + 1
-                if not res.result:
-                    print(res)
-                    return 1
-            end_time= time.time()
+        start_time = time.time()
+        try:
+            with open(self.args.errors_log, 'w') as errors_log, tempfile.TemporaryDirectory(dir=TMPFS_DIR) as tmp_dir:
+                if self.args.test_case is None:
+                    k = 1
+                    for test_case in test_cases:
+                        print(k, ' ', test_case)
+                        res = TestRunner.run_test_case(test_case, self.args, tmp_dir, testcase_deps[test_case])
+                        k = k + 1
+                        if not res.result:
+                            print(res.text_summary())
+                            return RC.FAILURE
+                else:
+                    t_case = self.args.test_case
+                    print(t_case)
+                    res = TestRunner.run_test_case(t_case, self.args, tmp_dir, testcase_deps[t_case])
+                    if not res.result:
+                        print(res.text_summary())
+                        return RC.FAILURE
+        finally:
+            end_time = time.time()
             print('Elapsed time: ', end_time - start_time)
-        return 0
+        return RC.SUCCESS
 
     @staticmethod
     def scan_for_dependencies(dir : str, debug_output : bool = False) -> Tuple[List[str], Dict[str, List[str]]]:
