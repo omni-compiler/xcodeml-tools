@@ -220,11 +220,16 @@ class TestRunner:
     def scan_for_dependencies(dir : str, debug_output : bool = False) -> Tuple[List[str], Dict[str, List[str]]]:
         test_cases = []
         reg_comment = re.compile('\!.*')
-        spaces_pat = '[\s]+'
-        fortran_id_pat = '[a-z][a-z0-9\_]*'
-        module_decl_pat = 'module' + spaces_pat + ('(%s)' % fortran_id_pat)
-        reg_module_decl = re.compile(module_decl_pat)
-        reg_use_module = re.compile('use' + spaces_pat + ('(%s)' % fortran_id_pat))
+        spaces = '[\s]+'
+        opt_spaces = '[\s]*'
+        fortran_id = '[a-z][a-z0-9\_]*'
+        module_decl = 'module' + spaces + ('(%s)' % fortran_id)
+        submodule_name = '[\sa-z0-9\_]+'
+        submodule_decl = 'submodule' + opt_spaces + ('\((%s)\)' % submodule_name) + opt_spaces +  ('(%s)' % fortran_id)
+        reg_space = re.compile('\s')
+        reg_module_decl = re.compile(module_decl)
+        reg_submodule_decl = re.compile(submodule_decl)
+        reg_use_module = re.compile('use' + spaces + ('(%s)' % fortran_id))
         mod_to_file = {}
         testcase_deps = {}
         for pattern in ('*.f', '*.f90', '*.f08'):
@@ -247,6 +252,7 @@ class TestRunner:
                     line = line.lower()
                     # Find module declarations and uses
                     module_decl_line = reg_module_decl.match(line)
+                    submodule_decl_line = reg_submodule_decl.match(line)
                     use_module_line = reg_use_module.match(line)
                     if module_decl_line is not None:
                         mod_name = module_decl_line.group(1)
@@ -256,6 +262,15 @@ class TestRunner:
                             mod_to_file[mod_name] = test_case
                             this_testcase_mods.add(mod_name)
                             if debug_output: print('\t' + mod_name)
+                    elif submodule_decl_line is not None:
+                        submod_short_name = submodule_decl_line.group(2)
+                        parent_mod_name = reg_space.sub('', submodule_decl_line.group(1))
+                        submod_name = '%s:%s' % (parent_mod_name, submod_short_name)
+                        mod_to_file[submod_name] = test_case
+                        this_testcase_mods.add(submod_name)
+                        if parent_mod_name not in this_testcase_mods:
+                            parent_mod_file = mod_to_file[parent_mod_name]
+                            deps.add(parent_mod_file)
                     elif use_module_line is not None:
                         mod_name = use_module_line.group(1)
                         #assert mod_name in mod_to_file, 'Module "%s" not defined in this or previous modules' % mod_name
