@@ -16,7 +16,8 @@ THIS_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 TEST_DATA_DEFAULT_RELATIVE_PATH = '../../F-FrontEnd/test/testdata'
 DEFAULT_ERROR_LOG_FILENAME = 'errors.log'
 TMPFS_DIR = '/dev/shm'
-TEST_TIMEOUT = 10 # seconds
+TEST_TIMEOUT = 10  # seconds
+
 
 def file_exists(path: str):
     return os.path.exists(path) and os.path.isfile(path)
@@ -37,6 +38,7 @@ class NativeCompiler(Enum):
     PGFORTRAN = 2
     UNKNOWN = 3
 
+
 class TesterArgs(NamedTuple):
     num_parallel_tests: int
     frontend: str
@@ -50,6 +52,7 @@ class TesterArgs(NamedTuple):
     working_dir: Optional[str]
     verbose_output: bool
     obj_sym_reader: str
+
 
 class TestingStage(Enum):
     DEPENDENCIES_PREP = 0
@@ -75,13 +78,16 @@ class TerminalColor:
     RED = '\033[31m'
     GREEN = '\033[32m'
 
+
 def to_paragraph(p: Union[str, bytes], prefix: str = ''):
     if isinstance(p, bytes):
         p = p.decode('utf-8')
     return '\n'.join([prefix + l for l in wrap(p, width=100)])
 
+
 def error_text(s: str):
     return TerminalColor.RED + s + TerminalColor.BLACK
+
 
 class TestResult(NamedTuple):
     def text_summary(self) -> str:
@@ -107,6 +113,7 @@ class ReturnCode(Enum):
 
 
 RC = ReturnCode
+
 
 class TestcaseRunner:
     @property
@@ -156,7 +163,6 @@ class TestcaseRunner:
     @property
     def syms_out_file(self): return join_path(self.working_dir, self.syms_out_file_basename)
 
-
     def __init__(self,
                  basename: str,
                  tester_args: TesterArgs,
@@ -183,7 +189,7 @@ class TestcaseRunner:
         native_options_in_file = self.test_case + '.native.options'
         if file_exists(native_options_in_file):
             self.__native_comp_opts += [get_file_as_str(native_options_in_file)]
-        self.__expected_output_in_file = os.path.splitext(self.test_case) [0]+ '.res'
+        self.__expected_output_in_file = os.path.splitext(self.test_case)[0] + '.res'
         self.__compare_with_expected_output = file_exists(self.expected_output_in_file)
         self.__working_dir = working_dir
         self.__xml_out_file_basename = basename + '.xml'
@@ -194,13 +200,13 @@ class TestcaseRunner:
         self.__syms_out_file_basename = basename + '.syms'
         self.__result = None
 
-    def __add_stage_info(self, type: TestingStage, process: subprocess.CompletedProcess):
+    def __add_stage_info(self, stage_type: TestingStage, process: subprocess.CompletedProcess):
         res = process.returncode == 0
-        self.__stages.append(TestingStageInfo(type=type, result=res, args=" ".join(process.args),
+        self.__stages.append(TestingStageInfo(type=stage_type, result=res, args=" ".join(process.args),
                                               error_log=None if res else process.stdout))
 
     def __run_exec(self, args: List[str], stage: Optional[TestingStage] = None,
-                   record_stage_only_on_error: bool=False) -> subprocess.CompletedProcess:
+                   record_stage_only_on_error: bool = False) -> subprocess.CompletedProcess:
         assert self.working_dir is not None, 'Working dir not set'
         p = subprocess.run(args=args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT, cwd=self.working_dir)
@@ -268,7 +274,7 @@ class TestcaseRunner:
 
     def __test_native_compiler_link(self) -> Optional[TestResult]:
         linker_args = [self.args.native_compiler, '-o', self.exec_out_file_basename, self.bin_out_file_basename]
-        p = self.__run_exec(linker_args, TestingStage.LINK)
+        self.__run_exec(linker_args, TestingStage.LINK)
         return self.__result
 
     def __read_symbols(self) -> Optional[TestResult]:
@@ -325,18 +331,16 @@ class TestcaseRunner:
                 res.append(line)
         return res
 
-    def __result_error(self, exception: str=None) -> TestResult:
+    def __result_error(self, exception: str = None) -> TestResult:
         return TestResult(tuple(self.__stages), False, exception)
 
     def __result_success(self) -> TestResult:
         return TestResult(tuple(self.__stages), True, None)
 
     def run(self) -> TestResult:
-        stages = self.__stages
         current_locale = locale.getlocale()
         try:
             locale.setlocale(locale.LC_ALL, 'C')
-            loc = locale.getlocale()
             if self.__prepare_dependencies() is not None:
                 return self.__result
             if self.__test_frontend() is not None:
@@ -352,7 +356,7 @@ class TestcaseRunner:
                     return self.__result
                 if self.__read_symbols() is not None:
                     return self.__result
-                if self.__has_main_symbol(): # Linked file is executable
+                if self.__has_main_symbol():  # Linked file is executable
                     # Execute the linked file
                     if self.__run_executable() is not None:
                         return self.__result
@@ -375,6 +379,7 @@ class TestcaseRunner:
         finally:
             locale.setlocale(locale.LC_ALL, current_locale)
 
+
 class TestRunner:
 
     @property
@@ -394,9 +399,9 @@ class TestRunner:
             return False
         else:
             raise argparse.ArgumentTypeError('Boolean value expected')
+
     @staticmethod
     def get_native_compiler_type(native_compiler: str) -> NativeCompiler:
-        native_compiler_type = None
         p = subprocess.run(args=[native_compiler, '--version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert p.returncode == 0, 'Native compiler check failed'
         info = p.stdout.decode('utf-8').lower()
@@ -406,6 +411,7 @@ class TestRunner:
             return NativeCompiler.PGFORTRAN
         else:
             return NativeCompiler.UNKNOWN
+
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Test runner for xcodeml-tools Fortran frontend and backend')
         parser.add_argument('-f', '--frontend-bin', type=str, required=True,
@@ -423,7 +429,7 @@ class TestRunner:
                             help='Specific input test file basename.')
         parser.add_argument('-w', '--working-dir', type=str, default=None,
                             help='Specific working dir directory (artifacts will be left there after run)')
-        #gfortran version is important! Currently some of the tests fail with gfortran 9 and 10
+        # gfortran version is important! Currently some of the tests fail with gfortran 9 and 10
         parser.add_argument('-n', '--native-compiler', type=str, default='gfortran-7',
                             help='Path to fortran compiler (currently only gfortran is supported)')
         parser.add_argument('-e', '--error-log', type=str, default=DEFAULT_ERROR_LOG_FILENAME,
@@ -463,33 +469,33 @@ class TestRunner:
         return args
 
     def run(self) -> int:
-        test_cases , testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
+        test_cases, testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
         start_time = time.time()
 
         @contextmanager
-        def prepare_dir(dir=None):
-            if dir is not None:
-                os.makedirs(dir, exist_ok=True)
-                yield dir
+        def prepare_dir(dir_path=None):
+            if dir_path is not None:
+                os.makedirs(dir_path, exist_ok=True)
+                yield dir_path
                 pass
             else:
-                d = tempfile.TemporaryDirectory(dir=dir)
+                d = tempfile.TemporaryDirectory(dir=dir_path)
                 yield d.name
                 d.cleanup()
         try:
             with prepare_dir(self.args.working_dir) as working_dir:
                 if self.args.test_case is None:
-                        k = 1
-                        for test_case in test_cases:
-                            print(k, ' ', test_case)
-                            testcase_working_dir = join_path(working_dir, os.path.basename(test_case).replace('.', '-'))
-                            os.makedirs(testcase_working_dir)
-                            tc = TestcaseRunner(test_case, self.args, working_dir, testcase_deps[test_case])
-                            res = tc.run()
-                            k = k + 1
-                            if not res.result:
-                                print(res.text_summary())
-                                return RC.FAILURE.value
+                    k = 1
+                    for test_case in test_cases:
+                        print(k, ' ', test_case)
+                        testcase_working_dir = join_path(working_dir, os.path.basename(test_case).replace('.', '-'))
+                        os.makedirs(testcase_working_dir)
+                        tc = TestcaseRunner(test_case, self.args, working_dir, testcase_deps[test_case])
+                        res = tc.run()
+                        k = k + 1
+                        if not res.result:
+                            print(res.text_summary())
+                            return RC.FAILURE.value
                 else:
                     t_case = self.args.test_case
                     print(t_case)
@@ -504,7 +510,8 @@ class TestRunner:
         return RC.SUCCESS.value
 
     @staticmethod
-    def scan_for_dependencies(dir: str, debug_output: bool = False) -> Tuple[Tuple[str, ...], Dict[str, Tuple[str, ...]]]:
+    def scan_for_dependencies(dir_path: str,
+                              debug_output: bool = False) -> Tuple[Tuple[str, ...], Dict[str, Tuple[str, ...]]]:
         test_cases = []
         reg_comment = re.compile('!.*')
         spaces = '[\s]+'
@@ -512,7 +519,7 @@ class TestRunner:
         fortran_id = '[a-z][a-z0-9\_]*'
         module_decl = 'module' + spaces + ('(%s)' % fortran_id)
         submodule_name = '[\sa-z0-9\_]+'
-        submodule_decl = 'submodule' + opt_spaces + ('\((%s)\)' % submodule_name) + opt_spaces +  ('(%s)' % fortran_id)
+        submodule_decl = 'submodule' + opt_spaces + ('\((%s)\)' % submodule_name) + opt_spaces + ('(%s)' % fortran_id)
         reg_space = re.compile('\s')
         reg_module_decl = re.compile(module_decl)
         reg_submodule_decl = re.compile(submodule_decl)
@@ -520,7 +527,7 @@ class TestRunner:
         mod_to_file = {}
         testcase_deps = {}
         for pattern in ('*.f', '*.f90', '*.f08'):
-            test_cases += [os.path.basename(str(path)) for path in pathlib.Path(dir).glob(pattern)]
+            test_cases += [os.path.basename(str(path)) for path in pathlib.Path(dir_path).glob(pattern)]
         test_cases = sorted(test_cases)
         # Order of the tests is currently relevant, as some files depend on each other!!!
         start_time = time.time()
@@ -528,7 +535,7 @@ class TestRunner:
         for test_case in test_cases:
             if debug_output: print(k, ' ', test_case)
             k = k + 1
-            with open(os.path.join(dir, test_case), 'r') as f:
+            with open(os.path.join(dir_path, test_case), 'r') as f:
                 deps = testcase_deps[test_case] = set()
                 lines = f.readlines()
                 this_testcase_mods = set()
@@ -544,7 +551,7 @@ class TestRunner:
                     if module_decl_line is not None:
                         mod_name = module_decl_line.group(1)
                         if mod_name not in ('procedure', 'function', 'subroutine'):
-                            #assert mod_name not in mod_to_file, 'Module "%s" already defined in "%s"' % \
+                            # assert mod_name not in mod_to_file, 'Module "%s" already defined in "%s"' % \
                             #                                    (mod_name, mod_to_file[mod_name])
                             mod_to_file[mod_name] = test_case
                             this_testcase_mods.add(mod_name)
@@ -560,10 +567,10 @@ class TestRunner:
                             deps.add(parent_mod_file)
                     elif use_module_line is not None:
                         mod_name = use_module_line.group(1)
-                        #assert mod_name in mod_to_file, 'Module "%s" not defined in this or previous modules' % mod_name
+                        # assert mod_name in mod_to_file, 'Module "%s" not defined in this or previous modules' % mod_name
                         if mod_name not in this_testcase_mods:
                             mod_file = mod_to_file.get(mod_name)
-                            #assert mod_file is not None, 'Module not declared'
+                            # assert mod_file is not None, 'Module not declared'
                             if mod_file is not None:
                                 deps.add(mod_file)
                 if deps:
