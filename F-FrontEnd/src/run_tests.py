@@ -10,6 +10,7 @@ from os.path import join as join_path, realpath as real_path
 from enum import Enum
 from typing import Tuple, NamedTuple, List, Optional, Dict, Union
 from textwrap import wrap
+from contextlib import contextmanager
 
 THIS_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 TEST_DATA_DEFAULT_RELATIVE_PATH = '../../F-FrontEnd/test/testdata'
@@ -37,17 +38,18 @@ class NativeCompiler(Enum):
     UNKNOWN = 3
 
 class TesterArgs(NamedTuple):
-    num_parallel_tests : int
-    frontend : str
-    backend : str
-    xmodules_dir : str
-    native_compiler_type : NativeCompiler
-    native_compiler : str
-    errors_log : str
-    test_data_dir : str
-    test_case : Optional[str]
-    verbose_output : bool
-    obj_sym_reader : str
+    num_parallel_tests: int
+    frontend: str
+    backend: str
+    xmodules_dir: str
+    native_compiler_type: NativeCompiler
+    native_compiler: str
+    errors_log: str
+    test_data_dir: str
+    test_case: Optional[str]
+    working_dir: Optional[str]
+    verbose_output: bool
+    obj_sym_reader: str
 
 class TestingStage(Enum):
     DEPENDENCIES_PREP = 0
@@ -94,7 +96,7 @@ class TestResult(NamedTuple):
         if self.exception is not None:
             txt += error_text('Exception:\n' + to_paragraph(self.exception, '\t'))
         return txt
-    stages: List[TestingStageInfo]
+    stages: Tuple[TestingStageInfo, ...]
     result: bool
     exception: Optional[str]
 
@@ -105,6 +107,273 @@ class ReturnCode(Enum):
 
 
 RC = ReturnCode
+
+class TestcaseRunner:
+    @property
+    def name(self): return self.__basename
+    @property
+    def input_dir(self): return self.__input_dir
+    @property
+    def dependencies(self): return self.__dependencies
+    @property
+    def args(self): return self.__args
+    @property
+    def test_case(self): return self.__test_case
+    @property
+    def use_native(self): return self.__use_native
+    @property
+    def skip_native(self): return self.__skip_native
+    @property
+    def reference_in_file(self): return self.__reference_in_file
+    @property
+    def compare_with_reference(self): return self.__compare_with_reference
+    @property
+    def frontend_opts(self): return self.__frontend_opts
+    @property
+    def native_comp_opts(self): return self.__native_comp_opts
+    @property
+    def expected_output_in_file(self): return self.__expected_output_in_file
+    @property
+    def compare_with_expected_output(self): return self.__compare_with_expected_output
+    @property
+    def stages(self): return self.__stages
+    @property
+    def working_dir(self): return self.__working_dir
+    @property
+    def xml_out_file_basename(self): return self.__xml_out_file_basename
+    @property
+    def decompiled_src_out_file_basename(self): return self.__decompiled_src_out_file_basename
+    @property
+    def bin_out_file_basename(self): return self.__bin_out_file_basename
+    @property
+    def exec_out_file_basename(self): return self.__exec_out_file_basename
+    @property
+    def exec_result_out_file_basename(self): return self.__exec_result_out_file_basename
+    @property
+    def exec_result_out_file(self): return join_path(self.working_dir, self.exec_result_out_file_basename)
+    @property
+    def syms_out_file_basename(self): return self.__syms_out_file_basename
+    @property
+    def syms_out_file(self): return join_path(self.working_dir, self.syms_out_file_basename)
+
+
+    def __init__(self,
+                 basename: str,
+                 tester_args: TesterArgs,
+                 working_dir: str,
+                 dependencies: Tuple[str, ...]):
+        self.__basename = basename
+        self.__args = tester_args
+        self.__input_dir = tester_args.test_data_dir
+        self.__dependencies = dependencies
+        self.__stages = []
+        self.__test_case = join_path(tester_args.test_data_dir, basename)
+        self.__skip_native = file_exists(self.test_case + '.skip.native')
+        self.__use_native = file_exists(self.test_case + '.native')
+        self.__reference_in_file = self.test_case + '.ref'
+        self.__compare_with_reference = file_exists(self.__reference_in_file)
+        frontend_opts = ['-fintrinsic-xmodules-path', tester_args.xmodules_dir, '-fno-xmp-coarray']
+        options_in_file = self.test_case + '.options'
+        if file_exists(options_in_file):
+            frontend_opts += [get_file_as_str(options_in_file)]
+        self.__frontend_opts = tuple(frontend_opts)
+        self.__native_comp_opts = []
+        if tester_args.native_compiler_type != NativeCompiler.PGFORTRAN:
+            self.__native_comp_opts += ['-fcoarray=single']
+        native_options_in_file = self.test_case + '.native.options'
+        if file_exists(native_options_in_file):
+            self.__native_comp_opts += [get_file_as_str(native_options_in_file)]
+        self.__expected_output_in_file = os.path.splitext(self.test_case) [0]+ '.res'
+        self.__compare_with_expected_output = file_exists(self.expected_output_in_file)
+        self.__working_dir = working_dir
+        self.__xml_out_file_basename = basename + '.xml'
+        self.__decompiled_src_out_file_basename = basename + '.dec.f90'
+        self.__bin_out_file_basename = basename + '.o'
+        self.__exec_out_file_basename = basename + '.bin'
+        self.__exec_result_out_file_basename = basename + '.res'
+        self.__syms_out_file_basename = basename + '.syms'
+        self.__result = None
+
+    def __add_stage_info(self, type: TestingStage, process: subprocess.CompletedProcess):
+        res = process.returncode == 0
+        self.__stages.append(TestingStageInfo(type=type, result=res, args=" ".join(process.args),
+                                              error_log=None if res else process.stdout))
+
+    def __run_exec(self, args: List[str], stage: Optional[TestingStage] = None,
+                   record_stage_only_on_error: bool=False) -> subprocess.CompletedProcess:
+        assert self.working_dir is not None, 'Working dir not set'
+        p = subprocess.run(args=args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, cwd=self.working_dir)
+        if stage is not None and not record_stage_only_on_error:
+            self.__add_stage_info(stage, p)
+            if not self.__stages[-1].result:
+                self.__result = self.__result_error()
+        return p
+
+    def __prepare_dependencies(self) -> Optional[TestResult]:
+        # Run frontend on dependencies
+        for dep_basename in self.dependencies:
+            dep = os.path.join(self.args.test_data_dir, dep_basename)
+            dep_obj_file_basename = dep_basename + '.o'
+            dep_xml_file_basename = dep_basename + '.xml'
+            dep_obj_file = join_path(self.working_dir, dep_obj_file_basename)
+            dep_xml_file = join_path(self.working_dir, dep_xml_file_basename)
+            # Generate xmod files
+            frontend_dep_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] + \
+                                [dep, '-o', dep_xml_file_basename]
+            p = self.__run_exec(frontend_dep_args, TestingStage.DEPENDENCIES_PREP, True)
+            if p.returncode != 0:
+                return self.__result
+            if not self.skip_native:
+                # Run backend
+                native_original_in_dep_file = dep + '.skip.native'
+                if file_exists(native_original_in_dep_file):
+                    src = dep
+                else:
+                    dep_decompiled_src = dep_basename + '.dec.f90'
+                    backend_dep_args = [self.args.backend, dep_xml_file_basename, '-o', dep_decompiled_src]
+                    p = self.__run_exec(backend_dep_args, TestingStage.DEPENDENCIES_PREP, True)
+                    if p.returncode != 0:
+                        return self.__result
+                    src = dep_decompiled_src
+                # Generate mod files
+                native_dep_args = [self.args.native_compiler] + self.native_comp_opts + ['-c', src, '-o', dep_obj_file]
+                p = self.__run_exec(native_dep_args, TestingStage.DEPENDENCIES_PREP, True)
+                if p.returncode != 0:
+                    return self.__result
+                os.remove(dep_obj_file)
+            os.remove(dep_xml_file)
+        self.__stages.append(TestingStageInfo(type=TestingStage.DEPENDENCIES_PREP, result=True, args=None,
+                                              error_log=None))
+        return self.__result
+
+    def __test_frontend(self) -> Optional[TestResult]:
+        frontend_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] +\
+                        [self.test_case, '-o', self.xml_out_file_basename]
+        self.__run_exec(frontend_args, TestingStage.FRONTEND)
+        return self.__result
+
+    def __test_backend(self) -> Optional[TestResult]:
+        backend_args = [self.args.backend, self.xml_out_file_basename, '-o', self.decompiled_src_out_file_basename]
+        self.__run_exec(backend_args, TestingStage.BACKEND)
+        return self.__result
+
+    def __test_with_native_compiler(self) -> Optional[TestResult]:
+        src = self.decompiled_src_out_file_basename
+        if self.use_native:
+            src = self.test_case
+        native_args = [self.args.native_compiler] + self.native_comp_opts + ['-c', src, '-o', self.bin_out_file_basename]
+        self.__run_exec(native_args, TestingStage.NATIVE)
+        return self.__result
+
+    def __test_native_compiler_link(self) -> Optional[TestResult]:
+        linker_args = [self.args.native_compiler, '-o', self.exec_out_file_basename, self.bin_out_file_basename]
+        p = self.__run_exec(linker_args, TestingStage.LINK)
+        return self.__result
+
+    def __read_symbols(self) -> Optional[TestResult]:
+        sym_read_args = [self.args.obj_sym_reader, '--format', 'posix', self.exec_out_file_basename]
+        p = self.__run_exec(sym_read_args, TestingStage.SYMBOLS_READ)
+        syms = p.stdout
+        with open(self.syms_out_file, 'wb') as f:
+            f.write(syms)
+        return self.__result
+
+    def __has_main_symbol(self) -> bool:
+        with open(self.syms_out_file, 'r') as f:
+            syms = f.readlines()
+            for line in syms:
+                line = line.strip()
+                if len(line) > 0 and 'main' in line.split()[0]:
+                    return True
+        return False
+
+    def __run_executable(self) -> Optional[TestResult]:
+        exec_args = [join_path('./', self.exec_out_file_basename)]
+        p = self.__run_exec(exec_args, TestingStage.EXECUTION)
+        with open(self.exec_result_out_file, 'wb') as f:
+            f.write(p.stdout)
+        return self.__result
+
+    def __decompile(self) -> Optional[TestResult]:
+        # Decompile file without line information, then compare to reference
+        backend_args = [self.args.backend, '-l', self.xml_out_file_basename, '-o', self.decompiled_src_out_file_basename]
+        self.__run_exec(backend_args, TestingStage.REFERENCE_OUTPUT, record_stage_only_on_error=True)
+        return self.__result
+
+    def __compare_output_files(self, filename1, filename2, stage: TestingStage) -> Optional[TestResult]:
+        with open(filename1, 'r') as f:
+            out_lines = f.read()
+            out_lines = self.normalize_expected_output(out_lines)
+        with open(filename2, 'r') as f:
+            expected_out_lines = self.normalize_expected_output(f.read())
+        res = out_lines == expected_out_lines
+        self.__stages.append(TestingStageInfo(type=stage, result=res, args=None,
+                                              error_log=None if res else 'Output did not match'))
+        if not self.__stages[-1].result:
+            self.__result = self.__result_error()
+        return self.__result
+
+    @staticmethod
+    def normalize_expected_output(s: Union[bytes, str]):
+        if isinstance(s, bytes):
+            s = s.decode("utf-8")
+        res = []
+        for line in s.split('\n'):
+            line = line.strip()
+            if len(line) > 0:
+                res.append(line)
+        return res
+
+    def __result_error(self, exception: str=None) -> TestResult:
+        return TestResult(tuple(self.__stages), False, exception)
+
+    def __result_success(self) -> TestResult:
+        return TestResult(tuple(self.__stages), True, None)
+
+    def run(self) -> TestResult:
+        stages = self.__stages
+        current_locale = locale.getlocale()
+        try:
+            locale.setlocale(locale.LC_ALL, 'C')
+            loc = locale.getlocale()
+            if self.__prepare_dependencies() is not None:
+                return self.__result
+            if self.__test_frontend() is not None:
+                return self.__result
+            if self.__test_backend() is not None:
+                return self.__result
+            if self.skip_native:
+                return self.__result_success()
+            if self.__test_with_native_compiler() is not None:
+                return self.__result
+            if self.compare_with_expected_output:
+                if self.__test_native_compiler_link() is not None:
+                    return self.__result
+                if self.__read_symbols() is not None:
+                    return self.__result
+                if self.__has_main_symbol(): # Linked file is executable
+                    # Execute the linked file
+                    if self.__run_executable() is not None:
+                        return self.__result
+                    if self.__compare_output_files(self.exec_result_out_file,
+                                                   self.expected_output_in_file,
+                                                   TestingStage.EXPECTED_OUTPUT) is not None:
+                        return self.__result
+            if self.compare_with_reference:
+                # Decompile file without line information, then compare to reference
+                if self.__decompile() is not None:
+                    return self.__result
+                if self.__compare_output_files(self.reference_in_file,
+                                               join_path(self.working_dir, self.decompiled_src_out_file_basename),
+                                               TestingStage.REFERENCE_OUTPUT) is not None:
+                    return self.__result
+            return self.__result_success()
+        except:
+            except_str = traceback.format_exc()
+            return self.__result_error(exception=except_str)
+        finally:
+            locale.setlocale(locale.LC_ALL, current_locale)
 
 class TestRunner:
 
@@ -126,7 +395,7 @@ class TestRunner:
         else:
             raise argparse.ArgumentTypeError('Boolean value expected')
     @staticmethod
-    def get_native_compiler_type(native_compiler : str) -> NativeCompiler:
+    def get_native_compiler_type(native_compiler: str) -> NativeCompiler:
         native_compiler_type = None
         p = subprocess.run(args=[native_compiler, '--version'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         assert p.returncode == 0, 'Native compiler check failed'
@@ -147,11 +416,13 @@ class TestRunner:
                             help='Directory, where intrinsic modules are located')
         parser.add_argument('-v', '--verbose', type=TestRunner.bool_str, default=False,
                             help='Verbose output')
-        parser.add_argument('-d', '--input-test-dir', type=str,
+        parser.add_argument('-d', '--input-tests-dir', type=str,
                             default=real_path(join_path(THIS_DIR_PATH, TEST_DATA_DEFAULT_RELATIVE_PATH)),
                             help='Input test data directory (default: %s)' % TEST_DATA_DEFAULT_RELATIVE_PATH)
         parser.add_argument('-i', '--input-test', type=str, default=None,
                             help='Specific input test file basename.')
+        parser.add_argument('-w', '--working-dir', type=str, default=None,
+                            help='Specific working dir directory (artifacts will be left there after run)')
         #gfortran version is important! Currently some of the tests fail with gfortran 9 and 10
         parser.add_argument('-n', '--native-compiler', type=str, default='gfortran-7',
                             help='Path to fortran compiler (currently only gfortran is supported)')
@@ -164,12 +435,12 @@ class TestRunner:
         p_args = parser.parse_args()
         assert file_exists(p_args.frontend_bin), 'Frontend executable  not found'
         assert file_exists(p_args.backend_bin), 'Backend executable not found'
-        assert dir_exists(p_args.input_test_dir), 'Intrinsic modules directory not found'
+        assert dir_exists(p_args.input_tests_dir), 'Input test data directory not found'
         if p_args.input_test is not None:
-            test_path = join_path(p_args.input_test_dir, p_args.input_test)
+            test_path = join_path(p_args.input_tests_dir, p_args.input_test)
             assert file_exists(test_path), 'Input test "%s" does not exist not found in test directory "%s"' % \
                                            (p_args.input_test_dir, p_args.input_test)
-        assert dir_exists(p_args.xmodules_dir), 'Input test data directory not found'
+        assert dir_exists(p_args.xmodules_dir), 'Intrinsic modules directory not found'
         assert not p_args.enable_coarray_to_xmp_transform, '--enable-coarray-to-xmp-transform is currently unsupported'
         assert p_args.number_of_parallel_tests >= 1, 'Number of parallel test should be at least 1'
         native_compiler = shutil.which(p_args.native_compiler)
@@ -184,8 +455,9 @@ class TestRunner:
                           native_compiler=native_compiler,
                           native_compiler_type=native_compiler_type,
                           errors_log=os.path.abspath(p_args.error_log),
-                          test_data_dir=p_args.input_test_dir,
+                          test_data_dir=p_args.input_tests_dir,
                           test_case=p_args.input_test,
+                          working_dir=p_args.working_dir,
                           verbose_output=p_args.verbose,
                           obj_sym_reader=obj_sym_reader)
         return args
@@ -193,33 +465,48 @@ class TestRunner:
     def run(self) -> int:
         test_cases , testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
         start_time = time.time()
+
+        @contextmanager
+        def prepare_dir(dir=None):
+            if dir is not None:
+                os.makedirs(dir, exist_ok=True)
+                yield dir
+                pass
+            else:
+                d = tempfile.TemporaryDirectory(dir=dir)
+                yield d.name
+                d.cleanup()
         try:
-            with open(self.args.errors_log, 'w') as errors_log, tempfile.TemporaryDirectory(dir=TMPFS_DIR) as tmp_dir:
+            with prepare_dir(self.args.working_dir) as working_dir:
                 if self.args.test_case is None:
-                    k = 1
-                    for test_case in test_cases:
-                        print(k, ' ', test_case)
-                        res = TestRunner.run_test_case(test_case, self.args, tmp_dir, testcase_deps[test_case])
-                        k = k + 1
-                        if not res.result:
-                            print(res.text_summary())
-                            return RC.FAILURE
+                        k = 1
+                        for test_case in test_cases:
+                            print(k, ' ', test_case)
+                            testcase_working_dir = join_path(working_dir, os.path.basename(test_case).replace('.', '-'))
+                            os.makedirs(testcase_working_dir)
+                            tc = TestcaseRunner(test_case, self.args, working_dir, testcase_deps[test_case])
+                            res = tc.run()
+                            k = k + 1
+                            if not res.result:
+                                print(res.text_summary())
+                                return RC.FAILURE.value
                 else:
                     t_case = self.args.test_case
                     print(t_case)
-                    res = TestRunner.run_test_case(t_case, self.args, tmp_dir, testcase_deps[t_case])
+                    tc = TestcaseRunner(t_case, self.args, working_dir, testcase_deps[t_case])
+                    res = tc.run()
                     if not res.result:
                         print(res.text_summary())
-                        return RC.FAILURE
+                        return RC.FAILURE.value
         finally:
             end_time = time.time()
             print('Elapsed time: ', end_time - start_time)
-        return RC.SUCCESS
+        return RC.SUCCESS.value
 
     @staticmethod
-    def scan_for_dependencies(dir : str, debug_output : bool = False) -> Tuple[List[str], Dict[str, List[str]]]:
+    def scan_for_dependencies(dir: str, debug_output: bool = False) -> Tuple[Tuple[str, ...], Dict[str, Tuple[str, ...]]]:
         test_cases = []
-        reg_comment = re.compile('\!.*')
+        reg_comment = re.compile('!.*')
         spaces = '[\s]+'
         opt_spaces = '[\s]*'
         fortran_id = '[a-z][a-z0-9\_]*'
@@ -286,7 +573,7 @@ class TestRunner:
         testcase_dep_lst = {}
         # Convert dependency trees into lists
         for test_case, direct_deps in testcase_deps.items():
-            lst = testcase_dep_lst[test_case] = []
+            lst = []
             test_case_direct_deps = testcase_deps[test_case]
             visited = set()
             for dir_dep in test_case_direct_deps:
@@ -299,189 +586,10 @@ class TestRunner:
                 if dir_dep not in visited:
                     visited.add(dir_dep)
                     lst.append(dir_dep)
+            testcase_dep_lst[test_case] = tuple(lst)
         end_time = time.time()
         if debug_output: print('Elapsed time: ', end_time - start_time)
-        return (test_cases, testcase_dep_lst)
-
-    @staticmethod
-    def run_test_case(test_case_basename : str, args : TesterArgs, dir : str, dependencies : List[str]) -> TestResult:
-        stages = []
-        result = None
-        error_log = None
-        except_str = None
-        current_locale = locale.getlocale()
-        try:
-            locale.setlocale(locale.LC_ALL, 'C')
-            frontend_opts = ['-fintrinsic-xmodules-path', args.xmodules_dir]
-            native_comp_opts = []
-            if args.native_compiler_type != NativeCompiler.PGFORTRAN:
-                native_comp_opts += ['-fcoarray=single']
-            frontend_opts += ['-fno-xmp-coarray']
-            loc = locale.getlocale()
-            test_case= os.path.join(args.test_data_dir, test_case_basename)
-            err_out_file_basename = test_case_basename + '.out'
-            xml_out_file_basename = test_case_basename + '.xml'
-            decompiled_src_out_file_basename = test_case_basename + '.dec.f90'
-            bin_out_file_basename = test_case_basename + '.o'
-            exec_out_file_basename = test_case_basename + '.bin'
-            exec_result_out_file_basename = test_case_basename + '.res'
-            skip_native_in_file = test_case + '.skip.native'
-            native_original_in_file = test_case + '.native'
-            reference_in_file = test_case + '.ref'
-            options_in_file = test_case + '.options'
-            add_native_options_in_file = test_case + '.native.options'
-            expected_output_in_file = os.path.splitext(test_case) [0]+ '.res'
-            syms_out_file_basename = test_case_basename + '.syms'
-            file_opts = []
-            if file_exists(options_in_file):
-                file_opts += [get_file_as_str(options_in_file)]
-            additional_native_opts = []
-            if file_exists(add_native_options_in_file):
-                additional_native_opts += [get_file_as_str(add_native_options_in_file)]
-            def add_stage_info(type : TestingStage, process : subprocess.CompletedProcess, stages=stages):
-                res = process.returncode == 0
-                stages.append(TestingStageInfo(type=type, result=res, args=" ".join(process.args),
-                                               error_log=None if res else process.stdout))
-            with tempfile.TemporaryDirectory(dir=dir) as tmp_dir:
-                #Run frontend on dependencies
-                for dep_basename in dependencies:
-                    dep = os.path.join(args.test_data_dir, dep_basename)
-                    dep_obj_file_basename = dep_basename + '.o'
-                    dep_xml_file_basename = dep_basename + '.xml'
-                    dep_obj_file = join_path(tmp_dir, dep_obj_file_basename)
-                    dep_xml_file = join_path(tmp_dir, dep_xml_file_basename)
-                    #Generate xmod files
-                    frontend_dep_args = [args.frontend] + frontend_opts + file_opts + \
-                                        ['-I', '.', '-I', args.test_data_dir] +\
-                                        [dep, '-o', dep_xml_file_basename]
-                    p = subprocess.run(args=frontend_dep_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT, cwd=tmp_dir)
-                    if p.returncode != 0:
-                        add_stage_info(TestingStage.DEPENDENCIES_PREP, p)
-                        return TestResult(stages=stages, result=False, exception=None)
-                    if not file_exists(skip_native_in_file):
-                        # Run backend
-                        native_original_in_dep_file = dep + '.skip.native'
-                        if file_exists(native_original_in_dep_file):
-                            src = dep
-                        else:
-                            dep_decompiled_src = dep_basename + '.dec.f90'
-                            backend_dep_args = [args.backend, dep_xml_file_basename, '-o', dep_decompiled_src]
-                            p = subprocess.run(args=backend_dep_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                               stderr=subprocess.STDOUT, cwd=tmp_dir)
-                            if p.returncode != 0:
-                                add_stage_info(TestingStage.DEPENDENCIES_PREP, p)
-                                return TestResult(stages=stages, result=False, exception=None)
-                            src = dep_decompiled_src
-                        #Generate mod files
-                        native_dep_args = [args.native_compiler] + native_comp_opts + ['-c', src, '-o', dep_obj_file]
-                        p = subprocess.run(args=native_dep_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT, cwd=tmp_dir)
-                        if p.returncode != 0:
-                            add_stage_info(TestingStage.DEPENDENCIES_PREP, p)
-                            return TestResult(stages=stages, result=False, exception=None)
-                        os.remove(dep_obj_file)
-                    os.remove(dep_xml_file)
-                stages.append(TestingStageInfo(type=TestingStage.DEPENDENCIES_PREP, result=True, args=None, error_log=None))
-                # Run frontend
-                frontend_args = [args.frontend] + frontend_opts + file_opts + \
-                                ['-I', '.', '-I', args.test_data_dir]  + [test_case, '-o', xml_out_file_basename]
-                p = subprocess.run(args=frontend_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT, cwd=tmp_dir)
-                add_stage_info(TestingStage.FRONTEND, p)
-                if not stages[-1].result:
-                    return TestResult(stages=stages, result=False, exception=None)
-                # Run backend
-                backend_args = [args.backend, xml_out_file_basename, '-o', decompiled_src_out_file_basename]
-                p = subprocess.run(args=backend_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT, cwd=tmp_dir)
-                add_stage_info(TestingStage.BACKEND, p)
-                if not stages[-1].result:
-                    return TestResult(stages=stages, result=False, exception=None)
-                if file_exists(skip_native_in_file):
-                    return TestResult(stages=stages, result=True, exception=None)
-                # Run native compiler to create object file
-                src = decompiled_src_out_file_basename
-                if file_exists(native_original_in_file):
-                    src = test_case
-                native_args = [args.native_compiler] + native_comp_opts + ['-c', src, '-o', bin_out_file_basename]
-                p = subprocess.run(args=native_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT, cwd=tmp_dir)
-                add_stage_info(TestingStage.NATIVE, p)
-                if not stages[-1].result:
-                    return TestResult(stages=stages, result=False, exception=None)
-                def normalize_output(s: bytes, remove_spaces: bool = False):
-                    if isinstance(s, bytes):
-                        s = s.decode("utf-8")
-                    res = []
-                    for line in s.split('\n'):
-                        line = line.strip()
-                        if len(line) > 0:
-                            res.append(line)
-                    return res
-                if file_exists(expected_output_in_file):
-                    # Run native compiler to link object file
-                    linker_args = [args.native_compiler, '-o', exec_out_file_basename, bin_out_file_basename]
-                    p = subprocess.run(args=linker_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT, cwd=tmp_dir)
-                    add_stage_info(TestingStage.LINK, p)
-                    if not stages[-1].result:
-                        return TestResult(stages=stages, result=False, exception=None)
-                    # Check if linked file is executable
-                    sym_read_args = [args.obj_sym_reader, '--format', 'posix', exec_out_file_basename]
-                    p = subprocess.run(args=sym_read_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT, cwd=tmp_dir)
-                    add_stage_info(TestingStage.SYMBOLS_READ, p)
-                    syms = p.stdout
-                    with open(os.path.join(tmp_dir, syms_out_file_basename), 'wb') as f:
-                        f.write(syms)
-                    main_found = False
-                    for line in syms.split(b'\n'):
-                        line = line.strip()
-                        if len(line) > 0 and b'main' in line.split()[0]:
-                            main_found = True
-                    if main_found:
-                        # Execute the linked file
-                        exec_args = [join_path('./', exec_out_file_basename)]
-                        p = subprocess.run(args=exec_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                           stderr=subprocess.STDOUT, cwd=tmp_dir)
-                        add_stage_info(TestingStage.EXECUTION, p)
-                        with open(os.path.join(tmp_dir, exec_result_out_file_basename), 'wb') as f:
-                            f.write(p.stdout)
-                        out_lines = normalize_output(p.stdout)
-                        if not stages[-1].result:
-                            return TestResult(stages=stages, result=False, exception=None)
-                        # Compare with expected output
-                        with open(expected_output_in_file, 'r') as f:
-                            expected_out_lines = normalize_output(f.read())
-                        res = out_lines == expected_out_lines
-                        stages.append(TestingStageInfo(type=TestingStage.EXPECTED_OUTPUT, result=res, args=None,
-                                                       error_log=None if res else 'Expected output did not match'))
-                        if not stages[-1].result:
-                            return TestResult(stages=stages, result=False, exception=None)
-                if file_exists(reference_in_file):
-                    # Decompile file without line information, then compare to reference
-                    backend_args = [args.backend, '-l', xml_out_file_basename, '-o', decompiled_src_out_file_basename]
-                    p = subprocess.run(args=backend_args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT, cwd=tmp_dir)
-                    if p.returncode != 0:
-                        add_stage_info(TestingStage.REFERENCE_OUTPUT, p)
-                        return TestResult(stages=stages, result=False, exception=None)
-                    with open(reference_in_file, 'r') as f:
-                        reference_lines = normalize_output(f.read(), True)
-                    with open(join_path(tmp_dir, decompiled_src_out_file_basename), 'r') as f:
-                        decompiled_src_lines = normalize_output(f.read(), True)
-                    res = reference_lines == decompiled_src_lines
-                    stages.append(TestingStageInfo(type=TestingStage.REFERENCE_OUTPUT, result=res, args=None,
-                                                   error_log=None if res else 'Reference output did not match'))
-                    if not stages[-1].result:
-                        return TestResult(stages=stages, result=False, exception=None)
-                return TestResult(stages=stages, result=True, exception=None)
-        except:
-            except_str = traceback.format_exc()
-            return TestResult(stages=stages, result=False, exception=except_str)
-        finally:
-            locale.setlocale(locale.LC_ALL, current_locale)
+        return tuple(test_cases), testcase_dep_lst
 
 
 if __name__ == '__main__':
