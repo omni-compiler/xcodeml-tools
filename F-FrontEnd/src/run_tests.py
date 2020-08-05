@@ -52,6 +52,8 @@ class TesterArgs(NamedTuple):
     working_dir: Optional[str]
     verbose_output: bool
     obj_sym_reader: str
+    jobs_num: int
+    break_on_failed: bool
 
 
 class TestingStage(Enum):
@@ -89,7 +91,7 @@ def error_text(s: str):
     return TerminalColor.RED + s + TerminalColor.BLACK
 
 
-class TestResult(NamedTuple):
+class TestCaseResult(NamedTuple):
     def text_summary(self) -> str:
         txt = ''
         for s in self.stages:
@@ -216,7 +218,7 @@ class TestcaseRunner:
                 self.__result = self.__result_error()
         return p
 
-    def __prepare_dependencies(self) -> Optional[TestResult]:
+    def __prepare_dependencies(self) -> Optional[TestCaseResult]:
         # Run frontend on dependencies
         for dep_basename in self.dependencies:
             dep = os.path.join(self.args.test_data_dir, dep_basename)
@@ -253,18 +255,18 @@ class TestcaseRunner:
                                               error_log=None))
         return self.__result
 
-    def __test_frontend(self) -> Optional[TestResult]:
+    def __test_frontend(self) -> Optional[TestCaseResult]:
         frontend_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] +\
                         [self.test_case, '-o', self.xml_out_file_basename]
         self.__run_exec(frontend_args, TestingStage.FRONTEND)
         return self.__result
 
-    def __test_backend(self) -> Optional[TestResult]:
+    def __test_backend(self) -> Optional[TestCaseResult]:
         backend_args = [self.args.backend, self.xml_out_file_basename, '-o', self.decompiled_src_out_file_basename]
         self.__run_exec(backend_args, TestingStage.BACKEND)
         return self.__result
 
-    def __test_with_native_compiler(self) -> Optional[TestResult]:
+    def __test_with_native_compiler(self) -> Optional[TestCaseResult]:
         src = self.decompiled_src_out_file_basename
         if self.use_native:
             src = self.test_case
@@ -272,12 +274,12 @@ class TestcaseRunner:
         self.__run_exec(native_args, TestingStage.NATIVE)
         return self.__result
 
-    def __test_native_compiler_link(self) -> Optional[TestResult]:
+    def __test_native_compiler_link(self) -> Optional[TestCaseResult]:
         linker_args = [self.args.native_compiler, '-o', self.exec_out_file_basename, self.bin_out_file_basename]
         self.__run_exec(linker_args, TestingStage.LINK)
         return self.__result
 
-    def __read_symbols(self) -> Optional[TestResult]:
+    def __read_symbols(self) -> Optional[TestCaseResult]:
         sym_read_args = [self.args.obj_sym_reader, '--format', 'posix', self.exec_out_file_basename]
         p = self.__run_exec(sym_read_args, TestingStage.SYMBOLS_READ)
         syms = p.stdout
@@ -294,20 +296,20 @@ class TestcaseRunner:
                     return True
         return False
 
-    def __run_executable(self) -> Optional[TestResult]:
+    def __run_executable(self) -> Optional[TestCaseResult]:
         exec_args = [join_path('./', self.exec_out_file_basename)]
         p = self.__run_exec(exec_args, TestingStage.EXECUTION)
         with open(self.exec_result_out_file, 'wb') as f:
             f.write(p.stdout)
         return self.__result
 
-    def __decompile(self) -> Optional[TestResult]:
+    def __decompile(self) -> Optional[TestCaseResult]:
         # Decompile file without line information, then compare to reference
         backend_args = [self.args.backend, '-l', self.xml_out_file_basename, '-o', self.decompiled_src_out_file_basename]
         self.__run_exec(backend_args, TestingStage.REFERENCE_OUTPUT, record_stage_only_on_error=True)
         return self.__result
 
-    def __compare_output_files(self, filename1, filename2, stage: TestingStage) -> Optional[TestResult]:
+    def __compare_output_files(self, filename1, filename2, stage: TestingStage) -> Optional[TestCaseResult]:
         with open(filename1, 'r') as f:
             out_lines = f.read()
             out_lines = self.normalize_expected_output(out_lines)
@@ -331,13 +333,13 @@ class TestcaseRunner:
                 res.append(line)
         return res
 
-    def __result_error(self, exception: str = None) -> TestResult:
-        return TestResult(tuple(self.__stages), False, exception)
+    def __result_error(self, exception: str = None) -> TestCaseResult:
+        return TestCaseResult(tuple(self.__stages), False, exception)
 
-    def __result_success(self) -> TestResult:
-        return TestResult(tuple(self.__stages), True, None)
+    def __result_success(self) -> TestCaseResult:
+        return TestCaseResult(tuple(self.__stages), True, None)
 
-    def run(self) -> TestResult:
+    def run(self) -> TestCaseResult:
         current_locale = locale.getlocale()
         try:
             locale.setlocale(locale.LC_ALL, 'C')
@@ -380,14 +382,48 @@ class TestcaseRunner:
             locale.setlocale(locale.LC_ALL, current_locale)
 
 
+@contextmanager
+def prepare_dir(dir_path=None, parent_dir=None):
+    if dir_path is not None:
+        os.makedirs(dir_path, exist_ok=True)
+        yield dir_path
+        pass
+    else:
+        d = tempfile.TemporaryDirectory(dir=parent_dir)
+        yield d.name
+        d.cleanup()
+
+def run_test_case(working_dir: str, test_case: str, tester_args: TesterArgs, dependencies: Tuple[str, ...],
+                  add_subdir: bool,
+                  working_dir_is_tmp):
+    if add_subdir:
+        testcase_working_dir = join_path(working_dir, os.path.basename(test_case).replace('.', '-'))
+    else:
+        testcase_working_dir = working_dir
+    os.makedirs(testcase_working_dir, exist_ok=True)
+    try:
+        tc = TestcaseRunner(test_case, tester_args, testcase_working_dir, dependencies)
+        res = tc.run()
+    finally:
+        if working_dir_is_tmp:
+            shutil.rmtree(testcase_working_dir)
+    return res
+
+
+def run_test_case_functor(args):
+    return args, run_test_case(*args)
+
+
 class TestRunner:
 
     @property
     def args(self):
         return self.__args
 
-    def __init__(self):
-        self.__args = self.parse_args()
+    def __init__(self, args : TesterArgs = None):
+        if args is None:
+            args = self.parse_args()
+        self.__args = args
 
     @staticmethod
     def bool_str(v):
@@ -438,6 +474,10 @@ class TestRunner:
                             help='Maximum number of tests allowed to run in parallel')
         parser.add_argument('-t', '--enable-coarray-to-xmp-transform', type=TestRunner.bool_str, default=False,
                             help='Transform coarray statement to xmp subroutine call statement')
+        parser.add_argument('-j', '--jobs', type=int, default=1,
+                            help='Number of tests to run simultaneously')
+        parser.add_argument('-r', '--break-on-failed', type=bool, default=False,
+                            help='Stop test run on failed test. Does not apply to parallel jobs')
         p_args = parser.parse_args()
         assert file_exists(p_args.frontend_bin), 'Frontend executable  not found'
         assert file_exists(p_args.backend_bin), 'Backend executable not found'
@@ -454,6 +494,7 @@ class TestRunner:
         native_compiler_type = self.get_native_compiler_type(native_compiler)
         obj_sym_reader = shutil.which('nm')
         assert obj_sym_reader is not None, 'Utility for reading object files not found'
+        assert p_args.jobs >= 1, 'Number of jobs should be at least 1'
         args = TesterArgs(num_parallel_tests=min(p_args.number_of_parallel_tests, multiprocessing.cpu_count()),
                           frontend=p_args.frontend_bin,
                           backend=p_args.backend_bin,
@@ -465,49 +506,71 @@ class TestRunner:
                           test_case=p_args.input_test,
                           working_dir=p_args.working_dir,
                           verbose_output=p_args.verbose,
-                          obj_sym_reader=obj_sym_reader)
+                          obj_sym_reader=obj_sym_reader,
+                          jobs_num=p_args.jobs,
+                          break_on_failed=p_args.break_on_failed)
         return args
 
-    def run(self) -> int:
+    def run(self, print_progress=False) -> Tuple[ReturnCode, List[Tuple[str, TestCaseResult]]]:
         test_cases, testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
         start_time = time.time()
-
-        @contextmanager
-        def prepare_dir(dir_path=None):
-            if dir_path is not None:
-                os.makedirs(dir_path, exist_ok=True)
-                yield dir_path
-                pass
-            else:
-                d = tempfile.TemporaryDirectory(dir=dir_path)
-                yield d.name
-                d.cleanup()
+        results = []
         try:
-            with prepare_dir(self.args.working_dir) as working_dir:
+            with prepare_dir(self.args.working_dir, TMPFS_DIR) as working_dir:
+                working_dir_is_tmp = self.args.working_dir is None
                 if self.args.test_case is None:
-                    k = 1
-                    for test_case in test_cases:
-                        print(k, ' ', test_case)
-                        testcase_working_dir = join_path(working_dir, os.path.basename(test_case).replace('.', '-'))
-                        os.makedirs(testcase_working_dir)
-                        tc = TestcaseRunner(test_case, self.args, working_dir, testcase_deps[test_case])
-                        res = tc.run()
-                        k = k + 1
-                        if not res.result:
-                            print(res.text_summary())
-                            return RC.FAILURE.value
+                    num_test_cases = len(test_cases)
+                    if self.args.jobs_num == 1:
+                        k = 1
+                        for test_case in test_cases:
+                            if print_progress:
+                                print('[%s of %s] %s' % (k, num_test_cases, test_case))
+                            res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], True,
+                                                working_dir_is_tmp)
+                            results.append((test_case, res))
+                            k = k + 1
+                            if not res.result:
+                                if print_progress:
+                                    print(res.text_summary())
+                                if self.args.break_on_failed:
+                                    return RC.FAILURE, results
+                    else:
+                        mp_args = [(working_dir, test_case, self.args, testcase_deps[test_case], True,
+                                    working_dir_is_tmp) for test_case in test_cases]
+                        results = [None] * num_test_cases
+                        num_failed_testcases = 0
+                        num_finished_testcases = 0
+                        test_case_num_by_name = {test_cases[i]: i for i in range(0, num_test_cases)}
+                        with multiprocessing.Pool(self.args.jobs_num) as pool:
+                            for args, res in pool.imap_unordered(run_test_case_functor, mp_args):
+                                num_finished_testcases += 1
+                                test_case = args[1]
+                                test_case_num = test_case_num_by_name[test_case]
+                                results[test_case_num] = (test_case, res)
+                                if not res.result:
+                                    num_failed_testcases += 1
+                                if print_progress:
+                                    print('[%s of %s] %s' % (num_finished_testcases, num_test_cases, test_case))
+                                    if not res.result:
+                                        print(res.text_summary())
+                        if num_failed_testcases > 0:
+                            return RC.FAILURE, results
                 else:
-                    t_case = self.args.test_case
-                    print(t_case)
-                    tc = TestcaseRunner(t_case, self.args, working_dir, testcase_deps[t_case])
-                    res = tc.run()
+                    test_case = self.args.test_case
+                    if print_progress:
+                        print(test_case)
+                    res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], False,
+                                        working_dir_is_tmp)
+                    results = [(test_case, res)]
                     if not res.result:
-                        print(res.text_summary())
-                        return RC.FAILURE.value
+                        if print_progress:
+                            print(res.text_summary())
+                        return RC.FAILURE, results
         finally:
             end_time = time.time()
-            print('Elapsed time: ', end_time - start_time)
-        return RC.SUCCESS.value
+            if print_progress:
+                print('Elapsed time: ', end_time - start_time)
+        return RC.SUCCESS, results
 
     @staticmethod
     def scan_for_dependencies(dir_path: str,
@@ -600,5 +663,5 @@ class TestRunner:
 
 
 if __name__ == '__main__':
-    ret_code = TestRunner().run()
-    exit(ret_code)
+    ret_code, results = TestRunner().run(True)
+    exit(ret_code.value)
