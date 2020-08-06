@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<xs:element name="omni_xcodeml_test_report">
+    <xs:complexType>
+    <xs:complexContent>
+        <xs:extension base="TestPart">
+            <xs:sequence>
+                <xs:element name = 'test_case' type = 'TestCase' minOccurs = '0' maxOccurs = 'unbounded' />
+            </xs:sequence>
+        </xs:extension>
+    </xs:complexContent>
+   </xs:complexType>
+</xs:element>
+
+<xs:complexType name = "TestPart">
+  <xs:attribute name="start_timestamp" type="xs:dateTime" use="required"/>
+  <xs:attribute name="end_timestamp" type="xs:dateTime" use="required"/>
+  <xs:attribute name="result" type="xs:boolean" use="required"/>
+</xs:complexType>
+
+<xs:complexType name = "NamedTestPart">
+    <xs:complexContent>
+    <xs:extension base="TestPart">
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+
+
+<xs:complexType name = "TestCase">
+    <xs:complexContent>
+    <xs:extension base="NamedTestPart">
+      <xs:sequence>
+        <xs:element name = 'stage' type = 'TestCaseStage' minOccurs = '1' maxOccurs = 'unbounded' />
+      </xs:sequence>
+      <xs:attribute name="exception" type="xs:string"/>
+    </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+
+<xs:complexType name = "TestCaseStage">
+    <xs:complexContent>
+    <xs:extension base="NamedTestPart">
+        <xs:attribute name="arguments" type="xs:string"/>
+        <xs:attribute name="error_log" type="xs:string"/>
+    </xs:extension>
+    </xs:complexContent>
+</xs:complexType>
+
+</xs:schema>

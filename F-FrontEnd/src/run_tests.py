@@ -11,12 +11,16 @@ from enum import Enum
 from typing import Tuple, NamedTuple, List, Optional, Dict, Union
 from textwrap import wrap
 from contextlib import contextmanager
+import datetime as dt
+import test_report as tr
+from lxml import etree
 
 THIS_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 TEST_DATA_DEFAULT_RELATIVE_PATH = '../../F-FrontEnd/test/testdata'
 DEFAULT_ERROR_LOG_FILENAME = 'errors.log'
 TMPFS_DIR = '/dev/shm'
 TEST_TIMEOUT = 10  # seconds
+TEST_REPORT_SCHEMA_FILE = join_path(THIS_DIR_PATH, 'test-report-schema.xsd')
 
 
 def file_exists(path: str):
@@ -54,9 +58,10 @@ class TesterArgs(NamedTuple):
     obj_sym_reader: str
     jobs_num: int
     break_on_failed: bool
+    report_file: str
 
 
-class TestingStage(Enum):
+class TestCaseStageID(Enum):
     DEPENDENCIES_PREP = 0
     FRONTEND = 1
     BACKEND = 2
@@ -68,11 +73,21 @@ class TestingStage(Enum):
     REFERENCE_OUTPUT = 8
 
 
-class TestingStageInfo(NamedTuple):
-    type: TestingStage
+class TestCaseStageResult(NamedTuple):
+    type: TestCaseStageID
     result: bool
     args: Optional[str]
     error_log: Optional[str]
+    start_timestamp: dt.datetime
+    end_timestamp: dt.datetime
+    def to_xml_data(self):
+        data = tr.TestCaseStage(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp, result=self.result,
+                             name=self.type.name)
+        if self.args is not None:
+            data.set_arguments(self.args)
+        if self.error_log is not None:
+            data.set_error_log(self.error_log)
+        return data
 
 
 class TerminalColor:
@@ -92,6 +107,11 @@ def error_text(s: str):
 
 
 class TestCaseResult(NamedTuple):
+    stages: Tuple[TestCaseStageResult, ...]
+    result: bool
+    exception: Optional[str]
+    start_timestamp: dt.datetime
+    end_timestamp: dt.datetime
     def text_summary(self) -> str:
         txt = ''
         for s in self.stages:
@@ -104,9 +124,12 @@ class TestCaseResult(NamedTuple):
         if self.exception is not None:
             txt += error_text('Exception:\n' + to_paragraph(self.exception, '\t'))
         return txt
-    stages: Tuple[TestingStageInfo, ...]
-    result: bool
-    exception: Optional[str]
+    def to_xml_data(self):
+        data = tr.TestCase(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp, result=self.result)
+        if self.exception is not None:
+            data.set_exception(self.exception)
+        data.set_stage([stage.to_xml_data() for stage in self.stages])
+        return data
 
 
 class ReturnCode(Enum):
@@ -201,19 +224,32 @@ class TestcaseRunner:
         self.__exec_result_out_file_basename = basename + '.res'
         self.__syms_out_file_basename = basename + '.syms'
         self.__result = None
+        self.__start_timestamp = None
+        self.__stage_start_timestamp = None
 
-    def __add_stage_info(self, stage_type: TestingStage, process: subprocess.CompletedProcess):
+    def __add_stage_info_from_process(self, stage_type: TestCaseStageID, process: subprocess.CompletedProcess):
         res = process.returncode == 0
-        self.__stages.append(TestingStageInfo(type=stage_type, result=res, args=" ".join(process.args),
-                                              error_log=None if res else process.stdout))
+        assert self.__stage_start_timestamp is not None
+        end_ts = dt.datetime.utcnow()
+        self.__stages.append(TestCaseStageResult(type=stage_type, result=res, args=" ".join(process.args),
+                                                 error_log=None if res else process.stdout,
+                                                 start_timestamp=self.__stage_start_timestamp, end_timestamp=end_ts))
+        self.__stage_start_timestamp = end_ts
 
-    def __run_exec(self, args: List[str], stage: Optional[TestingStage] = None,
+    def __add_stage_info(self, type: TestCaseStageID, result: bool, error_log: str = None):
+        assert self.__stage_start_timestamp is not None
+        end_ts = dt.datetime.utcnow()
+        self.__stages.append(TestCaseStageResult(type=type, args=None, result=result, error_log=error_log,
+                                                 start_timestamp=self.__stage_start_timestamp, end_timestamp=end_ts))
+        self.__stage_start_timestamp = end_ts
+
+    def __run_exec(self, args: List[str], stage: Optional[TestCaseStageID] = None,
                    record_stage_only_on_error: bool = False) -> subprocess.CompletedProcess:
         assert self.working_dir is not None, 'Working dir not set'
         p = subprocess.run(args=args, timeout=TEST_TIMEOUT, stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT, cwd=self.working_dir)
         if stage is not None and not record_stage_only_on_error:
-            self.__add_stage_info(stage, p)
+            self.__add_stage_info_from_process(stage, p)
             if not self.__stages[-1].result:
                 self.__result = self.__result_error()
         return p
@@ -229,7 +265,7 @@ class TestcaseRunner:
             # Generate xmod files
             frontend_dep_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] + \
                                 [dep, '-o', dep_xml_file_basename]
-            p = self.__run_exec(frontend_dep_args, TestingStage.DEPENDENCIES_PREP, True)
+            p = self.__run_exec(frontend_dep_args, TestCaseStageID.DEPENDENCIES_PREP, True)
             if p.returncode != 0:
                 return self.__result
             if not self.skip_native:
@@ -240,30 +276,29 @@ class TestcaseRunner:
                 else:
                     dep_decompiled_src = dep_basename + '.dec.f90'
                     backend_dep_args = [self.args.backend, dep_xml_file_basename, '-o', dep_decompiled_src]
-                    p = self.__run_exec(backend_dep_args, TestingStage.DEPENDENCIES_PREP, True)
+                    p = self.__run_exec(backend_dep_args, TestCaseStageID.DEPENDENCIES_PREP, True)
                     if p.returncode != 0:
                         return self.__result
                     src = dep_decompiled_src
                 # Generate mod files
                 native_dep_args = [self.args.native_compiler] + self.native_comp_opts + ['-c', src, '-o', dep_obj_file]
-                p = self.__run_exec(native_dep_args, TestingStage.DEPENDENCIES_PREP, True)
+                p = self.__run_exec(native_dep_args, TestCaseStageID.DEPENDENCIES_PREP, True)
                 if p.returncode != 0:
                     return self.__result
                 os.remove(dep_obj_file)
             os.remove(dep_xml_file)
-        self.__stages.append(TestingStageInfo(type=TestingStage.DEPENDENCIES_PREP, result=True, args=None,
-                                              error_log=None))
+        self.__add_stage_info(type=TestCaseStageID.DEPENDENCIES_PREP, result=True)
         return self.__result
 
     def __test_frontend(self) -> Optional[TestCaseResult]:
         frontend_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] +\
                         [self.test_case, '-o', self.xml_out_file_basename]
-        self.__run_exec(frontend_args, TestingStage.FRONTEND)
+        self.__run_exec(frontend_args, TestCaseStageID.FRONTEND)
         return self.__result
 
     def __test_backend(self) -> Optional[TestCaseResult]:
         backend_args = [self.args.backend, self.xml_out_file_basename, '-o', self.decompiled_src_out_file_basename]
-        self.__run_exec(backend_args, TestingStage.BACKEND)
+        self.__run_exec(backend_args, TestCaseStageID.BACKEND)
         return self.__result
 
     def __test_with_native_compiler(self) -> Optional[TestCaseResult]:
@@ -271,17 +306,17 @@ class TestcaseRunner:
         if self.use_native:
             src = self.test_case
         native_args = [self.args.native_compiler] + self.native_comp_opts + ['-c', src, '-o', self.bin_out_file_basename]
-        self.__run_exec(native_args, TestingStage.NATIVE)
+        self.__run_exec(native_args, TestCaseStageID.NATIVE)
         return self.__result
 
     def __test_native_compiler_link(self) -> Optional[TestCaseResult]:
         linker_args = [self.args.native_compiler, '-o', self.exec_out_file_basename, self.bin_out_file_basename]
-        self.__run_exec(linker_args, TestingStage.LINK)
+        self.__run_exec(linker_args, TestCaseStageID.LINK)
         return self.__result
 
     def __read_symbols(self) -> Optional[TestCaseResult]:
         sym_read_args = [self.args.obj_sym_reader, '--format', 'posix', self.exec_out_file_basename]
-        p = self.__run_exec(sym_read_args, TestingStage.SYMBOLS_READ)
+        p = self.__run_exec(sym_read_args, TestCaseStageID.SYMBOLS_READ)
         syms = p.stdout
         with open(self.syms_out_file, 'wb') as f:
             f.write(syms)
@@ -298,7 +333,7 @@ class TestcaseRunner:
 
     def __run_executable(self) -> Optional[TestCaseResult]:
         exec_args = [join_path('./', self.exec_out_file_basename)]
-        p = self.__run_exec(exec_args, TestingStage.EXECUTION)
+        p = self.__run_exec(exec_args, TestCaseStageID.EXECUTION)
         with open(self.exec_result_out_file, 'wb') as f:
             f.write(p.stdout)
         return self.__result
@@ -306,18 +341,17 @@ class TestcaseRunner:
     def __decompile(self) -> Optional[TestCaseResult]:
         # Decompile file without line information, then compare to reference
         backend_args = [self.args.backend, '-l', self.xml_out_file_basename, '-o', self.decompiled_src_out_file_basename]
-        self.__run_exec(backend_args, TestingStage.REFERENCE_OUTPUT, record_stage_only_on_error=True)
+        self.__run_exec(backend_args, TestCaseStageID.REFERENCE_OUTPUT, record_stage_only_on_error=True)
         return self.__result
 
-    def __compare_output_files(self, filename1, filename2, stage: TestingStage) -> Optional[TestCaseResult]:
+    def __compare_output_files(self, filename1, filename2, stage: TestCaseStageID) -> Optional[TestCaseResult]:
         with open(filename1, 'r') as f:
             out_lines = f.read()
             out_lines = self.normalize_expected_output(out_lines)
         with open(filename2, 'r') as f:
             expected_out_lines = self.normalize_expected_output(f.read())
         res = out_lines == expected_out_lines
-        self.__stages.append(TestingStageInfo(type=stage, result=res, args=None,
-                                              error_log=None if res else 'Output did not match'))
+        self.__add_stage_info(type=stage, result=res, error_log=None if res else 'Output did not match')
         if not self.__stages[-1].result:
             self.__result = self.__result_error()
         return self.__result
@@ -334,12 +368,16 @@ class TestcaseRunner:
         return res
 
     def __result_error(self, exception: str = None) -> TestCaseResult:
-        return TestCaseResult(tuple(self.__stages), False, exception)
+        return TestCaseResult(tuple(self.__stages), False, exception,
+                              start_timestamp=self.__start_timestamp, end_timestamp=dt.datetime.utcnow())
 
     def __result_success(self) -> TestCaseResult:
-        return TestCaseResult(tuple(self.__stages), True, None)
+        return TestCaseResult(tuple(self.__stages), True, None,
+                              start_timestamp=self.__start_timestamp, end_timestamp=dt.datetime.utcnow())
 
     def run(self) -> TestCaseResult:
+        self.__start_timestamp = dt.datetime.utcnow()
+        self.__stage_start_timestamp = self.__start_timestamp
         current_locale = locale.getlocale()
         try:
             locale.setlocale(locale.LC_ALL, 'C')
@@ -364,7 +402,7 @@ class TestcaseRunner:
                         return self.__result
                     if self.__compare_output_files(self.exec_result_out_file,
                                                    self.expected_output_in_file,
-                                                   TestingStage.EXPECTED_OUTPUT) is not None:
+                                                   TestCaseStageID.EXPECTED_OUTPUT) is not None:
                         return self.__result
             if self.compare_with_reference:
                 # Decompile file without line information, then compare to reference
@@ -372,7 +410,7 @@ class TestcaseRunner:
                     return self.__result
                 if self.__compare_output_files(self.reference_in_file,
                                                join_path(self.working_dir, self.decompiled_src_out_file_basename),
-                                               TestingStage.REFERENCE_OUTPUT) is not None:
+                                               TestCaseStageID.REFERENCE_OUTPUT) is not None:
                     return self.__result
             return self.__result_success()
         except:
@@ -413,6 +451,36 @@ def run_test_case(working_dir: str, test_case: str, tester_args: TesterArgs, dep
 def run_test_case_functor(args):
     return args, run_test_case(*args)
 
+class TestResult(NamedTuple):
+    testcases: Tuple[Tuple[str, TestCaseResult], ...]
+    result: bool
+    start_timestamp: dt.datetime
+    end_timestamp: dt.datetime
+
+    @staticmethod
+    def validate_file(filename):
+        schema = etree.XMLSchema(file=TEST_REPORT_SCHEMA_FILE)
+        parser = etree.XMLParser(schema=schema)
+        with open(filename, 'r') as f:
+            xml = f.read()
+        root = etree.fromstring(xml, parser)
+        pass
+
+    def save_to_file(self, filename):
+        report = tr.omni_xcodeml_test_report(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp,
+                                             result=self.result)
+        test_cases_data = []
+        for test_case_name, tes_case_result in self.testcases:
+            data = tes_case_result.to_xml_data()
+            data.set_name(test_case_name)
+            test_cases_data.append(data)
+        report.set_test_case(test_cases_data)
+        with open(filename, 'w') as f:
+            f.write('<?xml version="1.0"?>\n\n')
+            namespace_def = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
+                            ' xsi:noNamespaceSchemaLocation="test-report-schema.xsd"'
+            report.export(f, 0, namespacedef_=namespace_def, pretty_print=True)
+        self.validate_file(filename)
 
 class TestRunner:
 
@@ -478,6 +546,8 @@ class TestRunner:
                             help='Number of tests to run simultaneously')
         parser.add_argument('-r', '--break-on-failed', type=bool, default=False,
                             help='Stop test run on failed test. Does not apply to parallel jobs')
+        parser.add_argument('-o', '--save-report', type=str, default='',
+                            help='Path to XML report file, where results should be saved')
         p_args = parser.parse_args()
         assert file_exists(p_args.frontend_bin), 'Frontend executable  not found'
         assert file_exists(p_args.backend_bin), 'Backend executable not found'
@@ -495,6 +565,10 @@ class TestRunner:
         obj_sym_reader = shutil.which('nm')
         assert obj_sym_reader is not None, 'Utility for reading object files not found'
         assert p_args.jobs >= 1, 'Number of jobs should be at least 1'
+        report_file = p_args.save_report
+        if report_file is not None:
+            if not os.path.isabs(report_file):
+                report_file = join_path(os.getcwd(), report_file)
         args = TesterArgs(num_parallel_tests=min(p_args.number_of_parallel_tests, multiprocessing.cpu_count()),
                           frontend=p_args.frontend_bin,
                           backend=p_args.backend_bin,
@@ -508,69 +582,77 @@ class TestRunner:
                           verbose_output=p_args.verbose,
                           obj_sym_reader=obj_sym_reader,
                           jobs_num=p_args.jobs,
-                          break_on_failed=p_args.break_on_failed)
+                          break_on_failed=p_args.break_on_failed,
+                          report_file=report_file)
         return args
 
-    def run(self, print_progress=False) -> Tuple[ReturnCode, List[Tuple[str, TestCaseResult]]]:
+    def __run(self, print_progress=False) -> Tuple[ReturnCode, List[Tuple[str, TestCaseResult]]]:
         test_cases, testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
-        start_time = time.time()
         results = []
-        try:
-            with prepare_dir(self.args.working_dir, TMPFS_DIR) as working_dir:
-                working_dir_is_tmp = self.args.working_dir is None
-                if self.args.test_case is None:
-                    num_test_cases = len(test_cases)
-                    if self.args.jobs_num == 1:
-                        k = 1
-                        for test_case in test_cases:
-                            if print_progress:
-                                print('[%s of %s] %s' % (k, num_test_cases, test_case))
-                            res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], True,
-                                                working_dir_is_tmp)
-                            results.append((test_case, res))
-                            k = k + 1
-                            if not res.result:
-                                if print_progress:
-                                    print(res.text_summary())
-                                if self.args.break_on_failed:
-                                    return RC.FAILURE, results
-                    else:
-                        mp_args = [(working_dir, test_case, self.args, testcase_deps[test_case], True,
-                                    working_dir_is_tmp) for test_case in test_cases]
-                        results = [None] * num_test_cases
-                        num_failed_testcases = 0
-                        num_finished_testcases = 0
-                        test_case_num_by_name = {test_cases[i]: i for i in range(0, num_test_cases)}
-                        with multiprocessing.Pool(self.args.jobs_num) as pool:
-                            for args, res in pool.imap_unordered(run_test_case_functor, mp_args):
-                                num_finished_testcases += 1
-                                test_case = args[1]
-                                test_case_num = test_case_num_by_name[test_case]
-                                results[test_case_num] = (test_case, res)
-                                if not res.result:
-                                    num_failed_testcases += 1
-                                if print_progress:
-                                    print('[%s of %s] %s' % (num_finished_testcases, num_test_cases, test_case))
-                                    if not res.result:
-                                        print(res.text_summary())
-                        if num_failed_testcases > 0:
-                            return RC.FAILURE, results
-                else:
-                    test_case = self.args.test_case
-                    if print_progress:
-                        print(test_case)
-                    res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], False,
-                                        working_dir_is_tmp)
-                    results = [(test_case, res)]
-                    if not res.result:
+        with prepare_dir(self.args.working_dir, TMPFS_DIR) as working_dir:
+            working_dir_is_tmp = self.args.working_dir is None
+            if self.args.test_case is None:
+                num_test_cases = len(test_cases)
+                if self.args.jobs_num == 1:
+                    k = 1
+                    for test_case in test_cases:
                         if print_progress:
-                            print(res.text_summary())
+                            print('[%s of %s] %s' % (k, num_test_cases, test_case))
+                        res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], True,
+                                            working_dir_is_tmp)
+                        results.append((test_case, res))
+                        k = k + 1
+                        if not res.result:
+                            if print_progress:
+                                print(res.text_summary())
+                            if self.args.break_on_failed:
+                                return RC.FAILURE, results
+                else:
+                    mp_args = [(working_dir, test_case, self.args, testcase_deps[test_case], True,
+                                working_dir_is_tmp) for test_case in test_cases]
+                    results = [None] * num_test_cases
+                    num_failed_testcases = 0
+                    num_finished_testcases = 0
+                    test_case_num_by_name = {test_cases[i]: i for i in range(0, num_test_cases)}
+                    with multiprocessing.Pool(self.args.jobs_num) as pool:
+                        for args, res in pool.imap_unordered(run_test_case_functor, mp_args):
+                            num_finished_testcases += 1
+                            test_case = args[1]
+                            test_case_num = test_case_num_by_name[test_case]
+                            results[test_case_num] = (test_case, res)
+                            if not res.result:
+                                num_failed_testcases += 1
+                            if print_progress:
+                                print('[%s of %s] %s' % (num_finished_testcases, num_test_cases, test_case))
+                                if not res.result:
+                                    print(res.text_summary())
+                    if num_failed_testcases > 0:
                         return RC.FAILURE, results
-        finally:
-            end_time = time.time()
-            if print_progress:
-                print('Elapsed time: ', end_time - start_time)
+            else:
+                test_case = self.args.test_case
+                if print_progress:
+                    print(test_case)
+                res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], False,
+                                    working_dir_is_tmp)
+                results = [(test_case, res)]
+                if not res.result:
+                    if print_progress:
+                        print(res.text_summary())
+                    return RC.FAILURE, results
         return RC.SUCCESS, results
+
+    def run(self, print_progress=False) -> TestResult:
+        start_ts = dt.datetime.utcnow()
+        return_code, results = self.__run(print_progress)
+        end_ts = dt.datetime.utcnow()
+        res = TestResult(testcases=tuple(results),
+                         result=return_code == RC.SUCCESS,
+                         start_timestamp=start_ts, end_timestamp=end_ts)
+        if print_progress:
+            print('Elapsed time: ', end_ts - start_ts)
+        if self.args.report_file is not None:
+            res.save_to_file(self.args.report_file)
+        return res
 
     @staticmethod
     def scan_for_dependencies(dir_path: str,
@@ -663,5 +745,5 @@ class TestRunner:
 
 
 if __name__ == '__main__':
-    ret_code, results = TestRunner().run(True)
-    exit(ret_code.value)
+    res = TestRunner().run(True)
+    exit(RC.SUCCESS.value if res.result else RC.FAILURE.value)
