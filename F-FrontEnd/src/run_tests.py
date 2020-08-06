@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+__author__ = "Mikhail Zhigun"
+__copyright__ = "Copyright 2020, MeteoSwiss"
+
+""" This module contains command-line test runner implementation for XcodeML tools, omni compiler Fortran frontend and 
+    backend. Should be run from unix shell with necessary command-line arguments. TestRunner can automatically scan 
+    for module dependencies and run tests in parallel. The results can be optionally saved into machine-readable XML 
+    report (use included XML stylesheet for conversion to human-friendly HTML view). For debugging individual tests
+    run the tool with --input-test and --working-dir arguments. Then interim files from all test stages will be saved. 
+"""
+
+
 import sys
 
 assert sys.version_info[0] >= 3 and sys.version_info[1] >= 6, 'Python >= 3.6 is required'
@@ -484,7 +495,7 @@ class TestResult(NamedTuple):
         with open(filename, 'r') as f:
             xml = f.read()
         root = etree.fromstring(xml, parser)
-        pass
+        pass  # There wil lbe a crash in case validation fails
 
     def save_to_file(self, filename):
         duration = DT.us_duration(self.start_timestamp, self.end_timestamp)
@@ -510,7 +521,7 @@ class TestRunner:
     def args(self):
         return self.__args
 
-    def __init__(self, args : TesterArgs = None):
+    def __init__(self, args: TesterArgs = None):
         if args is None:
             args = self.parse_args()
         self.__args = args
