@@ -7,7 +7,7 @@ assert sys.version_info[0] >= 3 and sys.version_info[1] >= 6, 'Python >= 3.6 is 
 
 import argparse, os, locale, shutil, pathlib, tempfile, multiprocessing, subprocess, traceback, time, re
 from os.path import join as join_path, realpath as real_path
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Tuple, NamedTuple, List, Optional, Dict, Union
 from textwrap import wrap
 from contextlib import contextmanager
@@ -21,6 +21,7 @@ DEFAULT_ERROR_LOG_FILENAME = 'errors.log'
 TMPFS_DIR = '/dev/shm'
 TEST_TIMEOUT = 10  # seconds
 TEST_REPORT_SCHEMA_FILE = join_path(THIS_DIR_PATH, 'test-report-schema.xsd')
+DEFAULT_VIEW_XSLT = 'test-report-view.xslt'
 
 
 def file_exists(path: str):
@@ -73,6 +74,18 @@ class TestCaseStageID(Enum):
     REFERENCE_OUTPUT = 8
 
 
+class DT(IntEnum):
+    US = 1
+    S = 1000000 * US
+    D = 24 * 60 * 60 * S
+
+    @staticmethod
+    def us_duration(ts1: dt.datetime, ts2: dt.datetime):
+        d = ts2 - ts1
+        duration = d.microseconds * DT.US + d.seconds * DT.S + d.days * DT.D
+        return duration
+
+
 class TestCaseStageResult(NamedTuple):
     type: TestCaseStageID
     result: bool
@@ -80,9 +93,11 @@ class TestCaseStageResult(NamedTuple):
     error_log: Optional[str]
     start_timestamp: dt.datetime
     end_timestamp: dt.datetime
+
     def to_xml_data(self):
-        data = tr.TestCaseStage(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp, result=self.result,
-                             name=self.type.name)
+        duration = DT.us_duration(self.start_timestamp, self.end_timestamp)
+        data = tr.TestCaseStage(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp,
+                                duration=duration, result=self.result, name=self.type.name)
         if self.args is not None:
             data.set_arguments(self.args)
         if self.error_log is not None:
@@ -112,6 +127,7 @@ class TestCaseResult(NamedTuple):
     exception: Optional[str]
     start_timestamp: dt.datetime
     end_timestamp: dt.datetime
+
     def text_summary(self) -> str:
         txt = ''
         for s in self.stages:
@@ -124,8 +140,11 @@ class TestCaseResult(NamedTuple):
         if self.exception is not None:
             txt += error_text('Exception:\n' + to_paragraph(self.exception, '\t'))
         return txt
+
     def to_xml_data(self):
-        data = tr.TestCase(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp, result=self.result)
+        duration = DT.us_duration(self.start_timestamp, self.end_timestamp)
+        data = tr.TestCase(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp, duration=duration,
+                           result=self.result)
         if self.exception is not None:
             data.set_exception(self.exception)
         data.set_stage([stage.to_xml_data() for stage in self.stages])
@@ -451,6 +470,7 @@ def run_test_case(working_dir: str, test_case: str, tester_args: TesterArgs, dep
 def run_test_case_functor(args):
     return args, run_test_case(*args)
 
+
 class TestResult(NamedTuple):
     testcases: Tuple[Tuple[str, TestCaseResult], ...]
     result: bool
@@ -467,8 +487,9 @@ class TestResult(NamedTuple):
         pass
 
     def save_to_file(self, filename):
+        duration = DT.us_duration(self.start_timestamp, self.end_timestamp)
         report = tr.omni_xcodeml_test_report(start_timestamp=self.start_timestamp, end_timestamp=self.end_timestamp,
-                                             result=self.result)
+                                             duration=duration, result=self.result)
         test_cases_data = []
         for test_case_name, tes_case_result in self.testcases:
             data = tes_case_result.to_xml_data()
@@ -476,11 +497,12 @@ class TestResult(NamedTuple):
             test_cases_data.append(data)
         report.set_test_case(test_cases_data)
         with open(filename, 'w') as f:
-            f.write('<?xml version="1.0"?>\n\n')
+            f.write('<?xml version="1.0"?>\n<?xml-stylesheet type="text/xsl" href="%s"?>\n\n' % DEFAULT_VIEW_XSLT)
             namespace_def = 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
                             ' xsi:noNamespaceSchemaLocation="test-report-schema.xsd"'
             report.export(f, 0, namespacedef_=namespace_def, pretty_print=True)
         self.validate_file(filename)
+
 
 class TestRunner:
 

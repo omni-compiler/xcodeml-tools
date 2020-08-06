@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Thu Aug  6 13:55:26 2020 by generateDS.py version 2.35.24.
+# Generated Thu Aug  6 16:39:42 2020 by generateDS.py version 2.35.24.
 # Python 3.8.2 (default, Jul 16 2020, 14:00:26)  [GCC 9.3.0]
 #
 # Command line options:
@@ -953,7 +953,7 @@ class TestPart(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     subclass = None
     superclass = None
-    def __init__(self, start_timestamp=None, end_timestamp=None, result=None, extensiontype_=None, gds_collector_=None, **kwargs_):
+    def __init__(self, start_timestamp=None, end_timestamp=None, duration=None, result=None, extensiontype_=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
@@ -969,6 +969,8 @@ class TestPart(GeneratedsSuper):
         else:
             initvalue_ = end_timestamp
         self.end_timestamp = initvalue_
+        self.duration = _cast(int, duration)
+        self.duration_nsprefix_ = None
         self.result = _cast(bool, result)
         self.result_nsprefix_ = None
         self.extensiontype_ = extensiontype_
@@ -995,6 +997,10 @@ class TestPart(GeneratedsSuper):
         return self.end_timestamp
     def set_end_timestamp(self, end_timestamp):
         self.end_timestamp = end_timestamp
+    def get_duration(self):
+        return self.duration
+    def set_duration(self, duration):
+        self.duration = duration
     def get_result(self):
         return self.result
     def set_result(self, result):
@@ -1037,6 +1043,9 @@ class TestPart(GeneratedsSuper):
         if self.end_timestamp is not None and 'end_timestamp' not in already_processed:
             already_processed.add('end_timestamp')
             outfile.write(' end_timestamp="%s"' % self.gds_format_datetime(self.end_timestamp, input_name='end_timestamp'))
+        if self.duration is not None and 'duration' not in already_processed:
+            already_processed.add('duration')
+            outfile.write(' duration="%s"' % self.gds_format_integer(self.duration, input_name='duration'))
         if self.result is not None and 'result' not in already_processed:
             already_processed.add('result')
             outfile.write(' result="%s"' % self.gds_format_boolean(self.result, input_name='result'))
@@ -1076,6 +1085,10 @@ class TestPart(GeneratedsSuper):
                 self.end_timestamp = self.gds_parse_datetime(value)
             except ValueError as exp:
                 raise ValueError('Bad date-time attribute (end_timestamp): %s' % exp)
+        value = find_attr_value_('duration', node)
+        if value is not None and 'duration' not in already_processed:
+            already_processed.add('duration')
+            self.duration = self.gds_parse_integer(value, node, 'duration')
         value = find_attr_value_('result', node)
         if value is not None and 'result' not in already_processed:
             already_processed.add('result')
@@ -1098,13 +1111,13 @@ class NamedTestPart(TestPart):
     __hash__ = GeneratedsSuper.__hash__
     subclass = None
     superclass = TestPart
-    def __init__(self, start_timestamp=None, end_timestamp=None, result=None, name=None, extensiontype_=None, gds_collector_=None, **kwargs_):
+    def __init__(self, start_timestamp=None, end_timestamp=None, duration=None, result=None, name=None, extensiontype_=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
-        super(NamedTestPart, self).__init__(start_timestamp, end_timestamp, result, extensiontype_,  **kwargs_)
+        super(NamedTestPart, self).__init__(start_timestamp, end_timestamp, duration, result, extensiontype_,  **kwargs_)
         self.name = _cast(None, name)
         self.name_nsprefix_ = None
         self.extensiontype_ = extensiontype_
@@ -1205,13 +1218,13 @@ class TestCase(NamedTestPart):
     __hash__ = GeneratedsSuper.__hash__
     subclass = None
     superclass = NamedTestPart
-    def __init__(self, start_timestamp=None, end_timestamp=None, result=None, name=None, exception=None, stage=None, gds_collector_=None, **kwargs_):
+    def __init__(self, start_timestamp=None, end_timestamp=None, duration=None, result=None, name=None, exception=None, stage=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
-        super(TestCase, self).__init__(start_timestamp, end_timestamp, result, name,  **kwargs_)
+        super(TestCase, self).__init__(start_timestamp, end_timestamp, duration, result, name,  **kwargs_)
         self.exception = _cast(None, exception)
         self.exception_nsprefix_ = None
         if stage is None:
@@ -1324,13 +1337,13 @@ class TestCaseStage(NamedTestPart):
     __hash__ = GeneratedsSuper.__hash__
     subclass = None
     superclass = NamedTestPart
-    def __init__(self, start_timestamp=None, end_timestamp=None, result=None, name=None, arguments=None, error_log=None, gds_collector_=None, **kwargs_):
+    def __init__(self, start_timestamp=None, end_timestamp=None, duration=None, result=None, name=None, arguments=None, error_log=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
-        super(TestCaseStage, self).__init__(start_timestamp, end_timestamp, result, name,  **kwargs_)
+        super(TestCaseStage, self).__init__(start_timestamp, end_timestamp, duration, result, name,  **kwargs_)
         self.arguments = _cast(None, arguments)
         self.arguments_nsprefix_ = None
         self.error_log = _cast(None, error_log)
@@ -1429,13 +1442,13 @@ class omni_xcodeml_test_report(TestPart):
     __hash__ = GeneratedsSuper.__hash__
     subclass = None
     superclass = TestPart
-    def __init__(self, start_timestamp=None, end_timestamp=None, result=None, test_case=None, gds_collector_=None, **kwargs_):
+    def __init__(self, start_timestamp=None, end_timestamp=None, duration=None, result=None, test_case=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = None
-        super(omni_xcodeml_test_report, self).__init__(start_timestamp, end_timestamp, result,  **kwargs_)
+        super(omni_xcodeml_test_report, self).__init__(start_timestamp, end_timestamp, duration, result,  **kwargs_)
         if test_case is None:
             self.test_case = []
         else:
