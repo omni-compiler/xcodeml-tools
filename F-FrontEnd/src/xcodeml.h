@@ -189,7 +189,7 @@ typedef struct symbol_stack {
     struct symbol_stack *next;
 } symbol_stack;
 
-symbol_stack *current_symbol_stack;
+extern symbol_stack *current_symbol_stack;
 
 #define PRIV_PARM_SYM(priv_parm_list) ((priv_parm_list)->symbol)
 #define PRIV_PARM_LINK(priv_parm_list) ((priv_parm_list)->next)

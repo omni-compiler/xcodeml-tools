@@ -1,5 +1,7 @@
 #include "xcodeml.h"
 
+symbol_stack * current_symbol_stack = NULL;
+
 static char *sanitizeText(char *str)
 {
     char *p = str;
