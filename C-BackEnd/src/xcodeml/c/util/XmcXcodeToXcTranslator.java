@@ -1894,7 +1894,7 @@ public class XmcXcodeToXcTranslator {
                 if (childNode.getNodeType() != Node.ELEMENT_NODE) {
                     continue;
                 }
-		enterNodes(tc, obj, childNode);
+		enterNodes(tc, parent, childNode);
             }
 
         }
@@ -2010,7 +2010,7 @@ public class XmcXcodeToXcTranslator {
 		if (childNode.getNodeType() != Node.ELEMENT_NODE) {
 		    continue;
 		}
-		enterNodes(tc, obj, childNode);
+		enterNodes(tc, parent, childNode);
 	    }
 	}
 
