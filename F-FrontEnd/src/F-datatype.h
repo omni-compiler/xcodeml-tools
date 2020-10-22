@@ -180,7 +180,7 @@ typedef struct type_descriptor {
                             contain block)*/
         int is_module_procedure;
         /* used as a module procedure */ /* may not be required */
-        int is_visible_intrinsic; /* TRUE if non standard intrinsic */
+        int is_visible_intrinsic;        /* TRUE if non standard intrinsic */
         int is_interface; /* TRUE if the function is a interface */
 
         int has_binding_arg;

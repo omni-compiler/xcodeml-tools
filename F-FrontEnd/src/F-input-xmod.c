@@ -3321,44 +3321,45 @@ static int input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable *ht,
     /*     interface_class = INTF_OPERATOR; */
     /*     free(is_operator); */
     /*     free(name); */
-    
-    if (name != NULL && is_operator == NULL && is_defined_io == NULL && is_assignment == NULL){
 
-      /* generic */
+    if (name != NULL && is_operator == NULL && is_defined_io == NULL &&
+        is_assignment == NULL) {
 
-      id = find_ident_head(find_symbol(name), id_list);
-      if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
-	id = find_ident_head(ID_SYM(id), ID_NEXT(id));
-      } else if (ID_CLASS(id) == CL_MULTI) {
-	id = multi_find_class(id, CL_PROC);
-	PROC_CLASS(id) = P_UNDEFINEDPROC;
-      }
+        /* generic */
 
-      interface_class = INTF_GENERICS;
-      FUNCTION_TYPE_SET_GENERIC(ID_TYPE(id));
-      free(name);
+        id = find_ident_head(find_symbol(name), id_list);
+        if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
+            id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+        } else if (ID_CLASS(id) == CL_MULTI) {
+            id = multi_find_class(id, CL_PROC);
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
+        }
 
-    }
-    else if (name != NULL && is_operator != NULL && is_defined_io == NULL && is_assignment == NULL){
+        interface_class = INTF_GENERICS;
+        FUNCTION_TYPE_SET_GENERIC(ID_TYPE(id));
+        free(name);
 
-      /* operator */
-      
-      id = find_ident_head(find_symbol(name), id_list);
-      if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
-	id = find_ident_head(ID_SYM(id), ID_NEXT(id));
-      } else if (ID_CLASS(id) == CL_MULTI) {
-	id = multi_find_class(id, CL_PROC);
-	PROC_CLASS(id) = P_UNDEFINEDPROC;
-      }
+    } else if (name != NULL && is_operator != NULL && is_defined_io == NULL &&
+               is_assignment == NULL) {
 
-      interface_class = INTF_OPERATOR;
-      free(is_operator);
-      free(name);
+        /* operator */
+
+        id = find_ident_head(find_symbol(name), id_list);
+        if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
+            id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+        } else if (ID_CLASS(id) == CL_MULTI) {
+            id = multi_find_class(id, CL_PROC);
+            PROC_CLASS(id) = P_UNDEFINEDPROC;
+        }
+
+        interface_class = INTF_OPERATOR;
+        free(is_operator);
+        free(name);
 
     } else if (is_defined_io != NULL) {
 
         /* defined io */
-      
+
         if (strcmp("WRITE(FORMATTED)", is_defined_io) == 0) {
             interface_class = INTF_GENERIC_WRITE_FORMATTED;
             name = "_write_formatted";
@@ -3377,15 +3378,15 @@ static int input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable *ht,
         }
         id = find_ident_head(find_symbol(name), id_list);
         free(is_defined_io);
-    } else if (is_assignment != NULL){
-      
+    } else if (is_assignment != NULL) {
+
         /* assignment */
-      
+
         id = find_ident_head(find_symbol("="), id_list);
         interface_class = INTF_ASSIGNMENT;
         free(is_assignment);
     } else {
-      return FALSE;
+        return FALSE;
     }
 
     ep = PROC_EXT_ID(id);

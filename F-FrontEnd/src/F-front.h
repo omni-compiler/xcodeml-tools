@@ -171,6 +171,7 @@ enum control_type {
     CTL_OMP,
     CTL_XMP,
     CTL_ACC,
+    CTL_OMN,
     CTL_CRITICAL,
     CTL_BLK,
     CTL_INTERFACE,
@@ -285,6 +286,10 @@ typedef struct control {
 #define CTL_ACC_ARG(l) ((l)->v2)
 #define CTL_ACC_ARG_DIR(l) (EXPR_INT(EXPR_ARG1((l)->v2)))
 #define CTL_ACC_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
+
+#define CTL_OMN_ARG(l) ((l)->v2)
+#define CTL_OMN_ARG_DIR(l) (EXPR_STR(EXPR_ARG1((l)->v2)))
+#define CTL_OMN_ARG_CLAUSE(l) (EXPR_ARG2((l)->v2))
 
 #define CTL_BLOCK_STATEMENT(l) ((l)->v2)
 #define CTL_BLOCK_BODY(l) (EXPR_ARG1((l)->v2))
@@ -994,6 +999,7 @@ extern void compile_EQUIVALENCE_decl _ANSI_ARGS_((expr x));
 extern expv ExpandImpliedDoInDATA _ANSI_ARGS_((expv spec, expv new));
 
 extern void compile_OMN_directive _ANSI_ARGS_((expr x));
+extern void compile_OMN_decl_directive _ANSI_ARGS_((expr x));
 extern void begin_module _ANSI_ARGS_((expr name));
 extern void end_module _ANSI_ARGS_((expr name));
 extern int is_in_module(void);

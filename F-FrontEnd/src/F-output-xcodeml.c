@@ -546,6 +546,12 @@ static const char *xtag(enum expr_code code)
         case ACC_PRAGMA:
             return "ACCPragma";
 
+        case OMN_PRAGMA:
+            return "OMNPragma";
+
+        case OMNDECL_PRAGMA:
+            return "OMNDECLPragma";
+
         default:
             fatal("unknown exprcode : %d", code);
     }
@@ -3540,6 +3546,30 @@ static void outx_ACC_dir_clause_list(int l, expv v)
 }
 
 /**
+ * output OMN pragma statement
+ */
+static void outx_XMP_dir_string(int l, expv v);
+static void outx_XMP_dir_clause_list(int l, expv v);
+
+static void outx_OMN_pragma(int l, expv v)
+{
+    const int l1 = l + 1;
+    outx_tagOfStatement(l, v);
+
+    // outx_XMP_dir_string(l1,EXPR_ARG1(v));
+    // outx_tagText(l, "string", "Unroll");
+    outx_tagText(l, "string", EXPR_STR(EXPR_ARG1(v)));
+
+    if (EXPR_ARG2(v))
+        outx_XMP_dir_clause_list(l1, EXPR_ARG2(v));
+
+    /* output body */
+    if (EXPR_HAS_ARG3(v))
+        outx_expv_withListTag(l1, EXPR_ARG3(v));
+    outx_expvClose(l, v);
+}
+
+/**
  * output FassignStatement
  */
 static void outx_assignStatement(int l, expv v)
@@ -4471,6 +4501,11 @@ static void outx_expv(int l, expv v)
             outx_ACC_pragma(l, v);
             break;
 
+        case OMN_PRAGMA:
+        case OMNDECL_PRAGMA:
+            outx_OMN_pragma(l, v);
+            break;
+
         case F2008_BLOCK_STATEMENT:
             outx_BLOCK_statement(l, v);
             break;
@@ -5182,11 +5217,13 @@ static void outx_structType(int l, TYPE_DESC tp)
                 outx_true(TYPE_IS_PRIVATE(id), "is_private");
                 outx_printi(0, ">\n");
                 if (!is_defined_io) {
-                    outx_tagText(l3, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
+                    outx_tagText(l3, "name",
+                                 getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
                 }
                 outx_tag(l3, "binding");
                 FOREACH_ID (binding, TBP_BINDING(id)) {
-                    outx_tagText(l4, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(binding))));
+                    outx_tagText(l4, "name",
+                                 getXmlEscapedStr(SYM_NAME(ID_SYM(binding))));
                 }
                 outx_close(l3, "binding");
                 outx_close(l2, "typeBoundGenericProcedure");
@@ -5221,9 +5258,12 @@ static void outx_structType(int l, TYPE_DESC tp)
 
                 outx_printi(0, ">\n");
 
-                outx_tagText(l3, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
+                outx_tagText(l3, "name",
+                             getXmlEscapedStr(SYM_NAME(ID_SYM(id))));
                 outx_tag(l3, "binding");
-                outx_tagText(l4, "name", getXmlEscapedStr(SYM_NAME(ID_SYM(TBP_BINDING(id)))));
+                outx_tagText(
+                    l4, "name",
+                    getXmlEscapedStr(SYM_NAME(ID_SYM(TBP_BINDING(id)))));
                 outx_close(l3, "binding");
 
                 outx_close(l2, "typeBoundProcedure");
@@ -5934,6 +5974,10 @@ static void outx_declarations1(int l, EXT_ID parent_ep, int outputPragmaInBody)
                     break;
                 case ACC_PRAGMA:
                     outx_ACC_pragma(l1, v);
+                    break;
+                case OMN_PRAGMA:
+                case OMNDECL_PRAGMA:
+                    outx_OMN_pragma(l, v);
                     break;
                 default:
                     break;

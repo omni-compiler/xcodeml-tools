@@ -17,6 +17,7 @@
 int OMP_flag = FALSE;
 int XMP_flag = FALSE;
 int ACC_flag = FALSE;
+int OMN_flag = TRUE;
 
 /* lexical analyzer, enable conditional compilation.  */
 int cond_compile_enabled = FALSE;
@@ -137,6 +138,7 @@ enum lex_state {
     LEX_OMP_TOKEN,
     LEX_XMP_TOKEN,
     LEX_ACC_TOKEN,
+    LEX_OMN_TOKEN,
     LEX_COMMENT_TOKEN,
     LEX_RET_EOS
 };
@@ -147,6 +149,8 @@ int st_OCL_flag;
 int st_OMP_flag;
 int st_XMP_flag;
 int st_ACC_flag;
+int st_OMN_flag;
+int st_OMD_flag;
 int st_comment_line_flag;
 int st_PGI_flag;
 
@@ -166,6 +170,8 @@ sentinel_list sentinels;
 #define ACC_SENTINEL "!$acc"
 #define OCL_SENTINEL "!ocl"
 #define CDIR_SENTINEL "!cdir"
+#define OMN_SENTINEL "!$omn"
+#define OMD_SENTINEL "!$omd"
 #define PGI_SENTINEL "!pgi$"
 #define DIR_SENTINEL "!dir$"
 
@@ -337,6 +343,8 @@ void initialize_lex()
         add_sentinel(&sentinels, OCL_SENTINEL);
     if (cdir_flag)
         add_sentinel(&sentinels, CDIR_SENTINEL);
+    add_sentinel(&sentinels, OMN_SENTINEL);
+    add_sentinel(&sentinels, OMD_SENTINEL);
     if (pgi_flag)
         add_sentinel(&sentinels, PGI_SENTINEL);
 }
@@ -455,8 +463,8 @@ int is_function_statement_context()
                         return FALSE;
                     }
                 } else if ((prev == KW_COMPLEX || prev == KW_INTEGER // fix #136
-                    || prev == KW_REAL) && token_history_buf[i] == '*') 
-                {
+                            || prev == KW_REAL) &&
+                           token_history_buf[i] == '*') {
                     // for a type_spec like 'compley*8'
                     i += 2;
                 }
@@ -672,6 +680,16 @@ static int yylex0()
                     *p = TOLOWER(*p);
                 return ACCKW_LINE;
             }
+            if (st_OMN_flag && OMN_flag) {
+                lexstate = LEX_OMN_TOKEN;
+                // for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+                return OMNKW_LINE;
+            }
+            if (st_OMD_flag && OMN_flag) {
+                lexstate = LEX_OMN_TOKEN;
+                // for (p = bufptr; *p != '\0'; p++) *p = TOLOWER(*p);
+                return OMNDECLKW_LINE;
+            }
             if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
                 (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
                 lexstate = LEX_PRAGMA_TOKEN;
@@ -752,6 +770,12 @@ static int yylex0()
                 lexstate = LEX_NEW_STATEMENT;
             return t;
 
+        case LEX_OMN_TOKEN:
+            t = OMP_lex_token();
+            if (t == EOS)
+                lexstate = LEX_NEW_STATEMENT;
+            return t;
+	    
         case LEX_PRAGMA_TOKEN:
             lexstate = LEX_RET_EOS;
             return PRAGMA_SLINE;
@@ -2486,6 +2510,8 @@ again:
     st_ACC_flag = FALSE;       /* flag for "!$ACC" */
     st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
     st_OCL_flag = FALSE;       /* flag for "!OCL" */
+    st_OMN_flag = FALSE;       /* flag for "!OMN" */
+    st_OMD_flag = FALSE;       /* flag for "!OMD" */
     st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
     st_comment_line_flag = FALSE;
     st_PGI_flag = FALSE;
@@ -2533,6 +2559,18 @@ again:
                 strcat(buff, p);
                 set_pragma_str(buff);
                 st_PRAGMA_flag = TRUE;
+            } else if (strcasecmp(sentinel_name(&sentinels, index),
+                                  OMN_SENTINEL) == 0) {
+                char buff[256] = "OMN";
+                strcat(buff, p);
+                set_pragma_str(buff);
+                st_OMN_flag = TRUE;
+            } else if (strcasecmp(sentinel_name(&sentinels, index),
+                                  OMD_SENTINEL) == 0) {
+                char buff[256] = "OMD";
+                strcat(buff, p);
+                set_pragma_str(buff);
+                st_OMD_flag = TRUE;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   PGI_SENTINEL) == 0) {
                 char buff[256] = "pgi$";

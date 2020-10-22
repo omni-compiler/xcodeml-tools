@@ -167,6 +167,10 @@ int check_for_XMP_pragma(int st_no, expr x);
 void init_for_ACC_pragma();
 void check_for_ACC_pragma(expr x);
 
+expv OMN_pragma_list(int pragma, char *dir_name, expv arg1, expv arg2);
+void init_for_OMN_pragma();
+void check_for_OMN_pragma(expr x);
+
 void set_parent_implicit_decls(void);
 
 void push_env(ENV env)
@@ -394,6 +398,7 @@ expr x;
         expr_print(x, debug_fp);
     }
 
+    check_for_OMN_pragma(x);
     check_for_ACC_pragma(x);
     check_for_OMP_pragma(x);
     doCont = check_for_XMP_pragma(st_no, x);
@@ -633,6 +638,7 @@ void compile_statement1(int st_no, expr x)
                 // else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
                 // EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
                 //}
+                check_for_OMN_pragma(x); /* close DO directives if any */
                 check_for_OMP_pragma(x); /* close DO directives if any */
                 check_for_ACC_pragma(x); /* close LOOP directives if any */
                 check_for_XMP_pragma(st_no,
@@ -963,6 +969,12 @@ void compile_statement1(int st_no, expr x)
                     CURRENT_STATEMENTS_saved = CURRENT_STATEMENTS;
                     pop_ctl();
                 }
+            } else if (CTL_TYPE(ctl_top) == CTL_OMN) {
+                CTL_BLOCK(ctl_top) = OMN_pragma_list(
+                    OMN_PRAGMA, CTL_OMN_ARG_DIR(ctl_top),
+                    CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS);
+                EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
+                pop_ctl();
             }
 
             break;
@@ -5335,15 +5347,17 @@ static EXT_ID shallow_copy_ext_id(EXT_ID original)
 }
 
 #define ID_SEEM_GENERIC_PROCEDURE(id)                                          \
-   ((ID_TYPE((id)) != NULL &&						\
-     FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                       \
-     ((ID_CLASS((id)) == CL_PROC && TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE( \
-                                        ID_TYPE((id)))) == TYPE_GENERIC) ||    \
-      (TYPE_BASIC_TYPE(ID_TYPE((id))) == TYPE_FUNCTION &&                      \
-       TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id)))) != NULL &&           \
-       TYPE_BASIC_TYPE(TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))) ==  \
-           TYPE_GNUMERIC_ALL))) ||                                             \
-    (ID_TYPE((id)) != NULL && ID_CLASS((id)) == CL_PROC && FUNCTION_TYPE_IS_GENERIC(ID_TYPE((id)))))
+    ((ID_TYPE((id)) != NULL &&                                                 \
+      FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))) != NULL &&                      \
+      ((ID_CLASS((id)) == CL_PROC &&                                           \
+        TYPE_BASIC_TYPE(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id)))) ==           \
+            TYPE_GENERIC) ||                                                   \
+       (TYPE_BASIC_TYPE(ID_TYPE((id))) == TYPE_FUNCTION &&                     \
+        TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id)))) != NULL &&          \
+        TYPE_BASIC_TYPE(TYPE_REF(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE((id))))) == \
+            TYPE_GNUMERIC_ALL))) ||                                            \
+     (ID_TYPE((id)) != NULL && ID_CLASS((id)) == CL_PROC &&                    \
+      FUNCTION_TYPE_IS_GENERIC(ID_TYPE((id)))))
 
 typedef struct {
     TYPE_DESC original;
@@ -6119,10 +6133,10 @@ static void compile_USE_ONLY_decl(expr x, expr x_args, int is_intrinsic)
                 use_arg->use = NULL;
                 use_arg->is_operator = TRUE;
             }
-        } else if(EXPV_CODE(a) == F95_USER_DEFINED) { // #147
+        } else if (EXPV_CODE(a) == F95_USER_DEFINED) { // #147
             assert(EXPR_HAS_ARG1(a));
             args = list_put_last(args,
-                list2(F95_USER_DEFINED, NULL, EXPR_ARG1(a)));
+                                 list2(F95_USER_DEFINED, NULL, EXPR_ARG1(a)));
             use_arg->local = EXPV_NAME(EXPR_ARG1(a));
             use_arg->use = NULL;
             use_arg->is_operator = TRUE;

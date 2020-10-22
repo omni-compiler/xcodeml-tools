@@ -1130,13 +1130,13 @@ int type_kind_is_constant(TYPE_DESC tp)
         expv kind = type_get_kind(tp);
         switch (EXPR_CODE(kind)) {
             case STRING_CONSTANT:
-	        case INT_CONSTANT:
+            case INT_CONSTANT:
             case FLOAT_CONSTANT:
-	        case COMPLEX_CONSTANT:
-	        case F_TRUE_CONSTANT:
-	        case F_FALSE_CONSTANT:
-	        case F_DOUBLE_CONSTANT:
-	        case F_QUAD_CONSTANT:
+            case COMPLEX_CONSTANT:
+            case F_TRUE_CONSTANT:
+            case F_FALSE_CONSTANT:
+            case F_DOUBLE_CONSTANT:
+            case F_QUAD_CONSTANT:
                 return TRUE;
             default:
                 return FALSE;

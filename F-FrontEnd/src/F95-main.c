@@ -122,7 +122,7 @@ static void usage()
         "-fopenmp                  enable openmp translation.",
         "-facc                     enable OpenACC translation.",
         "-fxmp                     enable XcalableMP translation.",
-	"-pgi                      keep PGI directives",
+        "-pgi                      keep PGI directives",
         "-fno-xmp-coarray          disable translation coarray statements to "
         "XcalableMP subroutin calls.",
         "-fintrinsic-xmodules-path specify a xmod path for the intrinsic "
