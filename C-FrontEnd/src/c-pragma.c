@@ -17,6 +17,7 @@
 #include "c-omp.h"
 #include "c-xmp.h"
 #include "c-acc.h"
+#include "c-omn.h"
 
 //! Pointer to parsing string
 char    *pg_cp;
@@ -238,6 +239,8 @@ getPragmaKind(char *p)
         return PK_XMP;
     else if(s_useACC && equals_tokenP("acc", p)) /* OpenACC */
         return PK_ACC;
+    else if(equals_tokenP("omn", p)) /* METAX */
+        return PK_OMN;
     else
         return PK_NOT_PARSABLE;
 }
@@ -1344,6 +1347,9 @@ lexParsePragma(char *p, int *token)
     }
     else if(pk == PK_ACC) {
       return lexParsePragmaACC(p,token);
+    }
+    else if(pk == PK_OMN) {
+      return lexParsePragmaOMN(p,token);
     }
     else if(pk == PK_NOT_PARSABLE) {
         *token = DIRECTIVE;

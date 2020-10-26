@@ -41,6 +41,7 @@ typedef enum {
     PK_OMP,  // OpenMP
     PK_XMP,  // XcalableMP
     PK_ACC,  // OpenACC
+    PK_OMN,  // METAX
 } CPragmaKind;
 
 extern CExpr*  pg_parse_expr();
