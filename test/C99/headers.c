@@ -4,6 +4,7 @@
 #include <float.h>
 #include <limits.h>
 #include <locale.h>
+#define _Float128 double
 #include <math.h>
 #include <setjmp.h>
 #include <stdarg.h>

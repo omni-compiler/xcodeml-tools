@@ -1,71 +1,65 @@
 package xcodeml.util;
 
 import java.util.ArrayList;
-import xcodeml.util.XmLanguage;
 
 /**
  * Decompile option.
- * @deprecated Not thread-safe.
  */
-@Deprecated
-public class XmOption
+public class XmOptionLocal implements IXmOption
 {
-    public static final int COMP_VENDOR_GNU = 'G';
-    public static final int COMP_VENDOR_INTEL = 'I';
-
     /** if suppress to write line directives */
-    private static boolean _suppressLineDirective = false;
+    private boolean _suppressLineDirective = false;
 
     /** if compiling Xcalable MP is enabled */
-    private static boolean _xcalableMP = false;
-    private static boolean _xcalableMPthreads = false;
-    private static boolean _xcalableMPGPU = false;
-    private static boolean _xcalableMPasync = false;
+    private boolean _xcalableMP = false;
+    private boolean _xcalableMPthreads = false;
+    private boolean _xcalableMPGPU = false;
+    private boolean _xcalableMPasync = false;
 
-    private static boolean _tlog = false;
-    private static boolean _Fonesided = false;
+    private boolean _tlog = false;
+    private boolean _Fonesided = false;
 
     /** if compiling XcalableACC is enabled */
-    private static boolean _xcalableACC = false;
+    private boolean _xcalableACC = false;
 
     /** if compiling OpenMP is enabled */
-    private static boolean _openMP = false;
+    private boolean _openMP = false;
 
     /** if compiling OpenMP only target is enabled */
-    private static boolean _openMPonlyTarget = false;
+    private boolean _openMPonlyTarget = false;
 
     /** if compiling coarray is enabled */
-    private static boolean _coarray = false;
+    private boolean _coarray = false;
 
     /** if debug output is enabled */
-    private static boolean _debugOutput = false;
+    private boolean _debugOutput = false;
 
     /** ensure left to right evaluation of mathematical expression **/
-    private static boolean _addPar = false;
+    private boolean _addPar = false;
 
     /** target language ID */
-    private static XmLanguage _language = XmLanguage.C;
+    private XmLanguage _language = XmLanguage.C;
 
     /** Name of tht main function */
-    private static String _mainName = "";
+    private String _mainName = "";
 
     /** if transforming Fortran IO statement as atomic operation */
-    private static boolean _isAtomicIO = false;
+    private boolean _isAtomicIO = false;
 
     /** backend compiler vendor */
-    private static int _compilerVendor = COMP_VENDOR_GNU;
+    private int _compilerVendor = COMP_VENDOR_GNU;
 
     /** if supressing generation of USE statement for coarray runtime
      *  (TEMPORARY)
      */
-    private static boolean _coarrayUseStatement = false;
-    private static ArrayList<String> _coarrayEntryNames = new ArrayList<>();
+    private boolean _coarrayUseStatement = false;
+    private ArrayList<String> _coarrayEntryNames = new ArrayList<>();
 
-    private static int _pointer_scalar_size = 8;  // This value for gcc-8.3.0
-    private static int _pointer_array_size  = 40; // This value for gcc-8.3.0
-    private static int _pointer_diff_size   = 24; // This value for gcc-8.3.0
-  
-    private XmOption()
+    private int _pointer_scalar_size = 8;  // This value for gcc-8.3.0
+    private int _pointer_array_size  = 40; // This value for gcc-8.3.0
+    private int _pointer_diff_size   = 24; // This value for gcc-8.3.0
+
+    public XmOptionLocal()
     {
     }
 
@@ -74,7 +68,8 @@ public class XmOption
      *
      * @param enable true then compiler suppress to write line directives.
      */
-    public static void setIsSuppressLineDirective(boolean enable)
+    @Override
+    public void setIsSuppressLineDirective(boolean enable)
     {
         _suppressLineDirective = enable;
     }
@@ -84,7 +79,8 @@ public class XmOption
      *
      * @return true if compiler suppress to write line directives.
      */
-    public static boolean isSuppressLineDirective()
+    @Override
+    public boolean isSuppressLineDirective()
     {
         return _suppressLineDirective;
     }
@@ -94,7 +90,8 @@ public class XmOption
      *
      * @param enable true then translate XcalableMP directive.
      */
-    public static void setIsXcalableMP(boolean enable)
+    @Override
+    public void setIsXcalableMP(boolean enable)
     {
         _xcalableMP = enable;
     }
@@ -104,7 +101,8 @@ public class XmOption
      *
      * @return true if compiler translate XcalableMP directive.
      */
-    public static boolean isXcalableMP()
+    @Override
+    public boolean isXcalableMP()
     {
         return _xcalableMP;
     }
@@ -112,7 +110,8 @@ public class XmOption
     /**
      * Sets compiler to or not to translate XcalableMP-threads directive.
      */
-    public static void setIsXcalableMPthreads(boolean enable)
+    @Override
+    public void setIsXcalableMPthreads(boolean enable)
     {
         _xcalableMPthreads = enable;
     }
@@ -120,7 +119,8 @@ public class XmOption
     /**
      * Checks does compiler translate XcalableMP-threads directive.
      */
-    public static boolean isXcalableMPthreads()
+    @Override
+    public boolean isXcalableMPthreads()
     {
         return _xcalableMPthreads;
     }
@@ -128,7 +128,8 @@ public class XmOption
     /**
      * Sets compiler to or not to translate XcalableMP-GPU directive.
      */
-    public static void setIsXcalableMPGPU(boolean enable)
+    @Override
+    public void setIsXcalableMPGPU(boolean enable)
     {
         _xcalableMPGPU = enable;
     }
@@ -136,7 +137,8 @@ public class XmOption
     /**
      * Checks does compiler translate XcalableMP-GPU directive.
      */
-    public static boolean isXcalableMPGPU()
+    @Override
+    public boolean isXcalableMPGPU()
     {
         return _xcalableMPGPU;
     }
@@ -144,7 +146,8 @@ public class XmOption
     /**
      * Sets whether the compiler supports asynchronous communications or not.
      */
-    public static void setIsAsync(boolean enable)
+    @Override
+    public void setIsAsync(boolean enable)
     {
         _xcalableMPasync = enable;
     }
@@ -152,12 +155,14 @@ public class XmOption
     /**
      * Checks if the compiler supports asynchronous communications.
      */
-    public static boolean isAsync()
+    @Override
+    public boolean isAsync()
     {
         return _xcalableMPasync;
     }
 
-    public static void setIsXcalableACC(boolean enable)
+    @Override
+    public void setIsXcalableACC(boolean enable)
     {
         _xcalableACC = enable;
     }
@@ -167,7 +172,8 @@ public class XmOption
      *
      * @return true if compiler translate XcalableMP directive.
      */
-    public static boolean isXcalableACC()
+    @Override
+    public boolean isXcalableACC()
     {
         return _xcalableACC;
     }
@@ -175,7 +181,8 @@ public class XmOption
     /**
      * Sets compiler to or not to use tlog for MPI.
      */
-    public static void setTlogMPIisEnable(boolean enable)
+    @Override
+    public void setTlogMPIisEnable(boolean enable)
     {
         _tlog = enable;
     }
@@ -183,12 +190,14 @@ public class XmOption
     /**
      * Sets compiler to or not to use one-sided functions in Fortran.
     */
-    public static void setFonesided(boolean enable)
+    @Override
+    public void setFonesided(boolean enable)
     {
         _Fonesided = enable;
     }
 
-    public static boolean isFonesided()
+    @Override
+    public boolean isFonesided()
     {
         return _Fonesided;
     }
@@ -196,7 +205,8 @@ public class XmOption
     /**
      * Checks does compiler use tlog for MPI.
      */
-    public static boolean tlogMPIisEnable()
+    @Override
+    public boolean tlogMPIisEnable()
     {
         return _tlog;
     }
@@ -206,7 +216,8 @@ public class XmOption
      *
      * @param enable true then translate OpenMP directive.
      */
-    public static void setIsOpenMP(boolean enable)
+    @Override
+    public void setIsOpenMP(boolean enable)
     {
         _openMP = enable;
     }
@@ -216,7 +227,8 @@ public class XmOption
      *
      * @param enable true then translate OpenMP only target directive.
      */
-    public static void setIsOpenMPonlyTarget(boolean enable)
+    @Override
+    public void setIsOpenMPonlyTarget(boolean enable)
     {
      	_openMPonlyTarget = enable;
     }
@@ -226,7 +238,8 @@ public class XmOption
      *
      * @return true if compiler translate OpenMP directive.
      */
-    public static boolean isOpenMP()
+    @Override
+    public boolean isOpenMP()
     {
         return _openMP;
     }
@@ -236,7 +249,8 @@ public class XmOption
      *
      * @return true if compiler translate OpenMP only target directive.
      */
-    public static boolean isOpenMPOnlyTarget()
+    @Override
+    public boolean isOpenMPOnlyTarget()
     {
         return _openMPonlyTarget;
     }
@@ -246,7 +260,8 @@ public class XmOption
      *
      * @param enable true then translate coarrays.
      */
-    public static void setIsCoarray(boolean enable)
+    @Override
+    public void setIsCoarray(boolean enable)
     {
         _coarray = enable;
     }
@@ -256,7 +271,8 @@ public class XmOption
      *
      * @return true if compiler translate coarrays.
      */
-    public static boolean isCoarray()
+    @Override
+    public boolean isCoarray()
     {
         return _coarray;
     }
@@ -266,7 +282,8 @@ public class XmOption
      *
      * @param name added to the list of coarray runtime library
      */
-    public static void addToCoarrayEntryNames(String name)
+    @Override
+    public void addToCoarrayEntryNames(String name)
     {
         _coarrayEntryNames.add(name);
     }
@@ -276,7 +293,8 @@ public class XmOption
      *
      * @return the list of coarray runtime library
      */
-    public static ArrayList<String> getCoarrayEntryNames()
+    @Override
+    public ArrayList<String> getCoarrayEntryNames()
     {
         return _coarrayEntryNames;
     }
@@ -284,7 +302,8 @@ public class XmOption
     /**
      * Return true if debug output enabled.
      */
-    public static boolean isDebugOutput()
+    @Override
+    public boolean isDebugOutput()
     {
         return _debugOutput;
     }
@@ -292,7 +311,8 @@ public class XmOption
     /**
      * Set debug output.
      */
-    public static void setDebugOutput(boolean enable)
+    @Override
+    public void setDebugOutput(boolean enable)
     {
         _debugOutput = enable;
     }
@@ -300,7 +320,8 @@ public class XmOption
     /**
      * Set language
      */
-    public static void setLanguage(XmLanguage lang)
+    @Override
+    public void setLanguage(XmLanguage lang)
     {
         _language = lang;
     }
@@ -308,7 +329,8 @@ public class XmOption
     /**
      * Get language
      */
-    public static XmLanguage getLanguage()
+    @Override
+    public XmLanguage getLanguage()
     {
         return _language;
     }
@@ -316,7 +338,8 @@ public class XmOption
     /**
      * Set name of the main function
      */
-    public static void setMainName(String main_name)
+    @Override
+    public void setMainName(String main_name)
     {
         _mainName = main_name;
     }
@@ -324,7 +347,8 @@ public class XmOption
     /**
      * Get name of the main function
      */
-    public static String getMainName()
+    @Override
+    public String getMainName()
     {
         return _mainName;
     }
@@ -332,7 +356,8 @@ public class XmOption
     /**
      * Return if the language is C
      */
-    public static boolean isLanguageC()
+    @Override
+    public boolean isLanguageC()
     {
         return _language.equals(XmLanguage.C);
     }
@@ -340,7 +365,8 @@ public class XmOption
     /**
      * Return if the language is Fortran
      */
-    public static boolean isLanguageF()
+    @Override
+    public boolean isLanguageF()
     {
         return _language.equals(XmLanguage.F);
     }
@@ -348,7 +374,8 @@ public class XmOption
     /**
      * Return compiler vendor constant. (COMP_VENDOR_*)
      */
-    public static int getCompilerVendor()
+    @Override
+    public int getCompilerVendor()
     {
         return _compilerVendor;
     }
@@ -356,7 +383,8 @@ public class XmOption
     /**
      * Set compiler vendor constant. (COMP_VENDOR_*)
      */
-    public static void setCompilerVendor(int vendor)
+    @Override
+    public void setCompilerVendor(int vendor)
     {
         _compilerVendor = vendor;
     }
@@ -364,7 +392,8 @@ public class XmOption
     /**
      * Get if or not IO statements are transformed to atomic operation.
      */
-    public static boolean isAtomicIO()
+    @Override
+    public boolean isAtomicIO()
     {
         return _isAtomicIO || _compilerVendor == COMP_VENDOR_INTEL;
     }
@@ -372,7 +401,8 @@ public class XmOption
     /**
      * Set if or not IO statements are transformed to atomic operation.
      */
-    public static void setIsAtomicIO(boolean atomicIO)
+    @Override
+    public void setIsAtomicIO(boolean atomicIO)
     {
         _isAtomicIO = atomicIO;
     }
@@ -380,12 +410,14 @@ public class XmOption
     /**
      * Set/get suboption -fcoarray-use-statement (boolean)
      */
-    public static void setCoarrayUseStatement(boolean coarrayUseStatement)
+    @Override
+    public void setCoarrayUseStatement(boolean coarrayUseStatement)
     {
         _coarrayUseStatement = coarrayUseStatement;
     }
 
-    public static boolean coarrayUseStatement()
+    @Override
+    public boolean coarrayUseStatement()
     {
         return _coarrayUseStatement;
     }
@@ -396,7 +428,8 @@ public class XmOption
      *
      * @param enable true then compiler add parenthesis to ensure evaluation.
      */
-    public static void setAddPar(boolean enable)
+    @Override
+    public void setAddPar(boolean enable)
     {
         _addPar = enable;
     }
@@ -406,37 +439,44 @@ public class XmOption
      *
      * @return true if add parenthesis option is enabled.
      */
-    public static boolean isAddParEnabled()
+    @Override
+    public boolean isAddParEnabled()
     {
         return _addPar;
     }
 
-    public static void setPointerScalarSize(int value)
+    @Override
+    public void setPointerScalarSize(int value)
     {
 	    _pointer_scalar_size = value;
     }
 
-    public static int getPointerScalarSize()
+    @Override
+    public int getPointerScalarSize()
     {
 	    return _pointer_scalar_size;
     }
-  
-    public static void setPointerArraySize(int value)
+
+    @Override
+    public void setPointerArraySize(int value)
     {
   	    _pointer_array_size = value;
     }
 
-    public static int getPointerArraySize()
+    @Override
+    public int getPointerArraySize()
     {
   	    return _pointer_array_size;
 	}
-  
-    public static void setPointerDiffSize(int value)
+
+    @Override
+    public void setPointerDiffSize(int value)
     {
 	    _pointer_diff_size = value;
     }
 
-    public static int getPointerDiffSize()
+    @Override
+    public int getPointerDiffSize()
     {
      	return _pointer_diff_size;
     }

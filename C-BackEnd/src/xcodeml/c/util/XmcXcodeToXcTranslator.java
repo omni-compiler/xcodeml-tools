@@ -29,10 +29,8 @@ import xcodeml.c.type.XcUnionType;
 import xcodeml.c.type.XcVarKindEnum;
 import xcodeml.c.type.XcVoidType;
 import xcodeml.c.util.XmcBindingUtil;
-import xcodeml.util.XmStringUtil;
-import xcodeml.util.XmDomUtil;
-import xcodeml.util.XmTranslationException;
-import xcodeml.util.XmException;
+import xcodeml.util.*;
+
 import static xcodeml.util.XmDomUtil.getElement;
 import static xcodeml.util.XmDomUtil.getAttr;
 import static xcodeml.util.XmDomUtil.getContent;
@@ -61,13 +59,18 @@ public class XmcXcodeToXcTranslator {
         createVisitorMap(pairs);
     }
 
+    @Deprecated
     public XcProgramObj trans(Document xcodeDoc) {
+        return trans(xcodeDoc, new XmOptionStatic());
+    }
+
+    public XcProgramObj trans(Document xcodeDoc, IXmOption xmOption) {
         Node rootNode = xcodeDoc.getDocumentElement();
 
         XcIdentTableStack itStack = new XcIdentTableStack();
         XcIdentTable itable = itStack.push();
         TranslationContext tc = new TranslationContext(itStack,
-                                                       ScopeEnum.GLOBAL);
+                ScopeEnum.GLOBAL, xmOption);
 
         XcProgramObj prog = createXcodeProgram(tc, rootNode);
         prog.setIdentTable(itable);
@@ -133,7 +136,7 @@ public class XmcXcodeToXcTranslator {
     }
 
     private XcProgramObj createXcodeProgram(TranslationContext tc, Node n) {
-        XcProgramObj obj = new XcProgramObj();
+        XcProgramObj obj = new XcProgramObj(tc.getXmOption());
 
         obj.setLanguage(getAttr(n, "language"));
         obj.setTime(getAttr(n, "time"));
@@ -172,7 +175,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcExprStmtObj obj = new XcExprStmtObj();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             transChildren(tc, n, obj);
         }
@@ -573,7 +576,7 @@ public class XmcXcodeToXcTranslator {
 
             XcDeclObj obj = new XcDeclObj(ident);
 
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             String gccAsmCodeStr = null;
             Node gccAsmNode = getElement(n, "gccAsm");
             if (gccAsmNode != null) {
@@ -643,7 +646,7 @@ public class XmcXcodeToXcTranslator {
             ident.setDeclared();
 
             XcDeclObj obj = new XcDeclObj(ident);
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
 
             Node gccAsmNode = getElement(n, "gccAsm");
             if (gccAsmNode != null) {
@@ -665,7 +668,7 @@ public class XmcXcodeToXcTranslator {
                                           paramsNode);
 
             XcFuncDefObj obj = new XcFuncDefObj(ident);
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             obj.setIsGccExtension(getAttrBool(n, "is_gccExtension"));
 
             XcParamList pList = ((XcFuncType) ident.getType()).getParamList();
@@ -769,7 +772,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcCompStmtObj obj = new XcCompStmtObj();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             obj.setIdentTable(tc.identTableStack.push());
             enterNodes(tc, obj,
@@ -786,7 +789,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.If obj = new XcControlStmtObj.If();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "condition"),
@@ -852,7 +855,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.While obj = new XcControlStmtObj.While();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "condition"),
@@ -865,7 +868,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.Do obj = new XcControlStmtObj.Do();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "condition"),
@@ -878,7 +881,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.For obj = new XcControlStmtObj.For();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "init"),
@@ -893,7 +896,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.Break obj = new XcControlStmtObj.Break();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
         }
     }
@@ -903,7 +906,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.Continue obj = new XcControlStmtObj.Continue();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
         }
     }
@@ -913,7 +916,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.Return obj = new XcControlStmtObj.Return();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodesWithNull(tc, obj,
                                getContent(n));
@@ -925,7 +928,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.Goto obj = new XcControlStmtObj.Goto();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             transChildren(tc, n, obj);
         }
@@ -946,7 +949,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.Switch obj = new XcControlStmtObj.Switch();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "value"),
@@ -959,7 +962,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.CaseLabel obj = new XcControlStmtObj.CaseLabel();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             enterNodes(tc, obj,
                        getElement(n, "value"));
@@ -971,7 +974,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.DefaultLabel obj = new XcControlStmtObj.DefaultLabel();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
         }
     }
@@ -986,7 +989,7 @@ public class XmcXcodeToXcTranslator {
             }
 
             XcControlStmtObj.Label obj = new XcControlStmtObj.Label(name);
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
         }
     }
@@ -1752,7 +1755,7 @@ public class XmcXcodeToXcTranslator {
 	    String file = getAttr(n, "file");
 	    String flag = getAttr(n, "flag");
             obj.setLine("# " + lineno + " \"" + file + "\" " + flag);
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
         }
     }
@@ -2066,7 +2069,7 @@ public class XmcXcodeToXcTranslator {
             XcDirectiveObj obj = new XcDirectiveObj();
 	    //            obj.setLine("# " + getContentText(n));
             obj.setLine(getContentText(n));
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
         }
     }
@@ -2076,7 +2079,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcGccAsmStmtObj obj = new XcGccAsmStmtObj();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             Node strConstNode = getElement(n, "stringConstant");
             if (strConstNode == null) {
@@ -2218,7 +2221,7 @@ public class XmcXcodeToXcTranslator {
         @Override
         public void enter(TranslationContext tc, Node n, XcNode parent) {
             XcControlStmtObj.GccRangedCaseLabel obj = new XcControlStmtObj.GccRangedCaseLabel();
-            setSourcePos(obj, n);
+            setSourcePos(tc, obj, n);
             addChild(parent, obj);
             transChildren(tc, n, obj);
         }
@@ -2420,11 +2423,11 @@ public class XmcXcodeToXcTranslator {
         enterNodes(tc, obj, true, nodes);
     }
 
-    void setSourcePos(XcSourcePositioned obj, Node n) {
+    void setSourcePos(TranslationContext tc, XcSourcePositioned obj, Node n) {
         obj.setSourcePos(
             new XcSourcePosObj(getAttr(n, "file"),
                                getAttr(n, "lineno"),
-                               getAttr(n, "rawlineno")));
+                               getAttr(n, "rawlineno"), tc.getXmOption()));
     }
 
     String getType(Node n) {
@@ -2471,11 +2474,21 @@ public class XmcXcodeToXcTranslator {
         public XcIdentTableStack identTableStack;
         public ScopeEnum scopeEnum;
         Stack<XcNode> parentNodeStack;
+        final IXmOption xmOption;
+
+        @Deprecated
         public TranslationContext(XcIdentTableStack identTableStack,
                                   ScopeEnum scopeEnum) {
+            this(identTableStack, scopeEnum, new XmOptionStatic());
+        }
+
+        public TranslationContext(XcIdentTableStack identTableStack,
+                                  ScopeEnum scopeEnum,
+                                  IXmOption xmOption) {
             this.identTableStack = identTableStack;
             this.scopeEnum = scopeEnum;
             parentNodeStack = new Stack<XcNode>();
+            this.xmOption = xmOption;
         }
 
         public void pushParentNode(XcNode node) {
@@ -2484,6 +2497,8 @@ public class XmcXcodeToXcTranslator {
         public XcNode popParentNode() {
             return parentNodeStack.pop();
         }
+        public IXmOption getXmOption() { return xmOption; }
+
     }
     
     void _enterArrayType(TranslationContext tc,

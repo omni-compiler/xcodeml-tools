@@ -241,7 +241,7 @@ public abstract class XcConstObj extends XcObj implements XcExprObj
 
         private boolean _isWide;
 
-        private static XcPointerType s_chrPtrType = XmcTypeUtil.createConstCharConstPointer();
+        private static final XcPointerType s_chrPtrType = XmcTypeUtil.createConstCharConstPointer();
 
         /**
          *  Creates StringConst.

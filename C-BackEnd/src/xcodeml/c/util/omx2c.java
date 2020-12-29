@@ -1,5 +1,6 @@
 package xcodeml.c.util;
 
+import xcodeml.util.XmOptionLocal;
 import xcodeml.util.XmException;
 import xcodeml.util.XmBackEnd;
 
@@ -10,6 +11,6 @@ public class omx2c
 {
     public static void main(String[] args) throws XmException
     {
-        System.exit(new XmBackEnd("C", "C_Back").run(args));
+        System.exit(new XmBackEnd("C", "C_Back", new XmOptionLocal()).run(args));
     }
 }

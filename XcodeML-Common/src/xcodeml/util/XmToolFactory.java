@@ -135,7 +135,7 @@ public class XmToolFactory
     {
         try {
             return (XmDecompiler)Class.forName(
-                _property.getDecompilerClassName()).newInstance();
+                _property.getDecompilerClassName()).getDeclaredConstructor().newInstance();
         } catch(Exception e) {
             throw new XmException(e);
         }
@@ -143,12 +143,28 @@ public class XmToolFactory
     
     /**
      * create XcodeML decompiler context.
+     * @deprecated Not thread-safe
      */
+    @Deprecated
     public XmDecompilerContext createDecompilerContext() throws XmException
     {
         try {
             return (XmDecompilerContext)Class.forName(
-                _property.getDecompilerContextClassName()).newInstance();
+                _property.getDecompilerContextClassName()).getDeclaredConstructor().newInstance();
+        } catch(Exception e) {
+            throw new XmException(e);
+        }
+    }
+
+    /**
+     * create XcodeML decompiler context.
+     */
+    public XmDecompilerContext createDecompilerContext(IXmOption xmOption) throws XmException
+    {
+        try {
+            Class[] Params = new Class[]{IXmOption.class};
+            return (XmDecompilerContext)Class.forName(
+                    _property.getDecompilerContextClassName()).getDeclaredConstructor(Params).newInstance(xmOption);
         } catch(Exception e) {
             throw new XmException(e);
         }
