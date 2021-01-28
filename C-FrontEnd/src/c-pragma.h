@@ -44,7 +44,8 @@ typedef enum {
 } CPragmaKind;
 
 extern CExpr*  pg_parse_expr();
-extern char*   pg_get_peek_token(char *p);
+extern void    pg_get_peek_token(char *head, char **token,
+                                 size_t *token_len, char **next);
 extern void    pg_get_seek_token(int offset);
 extern void    pg_get_token();
 

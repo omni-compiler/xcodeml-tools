@@ -277,10 +277,12 @@ addSyntaxErrorNearInExpression(const char *s)
  * @return
  *      Pointer of next token.
  */
-char*
-pg_get_peek_token(char *p)
+void
+pg_get_peek_token(char *head, char **token, size_t *token_len, char **next)
 {
-  return lexSkipSpace(lexSkipWord(p));
+  *token = lexSkipSpace(head);
+  *next = lexSkipWord(*token);
+  *token_len = *next - *token;
 }
 
 /**
