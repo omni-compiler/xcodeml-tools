@@ -271,11 +271,14 @@ addSyntaxErrorNearInExpression(const char *s)
  * \brief
  * Get next token without modifying.
  *
- * @param p
+ * @param [in] head
  *      Pointer of token header.
- *
- * @return
- *      Pointer of next token.
+ * @param [out] token
+ *      Pointer of current token.
+ * @param [out] token_len
+ *      Pointer of current token length.
+ * @param [out] next
+ *      Pointer to parsing token.
  */
 void
 pg_get_peek_token(char *head, char **token, size_t *token_len, char **next)
