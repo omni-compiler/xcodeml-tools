@@ -267,6 +267,31 @@ addSyntaxErrorNearInExpression(const char *s)
     addError(NULL, CERR_053, s);
 }
 
+/**
+ * \brief
+ * Get next token without modifying.
+ *
+ * @return
+ *      Pointer of next token.
+ */
+char*
+pg_get_peek_token()
+{
+    return lexSkipSpace(pg_cp);
+}
+
+/**
+ * \brief
+ * parse token with seek.
+ */
+void
+pg_get_seek_token(int offset) {
+  int i;
+
+  for (i = 0; i < offset; i++) {
+    pg_get_token();
+  }
+}
 
 /**
  * \brief
