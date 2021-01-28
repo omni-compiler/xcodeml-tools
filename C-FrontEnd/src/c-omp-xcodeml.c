@@ -12,6 +12,7 @@ void outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause);
 void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list);
 void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript);
 void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
+void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -64,6 +65,9 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       break;
 
   case OMP_DIR_IF:
+      out_OMP_IF(fp, indent1 + 1, arg);
+      break;
+
   case OMP_DIR_NUM_THREADS:
   case OMP_COLLAPSE:
       outxContext(fp,indent1+1,arg);
@@ -130,6 +134,27 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       out_OMP_name_list(fp, indent1, namelist);
   }
   outxPrint(fp,indent,"</list>\n");
+}
+
+void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
+{
+  switch(((CExprOfList *)arg)->e_aux) {
+  case OMP_TASK:
+  case OMP_TASKLOOP:
+  case OMP_TARGET:
+  case OMP_TARGET_UPDATE:
+  case OMP_TARGET_DATA:
+  case OMP_TARGET_ENTER_DATA:
+  case OMP_TARGET_EXIT_DATA:
+  case OMP_DISTRIBUTE_PARALLEL_LOOP:
+    outxPrint(fp, indent ,"<name>%s</name>\n",
+              ompDirectiveName(((CExprOfList *)arg)->e_aux));
+    outxContext(fp, indent + 1, exprListHeadData(arg));
+    break;
+  default:
+    outxContext(fp, indent, arg);
+    break;
+  }
 }
 
 void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)

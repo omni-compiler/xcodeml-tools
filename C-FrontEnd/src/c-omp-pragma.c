@@ -61,6 +61,8 @@ static int parse_OMP_distribute_pragma(void);
 static int parse_OMP_parallel_for_SIMD_pragma(void);
 static int parse_OMP_if_directive_name_modifier(int *r);
 
+static char* get_peek_token(char *p, int *num_peek);
+
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
 #define OMP_DATA_MAP_TO      0
@@ -1008,10 +1010,10 @@ static CExpr* parse_OMP_clauses()
     return NULL;
 }
 
-static char* get_peek_token(int *num_peek)
+static char* get_peek_token(char *p, int *num_peek)
 {
   (*num_peek)++;
-  return pg_get_peek_token();
+  return pg_get_peek_token(p);
 }
 
 static int parse_OMP_if_directive_name_modifier(int *r)
@@ -1020,39 +1022,39 @@ static int parse_OMP_if_directive_name_modifier(int *r)
   int num_peek = 0;
   int modifier = OMP_NONE;
 
-  printf("%d\n", pg_OMP_pragma);
-//  exit (1);
-
   if (PG_IS_IDENT("task")) {
-    p = get_peek_token(&num_peek);
+    p = get_peek_token(pg_cp, &num_peek);
     modifier = OMP_TASK;
   } else if (PG_IS_IDENT("taskloop")) {
-    p = get_peek_token(&num_peek);
+    p = get_peek_token(pg_cp, &num_peek);
     modifier = OMP_TASKLOOP;
   } else if (PG_IS_IDENT("target")) {
-    p = get_peek_token(&num_peek);
+    p = get_peek_token(pg_cp, &num_peek);
     modifier = OMP_TARGET;
-
     if (p != NULL && *p != '\0') {
       if(strncmp(p, "update", strlen("update")) == 0) {
+        p = get_peek_token(p, &num_peek);
         modifier = OMP_TARGET_UPDATE;
       } else if(strncmp(p, "data", strlen("data")) == 0) {
+        p = get_peek_token(p, &num_peek);
         modifier = OMP_TARGET_DATA;
       } else if(strncmp(p, "enter", strlen("enter")) == 0) {
-        p = get_peek_token(&num_peek);
+        p = get_peek_token(p, &num_peek);
 
         if (p != NULL && *p != '\0') {
           if(strncmp(p, "data", strlen("data")) == 0) {
+            p = get_peek_token(p, &num_peek);
             modifier = OMP_TARGET_ENTER_DATA;
           }
         } else {
           goto syntax_err;
         }
       } else if(strncmp(p, "exit", strlen("exit")) == 0) {
-        p = get_peek_token(&num_peek);
+        p = get_peek_token(p, &num_peek);
 
         if (p != NULL && *p != '\0') {
           if(strncmp(p, "data", strlen("data")) == 0) {
+            p = get_peek_token(p, &num_peek);
             modifier = OMP_TARGET_EXIT_DATA;
           }
         } else {
@@ -1063,7 +1065,7 @@ static int parse_OMP_if_directive_name_modifier(int *r)
       goto syntax_err;
     }
   } else if (PG_IS_IDENT("parallel")) {
-    p = get_peek_token(&num_peek);
+    p = get_peek_token(pg_cp, &num_peek);
     modifier = OMP_PARALLEL_LOOP;
   }
 
