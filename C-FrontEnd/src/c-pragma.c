@@ -271,13 +271,16 @@ addSyntaxErrorNearInExpression(const char *s)
  * \brief
  * Get next token without modifying.
  *
+ * @param p
+ *      Pointer of token header.
+ *
  * @return
  *      Pointer of next token.
  */
 char*
-pg_get_peek_token()
+pg_get_peek_token(char *p)
 {
-    return lexSkipSpace(pg_cp);
+  return lexSkipSpace(lexSkipWord(p));
 }
 
 /**

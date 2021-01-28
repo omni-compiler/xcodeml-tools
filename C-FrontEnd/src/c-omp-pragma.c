@@ -59,6 +59,7 @@ static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
 static int parse_OMP_distribute_pragma(void);
 static int parse_OMP_parallel_for_SIMD_pragma(void);
+static int parse_OMP_if_directive_name_modifier(int *r);
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
@@ -901,10 +902,19 @@ static CExpr* parse_OMP_clauses()
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
       pg_get_token();
+
+      r = OMP_NONE;
+      if(parse_OMP_if_directive_name_modifier(&r) == 0) {
+        goto syntax_err;
+      }
       if((v = pg_parse_expr()) == NULL) goto syntax_err;
       if(pg_tok != ')') goto syntax_err;
       pg_get_token();
-      c = OMP_PG_LIST(OMP_DIR_IF,v);
+
+      if (r != OMP_NONE) {
+        v = OMP_PG_LIST(r, v);
+      }
+      c = OMP_PG_LIST(OMP_DIR_IF, v);
     } else if(PG_IS_IDENT("schedule")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
@@ -997,6 +1007,86 @@ static CExpr* parse_OMP_clauses()
     addError(NULL,"OMP: syntax error in OMP pragma clause");
     return NULL;
 }
+
+static char* get_peek_token(int *num_peek)
+{
+  (*num_peek)++;
+  return pg_get_peek_token();
+}
+
+static int parse_OMP_if_directive_name_modifier(int *r)
+{
+  char *p = NULL;
+  int num_peek = 0;
+  int modifier = OMP_NONE;
+
+  printf("%d\n", pg_OMP_pragma);
+//  exit (1);
+
+  if (PG_IS_IDENT("task")) {
+    p = get_peek_token(&num_peek);
+    modifier = OMP_TASK;
+  } else if (PG_IS_IDENT("taskloop")) {
+    p = get_peek_token(&num_peek);
+    modifier = OMP_TASKLOOP;
+  } else if (PG_IS_IDENT("target")) {
+    p = get_peek_token(&num_peek);
+    modifier = OMP_TARGET;
+
+    if (p != NULL && *p != '\0') {
+      if(strncmp(p, "update", strlen("update")) == 0) {
+        modifier = OMP_TARGET_UPDATE;
+      } else if(strncmp(p, "data", strlen("data")) == 0) {
+        modifier = OMP_TARGET_DATA;
+      } else if(strncmp(p, "enter", strlen("enter")) == 0) {
+        p = get_peek_token(&num_peek);
+
+        if (p != NULL && *p != '\0') {
+          if(strncmp(p, "data", strlen("data")) == 0) {
+            modifier = OMP_TARGET_ENTER_DATA;
+          }
+        } else {
+          goto syntax_err;
+        }
+      } else if(strncmp(p, "exit", strlen("exit")) == 0) {
+        p = get_peek_token(&num_peek);
+
+        if (p != NULL && *p != '\0') {
+          if(strncmp(p, "data", strlen("data")) == 0) {
+            modifier = OMP_TARGET_EXIT_DATA;
+          }
+        } else {
+          goto syntax_err;
+        }
+      }
+    } else {
+      goto syntax_err;
+    }
+  } else if (PG_IS_IDENT("parallel")) {
+    p = get_peek_token(&num_peek);
+    modifier = OMP_PARALLEL_LOOP;
+  }
+
+  if (modifier != OMP_NONE) {
+    if (p == NULL || *p == '\0') {
+      goto syntax_err;
+    }
+
+    if (*p == ':') {
+      *r = modifier;
+
+      // Next token. Skip tokens for peek.
+      pg_get_seek_token(num_peek + 1);
+    }
+  }
+
+  return 1;
+
+ syntax_err:
+  addError(NULL,"OMP if clause requires modifier or expression.");
+  return 0;
+}
+
 
 static CExpr* parse_OMP_namelist()
 {
