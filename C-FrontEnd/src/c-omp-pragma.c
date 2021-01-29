@@ -368,7 +368,7 @@ int parse_OMP_target_pragma()
     ret = PRAGMA_EXEC;
     pg_get_token();
     if(pg_tok == PG_IDENT && PG_IS_IDENT("data")){ /* target exit data */
-        pg_OMP_pragma = OMP_TARGET_ENTER_DATA;
+        pg_OMP_pragma = OMP_TARGET_EXIT_DATA;
         pg_get_token();
         goto chk_end;
     }
