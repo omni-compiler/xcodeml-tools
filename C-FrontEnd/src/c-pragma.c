@@ -8,6 +8,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "c-pragma.h"
 #include "c-parser.h"
@@ -267,6 +268,22 @@ addSyntaxErrorNearInExpression(const char *s)
     addError(NULL, CERR_053, s);
 }
 
+
+/**
+ * \brief
+ * judge c is token separator for pg_get_peek_token().
+ *
+ * @param c
+ *      message argument
+ *
+ * @return
+ *      true, false
+ */
+static bool
+is_token_separator_for_peek(char *c) {
+  return (c != NULL && *c == ':');
+}
+
 /**
  * \brief
  * Get next token without modifying.
@@ -284,7 +301,19 @@ void
 pg_get_peek_token(char *head, char **token, size_t *token_len, char **next)
 {
   *token = lexSkipSpace(head);
-  *next = lexSkipWord(*token);
+
+  *next = *token;
+  if (is_token_separator_for_peek(*next)) {
+    (*next)++;
+    goto end;
+  }
+
+  while(is_token_separator(**next) == 0 &&
+        !is_token_separator_for_peek(*next)) {
+    (*next)++;
+  }
+
+ end:
   *token_len = *next - *token;
 }
 
