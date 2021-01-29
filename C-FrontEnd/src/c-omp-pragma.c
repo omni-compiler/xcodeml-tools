@@ -1074,7 +1074,7 @@ static int parse_OMP_if_directive_name_modifier(int *r)
     }
   } else if (PG_IS_IDENT("parallel")) {
     get_peek_token(next, &token, &token_len, &next, &num_peek);
-    modifier = OMP_PARALLEL_LOOP;
+    modifier = OMP_PARALLEL_FOR;
   }
 
   if (modifier != OMP_NONE) {
