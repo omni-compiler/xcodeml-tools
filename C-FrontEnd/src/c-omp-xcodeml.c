@@ -293,6 +293,7 @@ char *ompScheduleName(int c)
     case OMP_SCHED_GUIDED: return "SCHED_GUIDED";
     case OMP_SCHED_RUNTIME: return "SCHED_RUNTIME";
     case OMP_SCHED_AFFINITY: return "SCHED_AFFINITY";
+    case OMP_SCHED_AUTO: return "SCHED_AUTO";
     default: 
 	return "SCHED_???";
     }

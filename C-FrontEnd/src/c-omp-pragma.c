@@ -923,6 +923,7 @@ static CExpr* parse_OMP_clauses()
       else if(PG_IS_IDENT("guided"))   r = (int)OMP_SCHED_GUIDED;
       else if(PG_IS_IDENT("runtime"))  r = (int)OMP_SCHED_RUNTIME;
       else if(PG_IS_IDENT("affinity")) r = (int)OMP_SCHED_AFFINITY;
+      else if(PG_IS_IDENT("auto"))     r = (int)OMP_SCHED_AUTO;
       else {
 	addError(NULL,"unknown schedule method '%s'",pg_tok_buf);
       }

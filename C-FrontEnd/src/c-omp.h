@@ -118,7 +118,8 @@ enum OMP_sched_clause {
     OMP_SCHED_DYNAMIC = 2,
     OMP_SCHED_GUIDED = 3,
     OMP_SCHED_RUNTIME = 4,
-    OMP_SCHED_AFFINITY = 5
+    OMP_SCHED_AFFINITY = 5,
+    OMP_SCHED_AUTO = 6,
 };
 
 enum OMP_data_default {
