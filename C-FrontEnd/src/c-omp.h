@@ -112,6 +112,7 @@ enum OMP_pragma_clause {
     OMP_TARGET_LAYOUT=35,
 
     OMP_FINAL = 36,
+    OMP_PRIORITY = 37,
 };
 
 enum OMP_sched_clause {

@@ -71,6 +71,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_DIR_NUM_THREADS:
   case OMP_COLLAPSE:
   case OMP_FINAL:
+  case OMP_PRIORITY:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -282,6 +283,7 @@ char *ompClauseName(int c)
   case OMP_TARGET_DATA_MAP:       return "TARGET_DATA_MAP";
   case OMP_DEPEND:                return "DEPEND";
   case OMP_FINAL:                 return "FINAL";
+  case OMP_PRIORITY:              return "PRIORITY";
   default:                        return "???OMP???";
   }
 }
