@@ -146,7 +146,7 @@ void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
   case OMP_TARGET_DATA:
   case OMP_TARGET_ENTER_DATA:
   case OMP_TARGET_EXIT_DATA:
-  case OMP_DISTRIBUTE_PARALLEL_LOOP:
+  case OMP_PARALLEL_FOR:
     outxPrint(fp, indent ,"<name>%s</name>\n",
               ompDirectiveName(((CExprOfList *)arg)->e_aux));
     outxContext(fp, indent + 1, exprListHeadData(arg));
