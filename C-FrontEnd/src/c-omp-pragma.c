@@ -292,7 +292,6 @@ int parse_OMP_pragma()
 
   if(PG_IS_IDENT("distribute")){  /* distribute */
     if((ret = parse_OMP_distribute_pragma()) == 0) goto syntax_err;
-    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
     goto chk_end;
   }
   
