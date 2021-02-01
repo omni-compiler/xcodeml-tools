@@ -70,6 +70,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_DIR_NUM_THREADS:
   case OMP_COLLAPSE:
+  case OMP_TASK_FINAL:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -280,6 +281,7 @@ char *ompClauseName(int c)
   case OMP_TARGET_LAYOUT:         return "TARGET_LAYOUT";
   case OMP_TARGET_DATA_MAP:       return "TARGET_DATA_MAP";
   case OMP_DEPEND:                return "DEPEND";
+  case OMP_TASK_FINAL:            return "TASK_FINAL";
   default:                        return "???OMP???";
   }
 }

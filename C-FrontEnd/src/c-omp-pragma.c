@@ -992,6 +992,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != '(') goto syntax_err;
       if((v = parse_depend_expr()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_DEPEND, v);
+    } else if (PG_IS_IDENT("final")) {
+      pg_get_token();
+      if(pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if(pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_TASK_FINAL, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
