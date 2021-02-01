@@ -999,7 +999,7 @@ static CExpr* parse_OMP_clauses()
       if((v = pg_parse_expr()) == NULL) goto syntax_err;
       if(pg_tok != ')') goto syntax_err;
       pg_get_token();
-      c = OMP_PG_LIST(OMP_TASK_FINAL, v);
+      c = OMP_PG_LIST(OMP_FINAL, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

@@ -111,7 +111,7 @@ enum OMP_pragma_clause {
     OMP_TARGET_SHADOW=34,
     OMP_TARGET_LAYOUT=35,
 
-    OMP_TASK_FINAL = 36,
+    OMP_FINAL = 36,
 };
 
 enum OMP_sched_clause {
