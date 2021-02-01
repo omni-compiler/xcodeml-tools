@@ -281,12 +281,7 @@ int parse_OMP_pragma()
   }
 
   if(PG_IS_IDENT("teams")){  /* teams */
-    pg_get_token();
-    if(pg_tok == PG_IDENT){
-      if((ret = parse_OMP_teams_pragma()) == 0) goto syntax_err;
-      goto chk_end;
-    }
-    if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
+    if((ret = parse_OMP_teams_pragma()) == 0) goto syntax_err;
     goto chk_end;
   }
 
