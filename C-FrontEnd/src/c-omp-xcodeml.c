@@ -129,7 +129,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     // for locator list
     out_OMP_name_list(fp, indent1, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 2)));
     break;
-	  
+
   case OMP_DATA_DEFAULT:
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
@@ -294,6 +294,7 @@ char *ompClauseName(int c)
   case OMP_GRAINSIZE:             return "GRAINSIZE";
   case OMP_NUM_TASKS:             return "NUM_TASKS";
   case OMP_NOGROUP:               return "NOGROUP";
+  case OMP_IS_DEVICE_PTR:         return "is_device_ptr";
   default:                        return "???OMP???";
   }
 }
