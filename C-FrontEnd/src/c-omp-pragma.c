@@ -1030,6 +1030,9 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_NUM_TASKS,v);
+    } else if (PG_IS_IDENT("nogroup")) {
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_NOGROUP, NULL);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

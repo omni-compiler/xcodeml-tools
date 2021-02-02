@@ -117,6 +117,7 @@ enum OMP_pragma_clause {
     OMP_MERGEABLE = 39,
     OMP_GRAINSIZE = 40,
     OMP_NUM_TASKS = 41,
+    OMP_NOGROUP = 42,
 };
 
 enum OMP_sched_clause {

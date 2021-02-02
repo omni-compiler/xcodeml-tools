@@ -64,6 +64,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_DIR_NOWAIT:
   case OMP_UNTIED:
   case OMP_MERGEABLE:
+  case OMP_NOGROUP:
       break;
 
   case OMP_DIR_IF:
@@ -292,6 +293,7 @@ char *ompClauseName(int c)
   case OMP_MERGEABLE:             return "MERGEABLE";
   case OMP_GRAINSIZE:             return "GRAINSIZE";
   case OMP_NUM_TASKS:             return "NUM_TASKS";
+  case OMP_NOGROUP:               return "NOGROUP";
   default:                        return "???OMP???";
   }
 }
