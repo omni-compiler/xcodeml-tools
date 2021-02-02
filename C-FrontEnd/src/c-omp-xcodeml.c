@@ -75,6 +75,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_FINAL:
   case OMP_PRIORITY:
   case OMP_GRAINSIZE:
+  case OMP_NUM_TASKS:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -290,6 +291,7 @@ char *ompClauseName(int c)
   case OMP_UNTIED:                return "UNTIED";
   case OMP_MERGEABLE:             return "MERGEABLE";
   case OMP_GRAINSIZE:             return "GRAINSIZE";
+  case OMP_NUM_TASKS:             return "NUM_TASKS";
   default:                        return "???OMP???";
   }
 }
