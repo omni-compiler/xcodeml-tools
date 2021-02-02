@@ -74,6 +74,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_COLLAPSE:
   case OMP_FINAL:
   case OMP_PRIORITY:
+  case OMP_GRAINSIZE:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -288,6 +289,7 @@ char *ompClauseName(int c)
   case OMP_PRIORITY:              return "PRIORITY";
   case OMP_UNTIED:                return "UNTIED";
   case OMP_MERGEABLE:             return "MERGEABLE";
+  case OMP_GRAINSIZE:             return "GRAINSIZE";
   default:                        return "???OMP???";
   }
 }

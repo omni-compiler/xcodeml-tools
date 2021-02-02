@@ -115,6 +115,7 @@ enum OMP_pragma_clause {
     OMP_PRIORITY = 37,
     OMP_UNTIED = 38,
     OMP_MERGEABLE = 39,
+    OMP_GRAINSIZE = 40,
 };
 
 enum OMP_sched_clause {

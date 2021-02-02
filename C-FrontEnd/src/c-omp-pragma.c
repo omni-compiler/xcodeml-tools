@@ -1014,6 +1014,14 @@ static CExpr* parse_OMP_clauses()
     } else if (PG_IS_IDENT("mergeable")) {
       pg_get_token();
       c = OMP_PG_LIST(OMP_MERGEABLE, NULL);
+    } else if (PG_IS_IDENT("grainsize")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_GRAINSIZE,v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
