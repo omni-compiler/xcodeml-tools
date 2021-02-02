@@ -1011,6 +1011,9 @@ static CExpr* parse_OMP_clauses()
     } else if (PG_IS_IDENT("untied")) {
       pg_get_token();
       c = OMP_PG_LIST(OMP_UNTIED, NULL);
+    } else if (PG_IS_IDENT("mergeable")) {
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_MERGEABLE, NULL);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
