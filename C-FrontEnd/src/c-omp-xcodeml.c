@@ -62,6 +62,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   switch(clause->e_aux){
   case OMP_DIR_ORDERED:
   case OMP_DIR_NOWAIT:
+  case OMP_UNTIED:
       break;
 
   case OMP_DIR_IF:
@@ -284,6 +285,7 @@ char *ompClauseName(int c)
   case OMP_DEPEND:                return "DEPEND";
   case OMP_FINAL:                 return "FINAL";
   case OMP_PRIORITY:              return "PRIORITY";
+  case OMP_UNTIED:                return "UNTIED";
   default:                        return "???OMP???";
   }
 }

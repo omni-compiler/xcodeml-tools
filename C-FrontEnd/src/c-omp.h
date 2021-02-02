@@ -113,6 +113,7 @@ enum OMP_pragma_clause {
 
     OMP_FINAL = 36,
     OMP_PRIORITY = 37,
+    OMP_UNTIED = 38,
 };
 
 enum OMP_sched_clause {
