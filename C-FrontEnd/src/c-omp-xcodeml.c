@@ -13,10 +13,6 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list);
 void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript);
 void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
-static void out_OMP_defaultmap(FILE *fp, int indent, CExpr *arg);
-
-static char *ompDefaultmapBehavior(int c);
-static char *ompDefaultmapCategory(int c);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -139,10 +135,6 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
       break;
 
-  case OMP_DATA_DEFAULTMAP:
-    out_OMP_defaultmap(fp, indent1 + 1, arg);
-    break;
-
   default:
     namelist = (CExprOfList *)arg;
     if(EXPR_L_SIZE(namelist) != 0)
@@ -188,20 +180,6 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
       }
     }
     outxPrint(fp,indent,"</list>\n");
-}
-
-static void out_OMP_defaultmap(FILE *fp, int indent, CExpr *arg) {
-  outxPrint(fp, indent, "<list>\n");
-  outxPrint(fp, indent + 1, "<string>%s</string>\n",
-            ompDefaultmapBehavior(((CExprOfList *)arg)->e_aux));
-
-  arg = exprListHeadData(arg);
-
-  if (arg != NULL) {
-    outxPrint(fp, indent + 1, "<Var>%s</Var>\n",
-              ompDefaultmapCategory(((CExprOfList *)arg)->e_aux));
-  }
-  outxPrint(fp,indent,"</list>\n");
 }
 
 char *ompDirectiveName(int c)
@@ -346,20 +324,4 @@ char *ompDataDefaultName(int c)
     default:
 	return "DEFAULT_???";
     }
-}
-
-static char *ompDefaultmapBehavior(int c)
-{
-  switch(c){
-  case OMP_DATA_DEFAULTMAP_BEHAVIOR_TOFROM: return "DEFAULTMAP_BEHAVIOR_TOFROM";
-  default: return "???DEFAULTMAP_BEHAVIOR_???";
-  }
-}
-
-static char *ompDefaultmapCategory(int c)
-{
-  switch(c){
-  case OMP_DATA_DEFAULTMAP_CATEGORY_SCALAR: return "DEFAULTMAP_CATEGORY_SCALAR";
-  default: return "???DEFAULTMAP_BEHAVIOR_???";
-  }
 }

@@ -880,8 +880,7 @@ next:
 
 static CExpr* parse_OMP_defaultmap()
 {
-  int r = OMP_NONE;
-  CExpr* v = pg_tok_val;
+  CExpr* args = EMPTY_LIST;
 
   if (pg_tok != PG_IDENT) {
     addError(NULL, "OpenMP directive clause requires variable-category");
@@ -889,30 +888,25 @@ static CExpr* parse_OMP_defaultmap()
   }
 
   if (PG_IS_IDENT("tofrom")) {
-    r = OMP_DATA_DEFAULTMAP_BEHAVIOR_TOFROM;
+    args = exprListAdd(args, pg_parse_expr());
   }
   else {
     goto err;
   }
-  v = OMP_PG_LIST(r, v);
 
-  pg_get_token();
   if (pg_tok != ':') {
     goto err;
   }
 
   pg_get_token();
   if (PG_IS_IDENT("scalar")) {
-    r = OMP_DATA_DEFAULTMAP_CATEGORY_SCALAR;
+    args = exprListAdd(args, pg_parse_expr());
   }
   else {
     goto err;
   }
-  v = OMP_PG_LIST(r, v);
 
-  pg_get_token();
-
-  return v;
+  return args;
 
  err:
   addError(NULL,"OMP: syntax error in OpenMP pragma clause");

@@ -137,16 +137,6 @@ enum OMP_data_default {
     OMP_DEFAULT_PRIVATE = 2
 };
 
-enum OMP_defaultmap_behavior {
-    OMP_DATA_DEFAULTMAP_BEHAVIOR_NONE = 0,
-    OMP_DATA_DEFAULTMAP_BEHAVIOR_TOFROM = 1,
-};
-
-enum OMP_defaultmap_category {
-    OMP_DATA_DEFAULTMAP_CATEGORY_NONE = 0,
-    OMP_DATA_DEFAULTMAP_CATEGORY_SCALAR = 1,
-};
-
 /* protype */
 char *ompDirectiveName(int c);
 char *ompClauseName(int c);
