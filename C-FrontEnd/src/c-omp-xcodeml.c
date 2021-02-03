@@ -294,7 +294,7 @@ char *ompClauseName(int c)
   case OMP_GRAINSIZE:             return "GRAINSIZE";
   case OMP_NUM_TASKS:             return "NUM_TASKS";
   case OMP_NOGROUP:               return "NOGROUP";
-  case OMP_IS_DEVICE_PTR:         return "is_device_ptr";
+  case OMP_IS_DEVICE_PTR:         return "IS_DEVICE_PTR";
   default:                        return "???OMP???";
   }
 }
