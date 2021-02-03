@@ -1146,28 +1146,28 @@ static int parse_OMP_if_directive_name_modifier(int *r)
     modifier = OMP_TARGET;
 
     if (ctx.token != NULL && *(ctx.token) != '\0') {
-      if(strncmp(ctx.token, "update", ctx.token_len) == 0) {
+      if (strncmp(ctx.token, "update", ctx.token_len) == 0) {
         (void) pg_peek_token(&ctx);
         modifier = OMP_TARGET_UPDATE;
-      } else if(strncmp(ctx.token, "data", ctx.token_len) == 0) {
+      } else if (strncmp(ctx.token, "data", ctx.token_len) == 0) {
         (void) pg_peek_token(&ctx);
         modifier = OMP_TARGET_DATA;
-      } else if(strncmp(ctx.token, "enter", ctx.token_len) == 0) {
+      } else if (strncmp(ctx.token, "enter", ctx.token_len) == 0) {
         (void) pg_peek_token(&ctx);
 
         if (ctx.token != NULL && *(ctx.token) != '\0') {
-          if(strncmp(ctx.token, "data", ctx.token_len) == 0) {
+          if (strncmp(ctx.token, "data", ctx.token_len) == 0) {
             (void) pg_peek_token(&ctx);
             modifier = OMP_TARGET_ENTER_DATA;
           }
         } else {
           goto syntax_err;
         }
-      } else if(strncmp(ctx.token, "exit", ctx.token_len) == 0) {
+      } else if (strncmp(ctx.token, "exit", ctx.token_len) == 0) {
         (void) pg_peek_token(&ctx);
 
         if (ctx.token != NULL && *(ctx.token) != '\0') {
-          if(strncmp(ctx.token, "data", ctx.token_len) == 0) {
+          if (strncmp(ctx.token, "data", ctx.token_len) == 0) {
             (void) pg_peek_token(&ctx);
             modifier = OMP_TARGET_EXIT_DATA;
           }
