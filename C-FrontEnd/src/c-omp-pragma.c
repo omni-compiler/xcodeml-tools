@@ -689,6 +689,7 @@ static CExpr* parse_OMP_C_subscript_list()
 static CExpr* parse_array_list()
 {
   CExpr* args = EMPTY_LIST;
+  int got_map_type_or_modifier = 0;
 
   if(pg_tok != '('){
     addError(NULL,"OMP: OpenMP directive clause requires name list");
@@ -702,33 +703,48 @@ static CExpr* parse_array_list()
     return NULL;
   }
   else{
-    if(PG_IS_IDENT("to")){
+    if(PG_IS_IDENT("always")) {
+      got_map_type_or_modifier = 1;
+      args = exprListAdd(args, pg_tok_val);
+      pg_get_token();
+      goto next;
+    }
+    else if(PG_IS_IDENT("to")){
+      got_map_type_or_modifier = 1;
       args = exprListAdd(args, pg_parse_expr());
     }
     else if(PG_IS_IDENT("from")){
+      got_map_type_or_modifier = 1;
       args = exprListAdd(args, pg_parse_expr());
     }
     else if(PG_IS_IDENT("tofrom")){
+      got_map_type_or_modifier = 1;
       args = exprListAdd(args, pg_parse_expr());
     }
     else if(PG_IS_IDENT("alloc")){
+      got_map_type_or_modifier = 1;
       args = exprListAdd(args, pg_parse_expr());
     }
     else if(PG_IS_IDENT("release")){
+      got_map_type_or_modifier = 1;
       args = exprListAdd(args, pg_parse_expr());
     }
     else if(PG_IS_IDENT("delete")){
+      got_map_type_or_modifier = 1;
       args = exprListAdd(args, pg_parse_expr());
     }
-    else
-      goto err;
   }
+
+  CExpr* v = NULL;
+  if(got_map_type_or_modifier == 1) {
+    if(pg_tok != ':') {
+      goto err;
+    } else {
+      pg_get_token();
+    }
+  } 
   
-  if(pg_tok != ':')
-    goto err;
-  
-  pg_get_token();
-  CExpr* v = pg_tok_val;
+  v = pg_tok_val;
   pg_get_token();
   if(pg_tok != '['){
     args = exprListAdd(args, v);
