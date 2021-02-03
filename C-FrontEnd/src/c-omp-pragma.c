@@ -882,6 +882,47 @@ next:
   return list;
 }
 
+static CExpr* parse_OMP_defaultmap()
+{
+  int r = OMP_NONE;
+  CExpr* v = pg_tok_val;
+
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OpenMP directive clause requires variable-category");
+    return NULL;
+  }
+
+  if (PG_IS_IDENT("tofrom")) {
+    r = OMP_DATA_DEFAULTMAP_BEHAVIOR_TOFROM;
+  }
+  else {
+    goto err;
+  }
+  v = OMP_PG_LIST(r, v);
+
+  pg_get_token();
+  if (pg_tok != ':') {
+    goto err;
+  }
+
+  pg_get_token();
+  if (PG_IS_IDENT("scalar")) {
+    r = OMP_DATA_DEFAULTMAP_CATEGORY_SCALAR;
+  }
+  else {
+    goto err;
+  }
+  v = OMP_PG_LIST(r, v);
+
+  pg_get_token();
+
+  return v;
+
+ err:
+  addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+  return NULL;
+}
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -1074,6 +1115,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_IS_DEVICE_PTR, v);
+    } else if (PG_IS_IDENT("defaultmap")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = parse_OMP_defaultmap()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DATA_DEFAULTMAP, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
