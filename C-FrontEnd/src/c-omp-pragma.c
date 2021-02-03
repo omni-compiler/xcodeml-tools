@@ -62,10 +62,6 @@ static int parse_OMP_distribute_pragma(void);
 static int parse_OMP_parallel_for_SIMD_pragma(void);
 static int parse_OMP_if_directive_name_modifier(int *r);
 
-static void get_peek_token(char *head, char **token,
-                           size_t *token_len, char **next,
-                           int *num_peek);
-
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
 #define OMP_DATA_MAP_TO      0
@@ -1138,57 +1134,47 @@ static CExpr* parse_OMP_clauses()
     return NULL;
 }
 
-static void get_peek_token(char *head, char **token,
-                           size_t *token_len, char **next,
-                           int *num_peek)
-{
-  (*num_peek)++;
-  *token_len = 0;
-  pg_get_peek_token(head, token, token_len, next);
-}
-
 static int parse_OMP_if_directive_name_modifier(int *r)
 {
-  char *next = pg_cp;
-  char *token = NULL;
-  size_t token_len = 0;
-  int num_peek = 0;
+  pg_token_context_t ctx;
   int modifier = OMP_NONE;
 
+  (void) pg_token_context_init(&ctx);
+
   if (PG_IS_IDENT("task")) {
-    get_peek_token(next, &token, &token_len, &next, &num_peek);
+    (void) pg_peek_token(&ctx);
     modifier = OMP_TASK;
   } else if (PG_IS_IDENT("taskloop")) {
-    get_peek_token(next, &token, &token_len, &next, &num_peek);
+    (void) pg_peek_token(&ctx);
     modifier = OMP_TASKLOOP;
   } else if (PG_IS_IDENT("target")) {
-    get_peek_token(next, &token, &token_len, &next, &num_peek);
+    (void) pg_peek_token(&ctx);
     modifier = OMP_TARGET;
 
-    if (token != NULL && *token != '\0') {
-      if(strncmp(token, "update", token_len) == 0) {
-        get_peek_token(next, &token, &token_len, &next, &num_peek);
+    if (ctx.token != NULL && *(ctx.token) != '\0') {
+      if(strncmp(ctx.token, "update", ctx.token_len) == 0) {
+        (void) pg_peek_token(&ctx);
         modifier = OMP_TARGET_UPDATE;
-      } else if(strncmp(token, "data", token_len) == 0) {
-        get_peek_token(next, &token, &token_len, &next, &num_peek);
+      } else if(strncmp(ctx.token, "data", ctx.token_len) == 0) {
+        (void) pg_peek_token(&ctx);
         modifier = OMP_TARGET_DATA;
-      } else if(strncmp(token, "enter", token_len) == 0) {
-        get_peek_token(next, &token, &token_len, &next, &num_peek);
+      } else if(strncmp(ctx.token, "enter", ctx.token_len) == 0) {
+        (void) pg_peek_token(&ctx);
 
-        if (token != NULL && *token != '\0') {
-          if(strncmp(token, "data", token_len) == 0) {
-            get_peek_token(next, &token, &token_len, &next, &num_peek);
+        if (ctx.token != NULL && *(ctx.token) != '\0') {
+          if(strncmp(ctx.token, "data", ctx.token_len) == 0) {
+            (void) pg_peek_token(&ctx);
             modifier = OMP_TARGET_ENTER_DATA;
           }
         } else {
           goto syntax_err;
         }
-      } else if(strncmp(token, "exit", token_len) == 0) {
-        get_peek_token(next, &token, &token_len, &next, &num_peek);
+      } else if(strncmp(ctx.token, "exit", ctx.token_len) == 0) {
+        (void) pg_peek_token(&ctx);
 
-        if (token != NULL && *token != '\0') {
-          if(strncmp(token, "data", token_len) == 0) {
-            get_peek_token(next, &token, &token_len, &next, &num_peek);
+        if (ctx.token != NULL && *(ctx.token) != '\0') {
+          if(strncmp(ctx.token, "data", ctx.token_len) == 0) {
+            (void) pg_peek_token(&ctx);
             modifier = OMP_TARGET_EXIT_DATA;
           }
         } else {
@@ -1199,20 +1185,19 @@ static int parse_OMP_if_directive_name_modifier(int *r)
       goto syntax_err;
     }
   } else if (PG_IS_IDENT("parallel")) {
-    get_peek_token(next, &token, &token_len, &next, &num_peek);
+    (void) pg_peek_token(&ctx);
     modifier = OMP_PARALLEL_FOR;
   }
 
   if (modifier != OMP_NONE) {
-    if (token == NULL || *token == '\0') {
+    if (ctx.token == NULL || *(ctx.token) == '\0') {
       goto syntax_err;
     }
-
-    if (*token == ':') {
+    if (*(ctx.token) == ':') {
       *r = modifier;
 
       // Next token. Skip tokens for peek.
-      pg_get_seek_token(num_peek + 1);
+      pg_seek_token(&ctx);
     }
   }
 

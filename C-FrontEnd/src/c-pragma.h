@@ -44,9 +44,6 @@ typedef enum {
 } CPragmaKind;
 
 extern CExpr*  pg_parse_expr();
-extern void    pg_get_peek_token(char *head, char **token,
-                                 size_t *token_len, char **next);
-extern void    pg_get_seek_token(int offset);
 extern void    pg_get_token();
 
 extern char    *pg_cp;
@@ -68,6 +65,17 @@ extern char* lexSkipSpaceP(char *p);
 extern char* lexSkipSpace(char *p);
 extern char* lexSkipSharp(char *p);
 extern char* lexConvertUnderscorePragma(char *p);
+
+typedef struct pg_token_context {
+  char *head;
+  char *token;
+  size_t token_len;
+  size_t num_peek;
+} pg_token_context_t;
+
+int pg_token_context_init(pg_token_context_t* ctx);
+int pg_peek_token(pg_token_context_t *ctx);
+int pg_seek_token(pg_token_context_t *ctx);
 
 #endif // _C_PRAGMA_H_
 
