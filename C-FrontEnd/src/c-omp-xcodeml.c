@@ -192,40 +192,61 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
 
 static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
 {
-    int indent1 = indent+1;
-    CCOL_DListNode *ite;
-    outxPrint(fp,indent,"<list>\n");
-    EXPR_FOREACH(ite, list) {
-      CExpr *node = EXPR_L_DATA(ite);
-      if (EXPR_CODE(node) == EC_NUMBER_CONST) {
-        const char *map_type;
-        const char *always;
-        long long l = EXPR_NUMBERCONST(node)->e_numValue.ll;
-        int i = (int)(-l);
+  int indent1 = indent+1;
+  CCOL_DListNode *ite;
 
-        if (i < 0) {
-          map_type = "??unknown map type??";
-        } else if (i == 0) {
-          always = "";
-          map_type = "";
-          goto emit_map_type;
-        } else if (i >= 1000) {
-          always = "always ";
-          i -= 1000;
-        } else {
-          always = "";
-        }
-        map_type = ompMapClauseTypeString((OMP_map_type)i);
-       emit_map_type:
-        outxPrint(fp, indent1, "<string>%s%s</string>\n", always, map_type);
-      } else if (EXPR_CODE(node) == EC_ARRAY_REF){
-        out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+  outxPrint(fp, indent, "<list>\n");
+
+  EXPR_FOREACH(ite, list) {
+    CExpr *mapEntry = EXPR_L_DATA(ite);
+    CExpr *mapTypeNode = EXPR_L_DATA(EXPR_L_AT(mapEntry, 0));
+    CExpr *varNode = EXPR_L_DATA(EXPR_L_AT(mapEntry, 1));
+
+    outxPrint(fp, indent1, "<list>\n");
+
+    if (EXPR_CODE(mapTypeNode) == EC_NUMBER_CONST) {
+      const char *map_type;
+      const char *always;
+      long long l = EXPR_NUMBERCONST(mapTypeNode)->e_numValue.ll;
+      int i = (int)(-l);
+
+      if (i < 0) {
+       unknown_map:
+        map_type = "??unknown map type??";
+      } else if (i == 0) {
+        always = "";
+        map_type = "";
+        goto emit_map_type;
+      } else if (i >= 1000) {
+        always = "always ";
+        i -= 1000;
       } else {
-        outxPrint(fp,indent1,"<Var>%s</Var>\n",
-                  ((CExprOfSymbol *)node)->e_symName);
+        always = "";
       }
+      map_type = ompMapClauseTypeString((OMP_map_type)i);
+     emit_map_type:
+      outxPrint(fp, indent1 + 1,
+                "<string>%s%s</string>\n", always, map_type);
+    } else {
+      goto unknown_map;
     }
-    outxPrint(fp,indent,"</list>\n");
+
+    if (EXPR_CODE(varNode) == EC_ARRAY_REF) {
+      out_ACC_arrayRef(fp, indent1 + 1, (CExprOfBinaryNode *)varNode);
+    } else {
+      CExpr *varNameNode = EXPR_L_DATA(EXPR_L_AT(varNode, 0));
+
+      outxPrint(fp, indent1 + 1, "<list>\n");      
+      outxPrint(fp, indent1 + 2, "<Var>%s</Var>\n",
+                ((CExprOfSymbol *)varNameNode)->e_symName);
+      outxPrint(fp, indent1 + 2, "<list></list>\n");
+      outxPrint(fp, indent1 + 1, "</list>\n");      
+    }
+
+    outxPrint(fp, indent1, "</list>\n");
+  }
+
+  outxPrint(fp, indent, "</list>\n");
 }
 
 char *ompDirectiveName(int c)
