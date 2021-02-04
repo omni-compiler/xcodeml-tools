@@ -139,12 +139,26 @@ enum OMP_data_default {
     OMP_DEFAULT_PRIVATE = 2
 };
 
+typedef enum {
+    OMP_DATA_MAP_UNKNOWN = 0,
+    OMP_DATA_MAP_TO = 1,
+    OMP_DATA_MAP_FROM =	2,
+    OMP_DATA_MAP_TOFROM	= 3,
+    OMP_DATA_MAP_ALLOC = 4,
+    OMP_DATA_MAP_RELEASE = 5,
+    OMP_DATA_MAP_DELETE = 6,
+    OMP_DATA_MAP_ALWAYS = 7,
+} OMP_map_type;
+#define N_OMP_DATA_MAP	(((int)OMP_DATA_MAP_ALWAYS) + 1)
+
 /* protype */
 char *ompDirectiveName(int c);
 char *ompClauseName(int c);
 char *ompScheduleName(int c);
 char *ompDataDefaultName(int c);
 
+const char *ompMapClauseTypeString(OMP_map_type mt);
+	
 CExpr* lexParsePragmaOMP(char *p, int *token);
 void out_OMP_PRAGMA(FILE *fp, int indent, int code, CExpr* expr);
 

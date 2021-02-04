@@ -1411,7 +1411,8 @@ char* lexConvertUnderscorePragma(char *p)
 static bool
 is_separator_for_peek(char *c)
 {
-  return (c != NULL && (*c == ':' || *c == ','));
+  return (c != NULL && (*c == ':' || *c == ',' ||
+			*c == '[' || *c == ']' || *c == '(' || *c == ')'));
 }
 
 /**
