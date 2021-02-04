@@ -54,7 +54,7 @@ static int parse_OMP_pragma(void);
 static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
-static CExpr* parse_OMP_device_ptr_list(void);
+static CExpr* parse_OMP_array_list(void);
 
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
@@ -860,7 +860,7 @@ nextLocator:
 
 }
 
-static CExpr* parse_OMP_device_ptr_list()
+static CExpr* parse_OMP_array_list()
 {
   CExpr* v = NULL;
   CExpr* arrayRef = NULL;
@@ -1117,7 +1117,7 @@ static CExpr* parse_OMP_clauses()
       pg_get_token();
       if (pg_tok != '(') goto syntax_err;
       pg_get_token();
-      if ((v = parse_OMP_device_ptr_list()) == NULL) goto syntax_err;
+      if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_IS_DEVICE_PTR, v);
@@ -1125,7 +1125,7 @@ static CExpr* parse_OMP_clauses()
       pg_get_token();
       if (pg_tok != '(') goto syntax_err;
       pg_get_token();
-      if ((v = parse_OMP_device_ptr_list()) == NULL) goto syntax_err;
+      if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_USE_DEVICE_PTR, v);
