@@ -64,14 +64,54 @@ static int parse_OMP_if_directive_name_modifier(int *r);
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
-#define OMP_DATA_MAP_TO      0
-#define OMP_DATA_MAP_FROM    1
-#define OMP_DATA_MAP_TOFROM  2
-#define OMP_DATA_MAP_ALLOC   3
-#define OMP_DATA_MAP_RELEASE 4
-#define OMP_DATA_MAP_DELETE  5
 #define OMP_CLAUSE_DEVICE    0
 #define OMP_CLAUSE_SHADOW    1
+
+typedef struct {
+  OMP_map_type t;
+  const char *map_type;
+} map_type_entry_t;
+
+map_type_entry_t map_table[] = {
+  { OMP_DATA_MAP_UNKNOWN, "" },
+  { OMP_DATA_MAP_TO, "to" },
+  { OMP_DATA_MAP_FROM, "from" },
+  { OMP_DATA_MAP_TOFROM, "tofrom" },
+  { OMP_DATA_MAP_ALLOC, "alloc" },
+  { OMP_DATA_MAP_RELEASE, "release" },
+  { OMP_DATA_MAP_DELETE, "delete" },
+  { OMP_DATA_MAP_ALWAYS, "always" },
+  { -1, NULL }
+};
+
+static inline int get_map_type_enum(const char *str)
+{
+  OMP_map_type mt = OMP_DATA_MAP_UNKNOWN;
+  map_type_entry_t *e = map_table;
+
+  while (e->t >= 0) {
+    if (strcasecmp(e->map_type, str) == 0) {
+      mt = e->t;
+      break;
+    }
+    e++;
+  }
+
+  if (mt == OMP_DATA_MAP_ALWAYS) {
+    return 1000;
+  } else {
+    return ((int)mt > 0) ? (int)mt : -1;
+  }
+}
+
+const char *ompMapClauseTypeString(OMP_map_type mt)
+{
+  if ((int)mt >= 0 && (int)mt < N_OMP_DATA_MAP) {
+    map_type_entry_t *e = &(map_table[(int)mt]);
+    return e->map_type;
+  }
+  return NULL;
+}
 
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
@@ -689,83 +729,137 @@ static CExpr* parse_OMP_C_subscript_list()
 static CExpr* parse_array_list()
 {
   CExpr* args = EMPTY_LIST;
-  int got_map_type_or_modifier = 0;
+  pg_token_context_t pgctx;
+  char map_type[32];
+  int map_type_val = -1;
+  int is_first = 1;
+  CExpr *v = NULL;
+  CExpr *mapV = NULL;
+
+  pg_token_context_init(&pgctx);
 
   if(pg_tok != '('){
-    addError(NULL,"OMP: OpenMP directive clause requires name list");
+    addError(NULL,"OMP: OpenMP directive clause requires at least a "
+             "name list");
     return NULL;
   }
-  pg_get_token();
 
  next:
+  v = NULL;
+  mapV = EMPTY_LIST;
+  pg_get_token();
   if(pg_tok != PG_IDENT){
     addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
     return NULL;
   }
-  else{
-    if(PG_IS_IDENT("always")) {
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_tok_val);
-      pg_get_token();
-      goto next;
-    }
-    else if(PG_IS_IDENT("to")){
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("from")){
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("tofrom")){
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("alloc")){
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("release")){
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_parse_expr());
-    }
-    else if(PG_IS_IDENT("delete")){
-      got_map_type_or_modifier = 1;
-      args = exprListAdd(args, pg_parse_expr());
-    }
+
+  map_type_val = -1;
+  is_first = 1;
+  
+ parse_map_type:
+  if (is_first == 1) {
+    snprintf(map_type, sizeof(map_type), "%s", pg_tok_buf);
+    is_first = 0;
+    pg_token_context_init(&pgctx);
+  } else {
+    memcpy(map_type, pgctx.token, pgctx.token_len);
+    map_type[pgctx.token_len] = '\0';
   }
 
-  CExpr* v = NULL;
-  if(got_map_type_or_modifier == 1) {
-    if(pg_tok != ':') {
-      goto err;
+  if (strcasecmp(map_type, "to") == 0 ||
+      strcasecmp(map_type, "from") == 0 ||
+      strcasecmp(map_type, "tofrom") == 0 ||
+      strcasecmp(map_type, "alloc") == 0 ||
+      strcasecmp(map_type, "release") == 0 ||
+      strcasecmp(map_type, "delete") == 0 ||
+      strcasecmp(map_type, "always") == 0) { 
+
+    pg_peek_token(&pgctx);		/* peek 1 */
+
+    if (strncasecmp(pgctx.token, ",", pgctx.token_len) == 0 ||
+        strncasecmp(pgctx.token, "[", pgctx.token_len) == 0 ||
+        strncasecmp(pgctx.token, ")", pgctx.token_len) == 0) {
+      /*
+       * got "map(%map_type%," ... %map_type% is var/array.
+       */
+      goto no_map_type;
+    } else if (strncasecmp(pgctx.token, ":", pgctx.token_len) == 0) {
+      /*
+       * got "map(%map_type% :" ... OK (if %map_type% != "always")
+       */
+      if (strcasecmp(map_type, "always") == 0) {
+        /*
+         * error
+         */
+        pg_seek_token(&pgctx);
+        addError(NULL, "OpenMP map clause: need a map_type next to "
+                 "\"always\"");
+        return NULL;
+      } else {
+        /*
+         * try to parse var
+         */
+        goto about_to_var;
+      }
     } else {
-      pg_get_token();
+      int mtv = -1;
+     about_to_var:
+      mtv = get_map_type_enum(map_type);
+      if (mtv < 0) {
+        goto err;
+      }
+      if (strcasecmp(map_type, "always") == 0) {
+        map_type_val = mtv;
+        goto parse_map_type;
+      } else {
+        if (map_type_val < 0) {
+          map_type_val = mtv;
+        } else {
+          map_type_val += mtv;
+        }
+        if (map_type_val < 0) {
+          goto err;
+        }
+        pg_seek_token(&pgctx);
+        mapV = exprListAdd(mapV,
+                           (CExpr *)allocExprOfNumberConst2(-map_type_val,
+                                                            BT_INT));
+      }
     }
-  } 
-  
+  } else {
+   no_map_type:
+    /*
+     * Add dummy map_type node.
+     */
+    mapV = exprListAdd(mapV,
+                       (CExpr *)allocExprOfNumberConst2(0, BT_INT));
+  }
+
   v = pg_tok_val;
   pg_get_token();
-  if(pg_tok != '['){
-    args = exprListAdd(args, v);
-  }
-  else{
-    CExpr *list     = parse_OMP_C_subscript_list();
-    CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
-    args = exprListAdd(args, arrayRef);
+  if (pg_tok != '[') {
+    CExpr *varRef = EMPTY_LIST;
+    varRef = exprListAdd(varRef, v);
+    varRef = exprListAdd(varRef, EMPTY_LIST);
+    mapV = exprListAdd(mapV, varRef);
+  } else{
+    CExpr *list = parse_OMP_C_subscript_list();
+    CExpr *arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+
+    mapV = exprListAdd(mapV, arrayRef);
   }
 
-  if(pg_tok == ','){
-    pg_get_token();
+  if (pg_tok == ',') {
+    args = exprListAdd(args, mapV);
     goto next;
-  }
-  else if(pg_tok == ')'){
+  } else if (pg_tok == ')') {
+    args = exprListAdd(args, mapV);
     pg_get_token();
     return args;
   }
-  
- err:
-  addError(NULL,"OMP: syntax error in OpenMP pragma clause");
+
+err:
+  addError(NULL, "OMP: syntax error in OpenMP pragma clause");
   return NULL;
 }
 

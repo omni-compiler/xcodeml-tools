@@ -14,6 +14,7 @@ void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript);
 void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_defaultmap(FILE *fp, int indent, CExpr *arg);
+static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
 
 static char *ompDefaultmapBehavior(int c);
 static char *ompDefaultmapCategory(int c);
@@ -143,6 +144,12 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     out_OMP_defaultmap(fp, indent1 + 1, arg);
     break;
 
+  case OMP_TARGET_DATA_MAP:
+    namelist = (CExprOfList *)arg;
+    if(EXPR_L_SIZE(namelist) != 0)
+      out_OMP_map(fp, indent1, namelist);
+    break;
+    
   default:
     namelist = (CExprOfList *)arg;
     if(EXPR_L_SIZE(namelist) != 0)
@@ -202,6 +209,45 @@ static void out_OMP_defaultmap(FILE *fp, int indent, CExpr *arg) {
               ompDefaultmapCategory(((CExprOfList *)arg)->e_aux));
   }
   outxPrint(fp,indent,"</list>\n");
+}
+
+
+void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
+{
+    int indent1 = indent+1;
+    CCOL_DListNode *ite;
+    outxPrint(fp,indent,"<list>\n");
+    EXPR_FOREACH(ite, list) {
+      CExpr *node = EXPR_L_DATA(ite);
+      if (EXPR_CODE(node) == EC_NUMBER_CONST) {
+        const char *map_type;
+        const char *always;
+        long long l = EXPR_NUMBERCONST(node)->e_numValue.ll;
+        int i = (int)(-l);
+
+        if (i < 0) {
+          map_type = "??unknown map type??";
+        } else if (i == 0) {
+          always = "";
+          map_type = "";
+          goto emit_map_type;
+        } else if (i >= 1000) {
+          always = "always ";
+          i -= 1000;
+        } else {
+          always = "";
+        }
+        map_type = ompMapClauseTypeString((OMP_map_type)i);
+       emit_map_type:
+        outxPrint(fp, indent1, "<string>%s%s</string>\n", always, map_type);
+      } else if (EXPR_CODE(node) == EC_ARRAY_REF){
+        out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+      } else {
+        outxPrint(fp,indent1,"<Var>%s</Var>\n",
+                  ((CExprOfSymbol *)node)->e_symName);
+      }
+    }
+    outxPrint(fp,indent,"</list>\n");
 }
 
 char *ompDirectiveName(int c)
