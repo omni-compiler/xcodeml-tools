@@ -297,6 +297,7 @@ char *ompClauseName(int c)
   case OMP_IS_DEVICE_PTR:         return "IS_DEVICE_PTR";
   case OMP_USE_DEVICE_PTR:        return "USE_DEVICE_PTR";
   case OMP_DATA_DEFAULTMAP:       return "DEFAULTMAP";
+  case OMP_TARGET_UPDATE_TO:      return "TARGET_UPDATE_TO";
   default:                        return "???OMP???";
   }
 }

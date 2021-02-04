@@ -120,6 +120,7 @@ enum OMP_pragma_clause {
     OMP_NOGROUP = 42,
     OMP_IS_DEVICE_PTR = 43,
     OMP_USE_DEVICE_PTR = 44,
+    OMP_TARGET_UPDATE_TO = 45,
 };
 
 enum OMP_sched_clause {

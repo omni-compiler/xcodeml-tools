@@ -929,6 +929,29 @@ static CExpr* parse_OMP_defaultmap()
   return NULL;
 }
 
+static CExpr* parse_OMP_to(int *r)
+{
+  CExpr* v = NULL;
+
+  switch (pg_OMP_pragma) {
+  case OMP_DECLARE_TARGET:
+    *r = OMP_DECLARE_TARGET_TO;
+    return parse_OMP_namelist();
+  case OMP_TARGET_UPDATE:
+    if (pg_tok != '(') return NULL;
+
+    pg_get_token();
+    *r = OMP_TARGET_UPDATE_TO;
+    if ((v = parse_OMP_array_list()) == NULL) return NULL;
+
+    if (pg_tok != ')') return NULL;
+    pg_get_token();
+    return v;
+  default:
+    return NULL;
+  }
+}
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -1050,8 +1073,8 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_TARGET_DATA_MAP, v);
     } else if(PG_IS_IDENT("to")){
       pg_get_token();
-      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
-      c = OMP_PG_LIST(OMP_DECLARE_TARGET_TO,v);
+      if ((v = parse_OMP_to(&r)) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(r, v);
     } else if(PG_IS_IDENT("device")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
