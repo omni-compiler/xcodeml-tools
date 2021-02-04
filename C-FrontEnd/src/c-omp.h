@@ -119,6 +119,7 @@ enum OMP_pragma_clause {
     OMP_NUM_TASKS = 41,
     OMP_NOGROUP = 42,
     OMP_IS_DEVICE_PTR = 43,
+    OMP_USE_DEVICE_PTR = 44,
 };
 
 enum OMP_sched_clause {

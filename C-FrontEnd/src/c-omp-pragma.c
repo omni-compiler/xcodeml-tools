@@ -1121,6 +1121,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_IS_DEVICE_PTR, v);
+    } else if (PG_IS_IDENT("use_device_ptr")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = parse_OMP_device_ptr_list()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_USE_DEVICE_PTR, v);
     } else if (PG_IS_IDENT("defaultmap")) {
       pg_get_token();
       if (pg_tok != '(') goto syntax_err;

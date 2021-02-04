@@ -295,6 +295,7 @@ char *ompClauseName(int c)
   case OMP_NUM_TASKS:             return "NUM_TASKS";
   case OMP_NOGROUP:               return "NOGROUP";
   case OMP_IS_DEVICE_PTR:         return "IS_DEVICE_PTR";
+  case OMP_USE_DEVICE_PTR:        return "USE_DEVICE_PTR";
   case OMP_DATA_DEFAULTMAP:       return "DEFAULTMAP";
   default:                        return "???OMP???";
   }
