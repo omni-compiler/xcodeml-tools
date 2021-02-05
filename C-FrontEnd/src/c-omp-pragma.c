@@ -726,17 +726,29 @@ static CExpr* parse_OMP_C_subscript_list()
   return NULL;
 }
 
-static CExpr* parse_array_list()
+typedef enum {
+  MAP_TYPE_SEQ_UNKNOWN = 0,
+  MAP_TYPE_SEQ_GOT_COLON,
+  MAP_TYPE_SEQ_ALL_VARS,
+  MAP_TYPE_SEQ_ERROR,
+} map_type_seq_result_t;
+
+static inline map_type_seq_result_t parse_map_type_seq(pg_token_context_t *ctx)
 {
-  CExpr* args = EMPTY_LIST;
+  map_type_seq_result_t ret = MAP_TYPE_SEQ_UNKNOWN;
+
+  return ret;
+}
+
+static CExpr *parse_array_list()
+{
+  CExpr *args = EMPTY_LIST;
   pg_token_context_t pgctx;
   char map_type[32];
   int map_type_val = -1;
   int is_first = 1;
   CExpr *v = NULL;
   CExpr *mapV = NULL;
-
-  pg_token_context_init(&pgctx);
 
   if(pg_tok != '('){
     addError(NULL,"OMP: OpenMP directive clause requires at least a "
@@ -745,6 +757,7 @@ static CExpr* parse_array_list()
   }
 
  next:
+  pg_token_context_init(&pgctx);
   v = NULL;
   mapV = EMPTY_LIST;
   pg_get_token();
