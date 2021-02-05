@@ -1049,6 +1049,11 @@ static CExpr *parse_array_list()
   }
 
   if (pg_tok == ',') {
+    if (got_map_type == 1) {
+      addError(NULL, "OMP: OpenMP map clause: only a single pair of "
+               "map-type and name list is allowed.");
+      return NULL;
+    }
     if (strcasecmp(map_type, "always") != 0) {
       got_comma = 1;
     }
@@ -1057,7 +1062,18 @@ static CExpr *parse_array_list()
   } else if (pg_tok == ')') {
     args = exprListAdd(args, mapV);
     pg_get_token();
+
+    if (pg_tok == ',') {
+      /*
+       * Ignore trailing ','.
+       */
+      pg_get_token();
+    }
     return args;
+  } else {
+    addError(NULL, "OMP: OpenMP map clause: invalid map-type: \"%s\".",
+             map_type);
+    return NULL;
   }
 
   addError(NULL, "OMP: OpenMP map clause: unhandled syntax error.");
