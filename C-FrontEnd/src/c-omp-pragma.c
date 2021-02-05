@@ -55,12 +55,15 @@ static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
 static CExpr* parse_OMP_array_list(void);
+static CExpr* parse_OMP_to(int *r);
 
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
 static int parse_OMP_distribute_pragma(void);
 static int parse_OMP_parallel_for_SIMD_pragma(void);
 static int parse_OMP_if_directive_name_modifier(int *r);
+static int parse_OMP_declare_pragma(void);
+static int parse_OMP_end_pragma(void);
 
 #define OMP_PG_LIST(pg,args) _omp_pg_list(pg,args)
 
@@ -279,17 +282,16 @@ int parse_OMP_pragma()
       goto chk_end;
   }
 
-  if(PG_IS_IDENT("declare")){ /* declare */
+  if (PG_IS_IDENT("declare")) { /* declare */
     pg_get_token();
-    if(pg_tok == PG_IDENT){
-        if(PG_IS_IDENT("target")){  /* declare target */
-	pg_OMP_pragma = OMP_DECLARE_TARGET;
-	pg_get_token();
-	if((pg_OMP_list = parse_OMP_clauses()) == NULL) goto syntax_err;
-	ret = PRAGMA_EXEC;
-	goto chk_end;
-      }
-    }
+    if((ret = parse_OMP_declare_pragma()) == 0) goto syntax_err;
+    goto chk_end;
+  }
+
+  if (PG_IS_IDENT("end")) { /* end */
+    pg_get_token();
+    if((ret = parse_OMP_end_pragma()) == 0) goto syntax_err;
+    goto chk_end;
   }
 
   if(PG_IS_IDENT("simd")){
@@ -577,6 +579,57 @@ int parse_OMP_parallel_for_SIMD_pragma()
 
  syntax_err:
   return 0;
+}
+
+static int parse_OMP_declare_pragma() {
+  int ret = OMP_NONE;
+  int r;
+  CExpr* v = NULL;
+
+  if (PG_IS_IDENT("target")) {  /* declare target */
+    pg_OMP_pragma = OMP_DECLARE_TARGET;
+    pg_get_token();
+    if (pg_tok == PG_IDENT) {
+      /* declare target clause[ [, ]clause ...] */
+      if ((pg_OMP_list = parse_OMP_clauses()) == NULL) {
+        goto end;
+      }
+      ret = PRAGMA_EXEC;
+    } else if (pg_tok == '(') {
+      /* declare target (extended-list) */
+      if ((v = parse_OMP_to(&r)) == NULL) {
+        goto end;
+      }
+      if((pg_OMP_list = exprListAdd(EMPTY_LIST,
+                                    OMP_PG_LIST(r, v))) == NULL) {
+        goto end;
+      }
+      ret = PRAGMA_EXEC;
+    } else {
+      /* declare target ... end declare target */
+      pg_OMP_pragma = OMP_DECLARE_TARGET_START;
+      ret = PRAGMA_EXEC;
+    }
+  }
+
+ end:
+  return ret;
+}
+
+static int parse_OMP_end_pragma() {
+  int ret = OMP_NONE;
+
+  if (PG_IS_IDENT("declare")) {
+    pg_get_token();
+    if (PG_IS_IDENT("target")) {
+      /* declare target ... end declare target */
+      pg_get_token();
+      pg_OMP_pragma = OMP_DECLARE_TARGET_END;
+      ret = PRAGMA_EXEC;
+    }
+  }
+
+  return ret;
 }
 
 CExpr *parse_range_expr(int clause)
@@ -1410,6 +1463,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_TARGET_UPDATE_FROM, v);
+    } else if(PG_IS_IDENT("link")){
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DATA_DECALRE_LINK, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
