@@ -827,12 +827,17 @@ static CExpr* parse_array_list()
       }
     }
   } else {
+    CExpr *mtNode;
    no_map_type:
     /*
-     * Add dummy map_type node.
+     * Add default map_type tofrom node.
+     * Reference:
+     *	p.218, 13, "2.15.5.1 map Clause", "OpenMP Application Programming
+     *	Interface Version 4.5 November 2015"
      */
-    mapV = exprListAdd(mapV,
-                       (CExpr *)allocExprOfNumberConst2(0, BT_INT));
+    mtNode = (CExpr *)allocExprOfNumberConst2(-((int)OMP_DATA_MAP_TOFROM),
+                                              BT_INT);
+    mapV = exprListAdd(mapV, mtNode);
   }
 
   v = pg_tok_val;
