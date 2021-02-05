@@ -773,7 +773,8 @@ parse_map_type_seq(pg_token_context_t *prevctx)
   } else {
     ret = MAP_TYPE_SEQ_NEXT_VAR;
   }
-  
+
+  *prevctx = ctx;
   return ret;
 }
 
@@ -786,10 +787,13 @@ static CExpr *parse_array_list()
   int is_first = 1;
   CExpr *v = NULL;
   CExpr *mapV = NULL;
+  int got_map_type = 0;
+  int got_comma = 0;
+  int got_always = 0;
 
-  if(pg_tok != '('){
-    addError(NULL,"OMP: An OpenMP map clause requires at least a "
-             "name list");
+  if (pg_tok != '(') {
+    addError(NULL,"OMP: OpenMP map clause: requires at least a "
+             "name list.");
     return NULL;
   }
 
@@ -798,14 +802,14 @@ static CExpr *parse_array_list()
   v = NULL;
   mapV = EMPTY_LIST;
   pg_get_token();
-  if(pg_tok != PG_IDENT){
-    addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OMP: OpenMP map clause: empty name list.");
     return NULL;
   }
 
   map_type_val = -1;
   is_first = 1;
-  
+
  parse_map_type:
   if (is_first == 1) {
     snprintf(map_type, sizeof(map_type), "%s", pg_tok_buf);
@@ -848,15 +852,30 @@ static CExpr *parse_array_list()
         } else if (res == MAP_TYPE_SEQ_NEXT_VAR) {
           goto no_map_type;
         } else {
-          addError(NULL, "OMP: An OpenMP map clause has an invalid "
-                   "map-type/map-type-modifier sequence.");
+          char buf[32 + 1];
+          size_t cplen = ((sizeof(buf) -1) < ctx.token_len) ?
+            (sizeof(buf) -1) : ctx.token_len;
+          memcpy(buf, ctx.token, cplen);
+          buf[cplen] = '\0';
+          addError(NULL, "OMP: OpenMP map clause: an invalid "
+                   "map-type/map-type-modifier sequence between "
+                   "\"%s\" and \"%s\".", map_type, buf);
           return NULL;
         }
       } else {
-        /*
-         * got "map(%map_type%," ... %map_type% is var/array.
-         */
-        goto no_map_type;
+        if (got_always == 1) {
+          /*
+           * got "map(always %map_type%, ..." ... error.
+           */
+          addError(NULL, "OMP: OpenMP map clause: ',' is allowed to be "
+                   "appeared only before map-type.");
+          return NULL;
+        } else {
+          /*
+           * got "map(%map_type%," ... %map_type% is var/array.
+           */
+          goto no_map_type;
+        }
       }
     } else if (strncasecmp(pgctx.token, ":", pgctx.token_len) == 0) {
       /*
@@ -867,33 +886,67 @@ static CExpr *parse_array_list()
          * error
          */
         pg_seek_token(&pgctx);
-        addError(NULL, "OpenMP map clause: need a map_type next to "
+        addError(NULL, "OMP: OpenMP map clause: need a map-type following "
                  "\"always\"");
         return NULL;
       } else {
-        /*
-         * try to parse var
-         */
-        goto about_to_var;
+        if (got_comma == 1) {
+          /*
+           * "map(always[,] to, from : ..." ... error.
+           */
+          addError(NULL, "OMP: OpenMP map clause: got ':' in name list.");
+          return NULL;
+        } else {
+          /*
+           * try to parse var
+           */
+          goto about_to_var;
+        }
       }
     } else {
       int mtv = -1;
      about_to_var:
       mtv = get_map_type_enum(map_type);
       if (mtv < 0) {
-        goto err;
+        addError(NULL, "OMP: OpenMP map clause: invalid map-type \"%s\".",
+                 map_type);
+        return NULL;
       }
       if (strcasecmp(map_type, "always") == 0) {
+        got_always = 1;
         map_type_val = mtv;
         goto parse_map_type;
       } else {
+        got_map_type = 1;
+
+        /*
+         * one more check.
+         */
+        if (strncasecmp(pgctx.token, ",", pgctx.token_len) != 0 &&
+            strncasecmp(pgctx.token, "[", pgctx.token_len) != 0 &&
+            strncasecmp(pgctx.token, ")", pgctx.token_len) != 0 &&
+            strncasecmp(pgctx.token, ":", pgctx.token_len) != 0) {
+          char buf[32 + 1];
+          size_t cplen = ((sizeof(buf) -1) < pgctx.token_len) ?
+            (sizeof(buf) -1) : pgctx.token_len;
+          memcpy(buf, pgctx.token, cplen);
+          buf[cplen] = '\0';
+          addError(NULL, "OMP: OpenMP map clause: an invalid "
+                   "map-type/map-type-modifier sequence, having "
+                   "both \"%s\" and \"%s\".",
+                   map_type, buf);
+          return NULL;
+        }
+
         if (map_type_val < 0) {
           map_type_val = mtv;
         } else {
           map_type_val += mtv;
         }
         if (map_type_val < 0) {
-          goto err;
+          addError(NULL, "OMP: OpenMP map clause: an internal error around "
+                   "map-type/map-type-modifer combination analisys.");
+          return NULL;
         }
         pg_seek_token(&pgctx);
         mapV = exprListAdd(mapV,
@@ -903,7 +956,17 @@ static CExpr *parse_array_list()
     }
   } else {
     CExpr *mtNode;
-   no_map_type:
+
+  no_map_type:
+    if (pgctx.token == NULL) {
+      pg_token_context_t ctx;
+      pg_token_context_init(&ctx);
+      pg_peek_token(&ctx);
+      if (strncasecmp(ctx.token, ":", ctx.token_len) == 0) {
+        addError(NULL, "OMP: OpenMP map clause: got ':' in name list.");
+        return NULL;
+      }
+    }
     /*
      * Add default map_type tofrom node.
      * Reference:
@@ -915,6 +978,9 @@ static CExpr *parse_array_list()
     mapV = exprListAdd(mapV, mtNode);
   }
 
+  /*
+   * var check.
+   */
   v = pg_tok_val;
   pg_get_token();
   if (pg_tok != '[') {
@@ -930,6 +996,9 @@ static CExpr *parse_array_list()
   }
 
   if (pg_tok == ',') {
+    if (strcasecmp(map_type, "always") != 0) {
+      got_comma = 1;
+    }
     args = exprListAdd(args, mapV);
     goto next;
   } else if (pg_tok == ')') {
@@ -938,8 +1007,7 @@ static CExpr *parse_array_list()
     return args;
   }
 
-err:
-  addError(NULL, "OMP: syntax error in OpenMP pragma clause");
+  addError(NULL, "OMP: OpenMP map clause: unhandled syntax error.");
   return NULL;
 }
 
