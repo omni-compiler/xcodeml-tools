@@ -318,6 +318,8 @@ char *ompDirectiveName(int c)
   case OMP_CANCEL: return "CANCEL";
   case OMP_CANCELLATION_POINT: return "CANCELLATION_POINT";
   case OMP_DECLARE_REDUCTION: return "DECLARE_REDUCTION";
+  case OMP_DECLARE_TARGET_START: return "DECLARE_TARGET_START";
+  case OMP_DECLARE_TARGET_END: return "OMP_DECLARE_TARGET_END";
 
   default:
     return "OMP???";
@@ -369,6 +371,7 @@ char *ompClauseName(int c)
   case OMP_DATA_DEFAULTMAP:       return "DEFAULTMAP";
   case OMP_TARGET_UPDATE_TO:      return "TARGET_UPDATE_TO";
   case OMP_TARGET_UPDATE_FROM:    return "TARGET_UPDATE_FROM";
+  case OMP_DATA_DECALRE_LINK:     return "DATA_DECALRE_LINK";
   default:                        return "???OMP???";
   }
 }
