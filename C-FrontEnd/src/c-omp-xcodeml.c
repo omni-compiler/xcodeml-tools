@@ -162,11 +162,14 @@ void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
   case OMP_TARGET_ENTER_DATA:
   case OMP_TARGET_EXIT_DATA:
   case OMP_PARALLEL_FOR:
-    outxPrint(fp, indent ,"<name>%s</name>\n",
+    outxPrint(fp,indent,"<list>\n");
+    outxPrint(fp, indent + 1,"<string>%s</string>\n",
               ompDirectiveName(((CExprOfList *)arg)->e_aux));
-    outxContext(fp, indent + 1, exprListHeadData(arg));
+    outxPrint(fp,indent,"</list>\n");
+    outxContext(fp, indent, exprListHeadData(arg));
     break;
   default:
+    outxPrint(fp,indent,"<list></list>\n");
     outxContext(fp, indent, arg);
     break;
   }
