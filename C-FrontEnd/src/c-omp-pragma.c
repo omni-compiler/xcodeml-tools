@@ -729,14 +729,51 @@ static CExpr* parse_OMP_C_subscript_list()
 typedef enum {
   MAP_TYPE_SEQ_UNKNOWN = 0,
   MAP_TYPE_SEQ_GOT_COLON,
-  MAP_TYPE_SEQ_ALL_VARS,
+  MAP_TYPE_SEQ_NEXT_VAR,
   MAP_TYPE_SEQ_ERROR,
 } map_type_seq_result_t;
 
-static inline map_type_seq_result_t parse_map_type_seq(pg_token_context_t *ctx)
+static inline map_type_seq_result_t
+parse_map_type_seq(pg_token_context_t *prevctx)
 {
   map_type_seq_result_t ret = MAP_TYPE_SEQ_UNKNOWN;
+  pg_token_context_t ctx = *prevctx;
+  char map_type[32 + 1];
+  size_t cplen;
 
+  pg_peek_token(&ctx);
+  cplen = ((sizeof(map_type) -1) < ctx.token_len) ?
+    (sizeof(map_type) -1) : ctx.token_len;
+  memcpy(map_type, ctx.token, cplen);
+  map_type[cplen] = '\0';
+
+  if (strcasecmp(map_type, "to") == 0 ||
+      strcasecmp(map_type, "from") == 0 ||
+      strcasecmp(map_type, "tofrom") == 0 ||
+      strcasecmp(map_type, "alloc") == 0 ||
+      strcasecmp(map_type, "release") == 0 ||
+      strcasecmp(map_type, "delete") == 0 ||
+      strcasecmp(map_type, "always") == 0) {
+
+    pg_peek_token(&ctx);		/* peek 1 */
+
+    if (strncasecmp(ctx.token, ",", ctx.token_len) == 0 ||
+        strncasecmp(ctx.token, "[", ctx.token_len) == 0) {
+      ret = MAP_TYPE_SEQ_NEXT_VAR;
+    } else if (strncasecmp(ctx.token, ":", ctx.token_len) == 0) {
+      if (strcasecmp(map_type, "always") == 0) {
+        /*
+         * got "map(always, always :" ... error
+         */
+        ret = MAP_TYPE_SEQ_ERROR;
+      } else {
+        ret = MAP_TYPE_SEQ_GOT_COLON;
+      }
+    }
+  } else {
+    ret = MAP_TYPE_SEQ_NEXT_VAR;
+  }
+  
   return ret;
 }
 
@@ -744,14 +781,14 @@ static CExpr *parse_array_list()
 {
   CExpr *args = EMPTY_LIST;
   pg_token_context_t pgctx;
-  char map_type[32];
+  char map_type[32 + 1];
   int map_type_val = -1;
   int is_first = 1;
   CExpr *v = NULL;
   CExpr *mapV = NULL;
 
   if(pg_tok != '('){
-    addError(NULL,"OMP: OpenMP directive clause requires at least a "
+    addError(NULL,"OMP: An OpenMP map clause requires at least a "
              "name list");
     return NULL;
   }
@@ -775,8 +812,10 @@ static CExpr *parse_array_list()
     is_first = 0;
     pg_token_context_init(&pgctx);
   } else {
-    memcpy(map_type, pgctx.token, pgctx.token_len);
-    map_type[pgctx.token_len] = '\0';
+    size_t cplen = ((sizeof(map_type) -1) < pgctx.token_len) ?
+      (sizeof(map_type) -1) : pgctx.token_len;
+    memcpy(map_type, pgctx.token, cplen);
+    map_type[cplen] = '\0';
   }
 
   if (strcasecmp(map_type, "to") == 0 ||
@@ -785,17 +824,40 @@ static CExpr *parse_array_list()
       strcasecmp(map_type, "alloc") == 0 ||
       strcasecmp(map_type, "release") == 0 ||
       strcasecmp(map_type, "delete") == 0 ||
-      strcasecmp(map_type, "always") == 0) { 
+      strcasecmp(map_type, "always") == 0) {
 
     pg_peek_token(&pgctx);		/* peek 1 */
 
     if (strncasecmp(pgctx.token, ",", pgctx.token_len) == 0 ||
         strncasecmp(pgctx.token, "[", pgctx.token_len) == 0 ||
         strncasecmp(pgctx.token, ")", pgctx.token_len) == 0) {
-      /*
-       * got "map(%map_type%," ... %map_type% is var/array.
-       */
-      goto no_map_type;
+      if (strncasecmp(pgctx.token, ",", pgctx.token_len) == 0 &&
+          strcasecmp(map_type, "always") == 0) {
+        /*
+         * "always, ": The most ambiguous case.
+         *
+         *	1) "alwyas" is a var.
+         *	2) "always" is a map_type_modifier with ignorable ','.
+         */
+        pg_token_context_t ctx = pgctx;
+        map_type_seq_result_t res = parse_map_type_seq(&ctx);
+
+        if (res == MAP_TYPE_SEQ_GOT_COLON) {
+          pg_peek_token(&pgctx);
+          goto about_to_var;
+        } else if (res == MAP_TYPE_SEQ_NEXT_VAR) {
+          goto no_map_type;
+        } else {
+          addError(NULL, "OMP: An OpenMP map clause has an invalid "
+                   "map-type/map-type-modifier sequence.");
+          return NULL;
+        }
+      } else {
+        /*
+         * got "map(%map_type%," ... %map_type% is var/array.
+         */
+        goto no_map_type;
+      }
     } else if (strncasecmp(pgctx.token, ":", pgctx.token_len) == 0) {
       /*
        * got "map(%map_type% :" ... OK (if %map_type% != "always")
