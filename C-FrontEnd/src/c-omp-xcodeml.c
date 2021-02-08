@@ -134,7 +134,12 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     outxPrint(fp,indent1,"<string>%s</string>\n",
               ((CExprOfSymbol *)EXPR_L_DATA(EXPR_L_AT(namelist, 1)))->e_symName);
     // for locator list
-    out_OMP_name_list(fp, indent1, (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 2)));
+    if (EXPR_L_DATA(EXPR_L_AT(namelist, 2)) != NULL) {
+      out_OMP_name_list(fp, indent1,
+                        (CExprOfList *)EXPR_L_DATA(EXPR_L_AT(namelist, 2)));
+    } else {
+      outxPrint(fp, indent1, "<list></list>\n");
+    }
     break;
 
   case OMP_DATA_DEFAULT:
