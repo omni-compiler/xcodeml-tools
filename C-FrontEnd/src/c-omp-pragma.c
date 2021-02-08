@@ -56,6 +56,7 @@ static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
 static CExpr* parse_OMP_array_list(void);
 static CExpr* parse_OMP_to(int *r);
+static CExpr* parse_OMP_dist_schedule(void);
 
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
@@ -1263,6 +1264,50 @@ static CExpr* parse_OMP_to(int *r)
   }
 }
 
+static CExpr* parse_OMP_dist_schedule() {
+  CExpr* args = EMPTY_LIST;
+  int kind = OMP_NONE;
+
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OMP: OpenMP dist_schedule clause: requires kind");
+    return NULL;
+  }
+
+  // kind.
+  if (PG_IS_IDENT("static")) {
+    kind = OMP_SCHED_STATIC;
+  }
+  else {
+    addError(NULL, "OMP: OpenMP dist_schedule clause: "
+             "unsupported kind: '%s'", pg_tok_buf);
+    return NULL;
+  }
+
+  pg_get_token();
+  if (pg_tok == ',') {
+    // chunk_size.
+    pg_get_token();
+    if (pg_tok == PG_IDENT || pg_tok == PG_CONST) {
+      if((args = pg_parse_expr()) == NULL) {
+        addError(NULL, "OMP: OpenMP dist_schedule clause: "
+                 "invalid chunk_size expression");
+        return NULL;
+      }
+    } else {
+      addError(NULL, "OMP: OpenMP dist_schedule clause: "
+               "requires chunk_size expression");
+        return NULL;
+    }
+
+    args = OMP_PG_LIST(kind, args);
+  }
+  else {
+    args = OMP_PG_LIST(kind, NULL);
+  }
+
+  return args;
+}
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -1507,6 +1552,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_THREAD_LIMIT, v);
+    } else if (PG_IS_IDENT("dist_schedule")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = parse_OMP_dist_schedule()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DIST_SCHEDULE, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

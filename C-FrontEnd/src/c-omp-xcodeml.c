@@ -96,10 +96,13 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     }
 
   case OMP_DIR_SCHEDULE:
+  case OMP_DIST_SCHEDULE:
       outxPrint(fp,indent1,"<list>\n");
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompScheduleName(((CExprOfList *)arg)->e_aux));
-      outxContext(fp,indent1+1,exprListHeadData(arg));
+      outxPrint(fp,indent1 + 1, "<list>\n");
+      outxContext(fp,indent1 + 2,exprListHeadData(arg));
+      outxPrint(fp,indent1 + 1, "</list>\n");
       outxPrint(fp,indent1,"</list>\n");
       break;
 
@@ -377,6 +380,7 @@ char *ompClauseName(int c)
   case OMP_DATA_DECALRE_LINK:     return "DATA_DECALRE_LINK";
   case OMP_NUM_TEAMS:             return "NUM_TEAMS";
   case OMP_THREAD_LIMIT:          return "THREAD_LIMIT";
+  case OMP_DIST_SCHEDULE:         return "DIST_SCHEDULE";
   default:                        return "???OMP???";
   }
 }

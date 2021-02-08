@@ -126,6 +126,7 @@ enum OMP_pragma_clause {
     OMP_TARGET_UPDATE_FROM = 46,
     OMP_NUM_TEAMS = 47,
     OMP_THREAD_LIMIT = 48,
+    OMP_DIST_SCHEDULE = 49,
 };
 
 enum OMP_sched_clause {
