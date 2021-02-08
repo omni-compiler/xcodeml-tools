@@ -856,7 +856,11 @@ static CExpr *parse_array_list()
   mapV = EMPTY_LIST;
   pg_get_token();
   if (pg_tok != PG_IDENT) {
-    addError(NULL, "OMP: OpenMP map clause: empty name list.");
+    if (got_map_type == 0 && pg_tok == ':') {
+      addError(NULL, "OMP: OpenMP map clause: no map-type is specified.");
+    } else {
+      addError(NULL, "OMP: OpenMP map clause: empty name list.");
+    }
     return NULL;
   }
 
