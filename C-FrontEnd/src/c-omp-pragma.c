@@ -1090,17 +1090,18 @@ static CExpr *parse_array_list()
 */
 static CExpr* parse_depend_expr()
 {
-
+  int got_source = 0;
+  int got_sink = 0;
   CExpr* args = EMPTY_LIST;
 
   if(pg_tok != '('){
-    addError(NULL,"OMP: OpenMP directive clause requires name list");
+    addError(NULL,"OMP: OpenMP depend clause: requires a name list.");
     return NULL;
   }
   pg_get_token();
 
   if(pg_tok != PG_IDENT){
-    addError(NULL, "OpenMP: empty name list in OpenMP directive clause");
+    addError(NULL, "OMP: OpenMP depend clause: empty name list.");
     return NULL;
   }
 
@@ -1113,10 +1114,10 @@ static CExpr* parse_depend_expr()
   }
 
   // in, out, inout is introduced in OpenMP 4.0
+  // sink, source in OpenMP 4.5
   // mutexinoutset, depobj is introduced in OpenMP 5.0
   if(PG_IS_IDENT("in")){
     args = exprListAdd(args, pg_parse_expr());
-
   }
   else if(PG_IS_IDENT("out")){
     args = exprListAdd(args, pg_parse_expr());
@@ -1124,19 +1125,37 @@ static CExpr* parse_depend_expr()
   else if(PG_IS_IDENT("inout")){
     args = exprListAdd(args, pg_parse_expr());
   }
+  else if(PG_IS_IDENT("sink")){
+    args = exprListAdd(args, pg_parse_expr());
+    got_sink = 1;
+  }
+  else if(PG_IS_IDENT("source")){
+    args = exprListAdd(args, pg_parse_expr());
+    got_source = 1;
+  }
   else if(PG_IS_IDENT("mutexinoutset")){
     args = exprListAdd(args, pg_parse_expr());
   }
   else if(PG_IS_IDENT("depobj")){
     args = exprListAdd(args, pg_parse_expr());
   }
+  
   else {
     goto err;
   }
 
-
-  if(pg_tok != ':')
+  if (got_source == 1) {
+    if (pg_tok == ')') {
+      pg_get_token();
+      return args;
+    } else {
+      addError(NULL, "OMP: OpenMP depend clause: depend-type \"source\" "
+               "must not has parameters.");
+      return NULL;
+    }
+  } else if (pg_tok != ':') {
     goto err;
+  }
 
   pg_get_token();
 
@@ -1144,19 +1163,31 @@ static CExpr* parse_depend_expr()
   CExpr *locatorList = EMPTY_LIST;
 
 nextLocator:
-  v = pg_tok_val;
-  pg_get_token();
-  if(pg_tok != '['){
-    // not array expression
-    locatorList = exprListAdd(locatorList, v);
-  }
-  else{
-    // array expression
-    CExpr *list     = parse_OMP_C_subscript_list();
-    CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
-    locatorList = exprListAdd(locatorList, arrayRef);
-  }
+  if (got_sink == 1) {
+    v = pg_parse_expr();
+    if (EXPR_CODE(v) == EC_PLUS || EXPR_CODE(v) == EC_MINUS ||
+        EXPR_CODE(v) == EC_IDENT) {
+      locatorList = exprListAdd(locatorList, v);
+    } else {
+      addError(NULL, "OMP: OpenMP depend clause: depend-type \"sink\" must "
+               "has vector list "
+               "(list of \"<var>\", \"<var> + <int>\" or \"<var> - <int>\").");
+      return NULL;
+    }
+  } else {
+    v = pg_tok_val;
+    pg_get_token();
 
+    if (pg_tok != '[') {
+      // not array expression
+      locatorList = exprListAdd(locatorList, v);
+    } else {
+      // array expression
+      CExpr *list     = parse_OMP_C_subscript_list();
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      locatorList = exprListAdd(locatorList, arrayRef);
+    }
+  }
 
   if(pg_tok == ','){
     pg_get_token();
