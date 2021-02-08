@@ -1289,6 +1289,10 @@ static CExpr* parse_OMP_clauses()
       pg_get_token();
       if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_DATA_COPYIN,v);
+    } else if(PG_IS_IDENT("copyprivate")){
+      pg_get_token();
+      if((v = parse_OMP_namelist()) == NULL) goto syntax_err;
+      c = OMP_PG_LIST(OMP_DATA_COPYPRIVATE,v);
     } else if(PG_IS_IDENT("reduction")){
       pg_get_token();
       if((v = parse_OMP_reduction_namelist(&r)) == NULL) goto syntax_err;

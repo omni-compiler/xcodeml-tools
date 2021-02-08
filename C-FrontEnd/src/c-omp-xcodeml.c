@@ -337,6 +337,7 @@ char *ompClauseName(int c)
   case OMP_DATA_FIRSTPRIVATE:     return "DATA_FIRSTPRIVATE";
   case OMP_DATA_LASTPRIVATE:      return "DATA_LASTPRIVATE";
   case OMP_DATA_COPYIN:           return "DATA_COPYIN";
+  case OMP_DATA_COPYPRIVATE:      return "DATA_COPYPRIVATE";
 
   case OMP_DATA_REDUCTION_PLUS:   return "DATA_REDUCTION_PLUS";
   case OMP_DATA_REDUCTION_MINUS:  return "DATA_REDUCTION_MINUS";
