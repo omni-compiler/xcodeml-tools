@@ -1495,6 +1495,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_NUM_TEAMS, v);
+    } else if (PG_IS_IDENT("thread_limit")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_THREAD_LIMIT, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

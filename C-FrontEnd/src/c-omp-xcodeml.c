@@ -80,6 +80,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_GRAINSIZE:
   case OMP_NUM_TASKS:
   case OMP_NUM_TEAMS:
+  case OMP_THREAD_LIMIT:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -374,6 +375,7 @@ char *ompClauseName(int c)
   case OMP_TARGET_UPDATE_FROM:    return "TARGET_UPDATE_FROM";
   case OMP_DATA_DECALRE_LINK:     return "DATA_DECALRE_LINK";
   case OMP_NUM_TEAMS:             return "NUM_TEAMS";
+  case OMP_THREAD_LIMIT:          return "THREAD_LIMIT";
   default:                        return "???OMP???";
   }
 }
