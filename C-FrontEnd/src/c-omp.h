@@ -124,6 +124,7 @@ enum OMP_pragma_clause {
     OMP_USE_DEVICE_PTR = 44,
     OMP_TARGET_UPDATE_TO = 45,
     OMP_TARGET_UPDATE_FROM = 46,
+    OMP_NUM_TEAMS = 47,
 };
 
 enum OMP_sched_clause {
