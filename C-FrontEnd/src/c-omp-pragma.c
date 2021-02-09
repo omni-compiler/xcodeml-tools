@@ -841,7 +841,6 @@ static CExpr *parse_array_list()
   int map_type_val = -1;
   int is_first = 1;
   CExpr *v = NULL;
-  CExpr *mapV = EMPTY_LIST;
   int got_map_type = 0;
 
   pg_token_context_init(&pgctx);
@@ -990,7 +989,7 @@ static CExpr *parse_array_list()
           return NULL;
         }
         pg_seek_token(&pgctx);
-        mapV = exprListAdd(mapV,
+        args = exprListAdd(args,
                            (CExpr *)allocExprOfNumberConst2(-map_type_val,
                                                             BT_INT));
       }
@@ -1016,7 +1015,7 @@ static CExpr *parse_array_list()
      */
     mtNode = (CExpr *)allocExprOfNumberConst2(-((int)OMP_DATA_MAP_TOFROM),
                                               BT_INT);
-    mapV = exprListAdd(mapV, mtNode);
+    args = exprListAdd(args, mtNode);
   }
 
   v = pg_tok_val;
@@ -1031,12 +1030,12 @@ static CExpr *parse_array_list()
     CExpr *varRef = EMPTY_LIST;
     varRef = exprListAdd(varRef, v);
     varRef = exprListAdd(varRef, EMPTY_LIST);
-    mapV = exprListAdd(mapV, varRef);
+    args = exprListAdd(args, varRef);
   } else{
     CExpr *list = parse_OMP_C_subscript_list();
     CExpr *arrayRef = exprBinary(EC_ARRAY_REF, v, list);
 
-    mapV = exprListAdd(mapV, arrayRef);
+    args = exprListAdd(args, arrayRef);
   }
 
   if (pg_tok == ',') {
@@ -1044,7 +1043,6 @@ static CExpr *parse_array_list()
     v = pg_tok_val;
     goto var_list;
   } else if (pg_tok == ')') {
-    args = exprListAdd(args, mapV);
     pg_get_token();
 
     if (pg_tok == ',') {
