@@ -15,6 +15,7 @@ void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 
 static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
+static char *ompProcBindName(int c);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -152,7 +153,12 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     if(EXPR_L_SIZE(namelist) != 0)
       out_OMP_map(fp, indent1, namelist);
     break;
-      
+
+  case OMP_PROC_BIND:
+    outxPrint(fp, indent1+1, "<string>%s</string>\n",
+              ompProcBindName(((CExprOfList *)arg)->e_aux));
+    break;
+
   default:
     namelist = (CExprOfList *)arg;
     if(EXPR_L_SIZE(namelist) != 0)
@@ -386,6 +392,7 @@ char *ompClauseName(int c)
   case OMP_NUM_TEAMS:             return "NUM_TEAMS";
   case OMP_THREAD_LIMIT:          return "THREAD_LIMIT";
   case OMP_DIST_SCHEDULE:         return "DIST_SCHEDULE";
+  case OMP_PROC_BIND:             return "PROC_BIND";
   default:                        return "???OMP???";
   }
 }
@@ -413,5 +420,16 @@ char *ompDataDefaultName(int c)
     case OMP_DEFAULT_PRIVATE:  return "DEFAULT_PRIVATE";
     default:
 	return "DEFAULT_???";
+    }
+}
+
+static char *ompProcBindName(int c)
+{
+    switch(c){
+    case OMP_PROC_BIND_MASTER: return "PROC_BIND_MASTER";
+    case OMP_PROC_BIND_CLOSE: return "PROC_BIND_CLOSE";
+    case OMP_PROC_BIND_SPREAD: return "PROC_BIND_SPREAD";
+    default:
+	return "PROC_BIND_???";
     }
 }

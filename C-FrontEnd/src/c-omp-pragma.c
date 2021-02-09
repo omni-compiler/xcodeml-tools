@@ -57,6 +57,7 @@ static CExpr* parse_OMP_reduction_namelist(int *r);
 static CExpr* parse_OMP_array_list(void);
 static CExpr* parse_OMP_to(int *r);
 static CExpr* parse_OMP_dist_schedule(void);
+static CExpr* parse_OMP_proc_bind(void);
 
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
@@ -1281,6 +1282,34 @@ static CExpr* parse_OMP_to(int *r)
   }
 }
 
+static CExpr* parse_OMP_proc_bind() {
+  CExpr* args = EMPTY_LIST;
+  int kind = OMP_PROC_BIND_NONE;
+
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OMP: OpenMP proc_bind clause: requires args");
+    return NULL;
+  }
+
+  if (PG_IS_IDENT("master")) {
+    kind = OMP_PROC_BIND_MASTER;
+  } else if (PG_IS_IDENT("close")) {
+    kind = OMP_PROC_BIND_CLOSE;
+  } else if (PG_IS_IDENT("spread")) {
+    kind = OMP_PROC_BIND_SPREAD;
+  }
+  else {
+    addError(NULL, "OMP: OpenMP proc_bind clause: "
+             "unsupported kind: '%s'", pg_tok_buf);
+    return NULL;
+  }
+
+  args = OMP_PG_LIST(kind, EMPTY_LIST);
+  pg_get_token();
+
+  return args;
+}
+
 static CExpr* parse_OMP_dist_schedule() {
   CExpr* args = EMPTY_LIST;
   int kind = OMP_NONE;
@@ -1577,6 +1606,14 @@ static CExpr* parse_OMP_clauses()
       if (pg_tok != ')') goto syntax_err;
       pg_get_token();
       c = OMP_PG_LIST(OMP_DIST_SCHEDULE, v);
+    } else if (PG_IS_IDENT("proc_bind")) {
+      pg_get_token();
+      if (pg_tok != '(') goto syntax_err;
+      pg_get_token();
+      if ((v = parse_OMP_proc_bind()) == NULL) goto syntax_err;
+      if (pg_tok != ')') goto syntax_err;
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_PROC_BIND, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

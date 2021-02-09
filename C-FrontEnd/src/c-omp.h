@@ -127,6 +127,7 @@ enum OMP_pragma_clause {
     OMP_NUM_TEAMS = 47,
     OMP_THREAD_LIMIT = 48,
     OMP_DIST_SCHEDULE = 49,
+    OMP_PROC_BIND = 50,
 };
 
 enum OMP_sched_clause {
@@ -143,6 +144,13 @@ enum OMP_data_default {
     OMP_DEFAULT_NONE = 0,
     OMP_DEFAULT_SHARED = 1,
     OMP_DEFAULT_PRIVATE = 2
+};
+
+enum OMP_proc_bind_clause {
+     OMP_PROC_BIND_NONE = 0,
+     OMP_PROC_BIND_MASTER = 1,
+     OMP_PROC_BIND_CLOSE = 2,
+     OMP_PROC_BIND_SPREAD = 3,
 };
 
 typedef enum {
