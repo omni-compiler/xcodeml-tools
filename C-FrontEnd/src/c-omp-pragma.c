@@ -1312,6 +1312,10 @@ static CExpr* parse_OMP_proc_bind() {
 
 static CExpr* parse_OMP_dist_schedule() {
   CExpr* args = EMPTY_LIST;
+  // 'modifiers' is always empty.
+  // Because it uses the same output format as 'schedule' clause.
+  CExpr* modifiers = EMPTY_LIST;
+  CExpr* chunk_size_expr = EMPTY_LIST;
   int kind = OMP_SCHED_NONE;
 
   if (pg_tok != PG_IDENT) {
@@ -1322,8 +1326,7 @@ static CExpr* parse_OMP_dist_schedule() {
   // kind.
   if (PG_IS_IDENT("static")) {
     kind = OMP_SCHED_STATIC;
-  }
-  else {
+  } else {
     addError(NULL, "OMP: OpenMP dist_schedule clause: "
              "unsupported kind: '%s'", pg_tok_buf);
     return NULL;
@@ -1334,7 +1337,7 @@ static CExpr* parse_OMP_dist_schedule() {
     // chunk_size.
     pg_get_token();
     if (pg_tok == PG_IDENT || pg_tok == PG_CONST) {
-      if((args = pg_parse_expr()) == NULL) {
+      if((chunk_size_expr = pg_parse_expr()) == NULL) {
         addError(NULL, "OMP: OpenMP dist_schedule clause: "
                  "invalid chunk_size expression");
         return NULL;
@@ -1344,11 +1347,11 @@ static CExpr* parse_OMP_dist_schedule() {
                "requires chunk_size expression");
         return NULL;
     }
-
-    args = OMP_PG_LIST(kind, args);
-  } else {
-    args = OMP_PG_LIST(kind, NULL);
   }
+
+  args = exprListAdd(args, modifiers);
+  args = exprListAdd(args, chunk_size_expr);
+  args = OMP_PG_LIST(kind, args);
 
   return args;
 }

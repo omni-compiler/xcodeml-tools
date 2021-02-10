@@ -99,17 +99,8 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     }
 
   case OMP_DIR_SCHEDULE:
-    out_OMP_schedule(fp, indent1, arg);
-    break;
-
   case OMP_DIST_SCHEDULE:
-    outxPrint(fp,indent1,"<list>\n");
-    outxPrint(fp,indent1+1,"<string>%s</string>\n",
-              ompScheduleName(((CExprOfList *)arg)->e_aux));
-    outxPrint(fp,indent1 + 1, "<list>\n");
-    outxContext(fp,indent1 + 2,exprListHeadData(arg));
-    outxPrint(fp,indent1 + 1, "</list>\n");
-    outxPrint(fp,indent1,"</list>\n");
+    out_OMP_schedule(fp, indent1, arg);
     break;
 
   case OMP_DEPEND:
