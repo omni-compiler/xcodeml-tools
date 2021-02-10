@@ -217,25 +217,28 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
 static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
 {
   int indent1 = indent+1;
+  int cur_indent = indent1;
   CCOL_DListNode *ite;
+  int emit_map_type = 0;
 
   outxPrint(fp, indent, "<list>\n");
 
   EXPR_FOREACH(ite, list) {
-    CExpr *mapEntry = EXPR_L_DATA(ite);
-    CExpr *mapTypeNode = EXPR_L_DATA(EXPR_L_AT(mapEntry, 0));
-    CExpr *varNode = EXPR_L_DATA(EXPR_L_AT(mapEntry, 1));
+    CExpr *v = EXPR_L_DATA(ite);
 
-    outxPrint(fp, indent1, "<list>\n");
+    if (emit_map_type == 1) {
+      outxPrint(fp, cur_indent, "<list>\n");
+      cur_indent++;
+      emit_map_type = 0;
+    }
 
-    if (EXPR_CODE(mapTypeNode) == EC_NUMBER_CONST) {
+    if (EXPR_CODE(v) == EC_NUMBER_CONST) {
       const char *map_type;
       const char *always;
-      long long l = EXPR_NUMBERCONST(mapTypeNode)->e_numValue.ll;
+      long long l = EXPR_NUMBERCONST(v)->e_numValue.ll;
       int i = (int)(-l);
 
       if (i < 0) {
-       unknown_map:
         map_type = "??unknown map type??";
       } else if (i == 0) {
         always = "";
@@ -249,27 +252,22 @@ static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
       }
       map_type = ompMapClauseTypeString((OMP_map_type)i);
      emit_map_type:
-      outxPrint(fp, indent1 + 1,
+      emit_map_type = 1;
+      outxPrint(fp, indent1,
                 "<string>%s%s</string>\n", always, map_type);
+    } else if (EXPR_CODE(v) == EC_ARRAY_REF) {
+      out_ACC_arrayRef(fp, cur_indent, (CExprOfBinaryNode *)v);
     } else {
-      goto unknown_map;
+      CExpr *var = EXPR_L_DATA(EXPR_L_AT(v, 0));
+      outxPrint(fp, cur_indent, "<list>\n");
+      outxPrint(fp, cur_indent + 1, "<Var>%s</Var>\n",
+                ((CExprOfSymbol *)var)->e_symName);
+      outxPrint(fp, cur_indent + 1, "<list></list>\n");
+      outxPrint(fp, cur_indent, "</list>\n");      
     }
-
-    if (EXPR_CODE(varNode) == EC_ARRAY_REF) {
-      out_ACC_arrayRef(fp, indent1 + 1, (CExprOfBinaryNode *)varNode);
-    } else {
-      CExpr *varNameNode = EXPR_L_DATA(EXPR_L_AT(varNode, 0));
-
-      outxPrint(fp, indent1 + 1, "<list>\n");      
-      outxPrint(fp, indent1 + 2, "<Var>%s</Var>\n",
-                ((CExprOfSymbol *)varNameNode)->e_symName);
-      outxPrint(fp, indent1 + 2, "<list></list>\n");
-      outxPrint(fp, indent1 + 1, "</list>\n");      
-    }
-
-    outxPrint(fp, indent1, "</list>\n");
   }
-
+  cur_indent--;
+  outxPrint(fp, cur_indent, "</list>\n");
   outxPrint(fp, indent, "</list>\n");
 }
 
