@@ -283,11 +283,8 @@ static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg)
 
   arg = exprListHeadData(arg);
 
-  if (EXPR_L_SIZE((CExprOfList*)arg) != 2) {
-    // Length of the list must be equal to 2.
-    // ignore.
-    return;
-  }
+  // NOTE: Length of the list must be equal to 2.
+  assert(EXPR_L_SIZE((CExprOfList*)arg) == 2);
 
   modifiers = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 0));
   chunk_size_expr = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 1));
