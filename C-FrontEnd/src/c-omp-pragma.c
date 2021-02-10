@@ -1349,6 +1349,12 @@ static CExpr* parse_OMP_dist_schedule() {
     }
   }
 
+  if (pg_tok != ')') {
+    addError(NULL, "OMP: OpenMP dist_schedule clause: many arguments "
+             "or not terminated");
+    return NULL;
+  }
+
   args = exprListAdd(args, modifiers);
   args = exprListAdd(args, chunk_size_expr);
   args = OMP_PG_LIST(kind, args);
@@ -1400,7 +1406,7 @@ static int parse_OMP_schedule_modifier(char *token, int token_len,
       count_schedule_modifier++;
       goto next;
     } else {
-      addError(NULL, "OMP: OpenMP schedule clause: not found ':' or ','");
+      addError(NULL, "OMP: OpenMP schedule clause: ':' or ',' not found");
       return 0;
     }
   } else {
@@ -1451,7 +1457,7 @@ static CExpr* parse_OMP_schedule() {
     // chunk_size.
     pg_get_token();
     if (pg_tok == PG_IDENT || pg_tok == PG_CONST) {
-      if((chunk_size_expr = pg_parse_expr()) == NULL) {
+      if ((chunk_size_expr = pg_parse_expr()) == NULL) {
         addError(NULL, "OMP: OpenMP schedule clause: "
                  "invalid chunk_size expression");
         return NULL;
@@ -1461,6 +1467,12 @@ static CExpr* parse_OMP_schedule() {
                "requires chunk_size expression");
         return NULL;
     }
+  }
+
+  if (pg_tok != ')') {
+    addError(NULL, "OMP: OpenMP schedule clause: many arguments "
+             "or not terminated");
+    return NULL;
   }
 
   args = exprListAdd(args, modifiers);
