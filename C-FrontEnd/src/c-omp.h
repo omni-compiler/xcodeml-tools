@@ -140,6 +140,13 @@ enum OMP_sched_clause {
     OMP_SCHED_AUTO = 6,
 };
 
+enum OMP_sched_modifier {
+    OMP_SCHED_MODIFIER_NONE = 0,
+    OMP_SCHED_MODIFIER_MONOTONIC = 1,
+    OMP_SCHED_MODIFIER_NONMONOTONIC = 2,
+    OMP_SCHED_MODIFIER_SIMD = 3,
+};
+
 enum OMP_data_default {
     OMP_DEFAULT_NONE = 0,
     OMP_DEFAULT_SHARED = 1,

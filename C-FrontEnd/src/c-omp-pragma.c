@@ -72,6 +72,8 @@ static int parse_OMP_end_pragma(void);
 #define OMP_CLAUSE_DEVICE    0
 #define OMP_CLAUSE_SHADOW    1
 
+#define MAX_NUM_SCHEDULE_MODIFIER (2)
+
 typedef struct {
   OMP_map_type t;
   const char *map_type;
@@ -1330,7 +1332,7 @@ static CExpr* parse_OMP_proc_bind() {
 
 static CExpr* parse_OMP_dist_schedule() {
   CExpr* args = EMPTY_LIST;
-  int kind = OMP_NONE;
+  int kind = OMP_SCHED_NONE;
 
   if (pg_tok != PG_IDENT) {
     addError(NULL, "OMP: OpenMP dist_schedule clause: requires kind");
@@ -1364,10 +1366,123 @@ static CExpr* parse_OMP_dist_schedule() {
     }
 
     args = OMP_PG_LIST(kind, args);
-  }
-  else {
+  } else {
     args = OMP_PG_LIST(kind, NULL);
   }
+
+  return args;
+}
+
+static int parse_OMP_schedule_modifier(char *token, int token_len,
+                                       CExpr** modifiers) {
+  pg_token_context_t ctx;
+  int modifier = OMP_SCHED_MODIFIER_NONE;
+  int count_schedule_modifier = 0;
+
+  (void) pg_token_context_init(&ctx);
+
+ next:
+  if (count_schedule_modifier >= MAX_NUM_SCHEDULE_MODIFIER) {
+    addError(NULL, "OMP: OpenMP schedule clause: "
+             "Number of appearances of modifier exceeds the upper limit");
+    return 0;
+  }
+
+  if (strncmp(token, "monotonic", token_len) == 0) {
+    modifier = OMP_SCHED_MODIFIER_MONOTONIC;
+  } else if (strncmp(token, "nonmonotonic", token_len) == 0) {
+    modifier = OMP_SCHED_MODIFIER_NONMONOTONIC;
+  } else if (strncmp(token, "simd", token_len) == 0) {
+    modifier = OMP_SCHED_MODIFIER_SIMD;
+  } else {
+    if (count_schedule_modifier == 0) {
+      return 1;
+    }
+    addError(NULL, "OMP: OpenMP schedule clause: "
+             "unsupported modifier: '%s'", pg_tok_buf);
+    return 0;
+  }
+
+  (void) pg_peek_token(&ctx);
+
+  *modifiers = exprListAdd(*modifiers,
+                           (CExpr *)allocExprOfNumberConst2(modifier, BT_INT));
+  if (ctx.token != NULL && *(ctx.token) != '\0') {
+    if (*(ctx.token) == ':') {
+      pg_seek_token(&ctx);
+    } else if (*(ctx.token) == ',') {
+      (void) pg_peek_token(&ctx);
+      token = ctx.token;
+      token_len = ctx.token_len;
+      count_schedule_modifier++;
+      goto next;
+    } else {
+      addError(NULL, "OMP: OpenMP schedule clause: not found ':' or ','");
+      return 0;
+    }
+  } else {
+    addError(NULL, "OMP: OpenMP schedule clause: requires modifier or kind");
+    return 0;
+  }
+
+  return 1;
+}
+
+static CExpr* parse_OMP_schedule() {
+  CExpr* args = EMPTY_LIST;
+  CExpr* modifiers = EMPTY_LIST;
+  CExpr* chunk_size_expr = EMPTY_LIST;
+  int kind = OMP_SCHED_NONE;
+
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OMP: OpenMP schedule clause: requires kind");
+    return NULL;
+  }
+
+  if (parse_OMP_schedule_modifier(pg_tok_buf, strlen(pg_tok_buf),
+                                  &modifiers) == 0) {
+    return NULL;
+  }
+
+  // kind.
+  if (PG_IS_IDENT("static")) {
+    kind = (int)OMP_SCHED_STATIC;
+  } else if (PG_IS_IDENT("dynamic")) {
+    kind = (int)OMP_SCHED_DYNAMIC;
+  }else if (PG_IS_IDENT("guided")) {
+    kind = (int)OMP_SCHED_GUIDED;
+  } else if (PG_IS_IDENT("runtime")) {
+    kind = (int)OMP_SCHED_RUNTIME;
+  } else if (PG_IS_IDENT("affinity")) {
+    kind = (int)OMP_SCHED_AFFINITY;
+  } else if (PG_IS_IDENT("auto")) {
+    kind = (int)OMP_SCHED_AUTO;
+  } else {
+    addError(NULL, "OMP: OpenMP schedule clause: "
+             "unsupported kind: '%s'", pg_tok_buf);
+    return NULL;
+  }
+
+  pg_get_token();
+  if (pg_tok == ',') {
+    // chunk_size.
+    pg_get_token();
+    if (pg_tok == PG_IDENT || pg_tok == PG_CONST) {
+      if((chunk_size_expr = pg_parse_expr()) == NULL) {
+        addError(NULL, "OMP: OpenMP schedule clause: "
+                 "invalid chunk_size expression");
+        return NULL;
+      }
+    } else {
+      addError(NULL, "OMP: OpenMP schedule clause: "
+               "requires chunk_size expression");
+        return NULL;
+    }
+  }
+
+  args = exprListAdd(args, modifiers);
+  args = exprListAdd(args, chunk_size_expr);
+  args = OMP_PG_LIST(kind, args);
 
   return args;
 }
@@ -1444,27 +1559,8 @@ static CExpr* parse_OMP_clauses()
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
       pg_get_token();
-      if(pg_tok != PG_IDENT) goto syntax_err;
-      if(PG_IS_IDENT("static"))        r = (int)OMP_SCHED_STATIC;
-      else if(PG_IS_IDENT("dynamic"))  r = (int)OMP_SCHED_DYNAMIC;
-      else if(PG_IS_IDENT("guided"))   r = (int)OMP_SCHED_GUIDED;
-      else if(PG_IS_IDENT("runtime"))  r = (int)OMP_SCHED_RUNTIME;
-      else if(PG_IS_IDENT("affinity")) r = (int)OMP_SCHED_AFFINITY;
-      else if(PG_IS_IDENT("auto"))     r = (int)OMP_SCHED_AUTO;
-      else {
-	addError(NULL,"unknown schedule method '%s'",pg_tok_buf);
-      }
-      pg_get_token();
-      
-      if(pg_tok == ','){
-	pg_get_token();
-	if((v = pg_parse_expr()) == NULL) goto syntax_err;
-	v = OMP_PG_LIST(r,v);
-      }
-      else v = OMP_PG_LIST(r,NULL);
-      
+      if((v = parse_OMP_schedule()) == NULL) goto syntax_err;
       if(pg_tok != ')') goto syntax_err;
-      
       pg_get_token();
       c = OMP_PG_LIST(OMP_DIR_SCHEDULE,v);
     } else if(PG_IS_IDENT("ordered")){

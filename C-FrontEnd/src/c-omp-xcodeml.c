@@ -12,10 +12,12 @@ void outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause);
 void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list);
 void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript);
 void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
-void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 
+static void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
 static char *ompProcBindName(int c);
+static char *ompScheduleModifierName(int c);
+static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -97,15 +99,18 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     }
 
   case OMP_DIR_SCHEDULE:
+    out_OMP_schedule(fp, indent1, arg);
+    break;
+
   case OMP_DIST_SCHEDULE:
-      outxPrint(fp,indent1,"<list>\n");
-      outxPrint(fp,indent1+1,"<string>%s</string>\n",
-		ompScheduleName(((CExprOfList *)arg)->e_aux));
-      outxPrint(fp,indent1 + 1, "<list>\n");
-      outxContext(fp,indent1 + 2,exprListHeadData(arg));
-      outxPrint(fp,indent1 + 1, "</list>\n");
-      outxPrint(fp,indent1,"</list>\n");
-      break;
+    outxPrint(fp,indent1,"<list>\n");
+    outxPrint(fp,indent1+1,"<string>%s</string>\n",
+              ompScheduleName(((CExprOfList *)arg)->e_aux));
+    outxPrint(fp,indent1 + 1, "<list>\n");
+    outxContext(fp,indent1 + 2,exprListHeadData(arg));
+    outxPrint(fp,indent1 + 1, "</list>\n");
+    outxPrint(fp,indent1,"</list>\n");
+    break;
 
   case OMP_DEPEND:
     /*
@@ -167,7 +172,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   outxPrint(fp,indent,"</list>\n");
 }
 
-void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
+static void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
 {
   switch(((CExprOfList *)arg)->e_aux) {
   case OMP_TASK:
@@ -264,6 +269,47 @@ static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
 
     outxPrint(fp, indent1, "</list>\n");
   }
+
+  outxPrint(fp, indent, "</list>\n");
+}
+
+static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg)
+{
+  CCOL_DListNode* ite = NULL;
+  CExpr* modifiers = NULL;
+  CExpr* chunk_size_expr = NULL;
+
+  outxPrint(fp, indent, "<list>\n");
+  outxPrint(fp, indent + 1, "<string>%s</string>\n",
+            ompScheduleName(((CExprOfList *)arg)->e_aux));
+
+  arg = exprListHeadData(arg);
+
+  if (EXPR_L_SIZE((CExprOfList*)arg) != 2) {
+    // Length of the list must be equal to 2.
+    // ignore.
+    return;
+  }
+
+  modifiers = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 0));
+  chunk_size_expr = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 1));
+
+  // modifier
+  outxPrint(fp, indent + 1, "<list>\n");
+  EXPR_FOREACH(ite, modifiers) {
+    CExpr *node = EXPR_L_DATA(ite);
+    outxPrint(fp, indent + 2, "<string>%s</string>\n",
+              ompScheduleModifierName((int)EXPR_NUMBERCONST(node)->
+                                      e_numValue.ll));
+  }
+  outxPrint(fp, indent + 1, "</list>\n");
+
+  // chunk_size
+  outxPrint(fp, indent + 1, "<list>\n");
+  if (exprListHead(chunk_size_expr) != NULL) {
+    outxContext(fp, indent + 2, chunk_size_expr);
+  }
+  outxPrint(fp, indent + 1, "</list>\n");
 
   outxPrint(fp, indent, "</list>\n");
 }
@@ -408,6 +454,17 @@ char *ompScheduleName(int c)
     case OMP_SCHED_AFFINITY: return "SCHED_AFFINITY";
     case OMP_SCHED_AUTO: return "SCHED_AUTO";
     default: 
+	return "SCHED_???";
+    }
+}
+
+static char *ompScheduleModifierName(int c)
+{
+    switch(c){
+    case OMP_SCHED_MODIFIER_MONOTONIC: return "SCHED_MODIFIER_MONOTONIC";
+    case OMP_SCHED_MODIFIER_NONMONOTONIC: return "SCHED_MODIFIER_NONMONOTONIC";
+    case OMP_SCHED_MODIFIER_SIMD: return "SCHED_MODIFIER_SIMD";
+    default:
 	return "SCHED_???";
     }
 }
