@@ -1771,7 +1771,8 @@ static int parse_OMP_if_directive_name_modifier(int *r)
             modifier = OMP_TARGET_ENTER_DATA;
           }
         } else {
-          goto syntax_err;
+          addError(NULL,"OMP if clause requires modifier or expression.");
+          return 0;
         }
       } else if (strncmp(ctx.token, "exit", ctx.token_len) == 0) {
         (void) pg_peek_token(&ctx);
@@ -1782,11 +1783,13 @@ static int parse_OMP_if_directive_name_modifier(int *r)
             modifier = OMP_TARGET_EXIT_DATA;
           }
         } else {
-          goto syntax_err;
+          addError(NULL,"OMP if clause requires modifier or expression.");
+          return 0;
         }
       }
     } else {
-      goto syntax_err;
+      addError(NULL,"OMP if clause requires modifier or expression.");
+      return 0;
     }
   } else if (PG_IS_IDENT("parallel")) {
     (void) pg_peek_token(&ctx);
@@ -1795,7 +1798,8 @@ static int parse_OMP_if_directive_name_modifier(int *r)
 
   if (modifier != OMP_NONE) {
     if (ctx.token == NULL || *(ctx.token) == '\0') {
-      goto syntax_err;
+      addError(NULL,"OMP if clause requires modifier or expression.");
+      return 0;
     }
     if (*(ctx.token) == ':') {
       *r = modifier;
@@ -1806,10 +1810,6 @@ static int parse_OMP_if_directive_name_modifier(int *r)
   }
 
   return 1;
-
- syntax_err:
-  addError(NULL,"OMP if clause requires modifier or expression.");
-  return 0;
 }
 
 
