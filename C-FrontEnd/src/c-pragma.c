@@ -454,7 +454,9 @@ pg_parse_expr()
     case PK_XMP:
     case PK_OMP:
     case PK_NOT_PARSABLE:
-	pg_set_exprs_type(e);
+        if(!EXPR_ISNULL(e)) {
+          pg_set_exprs_type(e);
+        }
 	break;
     default:
 	break;
