@@ -18,6 +18,7 @@ static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
 static char *ompProcBindName(int c);
 static char *ompScheduleModifierName(int c);
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
+static void out_OMP_defaultmap(FILE *fp,int indent, CExpr *arg);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -153,6 +154,10 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_PROC_BIND:
     outxPrint(fp, indent1+1, "<string>%s</string>\n",
               ompProcBindName(((CExprOfList *)arg)->e_aux));
+    break;
+
+  case OMP_DATA_DEFAULTMAP:
+    out_OMP_defaultmap(fp, indent1, arg);
     break;
 
   default:
@@ -298,6 +303,25 @@ static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg)
   outxPrint(fp, indent + 1, "</list>\n");
 
   outxPrint(fp, indent, "</list>\n");
+}
+
+static void out_OMP_defaultmap(FILE *fp,int indent, CExpr *arg)
+{
+    CExpr* behavior = NULL;
+    CExpr* category = NULL;
+
+    // NOTE: Length of the list must be equal to 2.
+    assert(EXPR_L_SIZE((CExprOfList*)arg) == 2);
+
+    behavior = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 0));
+    category = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 1));
+
+    outxPrint(fp, indent, "<list>\n");
+    outxPrint(fp, indent + 1,"<string>%s</string>\n",
+              ((CExprOfSymbol *)behavior)->e_symName);
+    outxPrint(fp, indent + 1,"<Var>%s</Var>\n",
+              ((CExprOfSymbol *)category)->e_symName);
+    outxPrint(fp, indent, "</list>\n");
 }
 
 char *ompDirectiveName(int c)
