@@ -1336,16 +1336,10 @@ static CExpr* parse_OMP_dist_schedule() {
   if (pg_tok == ',') {
     // chunk_size.
     pg_get_token();
-    if (pg_tok == PG_IDENT || pg_tok == PG_CONST) {
-      if((chunk_size_expr = pg_parse_expr()) == NULL) {
-        addError(NULL, "OMP: OpenMP dist_schedule clause: "
-                 "invalid chunk_size expression");
-        return NULL;
-      }
-    } else {
+    if((chunk_size_expr = pg_parse_expr()) == NULL) {
       addError(NULL, "OMP: OpenMP dist_schedule clause: "
-               "requires chunk_size expression");
-        return NULL;
+               "invalid chunk_size expression");
+      return NULL;
     }
   }
 
@@ -1456,16 +1450,10 @@ static CExpr* parse_OMP_schedule() {
   if (pg_tok == ',') {
     // chunk_size.
     pg_get_token();
-    if (pg_tok == PG_IDENT || pg_tok == PG_CONST) {
-      if ((chunk_size_expr = pg_parse_expr()) == NULL) {
-        addError(NULL, "OMP: OpenMP schedule clause: "
-                 "invalid chunk_size expression");
-        return NULL;
-      }
-    } else {
+    if ((chunk_size_expr = pg_parse_expr()) == NULL) {
       addError(NULL, "OMP: OpenMP schedule clause: "
-               "requires chunk_size expression");
-        return NULL;
+               "invalid chunk_size expression");
+      return NULL;
     }
   }
 
