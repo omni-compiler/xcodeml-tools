@@ -1556,12 +1556,18 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_DATA_DEFAULT,v);
     } else if(PG_IS_IDENT("if")){
       pg_get_token();
-      if(pg_tok != '(') goto syntax_err;
+      if(pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP if clause: requires arguments");
+        goto syntax_err;
+      }
 
       pg_get_token();
       if ((v = parse_OMP_if(&r)) == NULL) goto syntax_err;
 
-      if(pg_tok != ')') goto syntax_err;
+      if(pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP if clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
 
       if (r != OMP_NONE) {
@@ -1570,10 +1576,16 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_DIR_IF, v);
     } else if(PG_IS_IDENT("schedule")){
       pg_get_token();
-      if(pg_tok != '(') goto syntax_err;
+      if(pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP schedule clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if((v = parse_OMP_schedule()) == NULL) goto syntax_err;
-      if(pg_tok != ')') goto syntax_err;
+      if(pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP schedule clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_DIR_SCHEDULE,v);
     } else if(PG_IS_IDENT("ordered")){
@@ -1584,18 +1596,30 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_DIR_NOWAIT,NULL);
     } else if(PG_IS_IDENT("num_threads")){
       pg_get_token();
-      if(pg_tok != '(') goto syntax_err;
+      if(pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP num_threads clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if(pg_tok != ')') goto syntax_err;
+      if(pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP num_threads clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_DIR_NUM_THREADS,v);
     } else if(PG_IS_IDENT("collapse")){
       pg_get_token();
-      if(pg_tok != '(') goto syntax_err;
+      if(pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP collapse clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if(pg_tok != ')') goto syntax_err;
+      if(pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP collapse clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_COLLAPSE,v);
     }
@@ -1630,18 +1654,30 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_DEPEND, v);
     } else if (PG_IS_IDENT("final")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP final clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP final clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_FINAL, v);
     } else if (PG_IS_IDENT("priority")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP priority clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP priority clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_PRIORITY,v);
     } else if (PG_IS_IDENT("untied")) {
@@ -1652,18 +1688,30 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_MERGEABLE, NULL);
     } else if (PG_IS_IDENT("grainsize")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP grainsize clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP grainsize clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_GRAINSIZE,v);
     } else if (PG_IS_IDENT("num_tasks")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP num_tasks clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP num_tasks clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_NUM_TASKS,v);
     } else if (PG_IS_IDENT("nogroup")) {
@@ -1671,74 +1719,128 @@ static CExpr* parse_OMP_clauses()
       c = OMP_PG_LIST(OMP_NOGROUP, NULL);
     } else if (PG_IS_IDENT("is_device_ptr")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '('){
+        addError(NULL, "OMP: OpenMP is_device_ptr clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP is_device_ptr clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_IS_DEVICE_PTR, v);
     } else if (PG_IS_IDENT("use_device_ptr")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP use_device_ptr clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP use_device_ptr clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_USE_DEVICE_PTR, v);
     } else if (PG_IS_IDENT("defaultmap")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP defaultmap clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_defaultmap()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP defaultmap clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_DATA_DEFAULTMAP, v);
     } else if(PG_IS_IDENT("from")){
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP from clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP from clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_TARGET_UPDATE_FROM, v);
     } else if(PG_IS_IDENT("link")){
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP link clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_array_list()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP link clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_DATA_DECALRE_LINK, v);
     } else if (PG_IS_IDENT("num_teams")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP num_teams clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP num_teams clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_NUM_TEAMS, v);
     } else if (PG_IS_IDENT("thread_limit")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP thread_limit clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = pg_parse_expr()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP thread_limit clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_THREAD_LIMIT, v);
     } else if (PG_IS_IDENT("dist_schedule")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP dist_schedule clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_dist_schedule()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP dist_schedule clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_DIST_SCHEDULE, v);
     } else if (PG_IS_IDENT("proc_bind")) {
       pg_get_token();
-      if (pg_tok != '(') goto syntax_err;
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP proc_bind clause: requires arguments");
+        goto syntax_err;
+      }
       pg_get_token();
       if ((v = parse_OMP_proc_bind()) == NULL) goto syntax_err;
-      if (pg_tok != ')') goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP proc_bind clause: not terminated");
+        goto syntax_err;
+      }
       pg_get_token();
       c = OMP_PG_LIST(OMP_PROC_BIND, v);
     }
