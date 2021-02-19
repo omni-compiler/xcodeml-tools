@@ -172,6 +172,20 @@ typedef enum {
 } OMP_map_type;
 #define N_OMP_DATA_MAP	(((int)OMP_DATA_MAP_ALWAYS) + 1)
 
+typedef enum {
+    OMP_DEPEND_UNKNOWN = 0,
+    OMP_DEPEND_IN = 1,
+    OMP_DEPEND_OUT = 2,
+    OMP_DEPEND_INOUT = 3,
+    OMP_DEPEND_SINK = 4,
+    OMP_DEPEND_SOURCE = 5,
+    OMP_DEPEND_MUTEXINOUTSET = 6,
+    OMP_DEPEND_DEPOBJ = 7,
+    OMP_DEPEND_ITERATOR = 8,
+} OMP_depend_type;
+#define N_OMP_DEPEND	(((int)OMP_DEPEND_ITERATOR) + 1)
+
+	
 /* protype */
 char *ompDirectiveName(int c);
 char *ompClauseName(int c);
@@ -179,6 +193,7 @@ char *ompScheduleName(int c);
 char *ompDataDefaultName(int c);
 
 const char *ompMapClauseTypeString(OMP_map_type mt);
+const char *ompDependClauseTypeString(OMP_depend_type dt);
 	
 CExpr* lexParsePragmaOMP(char *p, int *token);
 void out_OMP_PRAGMA(FILE *fp, int indent, int code, CExpr* expr);

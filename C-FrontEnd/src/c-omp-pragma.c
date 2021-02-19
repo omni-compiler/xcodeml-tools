@@ -74,6 +74,9 @@ static int parse_OMP_end_pragma(void);
 
 #define MAX_NUM_SCHEDULE_MODIFIER (2)
 
+/*
+ * map clause type - string
+ */
 typedef struct {
   OMP_map_type t;
   const char *map_type;
@@ -96,7 +99,7 @@ static inline int get_map_type_enum(const char *str)
   OMP_map_type mt = OMP_DATA_MAP_UNKNOWN;
   map_type_entry_t *e = map_table;
 
-  while (e->t >= 0) {
+  while ((int)(e->t) >= 0) {
     if (strcasecmp(e->map_type, str) == 0) {
       mt = e->t;
       break;
@@ -116,6 +119,51 @@ const char *ompMapClauseTypeString(OMP_map_type mt)
   if ((int)mt >= 0 && (int)mt < N_OMP_DATA_MAP) {
     map_type_entry_t *e = &(map_table[(int)mt]);
     return e->map_type;
+  }
+  return NULL;
+}
+
+/*
+ * depend clause type - string
+ */
+typedef struct {
+  OMP_depend_type t;
+  const char *depend_type;
+} depend_type_entry_t;
+
+depend_type_entry_t depend_table[] = {
+  { OMP_DEPEND_UNKNOWN, "" },
+  { OMP_DEPEND_IN, "in" },
+  { OMP_DEPEND_OUT, "out" },
+  { OMP_DEPEND_INOUT, "inout" },
+  { OMP_DEPEND_SINK, "sink" },
+  { OMP_DEPEND_SOURCE, "source" },
+  { OMP_DEPEND_MUTEXINOUTSET, "mutexinoutset" },
+  { OMP_DEPEND_DEPOBJ, "depobj" },
+  { OMP_DEPEND_ITERATOR, "iterator" },
+  { -1, NULL }
+};
+
+static inline int get_depend_type_enum(const char *str)
+{
+  OMP_map_type dt = OMP_DEPEND_UNKNOWN;
+  depend_type_entry_t *e = depend_table;
+
+  while ((int)(e->t) >= 0) {
+    if (strcasecmp(e->depend_type, str) == 0) {
+      dt = e->t;
+      break;
+    }
+    e++;
+  }
+  return ((int)dt > 0) ? (int)dt : -1;
+}
+
+const char *ompDependClauseTypeString(OMP_depend_type dt)
+{
+  if ((int)dt >= 0 && (int)dt < N_OMP_DEPEND) {
+    depend_type_entry_t *e = &(depend_table[(int)dt]);
+    return e->depend_type;
   }
   return NULL;
 }
@@ -158,12 +206,19 @@ lexParsePragmaOMP(char *p, int *token) // p is buffer
   return pg_OMP_list;
 }
 
+#define ENABLE_MULTILINE_PRAGMA
 int parse_OMP_pragma()
 {
   int ret = PRAGMA_PREFIX; /* default */
+#ifdef ENABLE_MULTILINE_PRAGMA
+  CExpr *parsed_pragmas = NULL;
+#endif /* ENABLE_MULTILINE_PRAGMA */
   pg_OMP_pragma = OMP_NONE;
   pg_OMP_list = NULL;
 
+#ifdef ENABLE_MULTILINE_PRAGMA  
+ pragma_start:
+#endif /* ENABLE_MULTILINE_PRAGMA */
   pg_get_token();
   if(pg_tok != PG_IDENT) goto syntax_err;
 
@@ -374,11 +429,30 @@ int parse_OMP_pragma()
 
   addError(NULL,"OMP: unknown OMP directive, '%s'",pg_tok_buf);
  syntax_err:
-    return 0;
+  return 0;
 
  chk_end:
-    if(pg_tok != 0) addError(NULL,"OMP:extra arguments for OMP directive");
-    return ret;
+#ifndef ENABLE_MULTILINE_PRAGMA
+  if(pg_tok != 0) addError(NULL,"OMP:extra arguments for OMP directive");
+#else  
+  if (pg_tok == '\\') {
+    ret = PRAGMA_PREFIX;
+    pg_OMP_pragma = OMP_NONE;
+    if (pg_OMP_list != NULL) {
+      parsed_pragmas = exprListAdd(EMPTY_LIST, pg_OMP_list);
+      pg_OMP_list = NULL;
+    }
+    goto pragma_start;
+  } else {
+    if (pg_tok != 0) addError(NULL,"OMP:extra arguments for OMP directive");
+  }
+
+  if (parsed_pragmas != NULL) {
+    pg_OMP_list = parsed_pragmas;
+  }
+
+#endif /* ! ENABLE_MULTILINE_PRAGMA */
+  return ret;
 }
 
 int parse_OMP_target_pragma()
@@ -1077,6 +1151,7 @@ static CExpr* parse_depend_expr()
   int got_source = 0;
   int got_sink = 0;
   CExpr* args = EMPTY_LIST;
+  int depend_type = -1;
 
   if(pg_tok != '('){
     addError(NULL,"OMP: OpenMP depend clause: requires a name list.");
@@ -1093,40 +1168,33 @@ static CExpr* parse_depend_expr()
   if (PG_IS_IDENT("iterator")) {
     addError(NULL, "depend-modifier in depend clause is not implemented yet");
     return NULL;
-  } else {
-    args = exprListAdd(args, NULL);
   }
 
   // in, out, inout is introduced in OpenMP 4.0
   // sink, source in OpenMP 4.5
   // mutexinoutset, depobj is introduced in OpenMP 5.0
-  if(PG_IS_IDENT("in")){
-    args = exprListAdd(args, pg_parse_expr());
+  if (pg_tok == 'I' &&
+      (depend_type = get_depend_type_enum(pg_tok_buf)) > 0) {
+    args = exprListAdd(args,
+                       (CExpr *)allocExprOfNumberConst2(-depend_type,
+                                                        BT_INT));
+    switch (depend_type) {
+    case OMP_DEPEND_SINK:
+      got_sink = 1;
+      break;
+    case OMP_DEPEND_SOURCE:
+      got_source = 1;
+      break;
+    default:
+      break;
+    }
+  } else {
+    addError(NULL, "OMP: OpenMP depend clause: unknown depend-type \"%s\".",
+             pg_tok_buf);
+    return NULL;
   }
-  else if(PG_IS_IDENT("out")){
-    args = exprListAdd(args, pg_parse_expr());
-  }
-  else if(PG_IS_IDENT("inout")){
-    args = exprListAdd(args, pg_parse_expr());
-  }
-  else if(PG_IS_IDENT("sink")){
-    args = exprListAdd(args, pg_parse_expr());
-    got_sink = 1;
-  }
-  else if(PG_IS_IDENT("source")){
-    args = exprListAdd(args, pg_parse_expr());
-    got_source = 1;
-  }
-  else if(PG_IS_IDENT("mutexinoutset")){
-    args = exprListAdd(args, pg_parse_expr());
-  }
-  else if(PG_IS_IDENT("depobj")){
-    args = exprListAdd(args, pg_parse_expr());
-  }
-  
-  else {
-    goto err;
-  }
+
+  pg_get_token();
 
   if (got_source == 1) {
     if (pg_tok == ')') {
@@ -1164,7 +1232,10 @@ nextLocator:
 
     if (pg_tok != '[') {
       // not array expression
-      locatorList = exprListAdd(locatorList, v);
+      CExpr *varRef = EMPTY_LIST;
+      varRef = exprListAdd(varRef, v);
+      varRef = exprListAdd(varRef, EMPTY_LIST);
+      locatorList = exprListAdd(locatorList, varRef);
     } else {
       // array expression
       CExpr *list     = parse_OMP_C_subscript_list();

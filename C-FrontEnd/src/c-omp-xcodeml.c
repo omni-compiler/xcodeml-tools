@@ -15,6 +15,7 @@ void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 
 static void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
+static void out_OMP_depend(FILE *fp, int indent, CExprOfList *list);
 static char *ompProcBindName(int c);
 static char *ompScheduleModifierName(int c);
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
@@ -104,6 +105,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
     out_OMP_schedule(fp, indent1, arg);
     break;
 
+#if 0
   case OMP_DEPEND:
     /*
       <string>DEPEND</string>
@@ -139,7 +141,14 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       outxPrint(fp, indent1, "<list></list>\n");
     }
     break;
-
+#else
+  case OMP_DEPEND:
+    namelist = (CExprOfList *)arg;
+    if(EXPR_L_SIZE(namelist) != 0)
+      out_OMP_depend(fp, indent1, namelist);
+    break;
+#endif
+    
   case OMP_DATA_DEFAULT:
       outxPrint(fp,indent1+1,"<string>%s</string>\n",
 		ompDataDefaultName(((CExprOfList *)arg)->e_aux));
@@ -264,6 +273,84 @@ static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
   }
   cur_indent--;
   outxPrint(fp, cur_indent, "</list>\n");
+  outxPrint(fp, indent, "</list>\n");
+}
+
+static void out_OMP_depend(FILE *fp,int indent, CExprOfList *list)
+{
+  int indent1 = indent+1;
+  int cur_indent = indent1;
+  CCOL_DListNode *ite;
+  OMP_depend_type dt = OMP_DEPEND_UNKNOWN;
+  
+  outxPrint(fp, indent, "<list>\n");
+
+  EXPR_FOREACH(ite, list) {
+    CExpr *v = EXPR_L_DATA(ite);
+
+
+    if (EXPR_CODE(v) == EC_NULL_NODE) {
+      /*
+       * for not yet implemented depend-modifier
+       */
+      continue;
+    }
+
+    if (EXPR_CODE(v) == EC_NUMBER_CONST) {
+      const char *depend_type;
+      long long l = EXPR_NUMBERCONST(v)->e_numValue.ll;
+      int i = (int)(-l);
+
+      if (i <= 0) {
+        depend_type = "??unknown depend type??";
+      } else {
+        depend_type = ompDependClauseTypeString((OMP_depend_type)i);
+      }
+      outxPrint(fp, indent1,
+                "<string>%s</string>\n", depend_type);
+      dt = (OMP_depend_type)i;
+
+      if (dt == OMP_DEPEND_SOURCE) {
+        outxPrint(fp, cur_indent, "<list>\n");
+        outxPrint(fp, cur_indent, "</list>\n");
+        goto done;
+      }
+    } else {
+      CExpr *v2;
+      CCOL_DListNode *ite2;
+
+      outxPrint(fp, cur_indent, "<list>\n");
+      cur_indent++;
+
+      EXPR_FOREACH(ite2, v) {
+        v2 = EXPR_L_DATA(ite2);
+
+        if (dt == OMP_DEPEND_SINK) {
+          if (EXPR_CODE(v2) == EC_PLUS || EXPR_CODE(v2) == EC_MINUS) {
+            outxContext(fp, cur_indent + 1, v2);
+          } else {
+            outxContext(fp, cur_indent + 1, v2);
+          }
+        } else {
+          if (EXPR_CODE(v2) == EC_ARRAY_REF) {
+            out_ACC_arrayRef(fp, cur_indent, (CExprOfBinaryNode *)v2);
+          } else {
+            CExpr *var = EXPR_L_DATA(EXPR_L_AT(v2, 0));
+            outxPrint(fp, cur_indent, "<list>\n");
+            outxPrint(fp, cur_indent + 1, "<Var>%s</Var>\n",
+                      ((CExprOfSymbol *)var)->e_symName);
+            outxPrint(fp, cur_indent + 1, "<list></list>\n");
+            outxPrint(fp, cur_indent, "</list>\n");      
+          }
+        }
+      }
+
+      cur_indent--;
+      outxPrint(fp, cur_indent, "</list>\n");
+    }
+  }
+
+done:
   outxPrint(fp, indent, "</list>\n");
 }
 
