@@ -207,7 +207,7 @@ lexParsePragmaOMP(char *p, int *token) // p is buffer
   return pg_OMP_list;
 }
 
-#define ENABLE_MULTILINE_PRAGMA
+#undef ENABLE_MULTILINE_PRAGMA
 int parse_OMP_pragma()
 {
   int ret = PRAGMA_PREFIX; /* default */
