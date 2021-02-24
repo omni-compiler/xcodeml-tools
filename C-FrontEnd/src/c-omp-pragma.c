@@ -1469,17 +1469,11 @@ static int parse_OMP_schedule_modifier(char *token, int token_len,
     return 0;
   }
 
-  if (strncasecmp(token, "monotonic",
-                  strlen("monotonic") > token_len ?
-                  strlen("monotonic") : token_len) == 0) {
+  if (PG_TOKEN_STR_IS_EQUAL(token, token_len, "monotonic")) {
     modifier = OMP_SCHED_MODIFIER_MONOTONIC;
-  } else if (strncasecmp(token, "nonmonotonic",
-                         strlen("nonmonotonic") > token_len ?
-                         strlen("nonmonotonic") : token_len) == 0) {
+  } else if (PG_TOKEN_STR_IS_EQUAL(token, token_len, "nonmonotonic")) {
     modifier = OMP_SCHED_MODIFIER_NONMONOTONIC;
-  } else if (strncasecmp(token, "simd",
-                         strlen("simd") > token_len ?
-                         strlen("simd") : token_len) == 0) {
+  } else if (PG_TOKEN_STR_IS_EQUAL(token, token_len, "simd")) {
     modifier = OMP_SCHED_MODIFIER_SIMD;
   } else {
     if (count_schedule_modifier == 0) {
@@ -1947,17 +1941,17 @@ static int parse_OMP_if_directive_name_modifier(int *r)
     modifier = OMP_TARGET;
 
     if (ctx.token != NULL && *(ctx.token) != '\0') {
-      if (strncasecmp(ctx.token, "update", ctx.token_len) == 0) {
+      if (PG_TOKEN_CONTEXT_STR_IS_EQUAL(&ctx, "update")) {
         (void) pg_peek_token(&ctx);
         modifier = OMP_TARGET_UPDATE;
-      } else if (strncasecmp(ctx.token, "data", ctx.token_len) == 0) {
+      } else if (PG_TOKEN_CONTEXT_STR_IS_EQUAL(&ctx, "data")) {
         (void) pg_peek_token(&ctx);
         modifier = OMP_TARGET_DATA;
-      } else if (strncasecmp(ctx.token, "enter", ctx.token_len) == 0) {
+      } else if (PG_TOKEN_CONTEXT_STR_IS_EQUAL(&ctx, "enter")) {
         (void) pg_peek_token(&ctx);
 
         if (ctx.token != NULL && *(ctx.token) != '\0') {
-          if (strncasecmp(ctx.token, "data", ctx.token_len) == 0) {
+          if (PG_TOKEN_CONTEXT_STR_IS_EQUAL(&ctx, "data")) {
             (void) pg_peek_token(&ctx);
             modifier = OMP_TARGET_ENTER_DATA;
           }
@@ -1965,11 +1959,11 @@ static int parse_OMP_if_directive_name_modifier(int *r)
           addError(NULL,"OMP if clause requires modifier or expression.");
           return 0;
         }
-      } else if (strncasecmp(ctx.token, "exit", ctx.token_len) == 0) {
+      } else if (PG_TOKEN_CONTEXT_STR_IS_EQUAL(&ctx, "exit")) {
         (void) pg_peek_token(&ctx);
 
         if (ctx.token != NULL && *(ctx.token) != '\0') {
-          if (strncasecmp(ctx.token, "data", ctx.token_len) == 0) {
+          if (PG_TOKEN_CONTEXT_STR_IS_EQUAL(&ctx, "data")) {
             (void) pg_peek_token(&ctx);
             modifier = OMP_TARGET_EXIT_DATA;
           }
