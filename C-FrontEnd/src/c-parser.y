@@ -11,7 +11,7 @@ PRIVATE_STATIC const CExprCodeEnum s_CUnaryOpeEnumToExprCodeEnum[]     = CUnaryO
 PRIVATE_STATIC const CExprCodeEnum s_CAssignEnumToExprCodeEnum[]       = CAssignEnumToExprCodeEnumDef;
 
 // Number of nested declarations.
-long long unsigned int expr_num_nested = 0;
+unsigned long long int expr_num_nested_decl = 0ULL;
 
 %}
 
@@ -1620,17 +1620,17 @@ compstmt_or_error:
 
 compstmt_start:
       '{'
-            { STAT_TRACE(("{compstmt_start#1}")); pushSymbolTable(); expr_num_nested++; }
+            { STAT_TRACE(("{compstmt_start#1}")); pushSymbolTable(); expr_num_nested_decl++; }
         ;
 
 compstmt_end:
       '}'
             { STAT_TRACE(("{compstmt_end#1}")); $$ = exprList(EC_COMP_STMT);
-                EXPR_C($$)->e_lineNumInfo = popSymbolTable(); expr_num_nested--; }
+                EXPR_C($$)->e_lineNumInfo = popSymbolTable(); expr_num_nested_decl--; }
     | opt_label_decls compstmt_contents_nonempty '}'
             { STAT_TRACE(("{compstmt_end#2}"));
                 $$ = exprListCons($1, $2);
-                EXPR_C($$)->e_lineNumInfo = popSymbolTable(); expr_num_nested--; }
+                EXPR_C($$)->e_lineNumInfo = popSymbolTable(); expr_num_nested_decl--; }
     ;
 
 compstmt_contents_nonempty:

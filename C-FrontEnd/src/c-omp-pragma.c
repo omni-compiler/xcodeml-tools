@@ -686,7 +686,7 @@ static int parse_OMP_declare_pragma() {
       ret = PRAGMA_EXEC;
     } else if (pg_tok == '\0') {
       /* declare target ... end declare target */
-      if (expr_num_nested == 0) {
+      if (expr_num_nested_decl == 0ULL) {
         pg_OMP_pragma = OMP_DECLARE_TARGET_START;
         ret = PRAGMA_EXEC;
       } else {
