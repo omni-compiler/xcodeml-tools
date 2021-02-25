@@ -478,7 +478,7 @@ char *ompDirectiveName(int c)
   case OMP_CANCELLATION_POINT: return "CANCELLATION_POINT";
   case OMP_DECLARE_REDUCTION: return "DECLARE_REDUCTION";
   case OMP_DECLARE_TARGET_START: return "DECLARE_TARGET_START";
-  case OMP_DECLARE_TARGET_END: return "OMP_DECLARE_TARGET_END";
+  case OMP_DECLARE_TARGET_END: return "DECLARE_TARGET_END";
 
   default:
     return "OMP???";
