@@ -686,12 +686,12 @@ static int parse_OMP_declare_pragma() {
       ret = PRAGMA_EXEC;
     } else if (pg_tok == '\0') {
       /* declare target ... end declare target */
-      if (expr_num_nested_decl == 0ULL) {
+      if (expr_num_nested_defs == 0ULL) {
         pg_OMP_pragma = OMP_DECLARE_TARGET_START;
         ret = PRAGMA_EXEC;
       } else {
         addError(NULL, "OMP: OpenMP declare directive: "
-                 "Nested and local declarations are not supported.");
+                 "Nested and local definitions are not supported.");
       }
     } else {
      addError(NULL, "OMP: OpenMP declare directive: "
@@ -714,12 +714,12 @@ static int parse_OMP_end_pragma() {
     if (PG_IS_IDENT("target")) {
       /* declare target ... end declare target */
       pg_get_token();
-      if (expr_num_nested_decl == 0ULL) {
+      if (expr_num_nested_defs == 0ULL) {
         pg_OMP_pragma = OMP_DECLARE_TARGET_END;
         ret = PRAGMA_EXEC;
       } else {
         addError(NULL, "OMP: OpenMP declare directive: "
-                 "Nested and local declarations are not supported.");
+                 "Nested and local definitions are not supported.");
       }
     } else {
       addError(NULL, "OMP: OpenMP declare directive: "
