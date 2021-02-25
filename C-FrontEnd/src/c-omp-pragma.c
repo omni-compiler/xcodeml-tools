@@ -685,11 +685,16 @@ static int parse_OMP_declare_pragma() {
       }
       ret = PRAGMA_EXEC;
     } else if (pg_tok == '\0') {
-        /* declare target ... end declare target */
+      /* declare target ... end declare target */
+      if (expr_num_nested == 0) {
         pg_OMP_pragma = OMP_DECLARE_TARGET_START;
         ret = PRAGMA_EXEC;
+      } else {
+        addError(NULL, "OMP: OpenMP declare directive: "
+                 "Nested and local declarations are not supported.");
+      }
     } else {
-      addError(NULL, "OMP: OpenMP declare directive: "
+     addError(NULL, "OMP: OpenMP declare directive: "
                "unsupported : '%s'", pg_tok_buf);
     }
   } else {
