@@ -129,6 +129,7 @@ enum OMP_pragma_clause {
     OMP_DIST_SCHEDULE = 49,
     OMP_PROC_BIND = 50,
     OMP_SAFELEN = 51,
+    OMP_SIMDLEN = 52,
 };
 
 enum OMP_sched_clause {
@@ -159,6 +160,11 @@ enum OMP_proc_bind_clause {
      OMP_PROC_BIND_MASTER = 1,
      OMP_PROC_BIND_CLOSE = 2,
      OMP_PROC_BIND_SPREAD = 3,
+};
+
+enum OMP_linear_modifier {
+     OMP_LINEAR_MODIFIER_NONE = 0,
+     OMP_LINEAR_MODIFIER_VAL = 1,
 };
 
 typedef enum {

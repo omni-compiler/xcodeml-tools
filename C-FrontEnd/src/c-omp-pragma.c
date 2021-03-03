@@ -59,7 +59,11 @@ static CExpr* parse_OMP_to(int *r);
 static CExpr* parse_OMP_dist_schedule(void);
 static CExpr* parse_OMP_proc_bind(void);
 static CExpr* parse_OMP_if(int *r);
+static CExpr* parse_OMP_linear_namelist(void);
+static CExpr* parse_OMP_linear(void);
 
+static int parse_OMP_linear_list(CExpr** modifiers,
+                                 CExpr** linear_list);
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
 static int parse_OMP_distribute_pragma(void);
@@ -1578,6 +1582,112 @@ static CExpr* parse_OMP_schedule() {
   return args;
 }
 
+static CExpr* parse_OMP_linear_namelist() {
+  CExpr* list = EMPTY_LIST;
+
+ next:
+  if (pg_tok != PG_IDENT){
+    addError(NULL,"OMP: empty name list in OMP directive clause");
+    return NULL;
+  }
+
+  list = exprListAdd(list, pg_tok_val);
+  pg_get_token();
+  if (pg_tok == ',') {
+    pg_get_token();
+    goto next;
+  } else if (pg_tok == ')' || pg_tok == ':') {
+    return list;
+  }
+
+  addError(NULL,"OMP: many arguments or not terminated");
+  return NULL;
+}
+
+static int parse_OMP_linear_list(CExpr** modifiers,
+                                 CExpr** linear_list)
+{
+  pg_token_context_t ctx;
+
+  // modifier(list)
+  if (PG_IS_IDENT("val")) {
+    (void) pg_token_context_init(&ctx);
+    (void) pg_peek_token(&ctx);
+
+    if (ctx.token != NULL && *(ctx.token) != '\0') {
+      if (*(ctx.token) == '(') {
+        *modifiers = exprListAdd(*modifiers,
+                                 (CExpr *)allocExprOfNumberConst2(OMP_LINEAR_MODIFIER_VAL,
+                                                                  BT_INT));
+
+        pg_seek_token(&ctx);
+        if ((*linear_list = parse_OMP_linear_namelist()) == NULL) {
+          return 0;
+        }
+        if (pg_tok != ')') {
+          addError(NULL, "OMP: OpenMP linear clause: many arguments "
+                   "or not terminated");
+          return 0;
+        }
+        pg_get_token();
+     } else {
+        // list
+        if ((*linear_list = parse_OMP_linear_namelist()) == NULL) {
+          return 0;
+        }
+      }
+    } else {
+      addError(NULL, "OMP: OpenMP linear clause: not terminated");
+      return 0;
+    }
+  } else {
+    // list
+    if ((*linear_list = parse_OMP_linear_namelist()) == NULL) {
+        return 0;
+    }
+  }
+
+  return 1;
+}
+
+static CExpr* parse_OMP_linear()
+{
+  CExpr* args = EMPTY_LIST;
+  CExpr* modifiers = EMPTY_LIST;
+  CExpr* linear_list = EMPTY_LIST;
+  CExpr* linear_step_expr = EMPTY_LIST;
+
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OMP: OpenMP linear clause: requires list");
+    return NULL;
+  }
+
+  if (parse_OMP_linear_list(&modifiers, &linear_list) == 0) {
+    return NULL;
+  }
+
+  if (pg_tok == ':') {
+    pg_get_token();
+    if ((linear_step_expr = pg_parse_expr()) == NULL) {
+      addError(NULL, "OMP: OpenMP linear clause: "
+               "invalid linear_step expression");
+      return NULL;
+    }
+  }
+
+  if (pg_tok != ')') {
+    addError(NULL, "OMP: OpenMP linear clause: many arguments "
+             "or not terminated");
+    return NULL;
+  }
+
+  args = exprListAdd(args, modifiers);
+  args = exprListAdd(args, linear_list);
+  args = exprListAdd(args, linear_step_expr);
+
+  return args;
+}
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -1932,6 +2042,34 @@ static CExpr* parse_OMP_clauses()
       }
       pg_get_token();
       c = OMP_PG_LIST(OMP_SAFELEN, v);
+    } else if (PG_IS_IDENT("simdlen")){
+      pg_get_token();
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP simdlen clause: requires arguments");
+        goto syntax_err;
+      }
+      pg_get_token();
+      if ((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP simdlen clause: not terminated");
+        goto syntax_err;
+      }
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_SIMDLEN, v);
+    } else if (PG_IS_IDENT("linear")){
+      pg_get_token();
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP linear clause: requires arguments");
+        goto syntax_err;
+      }
+      pg_get_token();
+      if ((v = parse_OMP_linear()) == NULL) goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP linear clause: not terminated");
+        goto syntax_err;
+      }
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_DATA_LINEAR, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
