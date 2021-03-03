@@ -128,6 +128,7 @@ enum OMP_pragma_clause {
     OMP_THREAD_LIMIT = 48,
     OMP_DIST_SCHEDULE = 49,
     OMP_PROC_BIND = 50,
+    OMP_SAFELEN = 51,
 };
 
 enum OMP_sched_clause {

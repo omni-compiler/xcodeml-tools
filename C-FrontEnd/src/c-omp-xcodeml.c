@@ -86,6 +86,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_NUM_TASKS:
   case OMP_NUM_TEAMS:
   case OMP_THREAD_LIMIT:
+  case OMP_SAFELEN:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -536,6 +537,7 @@ char *ompClauseName(int c)
   case OMP_THREAD_LIMIT:          return "THREAD_LIMIT";
   case OMP_DIST_SCHEDULE:         return "DIST_SCHEDULE";
   case OMP_PROC_BIND:             return "PROC_BIND";
+  case OMP_SAFELEN:               return "SAFELEN";
   default:                        return "???OMP???";
   }
 }

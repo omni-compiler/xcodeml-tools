@@ -1918,6 +1918,20 @@ static CExpr* parse_OMP_clauses()
       }
       pg_get_token();
       c = OMP_PG_LIST(OMP_PROC_BIND, v);
+    } else if (PG_IS_IDENT("safelen")){
+      pg_get_token();
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP safelen clause: requires arguments");
+        goto syntax_err;
+      }
+      pg_get_token();
+      if ((v = pg_parse_expr()) == NULL) goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP safelen clause: not terminated");
+        goto syntax_err;
+      }
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_SAFELEN, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);
