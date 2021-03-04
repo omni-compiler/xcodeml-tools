@@ -1596,12 +1596,9 @@ static CExpr* parse_OMP_linear_namelist() {
   if (pg_tok == ',') {
     pg_get_token();
     goto next;
-  } else if (pg_tok == ')' || pg_tok == ':') {
-    return list;
   }
 
-  addError(NULL,"OMP: many arguments or not terminated");
-  return NULL;
+  return list;
 }
 
 static int parse_OMP_linear_list(CExpr** modifiers,
