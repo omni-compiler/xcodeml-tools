@@ -59,6 +59,7 @@ static CExpr* parse_OMP_to(int *r);
 static CExpr* parse_OMP_dist_schedule(void);
 static CExpr* parse_OMP_proc_bind(void);
 static CExpr* parse_OMP_if(int *r);
+static CExpr* parse_OMP_clauses_for_atomic(void);
 
 static int parse_OMP_target_pragma(void);
 static int parse_OMP_teams_pragma(void);
@@ -318,10 +319,13 @@ int parse_OMP_pragma()
   }
   
   if(PG_IS_IDENT("atomic")){
-      pg_OMP_pragma = OMP_ATOMIC;
-      ret = PRAGMA_PREFIX;
-      pg_get_token();
-      goto chk_end;
+    pg_OMP_pragma = OMP_ATOMIC;
+    pg_get_token();
+    if ((pg_OMP_list = parse_OMP_clauses_for_atomic()) == NULL) {
+      goto syntax_err;
+    }
+    ret = PRAGMA_PREFIX;
+    goto chk_end;
   }
 
   if(PG_IS_IDENT("flush")){
@@ -2098,6 +2102,65 @@ static CExpr* parse_OMP_reduction_namelist(int *r)
 
     addError(NULL,"syntax error in OMP directive clause");
     return NULL;
+}
+
+static CExpr *parse_OMP_clauses_for_atomic(void)
+{
+  CExpr *ret = EMPTY_LIST;
+  int n_sec_cst = 0;
+  int got_sec_cst = 0;
+  int got_clause = 0;
+
+  if (pg_tok == '\0') {
+    /*
+     * No clause.
+     */
+    return ret;
+  }
+
+  while (pg_tok != '\0') {
+    if (PG_IS_IDENT("seq_cst")) {
+      got_sec_cst++;
+      if (got_sec_cst > 1) {
+        addError(NULL, "OMP: OpenMP atomic pragma: successive \"sec_cst\".");
+        return NULL;
+      }
+    } else if (PG_IS_IDENT("read") ||
+        PG_IS_IDENT("write") ||
+        PG_IS_IDENT("update") ||
+        PG_IS_IDENT("capture")) {
+      got_sec_cst--;
+      if (got_clause == 1) {
+        addError(NULL, "OMP: OpenMP atomic pragma: Only a single "
+                 "atomic-clause is allowed.");
+        return NULL;
+      } else {
+        got_clause = 1;
+      }
+    } else {
+      if (pg_tok != PG_IDENT) {
+        addError(NULL, "OMP: OpenMP atomic pragma: syntax error around '%c'.",
+                 pg_tok);
+      } else {
+        addError(NULL, "OMP: OpenMP atomic pragma: unknown atomic-clause "
+                 "\"%s\".", pg_tok_buf);
+      }
+      return NULL;
+    }
+
+    ret = exprListAdd(ret, pg_tok_val);
+
+    pg_get_token();
+    if (pg_tok == ',') {
+      pg_get_token();
+      if (pg_tok == '\0') {
+        addError(NULL, "OMP: OpenMP atomic pragma: an extra comma found.");
+        return NULL;
+      }
+    }
+  }
+
+  return ret;
 }
 
 #ifdef not

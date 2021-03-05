@@ -16,6 +16,7 @@ void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 static void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_depend(FILE *fp, int indent, CExprOfList *list);
+static void out_OMP_atomic(FILE *fp, int indent, CExprOfList *list);
 static char *ompProcBindName(int c);
 static char *ompScheduleModifierName(int c);
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
@@ -35,11 +36,16 @@ out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
     outxPrint(fp,indent1,"<string>%s</string>\n",
 	      ompDirectiveName(pragma_code));
     switch(pragma_code){
+    case OMP_ATOMIC:
     case OMP_CRITICAL:
     case OMP_FLUSH:
     case OMP_THREADPRIVATE:
-	out_OMP_name_list(fp, indent1, clauseList);
-	goto end;
+      if (pragma_code == OMP_ATOMIC) {
+        out_OMP_atomic(fp, indent1, clauseList);
+      } else {
+        out_OMP_name_list(fp, indent1, clauseList);
+      }
+      goto end;
     }
 
     outxPrint(fp,indent1,"<list>\n");
@@ -352,6 +358,24 @@ static void out_OMP_depend(FILE *fp,int indent, CExprOfList *list)
 
 done:
   outxPrint(fp, indent, "</list>\n");
+}
+
+static void out_OMP_atomic(FILE *fp,int indent, CExprOfList *list)
+{
+    int indent1 = indent+1;
+    CCOL_DListNode *ite;
+    outxPrint(fp,indent,"<list>\n");
+    EXPR_FOREACH(ite, list) {
+      CExpr *node = EXPR_L_DATA(ite);
+      if(EXPR_CODE(node) == EC_ARRAY_REF){
+        out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+      }
+      else{
+        outxPrint(fp,indent1,"<string>%s</string>\n",
+                  ((CExprOfSymbol *)node)->e_symName);
+      }
+    }
+    outxPrint(fp,indent,"</list>\n");
 }
 
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg)
