@@ -1396,7 +1396,8 @@ static CExpr* parse_OMP_to(int *r)
   }
 }
 
-static CExpr* parse_OMP_proc_bind() {
+static CExpr* parse_OMP_proc_bind()
+{
   CExpr* args = EMPTY_LIST;
   int kind = OMP_PROC_BIND_NONE;
 
@@ -1423,7 +1424,8 @@ static CExpr* parse_OMP_proc_bind() {
   return args;
 }
 
-static CExpr* parse_OMP_dist_schedule() {
+static CExpr* parse_OMP_dist_schedule()
+{
   CExpr* args = EMPTY_LIST;
   // 'modifiers' is always empty.
   // Because it uses the same output format as 'schedule' clause.
@@ -1470,7 +1472,8 @@ static CExpr* parse_OMP_dist_schedule() {
 }
 
 static int parse_OMP_schedule_modifier(char *token, int token_len,
-                                       CExpr** modifiers) {
+                                       CExpr** modifiers)
+{
   pg_token_context_t ctx;
   int modifier = OMP_SCHED_MODIFIER_NONE;
   int count_schedule_modifier = 0;
@@ -1524,7 +1527,8 @@ static int parse_OMP_schedule_modifier(char *token, int token_len,
   return 1;
 }
 
-static CExpr* parse_OMP_schedule() {
+static CExpr* parse_OMP_schedule()
+{
   CExpr* args = EMPTY_LIST;
   CExpr* modifiers = EMPTY_LIST;
   CExpr* chunk_size_expr = EMPTY_LIST;
@@ -1583,12 +1587,13 @@ static CExpr* parse_OMP_schedule() {
   return args;
 }
 
-static CExpr* parse_OMP_linear_namelist() {
+static CExpr* parse_OMP_linear_namelist()
+{
   CExpr* list = EMPTY_LIST;
 
  next:
-  if (pg_tok != PG_IDENT){
-    addError(NULL,"OMP: empty name list in OMP directive clause");
+  if (pg_tok != PG_IDENT) {
+    addError(NULL,"OMP: OpenMP linear clause: empty name list");
     return NULL;
   }
 
