@@ -17,10 +17,14 @@ static void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_depend(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_atomic(FILE *fp, int indent, CExprOfList *list);
-static char *ompProcBindName(int c);
-static char *ompScheduleModifierName(int c);
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_defaultmap(FILE *fp,int indent, CExpr *arg);
+static void out_OMP_linear(FILE *fp, int indent, CExpr *arg);
+static void out_OMP_aligned(FILE *fp, int indent, CExpr *arg);
+
+static char *ompProcBindName(int c);
+static char *ompScheduleModifierName(int c);
+static char *ompLinearModifierName(int c);
 
 void
 out_OMP_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr)
@@ -92,6 +96,8 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   case OMP_NUM_TASKS:
   case OMP_NUM_TEAMS:
   case OMP_THREAD_LIMIT:
+  case OMP_SAFELEN:
+  case OMP_SIMDLEN:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -173,6 +179,14 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_DATA_DEFAULTMAP:
     out_OMP_defaultmap(fp, indent1, arg);
+    break;
+
+  case OMP_DATA_LINEAR:
+    out_OMP_linear(fp, indent1, arg);
+    break;
+
+  case OMP_ALIGNED:
+    out_OMP_aligned(fp, indent1, arg);
     break;
 
   default:
@@ -435,6 +449,72 @@ static void out_OMP_defaultmap(FILE *fp,int indent, CExpr *arg)
     outxPrint(fp, indent, "</list>\n");
 }
 
+
+static void out_OMP_aligned(FILE *fp, int indent, CExpr *arg)
+{
+  CExpr* aligned_list = NULL;
+  CExpr* alignment_expr = NULL;
+
+  outxPrint(fp, indent, "<list>\n");
+
+  // NOTE: Length of the list must be equal to 2.
+  assert(EXPR_L_SIZE((CExprOfList*)arg) == 2);
+
+  aligned_list = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 0));
+  alignment_expr = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 1));
+
+  // list
+  out_OMP_name_list(fp, indent + 1, (CExprOfList*) aligned_list);
+
+  // alignment
+  outxPrint(fp, indent + 1, "<list>\n");
+  if (exprListHead(alignment_expr) != NULL) {
+    outxContext(fp, indent + 2, alignment_expr);
+  }
+  outxPrint(fp, indent + 1, "</list>\n");
+
+  outxPrint(fp, indent, "</list>\n");
+}
+
+static void out_OMP_linear(FILE *fp, int indent, CExpr *arg)
+{
+  CCOL_DListNode* ite = NULL;
+  CExpr* modifiers = NULL;
+  CExpr* linear_list = NULL;
+  CExpr* linear_step_expr = NULL;
+
+  outxPrint(fp, indent, "<list>\n");
+
+  // NOTE: Length of the list must be equal to 3.
+  assert(EXPR_L_SIZE((CExprOfList*)arg) == 3);
+
+  modifiers = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 0));
+  linear_list = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 1));
+  linear_step_expr = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 2));
+
+  // modifier
+  outxPrint(fp, indent + 1, "<list>\n");
+  EXPR_FOREACH(ite, modifiers) {
+    CExpr *node = EXPR_L_DATA(ite);
+    outxPrint(fp, indent + 2, "<string>%s</string>\n",
+              ompLinearModifierName((int)EXPR_NUMBERCONST(node)->
+                                    e_numValue.ll));
+  }
+  outxPrint(fp, indent + 1, "</list>\n");
+
+  // list
+  out_OMP_name_list(fp, indent + 1, (CExprOfList*) linear_list);
+
+  // linear_step
+  outxPrint(fp, indent + 1, "<list>\n");
+  if (exprListHead(linear_step_expr) != NULL) {
+    outxContext(fp, indent + 2, linear_step_expr);
+  }
+  outxPrint(fp, indent + 1, "</list>\n");
+
+  outxPrint(fp, indent, "</list>\n");
+}
+
 char *ompDirectiveName(int c)
 {
   switch(c){
@@ -560,6 +640,10 @@ char *ompClauseName(int c)
   case OMP_THREAD_LIMIT:          return "THREAD_LIMIT";
   case OMP_DIST_SCHEDULE:         return "DIST_SCHEDULE";
   case OMP_PROC_BIND:             return "PROC_BIND";
+  case OMP_SAFELEN:               return "SAFELEN";
+  case OMP_SIMDLEN:               return "SIMDLEN";
+  case OMP_DATA_LINEAR:           return "DATA_LINEAR";
+  case OMP_ALIGNED:               return "ALIGNED";
   default:                        return "???OMP???";
   }
 }
@@ -610,4 +694,13 @@ static char *ompProcBindName(int c)
     default:
 	return "PROC_BIND_???";
     }
+}
+
+static char *ompLinearModifierName(int c)
+{
+  switch(c){
+  case OMP_LINEAR_MODIFIER_VAL: return "LINEAR_MODIFIER_VAL";
+  default:
+    return "LINEAR_MODIFIER_???";
+  }
 }
