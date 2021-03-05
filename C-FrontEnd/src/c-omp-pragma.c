@@ -2314,7 +2314,6 @@ static CExpr* parse_OMP_reduction_namelist(int *r)
 static CExpr *parse_OMP_clauses_for_atomic(void)
 {
   CExpr *ret = EMPTY_LIST;
-  int n_sec_cst = 0;
   int got_sec_cst = 0;
   int got_clause = 0;
 
