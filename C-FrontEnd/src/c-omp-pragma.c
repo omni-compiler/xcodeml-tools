@@ -59,6 +59,7 @@ static CExpr* parse_OMP_to(int *r);
 static CExpr* parse_OMP_dist_schedule(void);
 static CExpr* parse_OMP_proc_bind(void);
 static CExpr* parse_OMP_if(int *r);
+static CExpr* parse_OMP_aligned(void);
 static CExpr* parse_OMP_linear_namelist(void);
 static CExpr* parse_OMP_linear(void);
 
@@ -1685,6 +1686,44 @@ static CExpr* parse_OMP_linear()
   return args;
 }
 
+static CExpr* parse_OMP_aligned()
+{
+  CExpr* args = EMPTY_LIST;
+  CExpr* aligned_list = EMPTY_LIST;
+  CExpr* alignment_expr = EMPTY_LIST;
+
+  if (pg_tok != PG_IDENT) {
+    addError(NULL, "OMP: OpenMP aligned clause: requires list");
+    return NULL;
+  }
+
+  if ((aligned_list = parse_OMP_array_list()) == NULL) {
+    addError(NULL, "OMP: OpenMP aligned clause: "
+             "invalid list");
+    return NULL;
+  }
+
+  if (pg_tok == ':') {
+    pg_get_token();
+    if ((alignment_expr = pg_parse_expr()) == NULL) {
+      addError(NULL, "OMP: OpenMP aligned clause: "
+               "invalid alignment expression");
+      return NULL;
+    }
+  }
+
+  if (pg_tok != ')') {
+    addError(NULL, "OMP: OpenMP aligned clause: many arguments "
+             "or not terminated");
+    return NULL;
+  }
+
+  args = exprListAdd(args, aligned_list);
+  args = exprListAdd(args, alignment_expr);
+
+  return args;
+}
+
 static CExpr* parse_OMP_clauses()
 {
   CExpr *args=EMPTY_LIST, *v, *c;
@@ -2025,7 +2064,7 @@ static CExpr* parse_OMP_clauses()
       }
       pg_get_token();
       c = OMP_PG_LIST(OMP_PROC_BIND, v);
-    } else if (PG_IS_IDENT("safelen")){
+    } else if (PG_IS_IDENT("safelen")) {
       pg_get_token();
       if (pg_tok != '(') {
         addError(NULL, "OMP: OpenMP safelen clause: requires arguments");
@@ -2039,7 +2078,7 @@ static CExpr* parse_OMP_clauses()
       }
       pg_get_token();
       c = OMP_PG_LIST(OMP_SAFELEN, v);
-    } else if (PG_IS_IDENT("simdlen")){
+    } else if (PG_IS_IDENT("simdlen")) {
       pg_get_token();
       if (pg_tok != '(') {
         addError(NULL, "OMP: OpenMP simdlen clause: requires arguments");
@@ -2053,7 +2092,7 @@ static CExpr* parse_OMP_clauses()
       }
       pg_get_token();
       c = OMP_PG_LIST(OMP_SIMDLEN, v);
-    } else if (PG_IS_IDENT("linear")){
+    } else if (PG_IS_IDENT("linear")) {
       pg_get_token();
       if (pg_tok != '(') {
         addError(NULL, "OMP: OpenMP linear clause: requires arguments");
@@ -2067,6 +2106,20 @@ static CExpr* parse_OMP_clauses()
       }
       pg_get_token();
       c = OMP_PG_LIST(OMP_DATA_LINEAR, v);
+    } else if (PG_IS_IDENT("aligned")) {
+      pg_get_token();
+      if (pg_tok != '(') {
+        addError(NULL, "OMP: OpenMP aligned clause: requires arguments");
+        goto syntax_err;
+      }
+      pg_get_token();
+      if ((v = parse_OMP_aligned()) == NULL) goto syntax_err;
+      if (pg_tok != ')') {
+        addError(NULL, "OMP: OpenMP aligned clause: not terminated");
+        goto syntax_err;
+      }
+      pg_get_token();
+      c = OMP_PG_LIST(OMP_ALIGNED, v);
     }
     else {
       addError(NULL,"unknown OMP directive clause '%s'", pg_tok_buf);

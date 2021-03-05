@@ -130,6 +130,7 @@ enum OMP_pragma_clause {
     OMP_PROC_BIND = 50,
     OMP_SAFELEN = 51,
     OMP_SIMDLEN = 52,
+    OMP_ALIGNED = 53,
 };
 
 enum OMP_sched_clause {

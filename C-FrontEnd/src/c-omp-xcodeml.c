@@ -19,6 +19,7 @@ static void out_OMP_depend(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
 static void out_OMP_defaultmap(FILE *fp,int indent, CExpr *arg);
 static void out_OMP_linear(FILE *fp, int indent, CExpr *arg);
+static void out_OMP_aligned(FILE *fp, int indent, CExpr *arg);
 
 static char *ompProcBindName(int c);
 static char *ompScheduleModifierName(int c);
@@ -176,6 +177,10 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_DATA_LINEAR:
     out_OMP_linear(fp, indent1, arg);
+    break;
+
+  case OMP_ALIGNED:
+    out_OMP_aligned(fp, indent1, arg);
     break;
 
   default:
@@ -421,6 +426,32 @@ static void out_OMP_defaultmap(FILE *fp,int indent, CExpr *arg)
 }
 
 
+static void out_OMP_aligned(FILE *fp, int indent, CExpr *arg)
+{
+  CExpr* aligned_list = NULL;
+  CExpr* alignment_expr = NULL;
+
+  outxPrint(fp, indent, "<list>\n");
+
+  // NOTE: Length of the list must be equal to 2.
+  assert(EXPR_L_SIZE((CExprOfList*)arg) == 2);
+
+  aligned_list = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 0));
+  alignment_expr = EXPR_L_DATA(EXPR_L_AT((CExprOfList*)arg, 1));
+
+  // list
+  out_OMP_name_list(fp, indent + 1, (CExprOfList*) aligned_list);
+
+  // alignment
+  outxPrint(fp, indent + 1, "<list>\n");
+  if (exprListHead(alignment_expr) != NULL) {
+    outxContext(fp, indent + 2, alignment_expr);
+  }
+  outxPrint(fp, indent + 1, "</list>\n");
+
+  outxPrint(fp, indent, "</list>\n");
+}
+
 static void out_OMP_linear(FILE *fp, int indent, CExpr *arg)
 {
   CCOL_DListNode* ite = NULL;
@@ -588,6 +619,7 @@ char *ompClauseName(int c)
   case OMP_SAFELEN:               return "SAFELEN";
   case OMP_SIMDLEN:               return "SIMDLEN";
   case OMP_DATA_LINEAR:           return "DATA_LINEAR";
+  case OMP_ALIGNED:               return "ALIGNED";
   default:                        return "???OMP???";
   }
 }
