@@ -246,9 +246,9 @@ outxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
     const char *attrFmt, ...)
 {
     va_list args;
-	va_start(args, attrFmt);
-	voutxTag(fp, indent, expr, tag, xattrFlag, attrFmt, args);
-	va_end(args);
+    va_start(args, attrFmt);
+    voutxTag(fp, indent, expr, tag, xattrFlag, attrFmt, args);
+    va_end(args);
 }
 
 
@@ -270,12 +270,12 @@ void
 outxTagForStmt(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrFlag,
     const char *attrFmt, ...)
 {
-	va_list args;
-	va_start(args, attrFmt);
-	voutxTag(fp, indent, expr, tag,
-		XATTR_LINENO|XATTR_COMMON|addXattrFlag,
-		attrFmt, args);
-	va_end(args);
+    va_list args;
+    va_start(args, attrFmt);
+    voutxTag(fp, indent, expr, tag,
+        XATTR_LINENO|XATTR_COMMON|addXattrFlag,
+        attrFmt, args);
+    va_end(args);
 }
 
 
@@ -283,12 +283,12 @@ void
 outxTagForExpr(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrFlag,
     const char *attrFmt, ...)
 {
-	va_list args;
-	va_start(args, attrFmt);
-	voutxTag(fp, indent, expr, tag,
-		XATTR_TYPE|XATTR_IS_GCCEXTENSION|XATTR_COMMON|addXattrFlag,
-		attrFmt, args);
-	va_end(args);
+    va_list args;
+    va_start(args, attrFmt);
+    voutxTag(fp, indent, expr, tag,
+        XATTR_TYPE|XATTR_IS_GCCEXTENSION|XATTR_COMMON|addXattrFlag,
+        attrFmt, args);
+    va_end(args);
 }
 
 
