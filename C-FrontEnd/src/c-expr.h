@@ -1734,5 +1734,8 @@ void popLineMarkers(void);
 CExpr* exprListJoin_LM(CExpr *exprHead, CExpr *exprTail);
 CExpr* exprList1_LM(CExprCodeEnum c, CExpr* e1);
 
+//! Number of nested definitions.
+extern unsigned long long int expr_num_nested_defs;
+
 #endif /*  _C_EXPR_H_ */
 

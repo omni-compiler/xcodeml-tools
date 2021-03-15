@@ -68,6 +68,8 @@ enum OMP_pragma {
     OMP_CANCEL= 77,		/* cancel <type> <if-clause> */
     OMP_CANCELLATION_POINT= 78,	/* cancellation point <type> */
     OMP_DECLARE_REDUCTION= 79,	/* declare reduction <id> <type-list> <combiner> <init-clause> */
+    OMP_DECLARE_TARGET_START = 80, /* declare target */
+    OMP_DECLARE_TARGET_END = 81,   /* end declare target */
 };
 
 #define IS_OMP_PRAGMA_CODE(code) (((int)(code)) < 100)
@@ -104,12 +106,31 @@ enum OMP_pragma_clause {
     OMP_DATA_LINEAR=27,
     OMP_DATA_COPYPRIVATE=28,
     OMP_TARGET_DATA_MAP=29,
-    OMP_DATA_DEFAULT_MAP=30,
+    OMP_DATA_DEFAULTMAP=30,
     OMP_DECLARE_TARGET_TO=31,
     OMP_DATA_DECALRE_LINK=32,
     OMP_TARGET_DEVICE=33,
     OMP_TARGET_SHADOW=34,
     OMP_TARGET_LAYOUT=35,
+
+    OMP_FINAL = 36,
+    OMP_PRIORITY = 37,
+    OMP_UNTIED = 38,
+    OMP_MERGEABLE = 39,
+    OMP_GRAINSIZE = 40,
+    OMP_NUM_TASKS = 41,
+    OMP_NOGROUP = 42,
+    OMP_IS_DEVICE_PTR = 43,
+    OMP_USE_DEVICE_PTR = 44,
+    OMP_TARGET_UPDATE_TO = 45,
+    OMP_TARGET_UPDATE_FROM = 46,
+    OMP_NUM_TEAMS = 47,
+    OMP_THREAD_LIMIT = 48,
+    OMP_DIST_SCHEDULE = 49,
+    OMP_PROC_BIND = 50,
+    OMP_SAFELEN = 51,
+    OMP_SIMDLEN = 52,
+    OMP_ALIGNED = 53,
 };
 
 enum OMP_sched_clause {
@@ -118,7 +139,15 @@ enum OMP_sched_clause {
     OMP_SCHED_DYNAMIC = 2,
     OMP_SCHED_GUIDED = 3,
     OMP_SCHED_RUNTIME = 4,
-    OMP_SCHED_AFFINITY = 5
+    OMP_SCHED_AFFINITY = 5,
+    OMP_SCHED_AUTO = 6,
+};
+
+enum OMP_sched_modifier {
+    OMP_SCHED_MODIFIER_NONE = 0,
+    OMP_SCHED_MODIFIER_MONOTONIC = 1,
+    OMP_SCHED_MODIFIER_NONMONOTONIC = 2,
+    OMP_SCHED_MODIFIER_SIMD = 3,
 };
 
 enum OMP_data_default {
@@ -127,12 +156,53 @@ enum OMP_data_default {
     OMP_DEFAULT_PRIVATE = 2
 };
 
+enum OMP_proc_bind_clause {
+     OMP_PROC_BIND_NONE = 0,
+     OMP_PROC_BIND_MASTER = 1,
+     OMP_PROC_BIND_CLOSE = 2,
+     OMP_PROC_BIND_SPREAD = 3,
+};
+
+enum OMP_linear_modifier {
+     OMP_LINEAR_MODIFIER_NONE = 0,
+     OMP_LINEAR_MODIFIER_VAL = 1,
+};
+
+typedef enum {
+    OMP_DATA_MAP_UNKNOWN = 0,
+    OMP_DATA_MAP_TO = 1,
+    OMP_DATA_MAP_FROM =	2,
+    OMP_DATA_MAP_TOFROM	= 3,
+    OMP_DATA_MAP_ALLOC = 4,
+    OMP_DATA_MAP_RELEASE = 5,
+    OMP_DATA_MAP_DELETE = 6,
+    OMP_DATA_MAP_ALWAYS = 7,
+} OMP_map_type;
+#define N_OMP_DATA_MAP	(((int)OMP_DATA_MAP_ALWAYS) + 1)
+
+typedef enum {
+    OMP_DEPEND_UNKNOWN = 0,
+    OMP_DEPEND_IN = 1,
+    OMP_DEPEND_OUT = 2,
+    OMP_DEPEND_INOUT = 3,
+    OMP_DEPEND_SINK = 4,
+    OMP_DEPEND_SOURCE = 5,
+    OMP_DEPEND_MUTEXINOUTSET = 6,
+    OMP_DEPEND_DEPOBJ = 7,
+    OMP_DEPEND_ITERATOR = 8,
+} OMP_depend_type;
+#define N_OMP_DEPEND	(((int)OMP_DEPEND_ITERATOR) + 1)
+
+	
 /* protype */
 char *ompDirectiveName(int c);
 char *ompClauseName(int c);
 char *ompScheduleName(int c);
 char *ompDataDefaultName(int c);
 
+const char *ompMapClauseTypeString(OMP_map_type mt);
+const char *ompDependClauseTypeString(OMP_depend_type dt);
+	
 CExpr* lexParsePragmaOMP(char *p, int *token);
 void out_OMP_PRAGMA(FILE *fp, int indent, int code, CExpr* expr);
 

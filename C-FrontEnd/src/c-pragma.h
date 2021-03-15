@@ -66,5 +66,23 @@ extern char* lexSkipSpace(char *p);
 extern char* lexSkipSharp(char *p);
 extern char* lexConvertUnderscorePragma(char *p);
 
-#endif // _C_PRAGMA_H_
+typedef struct pg_token_context {
+  char *head;
+  char *token;
+  size_t token_len;
+  size_t num_peek;
+} pg_token_context_t;
 
+int pg_token_context_init(pg_token_context_t* ctx);
+int pg_peek_token(pg_token_context_t *ctx);
+int pg_seek_token(pg_token_context_t *ctx);
+
+#define PG_TOKEN_STR_IS_EQUAL(_token, _token_len, _str)     \
+  (strncasecmp((_token), (_str),                            \
+               strlen(_str) > (_token_len) ?                \
+               strlen(_str) : (_token_len)) == 0)
+
+#define PG_TOKEN_CONTEXT_STR_IS_EQUAL(_ctxp, _str)             \
+  (PG_TOKEN_STR_IS_EQUAL((_ctxp)->token, (_ctxp)->token_len , (_str)))
+
+#endif // _C_PRAGMA_H_

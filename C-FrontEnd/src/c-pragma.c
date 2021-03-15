@@ -8,6 +8,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "c-pragma.h"
 #include "c-parser.h"
@@ -453,7 +454,9 @@ pg_parse_expr()
     case PK_XMP:
     case PK_OMP:
     case PK_NOT_PARSABLE:
-	pg_set_exprs_type(e);
+        if (!EXPR_ISNULL(e)) {
+          pg_set_exprs_type(e);
+        }
 	break;
     default:
 	break;
@@ -1395,4 +1398,109 @@ char* lexConvertUnderscorePragma(char *p)
   }
   
   return str;
+}
+
+/**
+ * \brief
+ * judge c is token separator for pg_get_peek_token().
+ *
+ * @param c
+ *      message argument
+ *
+ * @return
+ *      true, false
+ */
+static bool
+is_separator_for_peek(char *c)
+{
+  return (c != NULL && (*c == ':' || *c == ',' ||
+			*c == '[' || *c == ']' || *c == '(' || *c == ')'));
+}
+
+/**
+ * \brief
+ * Init token context.
+ *
+ * @param [in, out] ctx
+ *      Pointer of token context.
+ *
+ * @return
+ *      0: Succeeded, 1 Failed
+ */
+int
+pg_token_context_init(pg_token_context_t *ctx)
+{
+  if (ctx != NULL) {
+    ctx->head = pg_cp;
+    ctx->token = NULL;
+    ctx->token_len = 0;
+    ctx->num_peek = 0;
+    return 0;
+  }
+
+  return 1;
+}
+
+/**
+ * \brief
+ * Get next token without modifying.
+ *
+ * @param [in, out] ctx
+ *      Pointer of token context.
+ *
+ * @return
+ *      0: Succeeded, 1 Failed
+ */
+int
+pg_peek_token(pg_token_context_t *ctx)
+{
+  if (ctx != NULL) {
+    ctx->num_peek++;
+
+    ctx->token = lexSkipSpace(ctx->head);
+
+    ctx->head = ctx->token;
+    if (is_separator_for_peek(ctx->head)) {
+      ctx->head++;
+      goto end;
+    }
+
+    while(is_token_separator(*ctx->head) == 0 &&
+          !is_separator_for_peek(ctx->head)) {
+      ctx->head++;
+    }
+
+  end:
+    ctx->token_len = ctx->head - ctx->token;
+
+    return 0;
+  }
+
+  return 1;
+}
+
+/**
+ * \brief
+ * parse token with seek.
+ *
+ * @param [in, out] ctx
+ *      Pointer of token context.
+ *
+ * @return
+ *      0: Succeeded, 1 Failed
+ */
+int
+pg_seek_token(pg_token_context_t *ctx)
+{
+  size_t i;
+
+  if (ctx != NULL) {
+    for (i = 0; i < ctx->num_peek + 1; i++) {
+      pg_get_token();
+    }
+    ctx->num_peek = 0;
+    return 0;
+  }
+
+  return 1;
 }
