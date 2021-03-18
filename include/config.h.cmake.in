@@ -1,0 +1,93 @@
+#ifndef OMNI_CONFIG_H
+#define OMNI_CONFIG_H
+
+// Check headers
+#cmakedefine HAVE_SYS_PARAM_H
+#cmakedefine HAVE_SYS_TERMIOS_H
+#cmakedefine HAVE_SYS_SOCKET_H
+#cmakedefine HAVE_SYS_RESOURCE_H
+#cmakedefine HAVE_SYS_TIME_H
+#cmakedefine HAVE_CTYPE_H
+#cmakedefine HAVE_STDIO_H
+#cmakedefine HAVE_STDARG_H
+#cmakedefine HAVE_DIRENT_H
+#cmakedefine HAVE_TIME_H
+#cmakedefine HAVE_SIGNAL_H
+#cmakedefine HAVE_NETDB_H
+#cmakedefine HAVE_NETINET_TCP_H
+#cmakedefine HAVE_NETINET_IN_H
+#cmakedefine HAVE_ARPA_INET_H
+#cmakedefine HAVE_SYS_IOCTL_H
+#cmakedefine HAVE_PTHREAD_H
+#cmakedefine HAVE_STDBOOL_H
+#cmakedefine HAVE_REGEX_H
+#cmakedefine HAVE_STRING_H
+#cmakedefine HAVE_UNISTD_H
+#cmakedefine HAVE_LIMITS_H
+#cmakedefine HAVE_STDLIB_H
+#cmakedefine HAVE_ERRNO_H
+#cmakedefine HAVE_LOCALE_H
+
+#if defined(HAVE_SYS_TIME_H) && defined(HAVE_TIME_H)
+#define TIME_WITH_SYS_TIME
+#endif
+
+// Check functions
+
+#cmakedefine HAVE_BZERO
+#cmakedefine HAVE_DOPRNT
+#cmakedefine HAVE_DUP2
+#cmakedefine HAVE_FORK
+#cmakedefine HAVE_GETTIMEOFDAY
+#cmakedefine HAVE_MALLOC
+#cmakedefine HAVE_MEMSET
+#cmakedefine HAVE_REALLOC
+#cmakedefine HAVE_SETENV
+#cmakedefine HAVE_SETLOCALE
+#cmakedefine HAVE_STRCASECMP
+#cmakedefine HAVE_STRCHR
+#cmakedefine HAVE_STRDUP
+#cmakedefine HAVE_STRFTIME
+#cmakedefine HAVE_STRNCASECMP
+#cmakedefine HAVE_STRRCHR
+#cmakedefine HAVE_STRSTR
+#cmakedefine HAVE_STRTOL
+#cmakedefine HAVE_STRTOLD
+#cmakedefine HAVE_SYSTEM
+#cmakedefine HAVE_VFORK
+#cmakedefine HAVE_VPRINTF
+
+// Check types
+
+#cmakedefine HAVE_INT16_T
+#ifdef HAVE_INT16_T
+#cmakedefine SIZEOF_INT16_T @SIZEOF_INT16_T@
+#endif
+#cmakedefine HAVE_INT32_T
+#ifdef HAVE_INT32_T
+#cmakedefine SIZEOF_INT32_T @SIZEOF_INT32_T@
+#endif
+#cmakedefine HAVE_INT64_T
+#ifdef HAVE_INT64_T
+#cmakedefine SIZEOF_INT64_T @SIZEOF_INT64_T@
+#endif
+#cmakedefine SIZEOF_VOID_P @SIZEOF_VOID_P@
+#if SIZEOF_VOID_P == 8
+#define ADDR_IS_64 1
+#else
+#define ADDR_IS_64 0
+#endif
+#cmakedefine HAVE_FLOAT
+#ifdef HAVE_FLOAT
+#cmakedefine SIZEOF_FLOAT @SIZEOF_FLOAT@
+#endif
+#cmakedefine HAVE_DOUBLE
+#ifdef HAVE_DOUBLE
+#cmakedefine SIZEOF_DOUBLE @SIZEOF_DOUBLE@
+#endif
+#cmakedefine HAVE_LONG_DOUBLE
+#ifdef HAVE_LONG_DOUBLE
+#cmakedefine SIZEOF_LONG_DOUBLE @SIZEOF_LONG_DOUBLE@
+#endif
+
+#endif //OMNI_CONFIG_H
