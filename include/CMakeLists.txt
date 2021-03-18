@@ -1,3 +1,5 @@
+set(CMAKE_REQUIRED_QUIET 1)
+
 # Check headers
 check_include_file(sys/param.h    HAVE_SYS_PARAM_H)
 check_include_file(sys/termios.h  HAVE_SYS_TERMIOS_H)
