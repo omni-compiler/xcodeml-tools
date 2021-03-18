@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckTypeSize)
+include(UseJava)
 include(cmake/git.cmake)
 
 set(DEFAULT_BUILD_TYPE "Release")
@@ -41,6 +42,21 @@ set(C_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(Java 1.8 REQUIRED)
+# Warning!!! After finding the first version, find_package(Java) does NOT look for others. CMAKE_FIND_PACKAGE_SORT_ORDER
+# and CMAKE_FIND_PACKAGE_SORT_DIRECTION have no effect. To override the "default" java version, set cmake variable
+# JAVA_HOME to desired java installation path.
+
+if(Java_VERSION_MAJOR EQUAL 1)
+  if(Java_VERSION_MINOR LESS 8)
+    message(FATAL_ERROR "Java ${Java_VERSION_STRING} is not supported")
+  endif()
+else()
+  if(Java_VERSION_MAJOR LESS 8)
+    message(FATAL_ERROR "Java ${Java_VERSION_STRING} is not supported")
+  endif()
+endif()
+
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 find_package(LibXml2 REQUIRED)
@@ -61,11 +77,14 @@ set(INT_OMNI_HOME "${CMAKE_BINARY_DIR}/home")
 set(INT_OMNI_HOME_BIN "${INT_OMNI_HOME}/bin")
 set(INT_OMNI_FFRONT "${INT_OMNI_HOME_BIN}/F_Front")
 set(INT_OMNI_HOME_FINCLUDES "${INT_OMNI_HOME}/fincludes")
+set(INT_OMNI_HOME_SHARE "${INT_OMNI_HOME}/share")
 
 set(OMNI_HOME "${CMAKE_INSTALL_PREFIX}")
 
-add_custom_target(create_int_install_dir ALL
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME})
+add_custom_target(create_int_install_dirs ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_BIN}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_SHARE})
 
 install(
     DIRECTORY ${INT_OMNI_HOME}/
@@ -83,4 +102,10 @@ endif()
 
 add_subdirectory(include)
 add_subdirectory(F-FrontEnd/src)
+
+set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
+
+add_subdirectory(XcodeML-Common/src)
+add_subdirectory(F-BackEnd/src)
+add_subdirectory(Driver/bin)
 

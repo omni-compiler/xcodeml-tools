@@ -18,7 +18,9 @@ function parseParameter()
 parseParameter ${@+"$@"}
 
 if [ ${ENABLE_TEST} = false ]; then
-    OMNI_HOME=@OMNI_HOME@
+    SCRIPT="$(realpath -s $0)"
+    SCRIPT_PATH="$(dirname $SCRIPT)"
+    OMNI_HOME="${SCRIPT_PATH}/.."
     OMNI_JAR1="${OMNI_HOME}/share/om-f-back.jar"
     OMNI_JAR2="${OMNI_HOME}/share/om-common.jar"
 else
@@ -26,6 +28,8 @@ else
     OMNI_JAR2="../XcodeML-Common/build/om-common.jar"
 fi
 
+if [ -z ${OMNI_JAVA+x} ]; then
 OMNI_JAVA=@JAVA@
+fi
 OMNI_JAVA_OPT="-Xmx200m -Xms200m -cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.f.util.omx2f"
 exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} ${_other_args[@]}
