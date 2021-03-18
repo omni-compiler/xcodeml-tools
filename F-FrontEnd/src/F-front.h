@@ -11,12 +11,16 @@
 
 #include "config.h"
 #include <assert.h>
-#if SIZEOF_UNSIGNED_INT == 4
+#if (SIZEOF_UNSIGNED_INT == 4) || (defined(HAVE_INT32_T) && (SIZEOF_INT32_T == 4))
 #define HAS_INT32 1
 #endif
 
-#if SIZEOF_UNSIGNED_SHORT == 2
+#if (SIZEOF_UNSIGNED_SHORT == 2) || (defined(HAVE_INT16_T) && (SIZEOF_INT16_T == 2))
 #define HAS_INT16 1
+#endif
+
+#if defined(HAVE_INT64_T) && (SIZEOF_INT64_T == 8)
+#define HAS_INT64 1
 #endif
 
 #include "exc_platform.h"

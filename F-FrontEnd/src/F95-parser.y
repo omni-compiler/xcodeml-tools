@@ -3740,6 +3740,6 @@ acc_size_expr_list:
 
   
 %%
-#include "F95-lex.c"
+#include "F95-lex.h"
 
 /* EOF */
