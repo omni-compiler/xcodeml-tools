@@ -16,8 +16,8 @@ extern int use_module(const char *module_filename,
 extern int use_module_to(const char *module_filename, FILE *fd);
 
 typedef struct symbol_filterElm_t {
-    char *use;
-    char *local;
+    const char *use;
+    const char *local;
     struct symbol_filterElm_t *next;
 } symbol_filterElem;
 
@@ -39,10 +39,10 @@ typedef struct symbol_filter_t {
 extern symbol_filter *push_new_filter(void);
 extern symbol_filter *peek_filter(void);
 extern void pop_filter(void);
-extern void symbol_filter_addElem(symbol_filter *filter, char *use,
-                                  char *local);
-extern char *apply_filter(symbol_filter *filter, char *symbol);
-extern int is_use_symbol(char *symbol);
-extern char *convert_to_non_use_symbol(char *orgname);
+extern void symbol_filter_addElem(symbol_filter *filter, const char *use,
+                                  const char *local);
+extern const char *apply_filter(symbol_filter *filter, const char *symbol);
+extern int is_use_symbol(const char *symbol);
+extern char *convert_to_non_use_symbol(const char *orgname);
 
 #endif /* _XCODEML_MODULE_H_ */

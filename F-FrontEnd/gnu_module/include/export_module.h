@@ -45,9 +45,9 @@
 #define XMALLOC(type, size) ((type)xmalloc2(size))
 #define MEMCLEAN( m ) memset( m , 0x00 , sizeof(*(m)) )
 
-extern void     error EXC_VARARGS(char *, fmt);
-extern void     fatal EXC_VARARGS(char *, fmt);
-extern void     warning EXC_VARARGS(char *, fmt);
+extern void     error EXC_VARARGS(const char *, fmt);
+extern void     fatal EXC_VARARGS(const char *, fmt);
+extern void     warning EXC_VARARGS(const char *, fmt);
 
 #ifdef _HASH_
 /*************

@@ -5,7 +5,7 @@
 BEGIN{
         printf("#include \"F-front.h\"\n");
         printf("/* generated from C-exprcode.def */\n");
-        printf("struct expr_code_info expr_code_info[] = {\n");
+        printf("const struct expr_code_info_t expr_code_info[] = {\n");
         i = 0;
 }
 

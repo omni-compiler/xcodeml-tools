@@ -40,7 +40,7 @@ static int _ACC_st_required = 0; // FALSE;
 
 int ACC_reduction_op(expr v)
 {
-    char *s;
+    const char *s;
 
     if (EXPR_CODE(v) != IDENT)
         fatal("ACC_reduction_op: no IDENT");
@@ -62,7 +62,7 @@ int ACC_reduction_op(expr v)
 
 int ACC_num_attr(expr v)
 {
-    char *s;
+    const char *s;
 
     if (EXPR_CODE(v) != IDENT)
         fatal("ACC_num_attr: no IDENT");
@@ -77,10 +77,10 @@ int ACC_num_attr(expr v)
     return ACC_CLAUSE_VECTOR_LENGTH; /* dummy */
 }
 
-void ACC_check_num_attr(expr v, enum ACC_pragma attr)
+void ACC_check_num_attr(expr v, enum ACC_pragma_clause attr)
 {
-    char *s;
-    enum ACC_pragma a;
+    const char *s;
+    enum ACC_pragma_clause a;
 
     if (EXPR_CODE(v) != IDENT)
         fatal("ACC_num_attr: no IDENT");
@@ -214,6 +214,42 @@ static enum ACC_pragma get_begin_directive(enum ACC_pragma dir)
     return ACC_DIR_END;
 }
 
+enum ACC_pragma to_ACC_pragma(omllint_t val)
+{
+	switch(val)
+	{
+	case ACC_PARALLEL: return ACC_PARALLEL;
+	case ACC_END_PARALLEL: return ACC_END_PARALLEL;
+	case ACC_DATA: return ACC_DATA;
+	case ACC_END_DATA: return ACC_END_DATA;
+	case ACC_LOOP: return ACC_LOOP; // no ACC_END_LOOP
+	case ACC_PARALLEL_LOOP: return ACC_PARALLEL_LOOP;
+	case ACC_END_PARALLEL_LOOP: return ACC_END_PARALLEL_LOOP;
+	case ACC_KERNELS_LOOP: return ACC_KERNELS_LOOP;
+	case ACC_END_KERNELS_LOOP: return ACC_END_KERNELS_LOOP;
+	case ACC_ATOMIC: return ACC_ATOMIC;
+	case ACC_END_ATOMIC: return ACC_END_ATOMIC;
+	case ACC_KERNELS: return ACC_KERNELS;
+	case ACC_END_KERNELS: return ACC_END_KERNELS;
+	case ACC_WAIT: return ACC_WAIT;
+	case ACC_CACHE: return ACC_CACHE;
+	case ACC_ROUTINE: return ACC_ROUTINE;
+	case ACC_ENTER_DATA: return ACC_ENTER_DATA;
+	case ACC_EXIT_DATA: return ACC_EXIT_DATA;
+	case ACC_HOST_DATA: return ACC_HOST_DATA;
+	case ACC_END_HOST_DATA: return ACC_END_HOST_DATA;
+	case ACC_DECLARE: return ACC_DECLARE;
+	case ACC_UPDATE_D: return ACC_UPDATE_D;
+	case ACC_INIT: return ACC_INIT;
+	case ACC_SHUTDOWN: return ACC_SHUTDOWN;
+	case ACC_SET: return ACC_SET;
+    default:
+        fatal("unknown ACC pragma");
+        return ACC_DIR_END;//unreachable code
+
+	};
+}
+
 void compile_ACC_directive(expr x)
 {
     if (x == NULL)
@@ -241,7 +277,7 @@ void compile_ACC_directive(expr x)
 
     expr directive = EXPR_ARG1(x); /* direcive name */
     expv clauses = compile_clause_list(EXPR_ARG2(x));
-    enum ACC_pragma dir_enum = EXPR_INT(directive);
+    enum ACC_pragma dir_enum = to_ACC_pragma(EXPR_INT(directive));
 
     check_for_ACC_pragma_2(x, dir_enum);
     check_for_OMP_pragma(x);
@@ -282,7 +318,7 @@ void compile_ACC_directive(expr x)
         case ACC_ATOMIC:
             check_INEXEC();
             push_ACC_construct(dir_enum, clauses);
-            if (is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE)) {
+            if (is_ACC_pragma(EXPR_ARG1(clauses), dir_enum)) {
                 _ACC_st_required = 2;
             } else {
                 _ACC_st_required = 1;
@@ -348,7 +384,7 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
     if (CTL_TYPE(ctl_top) != CTL_ACC)
         return;
 
-    enum ACC_pragma ctl_top_dir = CTL_ACC_ARG_DIR(ctl_top);
+    enum ACC_pragma ctl_top_dir = to_ACC_pragma(CTL_ACC_ARG_DIR(ctl_top));
 
     // close LOOP | PARALLEL_LOOP | KERNELS_LOOP directive if possible
     if (ctl_top_dir == ACC_LOOP ||
@@ -360,7 +396,7 @@ static void check_for_ACC_pragma_2(expr x, enum ACC_pragma dir)
     // close ATOMIC directive if possible
     if (ctl_top_dir == ACC_ATOMIC && dir != ACC_END_ATOMIC) {
         expv clauses = CTL_ACC_ARG_CLAUSE(ctl_top);
-        int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ACC_CLAUSE_CAPTURE);
+        int is_clause = is_ACC_pragma(EXPR_ARG1(clauses), ctl_top_dir);
         if (!is_clause) {
             pop_ACC_atomic_construct(ctl_top_dir);
         }
@@ -472,7 +508,7 @@ int is_ACC_loop_pragma(expv x)
     if (EXPR_CODE(x) != ACC_PRAGMA)
         return FALSE;
 
-    enum ACC_pragma code = EXPR_INT(EXPR_ARG1(x));
+    enum ACC_pragma code = to_ACC_pragma(EXPR_INT(EXPR_ARG1(x)));
     if (code == ACC_LOOP || code == ACC_PARALLEL_LOOP ||
         code == ACC_KERNELS_LOOP) {
         return TRUE;

@@ -6,7 +6,7 @@
 
 static struct list_node *cons_list _ANSI_ARGS_((expr x, struct list_node *l));
 
-char *xmalloc(size) int size;
+char *xmalloc(int size)
 {
     char *p;
     if ((p = (char *)malloc(size)) == NULL)
@@ -108,8 +108,7 @@ char *strdup(s) char *s;
 }
 #endif /* !HAVE_STRDUP */
 
-expr make_enode(code, v) enum expr_code code;
-void *v;
+expr make_enode(enum expr_code code, void *v)
 {
     expr ep;
 
@@ -120,9 +119,7 @@ void *v;
     return (ep);
 }
 
-expr make_float_enode(code, d, token) enum expr_code code;
-omldouble_t d;
-const char *token;
+expr make_float_enode(enum expr_code code, omldouble_t d, const char *token)
 {
     expr ep;
 
@@ -134,7 +131,7 @@ const char *token;
     return (ep);
 }
 
-expr make_int_enode(i) omllint_t i;
+expr make_int_enode(omllint_t i)
 {
     expr ep;
 
@@ -145,8 +142,7 @@ expr make_int_enode(i) omllint_t i;
     return (ep);
 }
 
-struct list_node *cons_list(x, l) expr x;
-struct list_node *l;
+struct list_node *cons_list(expr x, struct list_node *l)
 {
     struct list_node *lp;
 
@@ -159,62 +155,55 @@ struct list_node *l;
     return (lp);
 }
 
-expr list0(code) enum expr_code code;
+expr list0(enum expr_code code)
 {
     return (make_enode(code, NULL));
 }
 
-expr list1(code, x1) enum expr_code code;
-expr x1;
+expr list1(enum expr_code code, expr x1)
 {
     return (make_enode(code, (void *)cons_list(x1, NULL)));
 }
 
-expr list2(code, x1, x2) enum expr_code code;
-expr x1, x2;
+expr list2(enum expr_code code, expr x1, expr x2)
 {
     return (make_enode(code, (void *)cons_list(x1, cons_list(x2, NULL))));
 }
 
-expr list3(code, x1, x2, x3) enum expr_code code;
-expr x1, x2, x3;
+expr list3(enum expr_code code, expr x1, expr x2, expr x3)
 {
     return (make_enode(
         code, (void *)cons_list(x1, cons_list(x2, cons_list(x3, NULL)))));
 }
 
-expr list4(code, x1, x2, x3, x4) enum expr_code code;
-expr x1, x2, x3, x4;
+expr list4(enum expr_code code, expr x1, expr x2, expr x3, expr x4)
 {
     return (make_enode(
         code, (void *)cons_list(
                   x1, cons_list(x2, cons_list(x3, cons_list(x4, NULL))))));
 }
 
-expr list5(code, x1, x2, x3, x4, x5) enum expr_code code;
-expr x1, x2, x3, x4, x5;
+expr list5(enum expr_code code, expr x1, expr x2, expr x3, expr x4, expr x5)
 {
     return (make_enode(code,
                        (void *)cons_list(x1, cons_list(x2, cons_list(x3, cons_\
 list(x4, cons_list(x5, NULL)))))));
 }
 
-expr list6(code, x1, x2, x3, x4, x5, x6) enum expr_code code;
-expr x1, x2, x3, x4, x5, x6;
+expr list6(enum expr_code code, expr x1, expr x2, expr x3, expr x4, expr x5, expr x6)
 {
     return (make_enode(code,
                        (void *)cons_list(x1, cons_list(x2, cons_list(x3, cons_\
 list(x4, cons_list(x5, cons_list(x6, NULL))))))));
 }
 
-expr list_cons(v, w) expv v, w;
+expr list_cons(expv v, expv w)
 {
     EXPR_LIST(w) = cons_list(v, EXPR_LIST(w));
     return (w);
 }
 
-expr list_put_last(lx, x) expr lx;
-expr x;
+expr list_put_last(expr lx, expr x)
 {
     struct list_node *lp;
 
@@ -237,8 +226,7 @@ expr x;
     return (lx);
 }
 
-expr list_delete_item(lx, x) expr lx;
-expr x;
+expr list_delete_item(expr lx, expr x)
 {
     list lp;
     list oLp;

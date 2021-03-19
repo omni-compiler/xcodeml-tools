@@ -37,6 +37,8 @@ enum ACC_pragma {
     ACC_DIR_END
 };
 
+
+
 enum ACC_pragma_clause {
     ACC_CLAUSE_IF = 500,
     ACC_CLAUSE_ASYNC,

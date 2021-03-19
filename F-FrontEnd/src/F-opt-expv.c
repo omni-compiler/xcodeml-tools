@@ -11,10 +11,7 @@
 #define EXPV_IS_INT_ONE(v)                                                     \
     (EXPV_CODE(v) == INT_CONSTANT && EXPV_INT_VALUE(v) == 1)
 
-expv expv_numeric_const_reduce(left, right, code, v) expv left;
-expv right;
-enum expr_code code;
-expv v;
+expv expv_numeric_const_reduce(expv left, expv right, enum expr_code code, expv v)
 {
     BASIC_DATA_TYPE bTyp;
     TYPE_DESC tp = NULL;
@@ -706,8 +703,7 @@ omllint_t power_ii(omllint_t x, omllint_t n)
     return (pow);
 }
 
-expv expv_complex_const_reduce(v, tp) expv v;
-TYPE_DESC tp;
+expv expv_complex_const_reduce(expv v, TYPE_DESC tp)
 {
     expv vI, vR;
 

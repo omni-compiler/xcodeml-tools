@@ -135,6 +135,7 @@ static int second_pass_clean()
         switch (list->err_no) {
             case SP_ERR_UNDEF_TYPE_VAR: /* 1 */
             case SP_ERR_FOWARD_FUNC:    /* 5 */
+            {
                 current_line = list->line;
                 TYPE_DESC tpFunc = list->info.id->type;
                 if (tpFunc && (IS_SUBR(tpFunc) || IS_FUNCTION_TYPE(tpFunc)))
@@ -143,12 +144,14 @@ static int second_pass_clean()
                       ID_NAME(list->info.id));
                 err_num++;
                 break;
+            }
             case SP_ERR_CHAR_LEN: /* 2*/
                 error_at_node(list->info.ep,
                               "character string length must be integer.");
                 err_num++;
                 break;
             case SP_ERR_UNDEF_TYPE_FUNC: /* 4 */
+            {
                 current_line = list->line;
                 TYPE_DESC tp = list->info.id->type;
                 if (tp && !TYPE_IS_NOT_FIXED(tp) &&
@@ -159,6 +162,7 @@ static int second_pass_clean()
                       ID_NAME(list->info.id));
                 err_num++;
                 break;
+            }
             case SP_ERR_FATAL: /* 3 */
                 current_line = list->line;
                 error("%s: invalid code", SYM_NAME(EXPR_SYM(list->info.ep)));

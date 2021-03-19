@@ -67,7 +67,7 @@ static int typetable_hashcode(const char *type_signature)
 void typetable_enhash(XcodeMLNode *type)
 {
     xentry *entry;
-    char *type_signature;
+    const char *type_signature;
     int hcode;
 
     if (type == NULL)
@@ -105,7 +105,7 @@ void typetable_enhash(XcodeMLNode *type)
  *    <br>returns NULL if type_signature is NULL or
  *    <br>a type of the type_signature is not found.
  */
-xentry *typetable_dehash(char *type_signature)
+xentry *typetable_dehash(const char *type_signature)
 {
     xentry *entry;
     int hcode;
@@ -132,7 +132,7 @@ xentry *typetable_dehash(char *type_signature)
  * @param type_signature a signature of the type.
  * @return returns true if the type is a primitive one.
  */
-bool type_isPrimitive(char *type_signature)
+bool type_isPrimitive(const char *type_signature)
 {
     if (type_signature == NULL)
         return false;

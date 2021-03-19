@@ -32,7 +32,7 @@ static void InitializeVariableTable()
     nVarTbl = 0;
 }
 
-static void AddVariable(char *var)
+static void AddVariable(const char *var)
 {
     if (varTbl == NULL) {
         varTbl = (variableEntry *)malloc(sizeof(variableEntry) * 1);
@@ -47,7 +47,7 @@ static void AddVariable(char *var)
             t = NULL;
         } else {
             variableEntry key;
-            key.varName = var;
+            key.varName = strdup(var);
             t = (variableEntry *)bsearch((void *)&key, (void *)varTbl, nVarTbl,
                                          sizeof(variableEntry), varComp);
         }
@@ -63,12 +63,12 @@ static void AddVariable(char *var)
     }
 }
 
-static void SetVariableValue(char *var, omllint_t val)
+static void SetVariableValue(const char *var, omllint_t val)
 {
     variableEntry key;
     variableEntry *t;
 
-    key.varName = var;
+    key.varName = strdup(var);
     t = (variableEntry *)bsearch((void *)&key, (void *)varTbl, nVarTbl,
                                  sizeof(variableEntry), varComp);
 
@@ -80,12 +80,12 @@ static void SetVariableValue(char *var, omllint_t val)
     }
 }
 
-static omllint_t GetVariableValue(char *var)
+static omllint_t GetVariableValue(const char *var)
 {
     variableEntry key;
     variableEntry *t;
 
-    key.varName = var;
+    key.varName = strdup(var);
     t = (variableEntry *)bsearch((void *)&key, (void *)varTbl, nVarTbl,
                                  sizeof(variableEntry), varComp);
 
@@ -101,13 +101,13 @@ static omllint_t GetVariableValue(char *var)
     return 0;
 }
 
-static expv findIdent(expv spec, expv new)
+static expv findIdent(expv spec, expv new_v)
 {
     list lp;
     expv v;
 
-    if (new == NULL) {
-        new = list0(LIST);
+    if (new_v == NULL) {
+        new_v = list0(LIST);
     }
 
     FOR_ITEMS_IN_LIST (lp, spec) {
@@ -122,7 +122,7 @@ static expv findIdent(expv spec, expv new)
                 list lq;
                 expv vv;
                 int found = FALSE;
-                FOR_ITEMS_IN_LIST (lq, new) {
+                FOR_ITEMS_IN_LIST (lq, new_v) {
                     vv = LIST_ITEM(lq);
                     if (EXPR_SYM(vv) == EXPR_SYM(v)) {
                         found = TRUE;
@@ -130,21 +130,21 @@ static expv findIdent(expv spec, expv new)
                     }
                 }
                 if (found == FALSE) {
-                    new = list_put_last(new, v);
+                    new_v = list_put_last(new_v, v);
                 }
                 break;
             }
 
             default: {
                 if (EXPR_CODE_IS_TERMINAL(EXPR_CODE(v)) != TRUE) {
-                    new = findIdent(v, new);
+                    new_v = findIdent(v, new_v);
                 }
                 break;
             }
         }
     }
 
-    return new;
+    return new_v;
 }
 
 omllint_t getExprValue(expv v)
@@ -210,10 +210,10 @@ omllint_t getExprValue(expv v)
     return ret;
 }
 
-static int InterpretImpliedDo(expv doSpec, expv new)
+static int InterpretImpliedDo(expv doSpec, expv new_expv)
 {
     expv loopVar;
-    char *varName;
+    const char *varName;
 
     int thisLoop;
 
@@ -232,8 +232,8 @@ static int InterpretImpliedDo(expv doSpec, expv new)
         return FALSE;
     }
 
-    if (new == NULL) {
-        new = list0(LIST);
+    if (new_expv == NULL) {
+        new_expv = list0(LIST);
     }
 
     v = EXPR_ARG1(doSpec);
@@ -262,7 +262,7 @@ static int InterpretImpliedDo(expv doSpec, expv new)
 
             switch (EXPR_CODE(v)) {
                 case F_IMPLIED_DO: {
-                    if (InterpretImpliedDo(v, new) == FALSE) {
+                    if (InterpretImpliedDo(v, new_expv) == FALSE) {
                         return FALSE;
                     }
                     break;
@@ -280,7 +280,7 @@ static int InterpretImpliedDo(expv doSpec, expv new)
                     }
                     sym = find_symbol(SYM_NAME(EXPR_SYM(EXPR_ARG1(v))));
                     aRefV = list2(F_ARRAY_REF, make_enode(IDENT, sym), idxV);
-                    new = list_put_last(new, aRefV);
+                    new_expv = list_put_last(new_expv, aRefV);
                     break;
                 }
 
@@ -295,14 +295,14 @@ static int InterpretImpliedDo(expv doSpec, expv new)
     return TRUE;
 }
 
-expv ExpandImpliedDoInDATA(expv spec, expv new)
+expv ExpandImpliedDoInDATA(expv spec, expv new_expv)
 {
     list lp;
     expv v;
     expv idents = findIdent(spec, (expv)NULL);
 
-    if (new == NULL) {
-        new = list0(LIST);
+    if (new_expv == NULL) {
+        new_expv = list0(LIST);
     }
 
     InitializeVariableTable();
@@ -311,9 +311,9 @@ expv ExpandImpliedDoInDATA(expv spec, expv new)
         AddVariable(SYM_NAME(EXPR_SYM(v)));
     }
 
-    if (InterpretImpliedDo(spec, new) == FALSE) {
+    if (InterpretImpliedDo(spec, new_expv) == FALSE) {
         return NULL;
     }
 
-    return new;
+    return new_expv;
 }

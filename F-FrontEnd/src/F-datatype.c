@@ -349,16 +349,16 @@ int type_is_unlimited_class(TYPE_DESC tp)
     return (TYPE_IS_CLASS(tp) && TYPE_REF(tp) == NULL);
 }
 
-int type_is_class_of(TYPE_DESC derived_type, TYPE_DESC class)
+int type_is_class_of(TYPE_DESC derived_type, TYPE_DESC cls)
 {
     TYPE_DESC class_base;
     TYPE_DESC derived_type_base;
 
-    if (!TYPE_IS_CLASS(class)) {
+    if (!TYPE_IS_CLASS(cls)) {
         return FALSE;
     }
 
-    class_base = getBaseType(class);
+    class_base = getBaseType(cls);
     derived_type_base = getBaseType(derived_type);
 
     if (class_base == derived_type_base ||
@@ -866,8 +866,8 @@ static int type_parameter_expv_equals(expv v1, expv v2, int is_strict,
     }
 
     if (EXPR_CODE(v1) == FUNCTION_CALL && EXPR_CODE(v2) == FUNCTION_CALL) {
-        char *name1 = NULL;
-        char *name2 = NULL;
+        const char *name1 = NULL;
+        const char *name2 = NULL;
 
         SYMBOL s1 = EXPV_NAME(EXPR_ARG1(v1));
         ID fId1 = find_ident(s1);

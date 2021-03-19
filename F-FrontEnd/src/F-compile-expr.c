@@ -24,7 +24,7 @@ static TYPE_DESC getLargeIntType();
 /*
  * Convert expr terminal node to expv terminal node.
  */
-expv compile_terminal_node(x) expr x;
+expv compile_terminal_node(expr x)
 {
     expv ret = NULL;
 
@@ -162,7 +162,7 @@ expv compile_terminal_node(x) expr x;
 }
 
 TYPE_DESC
-bottom_type(type) const TYPE_DESC type;
+bottom_type(const TYPE_DESC type)
 {
     TYPE_DESC tp = type;
 
@@ -356,7 +356,7 @@ expv compile_expression(expr x)
     expv v1, v2;
     SYMBOL s;
     int is_userdefined = FALSE;
-    char *error_msg = NULL;
+    const char *error_msg = NULL;
     int type_is_not_fixed = FALSE;
 
     if (x == NULL) {
@@ -1347,7 +1347,7 @@ expv compile_ident_expression(expr x)
 
 done:
 
-#ifdef not
+#ifdef NOT
     if (ret == NULL) {
         /* FEAST change start */
         /* fatal("%s: invalid code", __func__); */
@@ -1445,7 +1445,7 @@ expv compile_substr_ref(expr x)
  *    | (F95_MEMBER_REF expression ident)
  *    | (XMP_COARRAY_REF expression image_selector)
  */
-expv compile_lhs_expression(x) expr x;
+expv compile_lhs_expression(expr x)
 {
     expr x1;
     expv v;
@@ -2915,7 +2915,7 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
     SYMBOL sym;
     expv result, components;
     TYPE_DESC tp;
-    TYPE_DESC this;
+    TYPE_DESC this_td;
 
     components = list0(LIST);
     result = list2(F95_STRUCT_CONSTRUCTOR, NULL, components);
@@ -2924,9 +2924,9 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
     // (PRIVATE works if the derived type is use-associated)
     int is_use_associated = ID_USEASSOC_INFO(struct_id) != NULL;
 
-    this = stp ?: ID_TYPE(struct_id);
+    this_td = stp ?: ID_TYPE(struct_id);
 
-    members = get_struct_members(this);
+    members = get_struct_members(this_td);
     cur = members;
 
     FOR_ITEMS_IN_LIST (lp, args) {
@@ -2934,7 +2934,7 @@ static expv compile_struct_constructor_with_components(const ID struct_id,
         expv v = compile_expression(arg);
 
         if (TYPE_BASIC_TYPE(EXPV_TYPE(v)) == TYPE_STRUCT &&
-            type_is_parent_type(EXPV_TYPE(v), this)) {
+            type_is_parent_type(EXPV_TYPE(v), this_td)) {
             TYPE_DESC stp = get_bottom_ref_type(EXPV_TYPE(v));
             if ((EXPV_CODE(arg) != F_SET_EXPR && is_first_arg) ||
                 (EXPV_CODE(arg) == F_SET_EXPR &&
@@ -3219,8 +3219,7 @@ static expv genCastCall(const char *name, TYPE_DESC tp, expv arg, expv kind)
 }
 
 /* stementment function call */
-expv statement_function_call(f_id, arglist) ID f_id;
-expv arglist;
+expv statement_function_call(ID f_id, expv arglist)
 {
     list arg_lp, param_lp;
     ID id;

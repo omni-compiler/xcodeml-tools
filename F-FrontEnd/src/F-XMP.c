@@ -40,7 +40,7 @@ static expv XMP_compile_acc_clause(expr x);
 
 int XMP_reduction_op(expr v)
 {
-    char *s;
+    const char *s;
 
     if (EXPR_CODE(v) != IDENT)
         fatal("XMP_reduction_op: no IDENT");
@@ -85,6 +85,43 @@ void init_for_XMP_pragma()
     XMP_io_desired_statements = 0;
 }
 
+static enum XMP_pragma to_XMP_pragma(omllint_t val)
+{
+	switch(val)
+	{
+	case XMP_NODES: return XMP_NODES;
+	case XMP_TEMPLATE: return XMP_TEMPLATE;
+	case XMP_DISTRIBUTE: return XMP_DISTRIBUTE;
+	case XMP_ALIGN: return XMP_ALIGN;
+	case XMP_SHADOW: return XMP_SHADOW;
+	case XMP_TASK: return XMP_TASK;
+	case XMP_TASKS: return XMP_TASKS;
+	case XMP_LOOP: return XMP_LOOP;
+	case XMP_REFLECT: return XMP_REFLECT;
+	case XMP_GMOVE: return XMP_GMOVE;
+	case XMP_BARRIER: return XMP_BARRIER;
+	case XMP_REDUCTION: return XMP_REDUCTION;
+	case XMP_BCAST: return XMP_BCAST;
+	case XMP_COARRAY: return XMP_COARRAY;
+	case XMP_TEMPLATE_FIX: return XMP_TEMPLATE_FIX;
+	case XMP_WAIT_ASYNC: return XMP_WAIT_ASYNC;
+	case XMP_ARRAY: return XMP_ARRAY;
+	case XMP_END_TASK: return XMP_END_TASK;
+	case XMP_END_TASKS: return XMP_END_TASKS;
+	case XMP_REDUCE_SHADOW: return XMP_REDUCE_SHADOW;
+
+	case XMP_MASTER_IO: return XMP_MASTER_IO;
+	case XMP_MASTER_IO_BEGIN: return XMP_MASTER_IO_BEGIN;
+	case XMP_END_MASTER_IO: return XMP_END_MASTER_IO;
+	case XMP_GLOBAL_IO: return XMP_GLOBAL_IO;
+	case XMP_GLOBAL_IO_BEGIN: return XMP_GLOBAL_IO_BEGIN;
+	case XMP_END_GLOBAL_IO: return XMP_END_GLOBAL_IO;
+
+	default:
+		fatal("unknown XMP pragma");
+		return XMP_DIR_END;
+	}
+}
 /*
  * called from Parser
  */
@@ -131,7 +168,7 @@ void compile_XMP_directive(expr x)
             /* check arg: (nameNames, nodeSizeList, inherit) */
             x1 = EXPR_ARG1(c); /* ident */
 
-            ID id = declare_ident(EXPR_GEN(x1), CL_VAR);
+            ID id = declare_ident((SYMBOL)EXPR_GEN(x1), CL_VAR);
             declare_id_type(id, BASIC_TYPE_DESC(TYPE_INT)); // dummy
 
             x2 = XMP_compile_subscript_list(EXPR_ARG2(c), XMP_LIST_NODES);
@@ -156,7 +193,7 @@ void compile_XMP_directive(expr x)
             list lp;
             FOR_ITEMS_IN_LIST (lp, x1) {
                 expr xx = LIST_ITEM(lp);
-                ID id = declare_ident(EXPR_GEN(xx), CL_VAR);
+                ID id = declare_ident((SYMBOL)EXPR_GEN(xx), CL_VAR);
                 declare_id_type(id, BASIC_TYPE_DESC(TYPE_INT)); // dummy
             }
 
@@ -309,7 +346,7 @@ void compile_XMP_directive(expr x)
             x3 = compile_expression(EXPR_ARG3(c));
             x4 = XMP_compile_acc_clause(EXPR_ARG4(c));
             c = list4(LIST, x1, x2, x3, x4);
-            output_statement(XMP_pragma_list(EXPR_INT(dir), c, NULL));
+            output_statement(XMP_pragma_list(to_XMP_pragma(EXPR_INT(dir)), c, NULL));
             break;
 
         case XMP_BARRIER:

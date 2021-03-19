@@ -43,7 +43,7 @@ int dollar_ok = 0; // accept '$' in identifier or not.
 extern int yyparse _ANSI_ARGS_((void));
 static void check_nerrors _ANSI_ARGS_((void));
 
-static int getVarSize(str) char *str;
+static int getVarSize(const char *str)
 {
     int ret = 0;
     char *ePtr = NULL;
@@ -59,12 +59,12 @@ static int getVarSize(str) char *str;
     }
 }
 
-static void cmd_error_exit EXC_VARARGS_DEF(char *, fmt)
+static void cmd_error_exit EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
     fprintf(stderr, "error: ");
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
     fprintf(stderr, "\n");
@@ -73,12 +73,12 @@ static void cmd_error_exit EXC_VARARGS_DEF(char *, fmt)
     exit(EXITCODE_ERR);
 }
 
-static void cmd_warning EXC_VARARGS_DEF(char *, fmt)
+static void cmd_warning EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
     fprintf(stderr, "warning: ");
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
     fprintf(stderr, "\n");
@@ -162,8 +162,7 @@ static void usage()
     }
 }
 
-int main(argc, argv) int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
     extern int fixed_format_flag;
     extern int max_line_len;
@@ -563,13 +562,13 @@ void where(lineno_info *ln)
 
 /* nonfatal error message */
 /* VARARGS0 */
-void error EXC_VARARGS_DEF(char *, fmt)
+void error EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
     ++nerrors;
     where(current_line);
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
     fprintf(stderr, "\n");
@@ -644,7 +643,7 @@ void warning_at_id EXC_VARARGS_DEF(ID, x)
 
 /* debug message */
 /* VARARGS0 */
-void debug EXC_VARARGS_DEF(char *, fmt)
+void debug EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
@@ -653,7 +652,7 @@ void debug EXC_VARARGS_DEF(char *, fmt)
 
     ++nerrors;
     where(current_line);
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     vfprintf(debug_fp, fmt, args);
     va_end(args);
     fprintf(debug_fp, "\n");
@@ -674,13 +673,13 @@ static void check_nerrors()
 
 /* compiler error: die */
 /* VARARGS1 */
-void fatal EXC_VARARGS_DEF(char *, fmt)
+void fatal EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
     where(current_line); /*, "Fatal");*/
     fprintf(stderr, "compiler error: ");
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     vfprintf(stderr, fmt, args);
     va_end(args);
     fprintf(stderr, "\n");
@@ -691,14 +690,14 @@ void fatal EXC_VARARGS_DEF(char *, fmt)
 int warning_flag = FALSE;
 
 /* warning with lineno_info */
-void warning_lineno(lineno_info *info, char *fmt, ...)
+void warning_lineno(lineno_info *info, const char *fmt, ...)
 {
     va_list args;
 
     if (warning_flag)
         return;
     where(info); /*, "Warn");*/
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     fprintf(stderr, "warning: ");
     vfprintf(stderr, fmt, args);
     va_end(args);
@@ -707,14 +706,14 @@ void warning_lineno(lineno_info *info, char *fmt, ...)
 }
 
 /* warning */
-void warning EXC_VARARGS_DEF(char *, fmt)
+void warning EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
     if (warning_flag)
         return;
     where(current_line); /*, "Warn");*/
-    EXC_VARARGS_START(char *, fmt, args);
+    EXC_VARARGS_START(const char *, fmt, args);
     fprintf(stderr, "warning: ");
     vfprintf(stderr, fmt, args);
     va_end(args);
