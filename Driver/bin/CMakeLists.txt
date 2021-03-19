@@ -13,4 +13,4 @@ add_custom_command(OUTPUT ${INT_F_BACK_DRIVER}
                    DEPENDS create_int_install_dirs
                    VERBATIM)
 
-add_custom_target(generate_driver ALL DEPENDS ${INT_F_BACK_DRIVER})
+add_custom_target(fback-driver ALL DEPENDS ${INT_F_BACK_DRIVER})

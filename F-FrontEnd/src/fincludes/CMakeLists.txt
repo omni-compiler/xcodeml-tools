@@ -22,7 +22,7 @@ add_custom_command(OUTPUT ${ISO_FORTRAN_ENV_XMOD}
                    COMMENT "Generating ISO_FORTRAN_ENV.xmod"
                    VERBATIM)
 
-add_custom_target(generate_xmods ALL DEPENDS ${ISO_C_BINDING_XMOD} ${ISO_FORTRAN_ENV_XMOD})
+add_custom_target(std-lib-xmods ALL DEPENDS ${ISO_C_BINDING_XMOD} ${ISO_FORTRAN_ENV_XMOD})
 
 
 

@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12)
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckTypeSize)
 include(UseJava)
+include(ProcessorCount)
 include(cmake/git.cmake)
 
 set(DEFAULT_BUILD_TYPE "Release")
@@ -76,6 +77,8 @@ endif()
 set(INT_OMNI_HOME "${CMAKE_BINARY_DIR}/home")
 set(INT_OMNI_HOME_BIN "${INT_OMNI_HOME}/bin")
 set(INT_OMNI_FFRONT "${INT_OMNI_HOME_BIN}/F_Front")
+set(INT_OMNI_FFRONT_CPP "${INT_OMNI_HOME_BIN}/ffront-cpp")
+set(INT_OMNI_FBACK "${INT_OMNI_HOME_BIN}/F_Back")
 set(INT_OMNI_HOME_FINCLUDES "${INT_OMNI_HOME}/fincludes")
 set(INT_OMNI_HOME_SHARE "${INT_OMNI_HOME}/share")
 
@@ -110,4 +113,39 @@ set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
 add_subdirectory(XcodeML-Common/src)
 add_subdirectory(F-BackEnd/src)
 add_subdirectory(Driver/bin)
+
+add_custom_target(build-c-install DEPENDS ffront om-f-back fback-driver std-lib-xmods)
+add_custom_target(build-cpp-install DEPENDS ffront-cpp om-f-back fback-driver std-lib-xmods)
+
+find_package(Python 3.6)
+
+if(${Python_FOUND})
+  set(TEST_FFRONT_C_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-c)
+  set(TEST_FFRONT_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-cpp)
+  set(TESTS_RUNNER ${CMAKE_SOURCE_DIR}/F-FrontEnd/src/tests-runner.py)
+
+  ProcessorCount(MAX_PARALLEL_TESTS)
+
+  add_custom_target(test-ffront-c)
+  add_custom_command(
+   TARGET test-ffront-c
+   COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_C_WORKING_DIR}
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_C_WORKING_DIR}
+   COMMAND ${Python_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+             -w ${TEST_FFRONT_C_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
+   COMMENT "Testing ffront C executable")
+  add_dependencies(test-ffront-c build-c-install)
+
+  add_custom_target(test-ffront-cpp)
+  add_custom_command(
+   TARGET test-ffront-cpp
+   COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_CPP_WORKING_DIR}
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_CPP_WORKING_DIR}
+   COMMAND ${Python_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+             -w ${TEST_FFRONT_C_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
+   COMMENT "Testing ffront CPP executable")
+  add_dependencies(test-ffront-cpp build-cpp-install)
+else()
+  message(WARNING "Python not found, testing targets will be unavailable")
+endif()
 
