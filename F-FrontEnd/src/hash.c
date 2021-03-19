@@ -103,12 +103,11 @@ static HashEntry *OneWordCreate(HashTable *tablePtr, const void *key,
  */
 
 void InitHashTable(
-    tablePtr,
-    keyType) register HashTable *tablePtr; /* Pointer to table record, which
-                                            * is supplied by the caller. */
-int keyType;                               /* Type of keys to use in table:
-                                            * HASH_STRING_KEYS, HASH_ONE_WORD_KEYS,
-                                            * or an integer >= 2. */
+        register HashTable *tablePtr, /* Pointer to table record, which
+                                                * is supplied by the caller. */
+       int keyType                               /* Type of keys to use in table:
+                                                   * HASH_STRING_KEYS, HASH_ONE_WORD_KEYS,
+                                                   * or an integer >= 2. */)
 {
     tablePtr->buckets = tablePtr->staticBuckets;
     tablePtr->staticBuckets[0] = tablePtr->staticBuckets[1] = 0;
@@ -150,7 +149,7 @@ int keyType;                               /* Type of keys to use in table:
  *----------------------------------------------------------------------
  */
 
-void DeleteHashEntry(entryPtr) HashEntry *entryPtr;
+void DeleteHashEntry(HashEntry *entryPtr)
 {
     register HashEntry *prevPtr;
 
@@ -189,8 +188,7 @@ void DeleteHashEntry(entryPtr) HashEntry *entryPtr;
  *----------------------------------------------------------------------
  */
 
-void DeleteHashTable(
-    tablePtr) register HashTable *tablePtr; /* Table to delete. */
+void DeleteHashTable(register HashTable *tablePtr /* Table to delete. */)
 {
     register HashEntry *hPtr, *nextPtr;
     int i;
@@ -247,10 +245,9 @@ void DeleteHashTable(
  *----------------------------------------------------------------------
  */
 
-HashEntry *FirstHashEntry(tablePtr,
-                          searchPtr) HashTable *tablePtr; /* Table to search. */
-HashSearch *searchPtr; /* Place to store information about
-                        * progress through the table. */
+HashEntry *FirstHashEntry(HashTable *tablePtr, /* Table to search. */
+		HashSearch *searchPtr /* Place to store information about
+		                        * progress through the table. */)
 {
     searchPtr->tablePtr = tablePtr;
     searchPtr->nextIndex = 0;
@@ -277,8 +274,7 @@ HashSearch *searchPtr; /* Place to store information about
  *----------------------------------------------------------------------
  */
 
-HashEntry *NextHashEntry(searchPtr) register HashSearch
-    *searchPtr; /* Place to store information about
+HashEntry *NextHashEntry(register HashSearch *searchPtr)  /* Place to store information about
                  * progress through the table.  Must
                  * have been initialized by calling
                  * FirstHashEntry. */
@@ -317,8 +313,7 @@ HashEntry *NextHashEntry(searchPtr) register HashSearch
  *----------------------------------------------------------------------
  */
 
-char *HashStats(
-    tablePtr) HashTable *tablePtr; /* Table for which to produce stats. */
+char *HashStats(HashTable *tablePtr) /* Table for which to produce stats. */
 {
 #define NUM_COUNTERS 10
     int count[NUM_COUNTERS], overflow, i, j;
@@ -386,8 +381,8 @@ char *HashStats(
  *----------------------------------------------------------------------
  */
 
-static unsigned int HashString(string) register const
-    char *string; /* String from which to compute hash value. */
+static unsigned int HashString(register const
+	    char *string) /* String from which to compute hash value. */
 {
     register unsigned int result;
     register int c;
@@ -439,22 +434,21 @@ static unsigned int HashString(string) register const
  */
 
 static HashEntry *
-    StringFind(tablePtr,
-               key) HashTable *tablePtr; /* Table in which to lookup entry. */
-const void *key; /* Key to use to find matching entry. */
+    StringFind(HashTable *tablePtr, /* Table in which to lookup entry. */
+    		const void *key /* Key to use to find matching entry. */)
 {
     register HashEntry *hPtr;
     register const char *p1, *p2;
     int index;
 
-    index = HashString(key) & tablePtr->mask;
+    index = HashString((const char *)key) & tablePtr->mask;
 
     /*
      * Search all of the entries in the appropriate bucket.
      */
 
     for (hPtr = tablePtr->buckets[index]; hPtr != NULL; hPtr = hPtr->nextPtr) {
-        for (p1 = key, p2 = hPtr->key.string;; p1++, p2++) {
+        for (p1 = (const char *)key, p2 = hPtr->key.string;; p1++, p2++) {
             if (*p1 != *p2) {
                 break;
             }
@@ -487,25 +481,25 @@ const void *key; /* Key to use to find matching entry. */
  *----------------------------------------------------------------------
  */
 
-static HashEntry *StringCreate(tablePtr, key, newPtr)
-    HashTable *tablePtr; /* Table in which to lookup entry. */
-const void *key;         /* Key to use to find or create matching
-                          * entry. */
-int *newPtr;             /* Store info here telling whether a new
-                          * entry was created. */
+static HashEntry *StringCreate(HashTable *tablePtr, /* Table in which to lookup entry. */
+		const void *key,         /* Key to use to find or create matching
+		                          * entry. */
+		int *newPtr             /* Store info here telling whether a new
+		                          * entry was created. */)
+
 {
     register HashEntry *hPtr;
     register const char *p1, *p2;
     int index;
 
-    index = HashString(key) & tablePtr->mask;
+    index = HashString((const char*)key) & tablePtr->mask;
 
     /*
      * Search all of the entries in this bucket.
      */
 
     for (hPtr = tablePtr->buckets[index]; hPtr != NULL; hPtr = hPtr->nextPtr) {
-        for (p1 = key, p2 = hPtr->key.string;; p1++, p2++) {
+        for (p1 = (const char*)key, p2 = hPtr->key.string;; p1++, p2++) {
             if (*p1 != *p2) {
                 break;
             }
@@ -522,12 +516,12 @@ int *newPtr;             /* Store info here telling whether a new
 
     *newPtr = 1;
     hPtr = (HashEntry *)malloc(
-        (unsigned)(sizeof(HashEntry) + strlen(key) - (sizeof(hPtr->key) - 1)));
+        (unsigned)(sizeof(HashEntry) + strlen((const char*)key) - (sizeof(hPtr->key) - 1)));
     hPtr->tablePtr = tablePtr;
     hPtr->bucketPtr = &(tablePtr->buckets[index]);
     hPtr->nextPtr = *hPtr->bucketPtr;
     hPtr->clientData = 0;
-    strcpy(hPtr->key.string, key);
+    strcpy(hPtr->key.string, (const char*)key);
     *hPtr->bucketPtr = hPtr;
     tablePtr->numEntries++;
 
@@ -561,9 +555,8 @@ int *newPtr;             /* Store info here telling whether a new
  */
 
 static HashEntry *
-    OneWordFind(tablePtr,
-                key) HashTable *tablePtr; /* Table in which to lookup entry. */
-register const void *key; /* Key to use to find matching entry. */
+    OneWordFind(HashTable *tablePtr, /* Table in which to lookup entry. */
+    		register const void *key /* Key to use to find matching entry. */)
 {
     register HashEntry *hPtr;
     int index;
@@ -603,12 +596,11 @@ register const void *key; /* Key to use to find matching entry. */
  *----------------------------------------------------------------------
  */
 
-static HashEntry *OneWordCreate(tablePtr, key, newPtr)
-    HashTable *tablePtr;  /* Table in which to lookup entry. */
-register const void *key; /* Key to use to find or create matching
-                           * entry. */
-int *newPtr;              /* Store info here telling whether a new
-                           * entry was created. */
+static HashEntry *OneWordCreate(HashTable *tablePtr,  /* Table in which to lookup entry. */
+		register const void *key,/* Key to use to find or create matching
+		                           * entry. */
+		int *newPtr              /* Store info here telling whether a new
+		                           * entry was created. */)
 {
     register HashEntry *hPtr;
     int index;
@@ -670,9 +662,8 @@ int *newPtr;              /* Store info here telling whether a new
  */
 
 static HashEntry *
-    ArrayFind(tablePtr,
-              key) HashTable *tablePtr; /* Table in which to lookup entry. */
-const void *key;                        /* Key to use to find matching entry. */
+    ArrayFind(HashTable *tablePtr, /* Table in which to lookup entry. */
+    		const void *key)                         /* Key to use to find matching entry. */
 {
     register HashEntry *hPtr;
     int *arrayPtr = (int *)key;
@@ -725,12 +716,11 @@ const void *key;                        /* Key to use to find matching entry. */
  *----------------------------------------------------------------------
  */
 
-static HashEntry *ArrayCreate(tablePtr, key, newPtr)
-    HashTable *tablePtr;  /* Table in which to lookup entry. */
-register const void *key; /* Key to use to find or create matching
-                           * entry. */
-int *newPtr;              /* Store info here telling whether a new
-                           * entry was created. */
+static HashEntry *ArrayCreate(HashTable *tablePtr,  /* Table in which to lookup entry. */
+		register const void *key, /* Key to use to find or create matching
+		                           * entry. */
+		int *newPtr              /* Store info here telling whether a new
+		                           * entry was created. */)
 {
     register HashEntry *hPtr;
     int *arrayPtr = (int *)key;
@@ -810,9 +800,8 @@ int *newPtr;              /* Store info here telling whether a new
 
 /* ARGSUSED */
 static HashEntry *
-    BogusFind(tablePtr,
-              key) HashTable *tablePtr; /* Table in which to lookup entry. */
-const void *key;                        /* Key to use to find matching entry. */
+    BogusFind(HashTable *tablePtr, /* Table in which to lookup entry. */
+    		const void *key                        /* Key to use to find matching entry. */)
 {
     fprintf(stderr, "called FindHashEntry on deleted table.\n");
     abort();
@@ -838,12 +827,12 @@ const void *key;                        /* Key to use to find matching entry. */
  */
 
 /* ARGSUSED */
-static HashEntry *BogusCreate(tablePtr, key, newPtr)
-    HashTable *tablePtr; /* Table in which to lookup entry. */
-const void *key;         /* Key to use to find or create matching
-                          * entry. */
-int *newPtr;             /* Store info here telling whether a new
-                          * entry was created. */
+static HashEntry *BogusCreate(HashTable *tablePtr, /* Table in which to lookup entry. */
+		const void *key,         /* Key to use to find or create matching
+		                          * entry. */
+		int *newPtr             /* Store info here telling whether a new
+		                          * entry was created. */)
+
 {
     fprintf(stderr, "called CreateHashEntry on deleted table.\n");
     abort();
@@ -871,7 +860,7 @@ int *newPtr;             /* Store info here telling whether a new
  */
 
 static void
-    RebuildTable(tablePtr) register HashTable *tablePtr; /* Table to enlarge. */
+    RebuildTable(register HashTable *tablePtr /* Table to enlarge. */)
 {
     int oldSize, count, index;
     HashEntry **oldBuckets;

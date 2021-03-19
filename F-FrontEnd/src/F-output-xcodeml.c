@@ -701,7 +701,7 @@ static void outx_intAsConst(int l, omllint_t n)
  */
 static int hasStringQuote(const char *str)
 {
-    char *s = strchr(str, '"');
+    const char *s = strchr(str, '"');
     if (s != NULL) {
         return STR_HAS_DBL_QUOTE;
     } else if ((s = strchr(str, '\'')) != NULL) {
@@ -760,8 +760,11 @@ static const char *getRawString(expv v)
             char buf1[CHAR_BUF_SIZE], buf2[CHAR_BUF_SIZE];
             strncpy(buf1, getRawString(EXPR_ARG1(v)), CHAR_BUF_SIZE);
             strncpy(buf2, getRawString(EXPR_ARG2(v)), CHAR_BUF_SIZE);
-            snprintf(buf, CHAR_BUF_SIZE, "%s // %s", buf1, buf2);
-
+            int ret = snprintf(buf, CHAR_BUF_SIZE, "%s // %s", buf1, buf2);
+            if(ret < 0)
+            {
+            	fatal("Output truncated");
+            }
             break;
         }
         default:
@@ -1062,7 +1065,11 @@ static void outx_vtagLineno(int l, const char *tag, lineno_info *li,
                             va_list args)
 {
     static char buf1[CHAR_BUF_SIZE], buf2[CHAR_BUF_SIZE];
-    snprintf(buf1, sizeof(buf1), "<%s", tag);
+    int ret = snprintf(buf1, sizeof(buf1), "<%s", tag);
+    if(ret < 0)
+    {
+    	fatal("Output truncated");
+    }
     if (args != NULL) {
         vsnprintf(buf2, sizeof(buf2), buf1, args);
     } else {
@@ -2778,7 +2785,7 @@ static void outx_OMP_pragma(int l, expv v)
 
 static void outx_OMP_dir_string(int l, expv v)
 {
-    char *s;
+    const char *s;
     s = NULL;
     if (EXPV_CODE(v) != INT_CONSTANT)
         fatal("outx_OMP_dir_string: not INT_CONSTANT");
@@ -2834,7 +2841,7 @@ static void outx_OMP_dir_string(int l, expv v)
     outx_printi(l, "<string>%s</string>\n", s);
 }
 
-static void outx_OMP_DATA_DEFAULT_kind(int l, char *s, expv v)
+static void outx_OMP_DATA_DEFAULT_kind(int l, const char *s, expv v)
 {
     outx_printi(l + 2, "<string>%s</string>\n", s);
     // printf("EXPV_INT_VALUE(%d)\n",EXPV_INT_VALUE(v));
@@ -2855,7 +2862,7 @@ static void outx_OMP_DATA_DEFAULT_kind(int l, char *s, expv v)
     outx_printi(l + 1, "</list>\n");
 }
 
-static void outx_OMP_sched_kind(int l, char *s, expv v)
+static void outx_OMP_sched_kind(int l, const char *s, expv v)
 {
     expr vv = EXPR_ARG2(v);
     outx_printi(l + 2, "<string>%s</string>\n", s);
@@ -2897,7 +2904,7 @@ static void outx_OMP_dir_clause_list(int l, expv v)
     struct list_node *lp;
     const int l1 = l + 1;
     expv vv, dir;
-    char *s = NULL;
+    const char *s = NULL;
 
     if (EXPV_CODE(v) != LIST)
         fatal("outx_OMP_dir_clause_list: not LIST");
@@ -3043,7 +3050,7 @@ static void outx_XMP_pragma(int l, expv v)
 
 static void outx_XMP_dir_string(int l, expv v)
 {
-    char *s = NULL;
+    const char *s = NULL;
 
     if (EXPV_CODE(v) != INT_CONSTANT)
         fatal("outx_XMP_dir_string: not INT_CONSTANT");
@@ -3175,7 +3182,7 @@ static void outx_ACC_pragma(int l, expv v)
 
 static void outx_ACC_dir_string(int l, expv v)
 {
-    char *s = NULL;
+    const char *s = NULL;
 
     if (EXPV_CODE(v) != INT_CONSTANT)
         fatal("outx_ACC_dir_string: not INT_CONSTANT");
@@ -3254,7 +3261,7 @@ static void outx_ACC_dir_string(int l, expv v)
 
 static void outx_ACC_clause_string(int l, expv v)
 {
-    char *s = NULL;
+    const char *s = NULL;
 
     if (EXPV_CODE(v) != INT_CONSTANT)
         fatal("outx_ACC_dir_string: not INT_CONSTANT");

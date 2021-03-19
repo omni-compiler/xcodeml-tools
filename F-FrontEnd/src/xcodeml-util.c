@@ -38,9 +38,9 @@ bool xcodeml_getAsBool(XcodeMLNode *ndPtr)
 /**
  * Gets a content of XcodeMLNode as string.
  */
-char *xcodeml_getAsString(XcodeMLNode *ndPtr)
+const char *xcodeml_getAsString(XcodeMLNode *ndPtr)
 {
-    char *content = NULL;
+    const char *content = NULL;
 
     if (ndPtr == NULL) {
         return NULL;
@@ -76,7 +76,7 @@ char *xcodeml_getAsString(XcodeMLNode *ndPtr)
  *        <br/> returns object if object is element.
  *        <br/> returns content if object is attribute.
  */
-XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, char *name)
+XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, const char *name)
 {
     XcodeMLNode *x;
     XcodeMLList *lp;
@@ -202,7 +202,7 @@ void pop_filter(void)
  * @param use a symbol will be used in a new environment.
  * @param local a local name of symbol.
  */
-void symbol_filter_addElem(symbol_filter *filter, char *use, char *local)
+void symbol_filter_addElem(symbol_filter *filter, const char *use, const char *local)
 {
     symbol_filterElem *newElm =
         XMALLOC(symbol_filterElem *, sizeof(symbol_filterElem));
@@ -221,7 +221,7 @@ void symbol_filter_addElem(symbol_filter *filter, char *use, char *local)
  *     <br> if return value is not NULL then it is the symbol itself of a local
  * name of it.
  */
-char *apply_filter(symbol_filter *filter, char *symbol)
+const char *apply_filter(symbol_filter *filter, const char *symbol)
 {
     if (filter == NULL || symbol == NULL)
         return symbol;
@@ -275,7 +275,7 @@ char *apply_filter(symbol_filter *filter, char *symbol)
 /**
  * return if the symbol is in USE list.
  */
-int is_use_symbol(char *symbol)
+int is_use_symbol(const char *symbol)
 {
     symbol_filterElem *filterElem;
     symbol_filter *filter;
@@ -306,13 +306,13 @@ int is_use_symbol(char *symbol)
 /**
  * get alternative symbol of which is not in use only list.
  */
-char *convert_to_non_use_symbol(char *orgname)
+char *convert_to_non_use_symbol(const char *orgname)
 {
     char *symbol;
     symbol_filter *filter;
     filter = peek_filter();
     assert(filter);
-    symbol = malloc(strlen(orgname) + 16);
+    symbol = (char*)malloc(strlen(orgname) + 16);
     sprintf(symbol, "u%d_%s_", filter->nonUseSymbolNumber, orgname);
     return symbol;
 }
@@ -320,7 +320,7 @@ char *convert_to_non_use_symbol(char *orgname)
 /**
  * Gets the FfunctionDefition by the name.
  */
-XcodeMLNode *get_funcDef(XcodeMLNode *defs, char *name)
+XcodeMLNode *get_funcDef(XcodeMLNode *defs, const char *name)
 {
     XcodeMLList *lp;
 
@@ -330,7 +330,7 @@ XcodeMLNode *get_funcDef(XcodeMLNode *defs, char *name)
     FOR_ITEMS_IN_XCODEML_LIST (lp, defs) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
         XcodeMLNode *nameTag;
-        char *func_name;
+        const char *func_name;
 
         if (x == defs)
             continue;

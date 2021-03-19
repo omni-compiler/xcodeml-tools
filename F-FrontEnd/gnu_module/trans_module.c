@@ -766,7 +766,7 @@ static ID  make_id( gfc_symbol *sym , const char *name )
 
        if (sym->attr.flavor == FL_MODULE) {
    
-          id->class = CL_MODULE;
+          id->cls = CL_MODULE;
           id->stg   = STG_EXT;
           id->type->basic_type = TYPE_MODULE;
           id->type->attr.exflags = 16;
@@ -778,10 +778,10 @@ static ID  make_id( gfc_symbol *sym , const char *name )
        } else if (sym->attr.flavor == FL_PARAMETER) {
 
           if(sym->attr.dimension) {
-             id->class = CL_VAR;
+             id->cls = CL_VAR;
              id->stg   = STG_SAVE;
           } else {
-             id->class = CL_PARAM;
+             id->cls = CL_PARAM;
              id->stg   = STG_UNKNOWN;
              if (sym->attr.in_common) {
                 id->stg = STG_COMMON;
@@ -951,7 +951,7 @@ static ID  make_id( gfc_symbol *sym , const char *name )
 
        } else if (sym->attr.flavor == FL_VARIABLE) {
 
-          id->class = CL_VAR;
+          id->cls = CL_VAR;
           if (sym->attr.in_common) {
              id->stg = STG_COMMON;
           } else {
@@ -968,7 +968,7 @@ static ID  make_id( gfc_symbol *sym , const char *name )
 
        } else if (sym->attr.flavor == FL_DERIVED) {
 
-          id->class = CL_TAGNAME;
+          id->cls = CL_TAGNAME;
           id->stg = STG_TAGNAME;
           id->use_assoc = make_assoc_info( sym , 6 );
           id->type = make_type_w(sym, 6);
@@ -980,7 +980,7 @@ static ID  make_id( gfc_symbol *sym , const char *name )
          
              member = XMALLOC(ID , sizeof(*member)) ;
 
-             member->class = CL_ELEMENT;
+             member->cls = CL_ELEMENT;
              member->stg = STG_UNKNOWN;
              member->name = XMALLOC(SYMBOL, sizeof(struct symbol));
              member->name->s_name = component->name;
@@ -1019,7 +1019,7 @@ static ID  make_id( gfc_symbol *sym , const char *name )
           }
           id->type->attr.type_attr_flags = 0;
 
-          id->class = CL_PROC;
+          id->cls = CL_PROC;
           id->stg   = STG_EXT;
           id->is_declared  = 1;
           id->attr.exflags = 2;
@@ -1207,7 +1207,7 @@ static void trans_symbol_generic(gfc_symtree *st )
                          if (e_lp0->l_item!=NULL){
                             generic_id = XMALLOC(ID,sizeof(*id));
                             generic_id->next = NULL;
-                            generic_id->class = CL_VAR;
+                            generic_id->cls = CL_VAR;
                             generic_id->stg = STG_ARG;
                             generic_id->type = e_lp0->l_item->v.e_lp->l_item->e_type;
                             generic_id->line = XMALLOC(struct line_info *, sizeof(*generic_id->line));

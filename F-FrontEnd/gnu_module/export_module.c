@@ -8,7 +8,7 @@
 #include "import_module.h"
 
 /* generated from C-exprcode.def */
-struct expr_code_info expr_code_info[] = {
+struct const expr_code_info expr_code_info[] = {
 /* 0 */ {       'T',    "ERROR_NODE",   NULL},
 /* 1 */ {       'T',    "IDENT",        NULL},
 /* 2 */ {       'T',    "STRING_CONSTANT",      NULL},
@@ -380,13 +380,13 @@ NextHashEntry(searchPtr)
 
 #define bzero(p, s)     memset((p), 0, (s))
 
-extern void     fatal EXC_VARARGS(char *, fmt);
+extern void     fatal EXC_VARARGS(const char *, fmt);
 
 
 /* compiler error: die */
 /* VARARGS1 */
 void
-fatal EXC_VARARGS_DEF(char *, fmt)
+fatal EXC_VARARGS_DEF(const char *, fmt)
 {
     va_list args;
 
@@ -429,23 +429,21 @@ struct list_node *cons_list(x,l)
     return(lp);
 }
 
-expr list2(code,x1,x2)
-     enum expr_code code;
-     expr x1,x2;
+expr list2(enum expr_code code,
+	     expr x1,
+		 expr x2)
+
 {
     return(make_enode(code,(void *)cons_list(x1,cons_list(x2,NULL))));
 }
 
-expr list3(code,x1,x2,x3)
-     enum expr_code code;
-     expr x1,x2,x3;
+expr list3(enum expr_code code, expr x1,expr x2,expr x3)
 {
     return(make_enode(code,(void *)cons_list(x1,cons_list(x2,cons_list(x3,NULL)))));
 }
 
-expr list_put_last(lx,x)
-     expr lx;
-     expr x;
+expr list_put_last(expr lx, expr x)
+
 {
     struct list_node *lp;
 
@@ -471,10 +469,9 @@ expr list_put_last(lx,x)
  * F-mem.c
  *************/
 expv
-expv_int_term(code, tp, i)
-     enum expr_code code;
-     TYPE_DESC tp;
-     omllint_t i;
+expv_int_term(enum expr_code code,
+	     TYPE_DESC tp,
+	     omllint_t i)
 {
     expv v;
 
@@ -486,9 +483,8 @@ expv_int_term(code, tp, i)
 }
 
 expv
-expv_any_term(code,p)
-     enum expr_code code;
-     void *p;
+expv_any_term(enum expr_code code,
+	     void *p)
 {
     expv v;
 
@@ -501,11 +497,10 @@ expv_any_term(code,p)
 
 
 expv
-expv_float_term(code,tp,d,token)
-     enum expr_code code;
-     TYPE_DESC tp;
-     omldouble_t d;
-     const char *token;
+expv_float_term(enum expr_code code,
+TYPE_DESC tp,
+omldouble_t d,
+const char *token)
 {
     expv v;
 
@@ -518,9 +513,9 @@ expv_float_term(code,tp,d,token)
 }
 
 expr
-expr_list_get_n(x, n)
-     expr x;
-     int n;
+expr_list_get_n(expr x,
+	     int n)
+
 {
     list lp;
     int i;

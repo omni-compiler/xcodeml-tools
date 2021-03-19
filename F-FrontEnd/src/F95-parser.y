@@ -500,8 +500,8 @@ extern int      yylex _ANSI_ARGS_((void));
 static int      yylex0 _ANSI_ARGS_((void));
 static void     flush_line _ANSI_ARGS_((void));
 
-static void set_pragma_str _ANSI_ARGS_((char *p));
-static void append_pragma_str _ANSI_ARGS_((char *p));
+static void set_pragma_str _ANSI_ARGS_((const char *p));
+static void append_pragma_str _ANSI_ARGS_((const char *p));
 
 #define GEN_NODE(TYPE, VALUE) make_enode((TYPE), ((void *)((_omAddrInt_t)(VALUE))))
 #define OMP_LIST(op, args) list2(LIST, GEN_NODE(INT_CONSTANT, op), args)

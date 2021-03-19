@@ -118,12 +118,12 @@ static int expr_is_type_param_typeof(expr x, BASIC_DATA_TYPE bt)
     return FALSE;
 }
 
-int expr_is_param(x) expr x;
+int expr_is_param(expr x)
 {
     return expr_is_param_typeof(x, TYPE_UNKNOWN);
 }
 
-int expr_has_param(x) expr x;
+int expr_has_param(expr x)
 {
     if (x == NULL)
         return FALSE;
@@ -142,12 +142,12 @@ int expr_has_param(x) expr x;
     return FALSE;
 }
 
-int expr_is_type_param(x) expr x;
+int expr_is_type_param(expr x)
 {
     return expr_is_type_param_typeof(x, TYPE_UNKNOWN);
 }
 
-int expr_has_type_param(x) expr x;
+int expr_has_type_param(expr x)
 {
     if (x == NULL)
         return FALSE;
@@ -228,13 +228,12 @@ int intrinsic_call_is_constant_expression(const ID id, const expr arg)
     return FALSE;
 }
 
-int expr_is_constant(x) expr x;
+int expr_is_constant(expr x)
 {
     return expr_is_constant_typeof(x, TYPE_UNKNOWN);
 }
 
-int expr_is_constant_typeof(x, bt) expr x;
-BASIC_DATA_TYPE bt;
+int expr_is_constant_typeof(expr x, BASIC_DATA_TYPE bt)
 {
     switch (EXPR_CODE(x)) {
         /* terminal */
@@ -370,7 +369,7 @@ BASIC_DATA_TYPE bt;
 
         case FUNCTION_CALL: {
 
-            char *name = NULL;
+            const char *name = NULL;
             SYMBOL s = EXPV_NAME(EXPR_ARG1(x));
             ID fId = find_ident(s);
             expv v;
@@ -411,8 +410,7 @@ BASIC_DATA_TYPE bt;
     return FALSE;
 }
 
-static expv getTerminalExpr(x, l) expr x;
-expv l;
+static expv getTerminalExpr(expr x, expv l)
 {
     if (l == NULL) {
         l = list0(LIST);
@@ -428,7 +426,7 @@ expv l;
     return l;
 }
 
-static TYPE_DESC getConstExprType(x) expr x;
+static TYPE_DESC getConstExprType(expr x)
 {
     expv l = getTerminalExpr(x, NULL);
     list lp;
@@ -476,10 +474,10 @@ expv expr_constant_value(expr x)
                     break;
                 }
                 if (!(IS_NUMERIC(tp))) {
-                    expv new = expv_reduce(compile_expression(x), FALSE);
-                    if (new != NULL) {
-                        if (expr_is_constant(new)) {
-                            ret = new;
+                    expv new_expv = expv_reduce(compile_expression(x), FALSE);
+                    if (new_expv != NULL) {
+                        if (expr_is_constant(new_expv)) {
+                            ret = new_expv;
                         }
                     }
                 } else {
@@ -491,10 +489,10 @@ expv expr_constant_value(expr x)
                         }
 
                         default: {
-                            expv new =
+                            expv new_expv =
                                 expv_reduce(compile_expression(x), FALSE);
-                            if (expr_is_constant(new) == TRUE) {
-                                ret = new;
+                            if (expr_is_constant(new_expv) == TRUE) {
+                                ret = new_expv;
                             }
                             break;
                         }
@@ -515,7 +513,7 @@ expv expr_constant_value(expr x)
     return ret;
 }
 
-expv expr_label_value(x) expr x;
+expv expr_label_value(expr x)
 {
     expv v = expr_constant_value(x);
     if (v == NULL)
@@ -561,9 +559,7 @@ Done:
     return ret;
 }
 
-int expr_is_array(x, force, idPtr) expr x;
-int force;
-ID *idPtr;
+int expr_is_array(expr x, int force, ID *idPtr)
 {
     ID id = NULL;
     int ret = FALSE;
@@ -587,20 +583,19 @@ ID *idPtr;
     return ret;
 }
 
-static void getArrayDimSpec(tp, new) TYPE_DESC tp;
-expv new;
+static void getArrayDimSpec(TYPE_DESC tp, expv new_expv)
 {
     if (IS_ARRAY_TYPE(tp) && TYPE_REF(tp) != NULL) {
         expv sV;
         fix_array_dimensions(tp);
-        getArrayDimSpec(TYPE_REF(tp), new);
+        getArrayDimSpec(TYPE_REF(tp), new_expv);
         sV = list3(LIST, TYPE_DIM_SIZE(tp), TYPE_DIM_LOWER(tp),
                    TYPE_DIM_UPPER(tp));
-        list_put_last(new, sV);
+        list_put_last(new_expv, sV);
     }
 }
 
-expv id_array_dimension_list(id) ID id;
+expv id_array_dimension_list(ID id)
 {
     expv ret = NULL;
 
@@ -611,7 +606,7 @@ expv id_array_dimension_list(id) ID id;
     return ret;
 }
 
-expv id_array_spec_list(id) ID id;
+expv id_array_spec_list(ID id)
 {
     expv ret = NULL;
 
@@ -624,8 +619,7 @@ expv id_array_spec_list(id) ID id;
     return ret;
 }
 
-expv expr_array_spec_list(x, idPtr) expr x;
-ID *idPtr;
+expv expr_array_spec_list(expr x, ID *idPtr)
 {
     ID id = NULL;
     expv ret = NULL;
@@ -651,10 +645,10 @@ Done:
 }
 
 int compute_element_offset(
-    aSpec, idxV) expv aSpec; /* VAR_ARRAY_INFO(id)
-                                or
-                                expr_array_spec_list(expr, ID *) */
-expv idxV; /* (LIST (INT_CONSTANT xx) (INT_CONSTANT xx) ...) */
+		expv aSpec, /* VAR_ARRAY_INFO(id)
+		                                or
+		                                expr_array_spec_list(expr, ID *) */
+		expv idxV /* (LIST (INT_CONSTANT xx) (INT_CONSTANT xx) ...) */)
 {
     int mul = 1;
     int off = 0;
@@ -688,7 +682,7 @@ expv idxV; /* (LIST (INT_CONSTANT xx) (INT_CONSTANT xx) ...) */
     return off;
 }
 
-expv expr_array_index(x) expr x;
+expv expr_array_index(expr x)
 {
     expr idx;
     list lp;

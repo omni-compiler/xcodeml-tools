@@ -55,7 +55,7 @@ typedef struct XcodeMLListRec {
         for (lp = XCODEML_LIST(x); lp != NULL; lp = XCODEML_LIST_NEXT(lp))
 
 extern XcodeMLNode *xcodeml_CreateGenericNode(XcodeMLNodeTypeT t, void *v);
-extern XcodeMLNode *xcodeml_CreateValueNode(char *s);
+extern XcodeMLNode *xcodeml_CreateValueNode(const char *s);
 
 extern XcodeMLNode *xcodeml_CreateList0(XcodeMLNodeTypeT t);
 extern XcodeMLNode *xcodeml_CreateList1(XcodeMLNodeTypeT t, XcodeMLNode *x1);

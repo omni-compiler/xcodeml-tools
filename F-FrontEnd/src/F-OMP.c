@@ -25,7 +25,7 @@ static enum OMP_st_pragma OMP_st_required, OMP_st_flag;
 
 int OMP_reduction_op(expr v)
 {
-    char *s;
+    const char *s;
     if (EXPR_CODE(v) != IDENT)
         fatal("OMP_reduction_op: no IDENT");
     s = SYM_NAME(EXPR_SYM(v));
@@ -46,7 +46,7 @@ int OMP_reduction_op(expr v)
 
 int OMP_depend_op(expv v)
 {
-    char *s;
+    const char *s;
     if (EXPR_CODE(v) != IDENT)
         fatal("OMP_depend_op: no IDENT");
     s = SYM_NAME(EXPR_SYM(v));
@@ -854,7 +854,7 @@ void compile_OMP_name_list(expr x)
 }
 
 struct {
-    char *runtime_name;
+    const char *runtime_name;
     BASIC_DATA_TYPE type;
 } omp_runtime_table[] = {
     {"omp_set_num_threads", TYPE_SUBR}, {"omp_get_num_threads", TYPE_INT},
@@ -868,7 +868,7 @@ struct {
 
 void check_OMP_runtime_function(ID id)
 {
-    char *s, *ss;
+    const char *s, *ss;
     int i;
     TYPE_DESC tp;
     BASIC_DATA_TYPE t;
