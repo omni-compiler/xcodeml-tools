@@ -96,11 +96,13 @@ set(ADDITIONAL_CLEAN_FILES "")
 LIST(APPEND ADDITIONAL_CLEAN_FILES ${INT_OMNI_HOME})
 SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${ADDITIONAL_CLEAN_FILES}")
 
+add_subdirectory(include)
+
 if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
-  add_compile_options(-Werror=implicit-function-declaration)
+  set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -Werror)
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fno-permissive)
 endif()
 
-add_subdirectory(include)
 add_subdirectory(F-FrontEnd/src)
 
 set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
