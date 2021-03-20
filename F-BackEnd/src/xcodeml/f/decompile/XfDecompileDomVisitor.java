@@ -24,7 +24,7 @@ import xcodeml.f.util.XmfWriter;
 import xcodeml.f.util.XmfNodeVisitorMap.Pair;
 import xcodeml.util.XmDomUtil;
 import xcodeml.util.XmTranslationException;
-import xcodeml.util.XmOption;
+import xcodeml.util.IXmOption;
 
 /**
  * Decompiler of XcodeML/F DOM nodes.
@@ -51,7 +51,9 @@ XfDecompileDomVisitor {
     static final int PRIO_DEFINED_UNARY = 12;
     static final int PRIO_HIGH = 13;
 
-    static boolean in_interface = false;
+    boolean in_interface = false;
+
+    final IXmOption _xmOption;
 
     static public String nodeToString(Node n) {
         String ret = null;
@@ -99,6 +101,7 @@ XfDecompileDomVisitor {
         _invokeNodeStack = new InvokeNodeStack();
         _validator = new XfRuntimeDomValidator();
         visitorMap = new XmfNodeVisitorMap<XcodeNodeVisitor>(pairs);
+        _xmOption = context.getXmOption();
     }
 
     public void invokeEnter(Document doc) throws XmException {
@@ -1402,7 +1405,7 @@ XfDecompileDomVisitor {
         boolean need_paren;
         int op_prio = operator_priority(operation);
 
-        if (XmOption.isAddParEnabled() && (operation == "+" || operation == "-"
+        if (_xmOption.isAddParEnabled() && (operation == "+" || operation == "-"
           || operation == "*" || operation == "/" || operation == "**"))
         {
             grouping = true;
@@ -3806,7 +3809,7 @@ XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (XmOption.coarrayUseStatement()) {
+            if (_xmOption.coarrayUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
@@ -3881,7 +3884,7 @@ XfDecompileDomVisitor {
 
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (XmOption.coarrayUseStatement()) {
+            if (_xmOption.coarrayUseStatement()) {
                 writer.writeToken("use xmpf_coarray_decl");
                 writer.setupNewLine();
             }
@@ -4054,7 +4057,7 @@ XfDecompileDomVisitor {
                 writer.writeToken(content + "_" + kind);
             } else {
                 /* check minus number */
-                if(new Long(content).longValue() < 0)
+                if(Long.parseLong(content) < 0)
                     content = "("+content+")";
                 writer.writeToken(content);
             }
@@ -4322,7 +4325,7 @@ XfDecompileDomVisitor {
             // ========
             writer.incrementIndentLevel();
             typeManager.enterScope();
-            if (XmOption.coarrayUseStatement()) {
+            if (_xmOption.coarrayUseStatement()) {
               writer.writeToken("use xmpf_coarray_decl");
               writer.setupNewLine();
             }
@@ -6124,7 +6127,9 @@ XfDecompileDomVisitor {
          *             method was called it.
          * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.XbfId)
          */
-        @Override public void enter(Node n) {
+        @Deprecated
+        @Override
+        public void enter(Node n) {
             assert false;
         }
     }
@@ -6576,7 +6581,9 @@ XfDecompileDomVisitor {
          *             method was called it.
          * @see xcodeml.f.binding.gen.RVisitorBase#enter(xcodeml.f.binding.gen.XbfName)
          */
-        @Override public void enter(Node n) {
+        @Deprecated
+        @Override
+        public void enter(Node n) {
             assert false;
         }
     }
@@ -7678,7 +7685,7 @@ XfDecompileDomVisitor {
      */
     private Boolean _isNameDefinedWithUseStmt(String name) {
 
-      ArrayList<String> libnames = XmOption.getCoarrayEntryNames();
+      ArrayList<String> libnames = _xmOption.getCoarrayEntryNames();
 
       // check if the name is declared in module xmpf_coarray_decl
       if (libnames.contains(name)) {

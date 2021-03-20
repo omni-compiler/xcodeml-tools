@@ -23,11 +23,22 @@ public class XmBackEnd
     private BufferedReader _reader;
     private String _inputFilePath;
     private XmToolFactory _toolFactory;
-    
+    private final IXmOption _xmOption;
+
+    /**
+     * @deprecated Not thread-safe.
+     */
+    @Deprecated
     public XmBackEnd(String langId, String commandName) throws XmException
+    {
+        this(langId, commandName, new XmOptionStatic());
+    }
+
+    public XmBackEnd(String langId, String commandName, IXmOption xmOption) throws XmException
     {
         _commandName = commandName;
         _toolFactory = new XmToolFactory(langId);
+        _xmOption = xmOption;
     }
 
     private void _error(String s)
@@ -44,7 +55,7 @@ public class XmBackEnd
         System.out.flush();
         System.err.flush();
         System.err.println(s + " : " + e.getMessage());
-        if(XmOption.isDebugOutput())
+        if(_xmOption.isDebugOutput())
             e.printStackTrace();
         System.err.flush();
         System.exit(1);
@@ -116,11 +127,11 @@ public class XmBackEnd
                     outputFilePath = narg;
                     ++i;
                 } else if(arg.equals("-d")) {
-                    XmOption.setDebugOutput(true);
+                    _xmOption.setDebugOutput(true);
                 } else if(arg.equals("-x")) {
                     addXml = true;
                 } else if(arg.equals("-l")) {
-                    XmOption.setIsSuppressLineDirective(true);
+                    _xmOption.setIsSuppressLineDirective(true);
                 } else if (arg.equals("-w")) {
                     if (narg == null) {
                         _error("needs argument after -w.");
@@ -145,7 +156,7 @@ public class XmBackEnd
                 _error("Too many input files.");
             }
         }
-        XmOption.setCoarrayUseStatement(coarray_useStmt);
+        _xmOption.setCoarrayUseStatement(coarray_useStmt);
 
         if(!_openInputFile())
             return 1;
@@ -188,7 +199,7 @@ public class XmBackEnd
             }
 
             XmDecompiler decompiler = _toolFactory.createDecompiler();
-            XmDecompilerContext context = _toolFactory.createDecompilerContext();
+            XmDecompilerContext context = _toolFactory.createDecompilerContext(_xmOption);
             
             if(maxColumns > 0) {
                 context.setProperty(XmDecompilerContext.KEY_MAX_COLUMNS, "" + maxColumns);

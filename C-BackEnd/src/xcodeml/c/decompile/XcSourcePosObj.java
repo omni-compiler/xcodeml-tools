@@ -1,9 +1,7 @@
 package xcodeml.c.decompile;
 
-import xcodeml.util.XmException;
+import xcodeml.util.*;
 import xcodeml.c.util.XmcWriter;
-import xcodeml.util.XmOption;
-import xcodeml.util.XmStringUtil;
 
 /**
  * Internal object represents following elements:
@@ -20,6 +18,8 @@ public final class XcSourcePosObj implements XcAppendable
     /* line number of input file*/
     private int _rawLineNum;
 
+    private final IXmOption xmOption;
+
     /**
      * Creates a XcSourcePosObj.
      * 
@@ -27,13 +27,30 @@ public final class XcSourcePosObj implements XcAppendable
      * @param lineNum the line number in the source code.
      * @param rawLineNum the raw line number in the source code.
      */
+    @Deprecated
     public XcSourcePosObj(String filePath,
                           int lineNum,
                           int rawLineNum)
     {
+        this(filePath, lineNum, rawLineNum, new XmOptionStatic());
+    }
+
+    /**
+     * Creates a XcSourcePosObj.
+     *
+     * @param filePath the file path of the source code.
+     * @param lineNum the line number in the source code.
+     * @param rawLineNum the raw line number in the source code.
+     */
+    public XcSourcePosObj(String filePath,
+                          int lineNum,
+                          int rawLineNum,
+                          IXmOption xmOption)
+    {
         _filePath = XmStringUtil.trim(filePath);
         _lineNum = lineNum;
         _rawLineNum = rawLineNum;
+        this.xmOption = xmOption;
     }
 
     /**
@@ -43,10 +60,27 @@ public final class XcSourcePosObj implements XcAppendable
      * @param lineNumStr the line number in the source code.
      * @param rawLineNumStr the raw line number in the source code.
      */
+    @Deprecated
     public XcSourcePosObj(String filePath,
                           String lineNumStr,
                           String rawLineNumStr)
     {
+       this(filePath, lineNumStr, rawLineNumStr, new XmOptionStatic());
+    }
+
+    /**
+     * Creates a XcSourcePosObj.
+     *
+     * @param filePath the file path of the source code.
+     * @param lineNumStr the line number in the source code.
+     * @param rawLineNumStr the raw line number in the source code.
+     */
+    public XcSourcePosObj(String filePath,
+                          String lineNumStr,
+                          String rawLineNumStr,
+                          IXmOption xmOption)
+    {
+        this.xmOption = xmOption;
         _filePath = XmStringUtil.trim(filePath);
 
         if(lineNumStr != null) {
@@ -89,7 +123,7 @@ public final class XcSourcePosObj implements XcAppendable
     @Override
     public void appendCode(XmcWriter w) throws XmException
     {
-        if(XmOption.isSuppressLineDirective())
+        if(xmOption.isSuppressLineDirective())
             return;
 
         if(_lineNum <= 0 || _filePath == null)

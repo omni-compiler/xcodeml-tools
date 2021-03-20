@@ -3,6 +3,7 @@ package xcodeml.c.decompile;
 import java.util.ArrayList;
 import java.util.List;
 
+import xcodeml.util.IXmOption;
 import xcodeml.util.XmException;
 import xcodeml.c.obj.XcNode;
 import xcodeml.c.type.XcIdent;
@@ -11,6 +12,7 @@ import xcodeml.c.type.XcType;
 import xcodeml.c.type.XcTypeEnum;
 import xcodeml.c.util.XmcWriter;
 import xcodeml.util.XmOption;
+import xcodeml.util.XmOptionStatic;
 
 /**
  * Internal object represents following elements:
@@ -34,8 +36,16 @@ public final class XcProgramObj extends XcObj
 
     private XcFuncDefObj _xmpMain = null;
 
+    private final IXmOption xmOption;
+
+    @Deprecated
     public XcProgramObj()
     {
+        xmOption = new XmOptionStatic();
+    }
+    public XcProgramObj(IXmOption xmOption)
+    {
+        this.xmOption = xmOption;
     }
 
     public final void setIdentTable(XcIdentTable identTable)
@@ -197,7 +207,7 @@ public final class XcProgramObj extends XcObj
         //if(XmOption.isXcalableMP())
         //    w.add(XcXmpFactory.createXmpIncludeDirective());
 
-        if(XmOption.isSuppressLineDirective() == false) {
+        if(xmOption.isSuppressLineDirective() == false) {
             w.noLfOrLf().add("# 1 ").add("\"").add(_source).add("\"").lf();
         }
 

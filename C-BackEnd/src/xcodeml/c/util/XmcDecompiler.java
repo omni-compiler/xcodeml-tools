@@ -26,7 +26,7 @@ public class XmcDecompiler implements XmDecompiler
   
     @Override
     public void decompile(XmDecompilerContext context, Document xcode, Writer writer) throws XmException {
-        XcProgramObj prog = new XmcXcodeToXcTranslator().trans(xcode);
+        XcProgramObj prog = new XmcXcodeToXcTranslator().trans(xcode, ((XmcDecompilerContext)context).getXmOption());
         XmcWriter xmcWriter = new XmcWriter(writer);
         prog.writeTo(xmcWriter);
         xmcWriter.flush();

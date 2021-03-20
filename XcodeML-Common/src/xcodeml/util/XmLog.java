@@ -48,11 +48,23 @@ public class XmLog
             return e.getCause().getMessage();
         return e.getMessage();
     }
-    
+
+    @Deprecated
+    static final IXmOption xmOption = new XmOptionStatic();
+
+    /**
+     * @deprecated Not thread-safe.
+     */
+    @Deprecated
     public static void error(ILineNo lineNo, Exception e)
     {
+        error(lineNo, e, xmOption);
+    }
+
+    public static void error(ILineNo lineNo, Exception e, IXmOption xmOption)
+    {
         error(wrapLocation(lineNo, getExceptionMessage(e)));
-        if(XmOption.isDebugOutput())
+        if(xmOption.isDebugOutput())
             e.printStackTrace();
     }
     
@@ -103,10 +115,19 @@ public class XmLog
     {
         fatal(wrapLocation(lineNo, s));
     }
-    
+
+    /**
+     * @deprecated Not thread-safe.
+     */
+    @Deprecated
     public static void debug(String s)
     {
-        if(XmOption.isDebugOutput())
+        debug(s, xmOption);
+    }
+
+    public static void debug(String s, IXmOption xmOption)
+    {
+        if(xmOption.isDebugOutput())
             printlnToOut(s);
     }
     

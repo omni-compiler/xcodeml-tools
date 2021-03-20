@@ -8,12 +8,14 @@ package xcodeml.f.decompile;
 
 import xcodeml.f.util.XmfWriter;
 import xcodeml.util.XmDecompilerContext;
-import xcodeml.util.XmOption;
+import xcodeml.util.XmDecompilerContextWithXmOption;
+import xcodeml.util.IXmOption;
+import xcodeml.util.XmOptionStatic;
 
 /**
  * Decompile context.
  */
-public class XmfDecompilerContext implements XmDecompilerContext
+public class XmfDecompilerContext extends XmDecompilerContextWithXmOption
 {
     private int _maxColumnCount = XmfWriter.DEFAULT_MAX_COLUMN_COUNT;
     private String _lastErrorMessage = null;
@@ -24,8 +26,17 @@ public class XmfDecompilerContext implements XmDecompilerContext
 
     private Exception _lastCause;
 
+    @Deprecated
     public XmfDecompilerContext()
     {
+        super(new XmOptionStatic());
+        //_typeManager = new XfTypeManager();
+        _typeManagerForDom = new XfTypeManagerForDom();
+    }
+
+    public XmfDecompilerContext(IXmOption xmOption)
+    {
+        super(xmOption);
         //_typeManager = new XfTypeManager();
         _typeManagerForDom = new XfTypeManagerForDom();
     }
@@ -44,7 +55,7 @@ public class XmfDecompilerContext implements XmDecompilerContext
      */
     public boolean isDebugMode()
     {
-        return XmOption.isDebugOutput();
+        return getXmOption().isDebugOutput();
     }
     
     /**
@@ -61,7 +72,7 @@ public class XmfDecompilerContext implements XmDecompilerContext
      */
     public boolean isOutputLineDirective()
     {
-        return !XmOption.isSuppressLineDirective();
+        return !getXmOption().isSuppressLineDirective();
     }
 
     /**
@@ -70,7 +81,7 @@ public class XmfDecompilerContext implements XmDecompilerContext
      */
     public void setOutputLineDirective(boolean outputLineDirective)
     {
-        XmOption.setIsSuppressLineDirective(!outputLineDirective);
+        getXmOption().setIsSuppressLineDirective(!outputLineDirective);
     }
 
     /**
