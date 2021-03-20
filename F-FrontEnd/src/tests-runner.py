@@ -21,15 +21,12 @@ from typing import Tuple, NamedTuple, List, Optional, Dict, Union
 from textwrap import wrap
 from contextlib import contextmanager
 import datetime as dt
-from lxml import etree
 
 THIS_DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 TEST_DATA_DEFAULT_RELATIVE_PATH = '../../F-FrontEnd/test/testdata'
 DEFAULT_ERROR_LOG_FILENAME = 'errors.log'
 TMPFS_DIR = '/dev/shm'
 TEST_TIMEOUT = 10  # seconds
-TEST_REPORT_SCHEMA_FILE = join_path(THIS_DIR_PATH, 'test-report-schema.xsd')
-DEFAULT_VIEW_XSLT = 'test-report-view.xslt'
 
 
 def file_exists(path: str):
@@ -466,14 +463,6 @@ class TestResult(NamedTuple):
     result: bool
     start_timestamp: dt.datetime
     end_timestamp: dt.datetime
-
-    @staticmethod
-    def validate_file(filename):
-        schema = etree.XMLSchema(file=TEST_REPORT_SCHEMA_FILE)
-        parser = etree.XMLParser(schema=schema)
-        with open(filename, 'r') as f:
-            xml = f.read()
-        etree.fromstring(xml, parser)
 
 
 class TestRunner:
