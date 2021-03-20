@@ -117,9 +117,9 @@ add_subdirectory(Driver/bin)
 add_custom_target(build-c-install DEPENDS ffront om-f-back fback-driver std-lib-xmods)
 add_custom_target(build-cpp-install DEPENDS ffront-cpp om-f-back fback-driver std-lib-xmods)
 
-find_package(Python 3.6)
+find_package(Python3 3.6 COMPONENTS Interpreter)
 
-if(${Python_FOUND})
+if(${Python3_FOUND})
   set(TEST_FFRONT_C_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-c)
   set(TEST_FFRONT_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-cpp)
   set(TESTS_RUNNER ${CMAKE_SOURCE_DIR}/F-FrontEnd/src/tests-runner.py)
@@ -131,7 +131,7 @@ if(${Python_FOUND})
    TARGET test-ffront-c
    COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_C_WORKING_DIR}
    COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_C_WORKING_DIR}
-   COMMAND ${Python_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+   COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
              -w ${TEST_FFRONT_C_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront C executable")
   add_dependencies(test-ffront-c build-c-install)
@@ -141,7 +141,7 @@ if(${Python_FOUND})
    TARGET test-ffront-cpp
    COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_CPP_WORKING_DIR}
    COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_CPP_WORKING_DIR}
-   COMMAND ${Python_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+   COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
              -w ${TEST_FFRONT_C_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront CPP executable")
   add_dependencies(test-ffront-cpp build-cpp-install)
