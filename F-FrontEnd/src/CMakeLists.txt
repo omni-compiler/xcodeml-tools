@@ -38,7 +38,7 @@ set(FFRONT_INC_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include ${CM
 set(FFRONT_DEFINES NDEBUG BUGFIX __XCODEML__ YYDEBUG)
 
 add_executable(ffront ${ffront_SRC} "${F_INPUT_XMOD_H}" "${C_EXPRCODE_H}" "${C_EXPRCODE_C}" ${BISON_F95_parser_OUTPUTS})
-add_dependencies(ffront generate_ffront_src)
+add_dependencies(ffront generate_ffront_src create_int_install_dirs)
 
 set_target_properties(ffront
                       PROPERTIES
@@ -67,8 +67,8 @@ foreach(C_FILEPATH ${ffront_SRC} ${C_EXPRCODE_C} ${F95_PARSER_C})
                   @ONLY)
 endforeach()
 
-add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC})
-add_dependencies(ffront-cpp generate_ffront_src)
+add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC} ${BISON_F95_parser_OUTPUT_HEADER})
+add_dependencies(ffront-cpp generate_ffront_src create_int_install_dirs)
 set_target_properties(ffront-cpp
                       PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${INT_OMNI_HOME_BIN}
