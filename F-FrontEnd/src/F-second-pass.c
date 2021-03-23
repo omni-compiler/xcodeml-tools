@@ -542,7 +542,7 @@ static void second_pass_expv_scan(expv v)
 
         default:
             fatal("unkown exprcode : %d", code);
-            abort();
+            FATAL_ERROR();
     }
 }
 #endif

@@ -46,6 +46,7 @@ terms specified in this license.
 #include <stdlib.h>
 #include <string.h>
 #include "hash.h"
+#include "omni_errors.h"
 
 /*
  * When there are this many entries per bucket, on average, rebuild
@@ -158,7 +159,7 @@ void DeleteHashEntry(HashEntry *entryPtr)
         for (prevPtr = *entryPtr->bucketPtr;; prevPtr = prevPtr->nextPtr) {
             if (prevPtr == NULL) {
                 fprintf(stderr, "malformed bucket chain in DeleteHashEntry.\n");
-                abort();
+                FATAL_ERROR();
             }
             if (prevPtr->nextPtr == entryPtr) {
                 prevPtr->nextPtr = entryPtr->nextPtr;
@@ -803,7 +804,7 @@ static HashEntry *
     		const void *key                        /* Key to use to find matching entry. */)
 {
     fprintf(stderr, "called FindHashEntry on deleted table.\n");
-    abort();
+    FATAL_ERROR();
     return NULL;
 }
 
@@ -834,7 +835,7 @@ static HashEntry *BogusCreate(HashTable *tablePtr, /* Table in which to lookup e
 
 {
     fprintf(stderr, "called CreateHashEntry on deleted table.\n");
-    abort();
+    FATAL_ERROR();
     return NULL;
 }
 

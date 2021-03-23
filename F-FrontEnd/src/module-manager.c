@@ -2,6 +2,7 @@
 #include "F-output-xcodeml.h"
 #include "F-input-xmod.h"
 #include "module-manager.h"
+#include "omni_errors.h"
 
 /**
  * \file module-manager.c
@@ -289,7 +290,9 @@ static int import_intermediate_file(const SYMBOL name,
     }
 
     error("failed to import module '%s'", SYM_NAME(name));
-    exit(1);
+    FATAL_ERROR();
+    //Unreachable code
+    return FALSE;
 }
 
 /**

@@ -1,4 +1,5 @@
 #include "xcodeml.h"
+#include "omni_errors.h"
 
 static int nonUseSymbolPrefixSequence = 0;
 XcodeMLNode *containsStmt = NULL;
@@ -266,7 +267,7 @@ const char *apply_filter(symbol_filter *filter, const char *symbol)
         return symbol;
     } else {
         fprintf(stderr, "abort in %s.", __func__);
-        abort();
+        FATAL_ERROR();
     }
 
     return apply_filter(filter->next, symbol);

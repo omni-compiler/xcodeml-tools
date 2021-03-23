@@ -7,6 +7,7 @@
 #include "module-manager.h"
 #include <limits.h>
 #include "external/klib/khash.h"
+#include "omni_errors.h"
 
 #define CHAR_BUF_SIZE 65536
 
@@ -768,7 +769,7 @@ static const char *getRawString(expv v)
             break;
         }
         default:
-            abort();
+            FATAL_ERROR();
     }
 
     return buf;
@@ -876,7 +877,7 @@ static const char *getBasicTypeID(BASIC_DATA_TYPE t)
             tid = "Fvoid";
             break;
         default:
-            abort();
+            FATAL_ERROR();
     }
     return tid;
 }
@@ -943,7 +944,7 @@ static const char *getTypeID(TYPE_DESC tp)
                 pfx = 'E';
                 break;
             default:
-                abort();
+                FATAL_ERROR();
         }
 
         sprintf(buf, "%c" ADDRX_PRINT_FMT, pfx, Addr2Uint(tp));
@@ -1248,7 +1249,7 @@ static const char *getScope(expv v)
             scope = "param";
             break;
         default:
-            abort();
+            FATAL_ERROR();
     }
 
     return scope;
@@ -1367,7 +1368,7 @@ static const char *get_sclass(ID id)
                 case STG_PRAGMA:
                     fatal("%s: illegal storage class: symbol=%s", __func__,
                           ID_NAME(id));
-                    abort();
+                    FATAL_ERROR();
             }
             break;
     }
@@ -1572,7 +1573,7 @@ static void outx_varRef(int l, expv v, ID id)
         outx_print(">\n");
         outx_var_ID(l1, id);
     } else {
-        abort();
+        FATAL_ERROR();
     }
     outx_printi(l, "</varRef>\n");
 }
@@ -2210,15 +2211,15 @@ static void outx_printStatement(int l, expv v)
                 break;
             case F_ARRAY_REF:
                 error_at_node(v, "cannot use array in format specifier");
-                exit(1);
+                FATAL_ERROR();
             case F_SUBSTR_REF:
                 error_at_node(v, "cannot use sub string in format specifier");
-                exit(1);
+                FATAL_ERROR();
             default:
                 error_at_node(v,
                               "invalid expression '%s' in a format specifier",
                               EXPR_CODE_NAME(EXPR_CODE(format)));
-                exit(1);
+                FATAL_ERROR();
                 break;
         }
 
@@ -2491,7 +2492,7 @@ static void outx_alloc(int l, expv v)
                     outx_arraySpec(l1, EXPR_ARG2(v1));
                     break;
                 default:
-                    abort();
+                    FATAL_ERROR();
             }
 
             outx_printi(l1, "<coShape>\n");
@@ -2513,7 +2514,7 @@ static void outx_alloc(int l, expv v)
         } break;
 
         default:
-            abort();
+            FATAL_ERROR();
     }
 
     outx_close(l, "alloc");
@@ -2701,7 +2702,7 @@ static void outx_constants(int l, expv v)
             break;
 
         default:
-            abort();
+            FATAL_ERROR();
     }
 }
 
@@ -4440,7 +4441,7 @@ static void outx_expv(int l, expv v)
             if (debug_flag)
                 expv_output(v, stderr);
             fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
-            abort();
+            FATAL_ERROR();
 
         case OMP_PRAGMA:
             outx_OMP_pragma(l, v);
@@ -4496,7 +4497,7 @@ static void outx_expv(int l, expv v)
 
         default:
             fatal("unknown exprcode : %d", code);
-            abort();
+            FATAL_ERROR();
     }
 }
 
