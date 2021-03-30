@@ -7,6 +7,12 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/F-input-xmod.h.in"
 file(GLOB ffront_SRC "*.c")
 file(GLOB ffront_HEADERS "*.h")
 
+file(GLOB_RECURSE 3rdparty_SRC "3rdparty/*.c")
+file(GLOB_RECURSE 3rdparty_HEADERS  "3rdparty/*.h")
+
+set(ffront_SRC ${ffront_SRC} ${3rdparty_SRC})
+set(ffront_HEADERS ${ffront_HEADERS} ${3rdparty_HEADERS})
+
 set(C_EXPRCODE_H "${CMAKE_CURRENT_BINARY_DIR}/C-exprcode.h")
 set(C_EXPRCODE_C "${CMAKE_CURRENT_BINARY_DIR}/C-exprcode.c")
 
