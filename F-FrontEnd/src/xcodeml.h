@@ -10,10 +10,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <assert.h>
-
-#ifndef __cplusplus
-typedef enum { false = 0, true = 1 } bool;
-#endif /* ! __cplusplus */
+#include "bool.h"
 
 #include "xcodeml-node.h"
 
