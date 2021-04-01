@@ -87,40 +87,41 @@ void init_for_XMP_pragma()
 
 static enum XMP_pragma to_XMP_pragma(omllint_t val)
 {
-	switch(val)
-	{
-	case XMP_NODES: return XMP_NODES;
-	case XMP_TEMPLATE: return XMP_TEMPLATE;
-	case XMP_DISTRIBUTE: return XMP_DISTRIBUTE;
-	case XMP_ALIGN: return XMP_ALIGN;
-	case XMP_SHADOW: return XMP_SHADOW;
-	case XMP_TASK: return XMP_TASK;
-	case XMP_TASKS: return XMP_TASKS;
-	case XMP_LOOP: return XMP_LOOP;
-	case XMP_REFLECT: return XMP_REFLECT;
-	case XMP_GMOVE: return XMP_GMOVE;
-	case XMP_BARRIER: return XMP_BARRIER;
-	case XMP_REDUCTION: return XMP_REDUCTION;
-	case XMP_BCAST: return XMP_BCAST;
-	case XMP_COARRAY: return XMP_COARRAY;
-	case XMP_TEMPLATE_FIX: return XMP_TEMPLATE_FIX;
-	case XMP_WAIT_ASYNC: return XMP_WAIT_ASYNC;
-	case XMP_ARRAY: return XMP_ARRAY;
-	case XMP_END_TASK: return XMP_END_TASK;
-	case XMP_END_TASKS: return XMP_END_TASKS;
-	case XMP_REDUCE_SHADOW: return XMP_REDUCE_SHADOW;
+    switch(val)
+    {
+    case XMP_NODES: return XMP_NODES;
+    case XMP_TEMPLATE: return XMP_TEMPLATE;
+    case XMP_DISTRIBUTE: return XMP_DISTRIBUTE;
+    case XMP_ALIGN: return XMP_ALIGN;
+    case XMP_SHADOW: return XMP_SHADOW;
+    case XMP_TASK: return XMP_TASK;
+    case XMP_TASKS: return XMP_TASKS;
+    case XMP_LOOP: return XMP_LOOP;
+    case XMP_REFLECT: return XMP_REFLECT;
+    case XMP_GMOVE: return XMP_GMOVE;
+    case XMP_BARRIER: return XMP_BARRIER;
+    case XMP_REDUCTION: return XMP_REDUCTION;
+    case XMP_BCAST: return XMP_BCAST;
+    case XMP_COARRAY: return XMP_COARRAY;
+    case XMP_TEMPLATE_FIX: return XMP_TEMPLATE_FIX;
+    case XMP_WAIT_ASYNC: return XMP_WAIT_ASYNC;
+    case XMP_ARRAY: return XMP_ARRAY;
+    case XMP_END_TASK: return XMP_END_TASK;
+    case XMP_END_TASKS: return XMP_END_TASKS;
+    case XMP_REDUCE_SHADOW: return XMP_REDUCE_SHADOW;
+    case XMP_MASTER_IO: return XMP_MASTER_IO;
+    case XMP_MASTER_IO_BEGIN: return XMP_MASTER_IO_BEGIN;
+    case XMP_END_MASTER_IO: return XMP_END_MASTER_IO;
+    case XMP_GLOBAL_IO: return XMP_GLOBAL_IO;
+    case XMP_GLOBAL_IO_BEGIN: return XMP_GLOBAL_IO_BEGIN;
+    case XMP_END_GLOBAL_IO: return XMP_END_GLOBAL_IO;
 
-	case XMP_MASTER_IO: return XMP_MASTER_IO;
-	case XMP_MASTER_IO_BEGIN: return XMP_MASTER_IO_BEGIN;
-	case XMP_END_MASTER_IO: return XMP_END_MASTER_IO;
-	case XMP_GLOBAL_IO: return XMP_GLOBAL_IO;
-	case XMP_GLOBAL_IO_BEGIN: return XMP_GLOBAL_IO_BEGIN;
-	case XMP_END_GLOBAL_IO: return XMP_END_GLOBAL_IO;
-
-	default:
-		fatal("unknown XMP pragma");
-		return XMP_DIR_END;
-	}
+    default:
+    {
+        fatal("unknown XMP pragma");
+        return XMP_DIR_END;
+    }
+    }
 }
 /*
  * called from Parser

@@ -103,11 +103,10 @@ static HashEntry *OneWordCreate(HashTable *tablePtr, const void *key,
  */
 
 void InitHashTable(
-        register HashTable *tablePtr, /* Pointer to table record, which
-                                                * is supplied by the caller. */
-       int keyType                               /* Type of keys to use in table:
-                                                   * HASH_STRING_KEYS, HASH_ONE_WORD_KEYS,
-                                                   * or an integer >= 2. */)
+register HashTable *tablePtr, /* Pointer to table record, which is supplied by the caller. */
+int keyType/* Type of keys to use in table:
+            * HASH_STRING_KEYS, HASH_ONE_WORD_KEYS,
+            * or an integer >= 2. */)
 {
     tablePtr->buckets = tablePtr->staticBuckets;
     tablePtr->staticBuckets[0] = tablePtr->staticBuckets[1] = 0;
@@ -245,9 +244,9 @@ void DeleteHashTable(register HashTable *tablePtr /* Table to delete. */)
  *----------------------------------------------------------------------
  */
 
-HashEntry *FirstHashEntry(HashTable *tablePtr, /* Table to search. */
-		HashSearch *searchPtr /* Place to store information about
-		                        * progress through the table. */)
+HashEntry *FirstHashEntry(
+HashTable *tablePtr, /* Table to search. */
+HashSearch *searchPtr /* Place to store information about progress through the table. */)
 {
     searchPtr->tablePtr = tablePtr;
     searchPtr->nextIndex = 0;
