@@ -216,38 +216,63 @@ static enum ACC_pragma get_begin_directive(enum ACC_pragma dir)
 
 enum ACC_pragma to_ACC_pragma(omllint_t val)
 {
-	switch(val)
-	{
-	case ACC_PARALLEL: return ACC_PARALLEL;
-	case ACC_END_PARALLEL: return ACC_END_PARALLEL;
-	case ACC_DATA: return ACC_DATA;
-	case ACC_END_DATA: return ACC_END_DATA;
-	case ACC_LOOP: return ACC_LOOP; // no ACC_END_LOOP
-	case ACC_PARALLEL_LOOP: return ACC_PARALLEL_LOOP;
-	case ACC_END_PARALLEL_LOOP: return ACC_END_PARALLEL_LOOP;
-	case ACC_KERNELS_LOOP: return ACC_KERNELS_LOOP;
-	case ACC_END_KERNELS_LOOP: return ACC_END_KERNELS_LOOP;
-	case ACC_ATOMIC: return ACC_ATOMIC;
-	case ACC_END_ATOMIC: return ACC_END_ATOMIC;
-	case ACC_KERNELS: return ACC_KERNELS;
-	case ACC_END_KERNELS: return ACC_END_KERNELS;
-	case ACC_WAIT: return ACC_WAIT;
-	case ACC_CACHE: return ACC_CACHE;
-	case ACC_ROUTINE: return ACC_ROUTINE;
-	case ACC_ENTER_DATA: return ACC_ENTER_DATA;
-	case ACC_EXIT_DATA: return ACC_EXIT_DATA;
-	case ACC_HOST_DATA: return ACC_HOST_DATA;
-	case ACC_END_HOST_DATA: return ACC_END_HOST_DATA;
-	case ACC_DECLARE: return ACC_DECLARE;
-	case ACC_UPDATE_D: return ACC_UPDATE_D;
-	case ACC_INIT: return ACC_INIT;
-	case ACC_SHUTDOWN: return ACC_SHUTDOWN;
-	case ACC_SET: return ACC_SET;
-    default:
-        fatal("unknown ACC pragma");
-        return ACC_DIR_END;//unreachable code
-
-	};
+    switch(val) {
+        case ACC_PARALLEL:
+            return ACC_PARALLEL;
+        case ACC_END_PARALLEL:
+            return ACC_END_PARALLEL;
+        case ACC_DATA:
+            return ACC_DATA;
+        case ACC_END_DATA:
+            return ACC_END_DATA;
+        case ACC_LOOP:
+            return ACC_LOOP; // no ACC_END_LOOP
+        case ACC_PARALLEL_LOOP:
+            return ACC_PARALLEL_LOOP;
+        case ACC_END_PARALLEL_LOOP:
+            return ACC_END_PARALLEL_LOOP;
+        case ACC_KERNELS_LOOP:
+            return ACC_KERNELS_LOOP;
+        case ACC_END_KERNELS_LOOP:
+            return ACC_END_KERNELS_LOOP;
+        case ACC_ATOMIC:
+            return ACC_ATOMIC;
+        case ACC_END_ATOMIC:
+            return ACC_END_ATOMIC;
+        case ACC_KERNELS:
+            return ACC_KERNELS;
+        case ACC_END_KERNELS:
+            return ACC_END_KERNELS;
+        case ACC_WAIT:
+            return ACC_WAIT;
+        case ACC_CACHE:
+            return ACC_CACHE;
+        case ACC_ROUTINE:
+            return ACC_ROUTINE;
+        case ACC_ENTER_DATA:
+            return ACC_ENTER_DATA;
+        case ACC_EXIT_DATA:
+            return ACC_EXIT_DATA;
+        case ACC_HOST_DATA:
+            return ACC_HOST_DATA;
+        case ACC_END_HOST_DATA:
+            return ACC_END_HOST_DATA;
+        case ACC_DECLARE:
+            return ACC_DECLARE;
+        case ACC_UPDATE_D:
+            return ACC_UPDATE_D;
+        case ACC_INIT:
+            return ACC_INIT;
+        case ACC_SHUTDOWN:
+            return ACC_SHUTDOWN;
+        case ACC_SET:
+            return ACC_SET;
+        default:
+        {
+            fatal("unknown ACC pragma");
+            return ACC_DIR_END;//unreachable code
+        }
+    };
 }
 
 void compile_ACC_directive(expr x)

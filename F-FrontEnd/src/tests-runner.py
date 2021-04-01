@@ -3,12 +3,12 @@
 
 __author__ = "Mikhail Zhigun"
 
-""" This module contains command-line test runner implementation for XcodeML tools, omni compiler Fortran frontend and 
-    backend. Should be run from unix shell with necessary command-line arguments. TestRunner can automatically scan 
-    for module dependencies and run tests in parallel. For debugging individual tests     run the tool with --input-test
-     and --working-dir arguments. Then interim files from all test stages will be saved. 
+""" 
+This module contains command-line test runner implementation for XcodeML tools, omni compiler Fortran frontend and 
+backend. Should be run from unix shell with necessary command-line arguments. TestRunner can automatically scan for 
+module dependencies and run tests in parallel. For debugging individual tests     run the tool with --input-test and 
+--working-dir arguments. Then interim files from all test stages will be saved. 
 """
-
 
 import sys
 
