@@ -43,6 +43,7 @@ public final class XcProgramObj extends XcObj
     {
         xmOption = new XmOptionStatic();
     }
+
     public XcProgramObj(IXmOption xmOption)
     {
         this.xmOption = xmOption;
