@@ -8,6 +8,7 @@ package xcodeml.f.util;
 
 import xcodeml.util.XmException;
 import xcodeml.util.XmBackEnd;
+import xcodeml.util.XmOptionLocal;
 
 /**
  * Run XcodeML/Fortran decompiler.
@@ -16,6 +17,6 @@ public class omx2f
 {
     public static void main(String[] args) throws XmException
     {
-        System.exit(new XmBackEnd("F", "F_Back").run(args));
+        System.exit(new XmBackEnd("F", "F_Back", new XmOptionLocal()).run(args));
     }
 }

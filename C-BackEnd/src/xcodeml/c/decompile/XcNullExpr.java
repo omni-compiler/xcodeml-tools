@@ -9,15 +9,10 @@ import xcodeml.c.util.XmcWriter;
  */
 public class XcNullExpr extends XcObj implements XcExprObj {
 
-    private static XcNullExpr _nullExpr = null;
 
     public static XcNullExpr createXcNullExpr()
     {
-        if (_nullExpr == null) {
-            _nullExpr = new XcNullExpr();
-        }
-
-        return _nullExpr;
+        return new XcNullExpr();
     }
 
     @Override

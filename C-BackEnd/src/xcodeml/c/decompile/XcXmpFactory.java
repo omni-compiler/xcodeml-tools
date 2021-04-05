@@ -22,7 +22,6 @@ import xcodeml.c.type.XcXmpCoArrayType;
  */
 public final class XcXmpFactory
 {
-    private static int _tmpVarId = 0;
 
     private static final String _tmpValue = "__xmp_tmp_value_";
 
@@ -53,16 +52,6 @@ public final class XcXmpFactory
     private static final XcConstObj.IntConst _true = _one;
 
     private static final XcDirectiveObj _includeDirective = new XcDirectiveObj("#include <omxmp_internal.h>");
-
-    /**
-     * Creates string be used as a name of temporary variable.
-     *
-     * @return the name of temporary variable name.
-     */
-    private static String _createTmpValueName()
-    {
-        return _tmpValue + _tmpVarId++;
-    }
 
     /**
      * Creates an include directive which links to XcalableMP extensions implements.
