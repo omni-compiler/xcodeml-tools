@@ -12,7 +12,7 @@
 static SYMBOL blank_common_symbol;
 int order_sequence = 0;
 
-static void declare_dummy_args _ANSI_ARGS_((expr l, enum name_class cls));
+static void declare_dummy_args _ANSI_ARGS_((expr l, enum name_class class));
 static int markAsSave _ANSI_ARGS_((ID id));
 
 /* for module and use statement */
@@ -303,7 +303,7 @@ static void link_parent_defined_by(ID id)
 /*
  * define main program or block data, subroutine, functions
  */
-void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
+void declare_procedure(enum name_class class, expr name, TYPE_DESC type,
                        expr args, expr prefix_spec, expr result_opt,
                        expr bind_opt)
 {
@@ -335,8 +335,8 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
         error("%s returns ABSTRACT TYPE", s ? SYM_NAME(s) : "function");
     }
 
-    if (cls != CL_ENTRY) {
-        CURRENT_PROC_CLASS = cls;
+    if (class != CL_ENTRY) {
+        CURRENT_PROC_CLASS = class;
         if (name) {
             CURRENT_PROC_NAME = s;
             ep = find_ext_id_parent(CURRENT_PROC_NAME);
@@ -362,7 +362,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
     FOR_ITEMS_IN_LIST (lp, prefix_spec) {
         switch (EXPR_CODE(LIST_ITEM(lp))) {
             case F95_RECURSIVE_SPEC:
-                if (cls != CL_PROC) {
+                if (class != CL_PROC) {
                     error("invalid recursive prefix");
                     return;
                 }
@@ -370,7 +370,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
                 break;
 
             case F95_PURE_SPEC:
-                if (cls != CL_PROC) {
+                if (class != CL_PROC) {
                     error("invalid pure prefix");
                     return;
                 }
@@ -378,7 +378,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
                 break;
 
             case F95_ELEMENTAL_SPEC:
-                if (cls != CL_PROC) {
+                if (class != CL_PROC) {
                     error("invalid elemental prefix");
                     return;
                 }
@@ -386,7 +386,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
                 break;
 
             case F08_MODULE_SPEC:
-                if (cls != CL_PROC) {
+                if (class != CL_PROC) {
                     error("invalid module prefix");
                     return;
                 }
@@ -394,7 +394,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
                 break;
 
             case F08_IMPURE_SPEC:
-                if (cls != CL_PROC) {
+                if (class != CL_PROC) {
                     error("invalid pure prefix");
                     return;
                 }
@@ -406,7 +406,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
         }
     }
 
-    switch (cls) {
+    switch (class) {
 
         case CL_MAIN:
             if (debug_flag)
@@ -684,9 +684,9 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
             if (mcLn_no == -1)
                 if (debug_flag)
                     fprintf(diag_file, "   %s %s:\n",
-                            cls == CL_MODULE ? "module" : "submodule",
+                            class == CL_MODULE ? "module" : "submodule",
                             SYM_NAME(current_module_name));
-            id = declare_ident(s, cls);
+            id = declare_ident(s, class);
             declare_id_type(id, type);
             ID_LINE(id) = EXPR_LINE(name); /* set line_no */
             ID_STORAGE(id) = STG_EXT;
@@ -713,7 +713,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
             arg_len++;
         }
 
-        if (cls != CL_PROC) {
+        if (class != CL_PROC) {
             error("unexpected statement in interface block");
             abort();
         }
@@ -795,7 +795,7 @@ declare_current_procedure_ext_id()
     return ep;
 }
 
-static void declare_dummy_args(expr l, enum name_class cls)
+static void declare_dummy_args(expr l, enum name_class class)
 {
     list lp;
     expr x;
@@ -814,7 +814,7 @@ static void declare_dummy_args(expr l, enum name_class cls)
             ID_STORAGE(id) = STG_ARG;
         } else if (ID_STORAGE(id) != STG_ARG) {
             if (ID_STORAGE(id) == STG_AUTO && IS_ARRAY_TYPE(ID_TYPE(id)) &&
-                (!TYPE_IS_POINTER(ID_TYPE(id))) && cls == CL_ENTRY &&
+                (!TYPE_IS_POINTER(ID_TYPE(id))) && class == CL_ENTRY &&
                 is_array_size_adjustable(ID_TYPE(id))) {
                 /*
                  * Local adjustable array is about to be used as a
@@ -825,7 +825,7 @@ static void declare_dummy_args(expr l, enum name_class cls)
                               "be used as a dummy argument for an "
                               "ENTRY statement, not supported yet.",
                               ID_NAME(id));
-            } else if (cls != CL_ENTRY) {
+            } else if (class != CL_ENTRY) {
                 error_at_node(l, "illegal dummy argument '%s'", SYM_NAME(s));
             }
         }
@@ -1204,7 +1204,8 @@ ID declare_function(ID id)
     return id;
 }
 
-void declare_statement_function(ID id, expr args, expr body)
+void declare_statement_function(id, args, body) ID id;
+expr args, body;
 {
     ID ip;
     list lp;
@@ -1276,6 +1277,7 @@ ID find_label_from_block(int st_no, BLOCK_ENV block)
 ID declare_label(int st_no, LABEL_TYPE type, int def_flag)
 {
     ID ip, last_ip;
+    char name[10];
     CTL cp;
     int in_block = FALSE;
     int not_same_block = FALSE;
@@ -1325,11 +1327,8 @@ ID declare_label(int st_no, LABEL_TYPE type, int def_flag)
     }
 
     /* if not found, make label entry */
-    {
-        char name[20];
-        sprintf(name, "%05d", st_no);
-        ip = new_ident_desc(find_symbol(name));
-    }
+    sprintf(name, "%05d", st_no);
+    ip = new_ident_desc(find_symbol(name));
     ID_LINK_ADD(ip, LOCAL_LABELS, last_ip);
 
     ID_ADDR(ip) = expv_sym_term(IDENT, NULL, ID_SYM(ip));
@@ -1467,7 +1466,7 @@ declare_external_id(SYMBOL s, enum storage_class tag, int def_flag)
     return ep;
 }
 
-ID declare_ident(SYMBOL s, enum name_class cls)
+ID declare_ident(SYMBOL s, enum name_class class)
 {
     ID ip, last_ip;
     ID predecl_ip = NULL;
@@ -1487,7 +1486,7 @@ ID declare_ident(SYMBOL s, enum name_class cls)
     if (is_in_struct_member_initializer_compilation_flag_for_declare_ident ==
         FALSE) {
         if (CTL_TYPE(ctl_top) == CTL_STRUCT) {
-            if (cls == CL_TAGNAME) {
+            if (class == CL_TAGNAME) {
                 isPreDecl = TRUE;
             } else
                 /*
@@ -1498,15 +1497,15 @@ ID declare_ident(SYMBOL s, enum name_class cls)
                 TYPE_DESC struct_tp = CTL_STRUCT_TYPEDESC(ctl_top);
                 if (CURRENT_STATE == IN_TYPE_PARAM_DECL) {
                     symbols = &TYPE_TYPE_PARAMS(struct_tp);
-                    cls = CL_TYPE_PARAM;
+                    class = CL_TYPE_PARAM;
                 } else if (CURRENT_STATE == IN_TYPE_BOUND_PROCS) {
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
-                    cls = CL_TYPE_BOUND_PROC;
+                    class = CL_TYPE_BOUND_PROC;
                 } else {
                     isInternalPrivate = TYPE_IS_INTERNAL_PRIVATE(struct_tp);
                     symbols = &TYPE_MEMBER_LIST(struct_tp);
-                    cls = CL_ELEMENT;
+                    class = CL_ELEMENT;
                 }
             }
         }
@@ -1515,9 +1514,9 @@ ID declare_ident(SYMBOL s, enum name_class cls)
     last_ip = NULL;
     FOREACH_ID (ip, *symbols) {
         if (ID_SYM(ip) == s) {
-            /* if argument 'cls' is CL_UNKNOWN, find id */
-            if (ID_CLASS(ip) == cls) {
-                if (cls == CL_TAGNAME) {
+            /* if argument 'class' is CL_UNKNOWN, find id */
+            if (ID_CLASS(ip) == class) {
+                if (class == CL_TAGNAME) {
                     if (TYPE_IS_DECLARED(ID_TYPE(ip)) == FALSE) {
                         predecl_ip = ip;
                         continue;
@@ -1542,12 +1541,12 @@ ID declare_ident(SYMBOL s, enum name_class cls)
                 }
                 return ip;
             }
-            if (ID_CLASS(ip) == CL_PROC && cls == CL_VAR) {
+            if (ID_CLASS(ip) == CL_PROC && class == CL_VAR) {
                 return ip;
             }
 
             if (ID_CLASS(ip) == CL_MULTI &&
-                (cls == CL_TAGNAME || cls == CL_PROC)) {
+                (class == CL_TAGNAME || class == CL_PROC)) {
                 symbols = &MULTI_ID_LIST(ip);
                 FOREACH_ID (ip, *symbols) {
                     last_ip = ip;
@@ -1555,13 +1554,13 @@ ID declare_ident(SYMBOL s, enum name_class cls)
                 break;
             }
 
-            if (cls == CL_UNKNOWN) {
+            if (class == CL_UNKNOWN) {
                 return ip;
             }
 
             /* define name class */
             if (ID_CLASS(ip) == CL_UNKNOWN) {
-                ID_CLASS(ip) = cls;
+                ID_CLASS(ip) = class;
             } else if (!(ID_IS_DUMMY_ARG(ip))) {
                 snprintf(msg, 2048, fmt, "name", SYM_NAME(s));
                 if (isInUseDecl == FALSE) {
@@ -1591,7 +1590,7 @@ ID declare_ident(SYMBOL s, enum name_class cls)
         ip = new_ident_desc(s);
         ID_LINK_ADD(ip, *symbols, last_ip);
         ID_SYM(ip) = s;
-        ID_CLASS(ip) = cls;
+        ID_CLASS(ip) = class;
         if (isPreDecl == FALSE)
             ID_ORDER(ip) = order_sequence++;
         if (isInternalPrivate) {
@@ -1599,7 +1598,7 @@ ID declare_ident(SYMBOL s, enum name_class cls)
         }
     }
 
-    switch (cls) {
+    switch (class) {
         case CL_TAGNAME:
             ID_STORAGE(ip) = STG_TAGNAME;
             break;
@@ -2078,7 +2077,6 @@ static TYPE_DESC declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                 }
                 break;
             case XMP_CODIMENSION_SPEC:
-            {
                 if (ignoreDims)
                     break;
                 /* if (is_descendant_coindexed(tp)){ */
@@ -2098,7 +2096,6 @@ static TYPE_DESC declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
                     return NULL;
                 }
                 break;
-            }
             case F95_EXTERNAL_SPEC:
                 /* see compile_EXTERNAL_decl() */
                 TYPE_SET_EXTERNAL(tp);
@@ -2919,7 +2916,7 @@ expv expv_reduce_kind(expv v)
 
     switch (EXPV_CODE(ret)) {
         case FUNCTION_CALL: {
-            const char *name = NULL;
+            char *name = NULL;
             SYMBOL s = EXPV_NAME(EXPR_ARG1(ret));
             ID fId = find_ident(s);
 
@@ -4818,7 +4815,7 @@ void compile_INTRINSIC_decl(expr id_list)
     }
 }
 
-static int markAsSave(ID id)
+static int markAsSave(id) ID id;
 {
     if (ID_CLASS(id) == CL_PARAM) {
         return TRUE;
@@ -4843,7 +4840,7 @@ static int markAsSave(ID id)
 }
 
 /* declare save variable */
-void compile_SAVE_decl(expr id_list)
+void compile_SAVE_decl(id_list) expr id_list;
 {
     list lp;
     expr ident;

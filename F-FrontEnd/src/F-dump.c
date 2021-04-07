@@ -6,13 +6,14 @@
 
 static void print_string_constant _ANSI_ARGS_((FILE * fp, char *str));
 
-const char *basic_type_names[] = BASIC_TYPE_NAMES;
-const char *name_class_names[] = NAME_CLASS_NAMES;
-const char *proc_class_names[] = PROC_CLASS_NAMES;
-const char *storage_class_names[] = STORAGE_CLASS_NAMES;
-const char *control_type_names[] = CONTROL_TYPE_NAMES;
+char *basic_type_names[] = BASIC_TYPE_NAMES;
+char *name_class_names[] = NAME_CLASS_NAMES;
+char *proc_class_names[] = PROC_CLASS_NAMES;
+char *storage_class_names[] = STORAGE_CLASS_NAMES;
+char *control_type_names[] = CONTROL_TYPE_NAMES;
 
-static void print_string_constant(FILE *fp, char *str)
+static void print_string_constant(fp, str) FILE *fp;
+char *str;
 {
     if (str == NULL || str[0] == '\0') {
         fprintf(fp, " \"\")");
@@ -32,7 +33,9 @@ static void print_string_constant(FILE *fp, char *str)
 }
 
 /* tree print routine */
-static void expv_output_rec(expv v, int l /* indent level */,FILE *fp)
+static void expv_output_rec(v, l, fp) expv v;
+int l; /* indent level */
+FILE *fp;
 {
     int i;
     struct list_node *lp;
@@ -130,7 +133,9 @@ static void expv_output_rec(expv v, int l /* indent level */,FILE *fp)
 }
 
 /* for debug */
-static void print_ID(ID id, FILE *fp, int rec)
+static void print_ID(id, fp, rec) ID id;
+FILE *fp;
+int rec;
 {
     fprintf(fp, "'%s',class=%s,", ID_NAME(id), name_class_name(ID_CLASS(id)));
     fprintf(fp, "type=");
@@ -144,7 +149,9 @@ static void print_ID(ID id, FILE *fp, int rec)
     fprintf(fp, "\n");
 }
 
-void print_IDs(ID ip, FILE *fp, int rec)
+void print_IDs(ip, fp, rec) ID ip;
+FILE *fp;
+int rec;
 {
     fprintf(fp, "# ID dump by %s\n", __func__);
     for (; ip != NULL; ip = ID_NEXT(ip))
@@ -184,7 +191,8 @@ void print_interface_IDs(ID id, FILE *fd)
     }
 }
 
-void print_types(TYPE_DESC tp, FILE *fp)
+void print_types(tp, fp) TYPE_DESC tp;
+FILE *fp;
 {
     fprintf(fp, "# TYPE dump by %s\n", __func__);
     for (; tp != NULL; tp = TYPE_LINK(tp))
@@ -192,7 +200,8 @@ void print_types(TYPE_DESC tp, FILE *fp)
     fflush(fp);
 }
 
-void type_output(TYPE_DESC tp, FILE *fp)
+void type_output(tp, fp) TYPE_DESC tp;
+FILE *fp;
 {
     fprintf(fp, "# TYPE dump by %s\n", __func__);
     print_types(tp, fp);
@@ -252,7 +261,8 @@ void print_type(TYPE_DESC tp, FILE *fp, int recursive)
  * @brief
  * dump expv tree for debug
  */
-void expv_output(expv x, FILE *fp)
+void expv_output(x, fp) expv x;
+FILE *fp;
 {
     fprintf(fp, "# EXPV dump by %s\n", __func__);
     expv_output_rec(x, 0, fp);
@@ -260,7 +270,9 @@ void expv_output(expv x, FILE *fp)
 }
 
 /* tree print routine */
-static void expr_print_rec(expr x, int l, FILE *fp)
+static void expr_print_rec(x, l, fp) expr x;
+int l;
+FILE *fp;
 {
     int i;
     struct list_node *lp;
@@ -322,7 +334,8 @@ static void expr_print_rec(expr x, int l, FILE *fp)
  * @brief
  * dump expr tree for debug
  */
-void expr_print(expr x, FILE *fp)
+void expr_print(x, fp) expr x;
+FILE *fp;
 {
     fprintf(fp, "# EXPR dump by %s\n", __func__);
     expr_print_rec(x, 0, fp);
@@ -331,7 +344,7 @@ void expr_print(expr x, FILE *fp)
 
 void expr_print_indent(expr x, int l, FILE *fp) { expr_print_rec(x, l, fp); }
 
-void print_controls(FILE *fp)
+void print_controls(fp) FILE *fp;
 {
     int i;
     CTL ctl;
@@ -361,27 +374,27 @@ void expv_dump(expv x)
 
 void expv_dump0(expv x, FILE *fp) { expv_output_rec(x, 0, fp); }
 
-const char *basic_type_name(BASIC_DATA_TYPE t)
+char *basic_type_name(t) BASIC_DATA_TYPE t;
 {
     return basic_type_names[(int)t];
 }
 
-const char *name_class_name(enum name_class c)
+char *name_class_name(c) enum name_class c;
 {
     return name_class_names[(int)c];
 }
 
-const char *proc_class_name(enum proc_class c)
+char *proc_class_name(c) enum proc_class c;
 {
     return proc_class_names[(int)c];
 }
 
-const char *storage_class_name(enum storage_class c)
+char *storage_class_name(c) enum storage_class c;
 {
     return storage_class_names[(int)c];
 }
 
-const char *control_type_name(enum control_type c)
+char *control_type_name(c) enum control_type c;
 {
     return control_type_names[(int)c];
 }
