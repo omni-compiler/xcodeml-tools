@@ -58,7 +58,7 @@ int flag_force_c_comment = FALSE; /* does not set yet.  */
 #define QUOTE '\002' /* special quote mark */
 
 struct keyword_token {
-    const char *k_name;
+    char *k_name;
     int k_token;
 };
 
@@ -98,7 +98,7 @@ static int convert_encoding(void);
 int prevline_is_inQuote = 0;
 int prevline_is_inComment = FALSE;
 
-extern expr st_name; /* statement name */
+expr st_name; /* statement name */
 
 static int line_count = 0;
 lineno_info *current_line;
@@ -171,17 +171,17 @@ sentinel_list sentinels;
 
 /* sentinel list functions */
 static void init_sentinel_list(sentinel_list *p);
-static int add_sentinel(sentinel_list *p, const char *name);
+static int add_sentinel(sentinel_list *p, char *name);
 static unsigned int sentinel_count(sentinel_list *p);
 static char *sentinel_name(sentinel_list *p, unsigned int n);
-static int sentinel_index(sentinel_list *p, const char *name);
+static int sentinel_index(sentinel_list *p, char *name);
 
 /* buffer for progma with pragma key and rest of line.  */
 static char *pragmaBuf = NULL;
 
-extern const struct keyword_token OMP_keywords[];
-extern const struct keyword_token XMP_keywords[];
-extern const struct keyword_token ACC_keywords[];
+extern struct keyword_token OMP_keywords[];
+extern struct keyword_token XMP_keywords[];
+extern struct keyword_token ACC_keywords[];
 
 /* read_line return value */
 #define ST_EOF 0
@@ -216,15 +216,15 @@ static int read_initial_line _ANSI_ARGS_((void));
 static int classify_statement _ANSI_ARGS_((void));
 static int token _ANSI_ARGS_((void));
 static int is_not_keyword _ANSI_ARGS_((void));
-static int get_keyword _ANSI_ARGS_((const struct keyword_token * ks));
-static int get_keyword_optional_blank _ANSI_ARGS_((int cls));
+static int get_keyword _ANSI_ARGS_((struct keyword_token * ks));
+static int get_keyword_optional_blank _ANSI_ARGS_((int class));
 static int readline_free_format _ANSI_ARGS_((void));
 static int read_number _ANSI_ARGS_((void));
 static int is_identifier_letter _ANSI_ARGS_((char c, int pos));
 static int read_identifier _ANSI_ARGS_((void));
 
 static void string_to_integer _ANSI_ARGS_((omllint_t * p, char *cp, int radix));
-static double convert_str_double _ANSI_ARGS_((const char *s));
+static double convert_str_double _ANSI_ARGS_((char *s));
 
 static int read_initial_line _ANSI_ARGS_((void));
 static int read_fixed_format _ANSI_ARGS_((void));
@@ -246,8 +246,8 @@ static int ACC_lex_token();
 
 /* for free format.  */
 /* pragma string setter. */
-static void set_pragma_str _ANSI_ARGS_((const char *));
-static void append_pragma_str _ANSI_ARGS_((const char *));
+static void set_pragma_str _ANSI_ARGS_((char *));
+static void append_pragma_str _ANSI_ARGS_((char *));
 
 static void restore_file(void);
 
@@ -358,9 +358,9 @@ static void prepare_for_new_statement(void)
     need_keyword = FALSE;
 }
 
-static int is_keyword(int k, const struct keyword_token *tblPtr)
+static int is_keyword(int k, struct keyword_token *tblPtr)
 {
-    const struct keyword_token *kwPtr;
+    struct keyword_token *kwPtr;
 
     /*
      * special treatment for I/O.
@@ -509,7 +509,7 @@ int is_function_statement_context()
     }
 }
 
-int check_ident_context(const char *name)
+int check_ident_context(char *name)
 {
     int ret = IDENTIFIER;
 
@@ -535,7 +535,7 @@ int check_ident_context(const char *name)
                     is_function_statement_context()) {
                     ret = FUNCTION;
                     if (strcasecmp(name, "function") != 0) {
-                        const char *rest = name + 8;
+                        char *rest = name + 8;
                         auxIdentX = GEN_NODE(IDENT, find_symbol(rest));
                     }
                 }
@@ -577,7 +577,7 @@ int check_ident_context(const char *name)
 int yylex()
 {
     if (token_history_buf == NULL)
-        token_history_buf = (int*)malloc(sizeof(int) * token_history_buf_size);
+        token_history_buf = malloc(sizeof(int) * token_history_buf_size);
 
     int curToken = UNKNOWN;
 
@@ -649,6 +649,8 @@ static int yylex0()
                 }
                 return (ST_EOF);
             }
+
+            bufptr = st_buffer;
 
             /* set bufptr st_buffer */
             bufptr = st_buffer;
@@ -788,7 +790,7 @@ static void save_format_str()
     formatString = strdup(fmt);
 }
 
-static void set_pragma_str(const char *s)
+static void set_pragma_str(char *s)
 {
     if (pragmaString != NULL) {
         free(pragmaString);
@@ -802,7 +804,7 @@ static void set_pragma_str(const char *s)
     pragmaString = strdup(pragmaBuf);
 }
 
-static void append_pragma_str(const char *s)
+static void append_pragma_str(char *s)
 {
     if (s == NULL)
         return; /* no change */
@@ -839,12 +841,12 @@ char *lex_get_line()
     return (s);
 }
 
-void yyerror(const char *s)
+void yyerror(s) const char *s;
 {
     error("%s", s);
 }
 
-const char *lexline(int *n)
+char *lexline(n) int *n;
 {
     *n = strlen(bufptr);
     return (bufptr);
@@ -1193,7 +1195,7 @@ static int read_identifier()
     int tkn_len;
     char *p, ch;
     int excess_name_length = 0;
-    enum expr_code defined_io = ERROR_NODE;
+    enum expr_code defined_io = 0;
 
     p = buffio;
     for (tkn_len = 0; UNDER_LINE_BUF_SIZE(buffio, p) &&
@@ -1490,9 +1492,9 @@ static int read_number()
     return (CONSTANT);
 }
 
-static void string_to_integer(omllint_t *p,
-		char *cp,
-		int radix)
+static void string_to_integer(p, cp, radix) omllint_t *p;
+char *cp;
+int radix;
 {
     char ch;
     int x;
@@ -1523,7 +1525,7 @@ static void string_to_integer(omllint_t *p,
          (omllint_t)v0;
 }
 
-static double convert_str_double(const char *s)
+static double convert_str_double(s) char *s;
 {
     char v[100];
     register char *t;
@@ -1564,8 +1566,8 @@ static int classify_statement()
         (fixed_format_flag &&
          (isalpha((int)*bufptr) || isdigit((int)*bufptr) || *bufptr == '_'))) {
         char *startp; /* point begin of st_name.  */
-        char *endp;   /* end point for st_name.  */
-        const char *endcol; /* point the ':' for replace of blanks.  */
+        char *endp;   /* end pooint for st_name.  */
+        char *endcol; /* point the ':' for replace of blanks.  */
         p = bufptr;
         if (st_class == UNKNOWN) {
             while (isspace(*p))
@@ -1951,11 +1953,10 @@ static int is_not_keyword()
 
 /* cut keyword from st_buffer */
 /* serch for keyword (BAKA search) */
-static int get_keyword(const struct keyword_token *ks)
+static int get_keyword(ks) struct keyword_token *ks;
 {
-    register char *p;
-    const char *q;
-    const struct keyword_token *kp;
+    register char *p, *q;
+    struct keyword_token *kp;
     char *save;
 
     if (!isalpha((int)*bufptr))
@@ -2011,7 +2012,7 @@ static int get_keyword(const struct keyword_token *ks)
     } else {
         int tkn_len;
         char *p;
-        int cls, cl;
+        int class, cl;
         int ret = UNKNOWN;
         /*  'save' is an original point of buffer.
          * If token is unknown then return this.
@@ -2051,10 +2052,10 @@ static int get_keyword(const struct keyword_token *ks)
         *p = 0; /* termination */
         for (kp = ks; kp->k_name; kp++) {
             if (strcmp(kp->k_name, buffio) == 0) {
-            	cls = kp->k_token;
-                ret = cls;
+                class = kp->k_token;
+                ret = class;
                 if (ks == keywords) {
-                    if ((cl = get_keyword_optional_blank(cls)) != UNKNOWN) {
+                    if ((cl = get_keyword_optional_blank(class)) != UNKNOWN) {
                         ret = cl;
                     }
                 }
@@ -2082,7 +2083,7 @@ static int get_keyword(const struct keyword_token *ks)
     }
 }
 
-static int get_keyword_optional_blank(int cls)
+static int get_keyword_optional_blank(int class)
 {
     int cl;
     char *save;
@@ -2091,7 +2092,7 @@ static int get_keyword_optional_blank(int cls)
     while (isspace(*bufptr))
         bufptr++; /* skip space */
 
-    switch (cls) {
+    switch (class) {
         case END:
             if ((cl = get_keyword(end_keywords)) != UNKNOWN) {
                 if (cl == BLOCK) {
@@ -2332,7 +2333,7 @@ static void restore_file()
 /*
  * Files name table
  */
-int get_file_id(const char *file)
+int get_file_id(char *file)
 {
     int i;
     for (i = 0; i < n_files; i++) {
@@ -2466,7 +2467,6 @@ static int read_free_format()
     int inQuote = FALSE;
     char *bufMax = st_buffer + ST_BUF_SIZE - 1;
     char oBuf[65536];
-    int cont_line_num = 0;
 
     exposed_comma = 0;
     exposed_eql = 0;
@@ -2597,7 +2597,7 @@ again:
         }
     }
 
-    cont_line_num = 0;
+    int cont_line_num = 0;
     while (find_last_ampersand(st_buffer, &st_len)) {
         int index = 0;
         if (cont_line_num >= max_cont_line) {
@@ -2896,7 +2896,6 @@ static int read_fixed_format()
     int inQuote = FALSE;
     int current_st_PRAGMA_flag = 0;
     int index; /* sentinel index in list */
-    int cont_line_num = 0;
 
     exposed_comma = 0;
     exposed_eql = 0;
@@ -3039,7 +3038,7 @@ copy_body:
     memcpy(oBuf, st_buffer, newLen);
     oBuf[newLen] = '\0';
 
-    cont_line_num = 0;
+    int cont_line_num = 0;
     current_st_PRAGMA_flag = st_PRAGMA_flag;
     while ((rv = readline_fixed_format()) == ST_CONT) {
         cont_line_num++;
@@ -3224,7 +3223,6 @@ static int readline_fixed_format()
     int local_CONDCOMPL_flag = FALSE;
     int local_SENTINEL_flag = FALSE;
     int local_PGI_flag = FALSE;
-    int iend;
 
     /* line # counter for each file in cpp.  */
 next_line:
@@ -3444,7 +3442,7 @@ next_line0:
 read_num_column:
     strcpy(stn_cols, "      ");
     /*                 123456   */
-    iend = local_OCL_flag ? 5 : 6;
+    int iend = local_OCL_flag ? 5 : 6;
     for (i = 0; i < iend; i++) {
         if (line_buffer[i] == '\0') {
             // warning_lineno( &read_lineno, "unexpected eof");
@@ -3717,7 +3715,7 @@ int lookup_col2()
     return ret;
 }
 
-static int power10(int y)
+static int power10(y) int y;
 {
     if (y == 0) {
         return 1;
@@ -3734,16 +3732,17 @@ static int power10(int y)
 }
 
 typedef struct {
-    const char *key;
+    char *key;
     int len;
 } unHKey;
-static const unHKey unHToken[] = {{"integer", 7}, {"real", 4},      {"double", 6},
+static unHKey unHToken[] = {{"integer", 7}, {"real", 4},      {"double", 6},
                             {"logical", 7}, {"character", 9}, {NULL, 0}};
 
 static int
-    getHollerithLength(char *head, /* start pointer of the room. */
-    		char *cur,   /* current pointer that is pointing 'H'|'h' */
-    		int inQuote /* if TRUE, 'H'|'h' is in quote. */)
+    getHollerithLength(head, cur,
+                       inQuote) char *head; /* start pointer of the room. */
+char *cur;   /* current pointer that is pointing 'H'|'h' */
+int inQuote; /* if TRUE, 'H'|'h' is in quote. */
 {
     int sLen = 0;
     int nTen = 0;
@@ -3868,9 +3867,10 @@ static int
     }
 }
 
-static int getEscapeValue(char *cur, /* current scan point. */
-		int *valPtr,                                 /* return value pointer. */
-		char **newPtr )                               /* next scan point return. */
+static int getEscapeValue(cur, valPtr,
+                          newPtr) char *cur; /* current scan point. */
+int *valPtr;                                 /* return value pointer. */
+char **newPtr;                               /* next scan point return. */
 {
     int val = 0;
     if (*cur != '\\') {
@@ -3937,17 +3937,19 @@ static int getEscapeValue(char *cur, /* current scan point. */
     return TRUE;
 }
 
-static int unHollerith(char *cur,
-		char *head,
-		char *dst,
-		char *dstHead,
-		char *dstMax,
-		int *inQuotePtr,
-		int quoteChar,
-		int *inHollerithPtr,
-		int *hollerithLenPtr,
-		char **newCurPtr,
-		char **newDstPtr)
+static int unHollerith(cur, head, dst, dstHead, dstMax, inQuotePtr, quoteChar,
+                       inHollerithPtr, hollerithLenPtr, newCurPtr,
+                       newDstPtr) char *cur;
+char *head;
+char *dst;
+char *dstHead;
+char *dstMax;
+int *inQuotePtr;
+int quoteChar;
+int *inHollerithPtr;
+int *hollerithLenPtr;
+char **newCurPtr;
+char **newDstPtr;
 {
     int hLen = getHollerithLength(head, cur, *inQuotePtr);
     int nGet = 0;
@@ -4039,12 +4041,13 @@ Done:
     return TRUE;
 }
 
-static int checkInQuote(char *cur,
-		char *dst,
-		int *inQuotePtr,
-		int *quoteCharPtr,
-		char **newCurPtr,
-		char **newDstPtr)
+static int checkInQuote(cur, dst, inQuotePtr, quoteCharPtr, newCurPtr,
+                        newDstPtr) char *cur;
+char *dst;
+int *inQuotePtr;
+int *quoteCharPtr;
+char **newCurPtr;
+char **newDstPtr;
 {
     if (*inQuotePtr == FALSE) {
         *inQuotePtr = TRUE;
@@ -4078,17 +4081,19 @@ static int checkInQuote(char *cur,
     return TRUE;
 }
 
-int ScanFortranLine(char *src,
-		char *srcHead,
-		char *dst,
-		char *dstHead,
-		char *dstMax,
-		int *inQuotePtr,
-		int *quoteCharPtr,
-		int *inHollerithPtr,
-		int *hollerithLenPtr,
-		char **newCurPtr,
-		char **newDstPtr)
+int ScanFortranLine(src, srcHead, dst, dstHead, dstMax, inQuotePtr,
+                    quoteCharPtr, inHollerithPtr, hollerithLenPtr, newCurPtr,
+                    newDstPtr) char *src;
+char *srcHead;
+char *dst;
+char *dstHead;
+char *dstMax;
+int *inQuotePtr;
+int *quoteCharPtr;
+int *inHollerithPtr;
+int *hollerithLenPtr;
+char **newCurPtr;
+char **newDstPtr;
 {
     char *cpDst = dst;
     char *cur;
@@ -4436,7 +4441,7 @@ static int OMP_lex_token()
     return token();
 }
 
-const struct keyword_token OMP_keywords[] = {{"parallel", OMPKW_PARALLEL},
+struct keyword_token OMP_keywords[] = {{"parallel", OMPKW_PARALLEL},
                                        {"end", OMPKW_END},
                                        {"task", OMPKW_TASK},
                                        {"private", OMPKW_PRIVATE},
@@ -4517,13 +4522,14 @@ static void init_sentinel_list(sentinel_list *p)
 }
 
 /* add sentinel name to list */
-static int add_sentinel(sentinel_list *p, const char *name)
+static int add_sentinel(sentinel_list *p, char *name)
 {
     if (p->sentinel_count == MAX_SENTINEL_COUNT)
         return 0;
     if (name == NULL)
         return 0;
-    p->name_list[p->sentinel_count] = strdup(name);
+    p->name_list[p->sentinel_count] = malloc(strlen(name) + 1);
+    strcpy(p->name_list[p->sentinel_count], name);
     p->sentinel_count++;
     return 1;
 }
@@ -4541,7 +4547,7 @@ static char *sentinel_name(sentinel_list *p, unsigned int n)
 }
 
 /* sentinel index by name */
-static int sentinel_index(sentinel_list *p, const char *name)
+static int sentinel_index(sentinel_list *p, char *name)
 {
     int index;
     for (index = 0; index < p->sentinel_count; index++) {
@@ -4621,7 +4627,7 @@ int convert_encoding(void)
 }
 #endif
 
-const struct keyword_token XMP_keywords[] = {{"end", XMPKW_END},
+struct keyword_token XMP_keywords[] = {{"end", XMPKW_END},
                                        {"nodes", XMPKW_NODES},
                                        {"template", XMPKW_TEMPLATE},
                                        {"distribute", XMPKW_DISTRIBUTE},
@@ -4697,7 +4703,7 @@ static int ACC_lex_token()
     return token();
 }
 
-const struct keyword_token ACC_keywords[] = {
+struct keyword_token ACC_keywords[] = {
     {"end", ACCKW_END},
     {"parallel", ACCKW_PARALLEL},
     {"data", ACCKW_DATA},

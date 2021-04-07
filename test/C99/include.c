@@ -1,4 +1,3 @@
-#define _Float128 double
 #include <inttypes.h>
 #include <complex.h>
 #include <stdbool.h>
