@@ -5,9 +5,7 @@
 #include "F-front.h"
 
 /* construct expression */
-expv expv_cons(code, tp, left, right) enum expr_code code;
-TYPE_DESC tp;
-expv left, right;
+expv expv_cons(enum expr_code code, TYPE_DESC tp, expv left, expv right)
 {
     expv v;
     struct list_node *l, *r;
@@ -26,9 +24,7 @@ expv left, right;
     return (v);
 }
 
-expv expv_user_def_cons(code, tp, id, left, right) enum expr_code code;
-TYPE_DESC tp;
-expv id, left, right;
+expv expv_user_def_cons(enum expr_code code, TYPE_DESC tp, expv id, expv left, expv right)
 {
     expv v;
     struct list_node *i, *l, *r;
@@ -55,9 +51,7 @@ expv id, left, right;
  *      STRING_CONSTANT
  *      LABEL_CONSTANT
  */
-expv expv_sym_term(code, tp, name) enum expr_code code;
-TYPE_DESC tp;
-SYMBOL name;
+expv expv_sym_term(enum expr_code code, TYPE_DESC tp, SYMBOL name)
 {
     expv v;
 
@@ -68,9 +62,7 @@ SYMBOL name;
     return (v);
 }
 
-expv expv_str_term(code, tp, str) enum expr_code code;
-TYPE_DESC tp;
-char *str;
+expv expv_str_term(enum expr_code code, TYPE_DESC tp, const char *str)
 {
     expv v;
 
@@ -81,9 +73,7 @@ char *str;
     return (v);
 }
 
-expv expv_int_term(code, tp, i) enum expr_code code;
-TYPE_DESC tp;
-omllint_t i;
+expv expv_int_term(enum expr_code code, TYPE_DESC tp, omllint_t i)
 {
     expv v;
 
@@ -94,8 +84,7 @@ omllint_t i;
     return (v);
 }
 
-expv expv_any_term(code, p) enum expr_code code;
-void *p;
+expv expv_any_term(enum expr_code code, void *p)
 {
     expv v;
 
@@ -106,10 +95,7 @@ void *p;
     return (v);
 }
 
-expv expv_float_term(code, tp, d, token) enum expr_code code;
-TYPE_DESC tp;
-omldouble_t d;
-const char *token;
+expv expv_float_term(enum expr_code code, TYPE_DESC tp, omldouble_t d, const char *token)
 {
     expv v;
 
@@ -121,8 +107,7 @@ const char *token;
     return (v);
 }
 
-expv expv_retype(tp, v) TYPE_DESC tp;
-expv v;
+expv expv_retype(TYPE_DESC tp, expv v)
 {
     expv vv;
     vv = XMALLOC(expv, sizeof(*v));
@@ -131,7 +116,7 @@ expv v;
     return (vv);
 }
 
-static void listToArray(lp) list lp;
+static void listToArray(list lp)
 {
     if (LIST_ARRAY(lp) == NULL) {
         list lq;
@@ -151,8 +136,7 @@ static void listToArray(lp) list lp;
     }
 }
 
-expr expr_list_get_n(x, n) expr x;
-int n;
+expr expr_list_get_n(expr x, int n)
 {
     list lp;
     int i;
@@ -165,9 +149,7 @@ int n;
     return LIST_ITEM(lp);
 }
 
-expr expr_list_get_n_or_named(x, n, named_arg) expr x;
-int n;
-const char *named_arg;
+expr expr_list_get_n_or_named(expr x, int n, const char *named_arg)
 {
     list lp;
     int i;
@@ -194,10 +176,7 @@ const char *named_arg;
     return NULL;
 }
 
-int expr_list_set_n(x, n, val, doOverride) expr x;
-int n;
-expr val;
-int doOverride;
+int expr_list_set_n(expr x, int n, expr val, int doOverride)
 {
     list lp = EXPR_LIST(x);
 

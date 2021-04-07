@@ -1,8 +1,8 @@
 #include "xcodeml.h"
 
-static char *sanitizeText(char *str)
+static const char *sanitizeText(const char *str)
 {
-    char *p = str;
+    const char *p = str;
 
     bool foundNonSpaces = false;
     while (*p != '\0') {
@@ -38,18 +38,18 @@ static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr)
 
                 case XML_ELEMENT_NODE: {
                     me = xcodeml_CreateList0(XcodeML_Element);
-                    XCODEML_NAME(me) = strdup((char *)curNode->name);
+                    XCODEML_NAME(me) = strdup((const char*)curNode->name);
                     break;
                 }
 
                 case XML_ATTRIBUTE_NODE: {
                     me = xcodeml_CreateList0(XcodeML_Attribute);
-                    XCODEML_NAME(me) = strdup((char *)curNode->name);
+                    XCODEML_NAME(me) = strdup((const char*)curNode->name);
                     break;
                 }
 
                 case XML_TEXT_NODE: {
-                    char *text = sanitizeText((char *)curNode->content);
+                    const char *text = sanitizeText((const char*)curNode->content);
                     me = xcodeml_CreateValueNode(text);
                     break;
                 }
@@ -119,7 +119,7 @@ static bool xcParse(xmlNode *ndPtr, const char *fileName, XcodeMLNode **pnPtr)
     return ret;
 }
 
-char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr)
+const char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr)
 {
     if (XCODEML_TYPE(ndPtr) == XcodeML_Attribute) {
         if (XCODEML_TYPE(XCODEML_ARG1(ndPtr)) == XcodeML_Value) {
@@ -129,7 +129,7 @@ char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr)
     return "";
 }
 
-char *xcodeml_GetElementValue(XcodeMLNode *ndPtr)
+const char *xcodeml_GetElementValue(XcodeMLNode *ndPtr)
 {
     if (XCODEML_TYPE(ndPtr) == XcodeML_Element) {
         XcodeMLNode *x1;
@@ -244,7 +244,7 @@ void xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl)
         }
 
         case XcodeML_Element: {
-            char *v = xcodeml_GetElementValue(ndPtr);
+            const char *v = xcodeml_GetElementValue(ndPtr);
             XcodeMLNode *x1;
             XcodeMLList *lp;
 
@@ -267,7 +267,7 @@ void xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl)
         }
 
         case XcodeML_Attribute: {
-            char *v = xcodeml_GetAttributeValue(ndPtr);
+            const char *v = xcodeml_GetAttributeValue(ndPtr);
             if (strlen(v) > 0) {
                 fprintf(fd, "PROP (\"%s\" \"%s\")", XCODEML_NAME(ndPtr), v);
             } else {

@@ -9,12 +9,12 @@ static int enter_typeTable(XcodeMLNode *node);
 static int enter_module(XcodeMLNode *node);
 static int enter_symbols(XcodeMLNode *node);
 static int enter_declarations(XcodeMLNode *node);
-static int enter_declarations_wsymbol(XcodeMLNode *node, char *symbol);
+static int enter_declarations_wsymbol(XcodeMLNode *node, const char *symbol);
 static int enter_useDecl(XcodeMLNode *node);
 static int enter_useOnlyDecl(XcodeMLNode *node);
 static int enter_varDecl(XcodeMLNode *node);
 static int enter_structDecl(XcodeMLNode *node);
-static int enter_taggedType(char *type_sig, char *tagname);
+static int enter_taggedType(const char *type_sig, const char *tagname);
 
 static int enter_interfaceDecl(XcodeMLNode *node);
 static int enter_functionDecl(XcodeMLNode *node);
@@ -50,6 +50,8 @@ struct module_list *module_list_tail = NULL;
         }                                                                      \
     }
 
+struct symbol_stack *current_symbol_stack = NULL;
+
 static void add_symbol(XcodeMLNode *nameNode)
 {
     if (nameNode == NULL)
@@ -77,7 +79,7 @@ static void add_symbol(XcodeMLNode *nameNode)
 
 void push_symbol_stack(XcodeMLNode *decls)
 {
-    symbol_stack *st = (symbol_stack *)malloc(sizeof(symbol_stack));
+    struct symbol_stack *st = (struct symbol_stack *)malloc(sizeof(struct symbol_stack));
     memset(st, 0, sizeof(*st));
     if (current_symbol_stack != NULL)
         st->next = current_symbol_stack->next;
@@ -110,7 +112,7 @@ void pop_symbol_stack()
     if (current_symbol_stack == NULL)
         return;
 
-    symbol_stack *next = current_symbol_stack->next;
+    struct symbol_stack *next = current_symbol_stack->next;
     XcodeMLList *lp, *lpn;
 
     for (lp = current_symbol_stack->id_list,
@@ -289,7 +291,7 @@ int enter_symbols(XcodeMLNode *symbols)
 
     FOR_ITEMS_IN_XCODEML_LIST (lp, symbols) {
         XcodeMLNode *x;
-        char *name, *type, *sclass;
+        const char *name, *type, *sclass;
 
         x = XCODEML_LIST_NODE(lp);
 
@@ -326,7 +328,7 @@ int enter_declarations(XcodeMLNode *declarations)
     return TRUE;
 }
 
-int enter_declarations_wsymbol(XcodeMLNode *declarations, char *symbol)
+int enter_declarations_wsymbol(XcodeMLNode *declarations, const char *symbol)
 {
     XcodeMLList *lp;
 
@@ -452,7 +454,7 @@ int enter_useDecl(XcodeMLNode *useDecl)
 {
     XcodeMLNode *nameAttr;
     XcodeMLList *lp;
-    char *moduleName;
+    const char *moduleName;
     symbol_filter *filter = peek_filter();
     int i = 0;
 
@@ -469,7 +471,7 @@ int enter_useDecl(XcodeMLNode *useDecl)
     } else {
         FOR_ITEMS_IN_XCODEML_LIST (lp, useDecl) {
             XcodeMLNode *x = XCODEML_LIST_NODE(lp);
-            char *local, *use;
+            const char *local, *use;
 
             if (x == useDecl)
                 continue;
@@ -503,7 +505,7 @@ int enter_useOnlyDecl(XcodeMLNode *useOnlyDecl)
 {
     XcodeMLNode *nameAttr;
     XcodeMLList *lp;
-    char *moduleName;
+    const char *moduleName;
     symbol_filter *filter = peek_filter();
     int i = 0;
 
@@ -517,7 +519,7 @@ int enter_useOnlyDecl(XcodeMLNode *useOnlyDecl)
 
     FOR_ITEMS_IN_XCODEML_LIST (lp, useOnlyDecl) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
-        char *local, *use;
+        const char *local, *use;
 
         if (x == useOnlyDecl)
             continue;
@@ -550,7 +552,7 @@ int enter_varDecl(XcodeMLNode *varDecl)
 {
     XcodeMLNode *name;
     XcodeMLNode *value;
-    char *type_signature, *symbol, *orgSymbol;
+    const char *type_signature, *symbol, *orgSymbol;
     symbol_filter *filter = peek_filter();
     int ret;
 
@@ -580,7 +582,7 @@ int enter_varDecl(XcodeMLNode *varDecl)
 int enter_structDecl(XcodeMLNode *structDecl)
 {
     XcodeMLNode *name;
-    char *symbol, *type_sig;
+    const char *symbol, *type_sig;
 
     if (structDecl == NULL)
         return FALSE;
@@ -596,7 +598,7 @@ int enter_structDecl(XcodeMLNode *structDecl)
     return TRUE;
 }
 
-int enter_taggedType(char *type_sig, char *tagname)
+int enter_taggedType(const char *type_sig, const char *tagname)
 {
     xentry *xe = NULL;
     XcodeMLNode *structType, *symbol;
@@ -625,8 +627,8 @@ int enter_taggedType(char *type_sig, char *tagname)
 
         if (strcmp(XCODEML_NAME(x), "id") == 0) {
             XcodeMLNode *name = GET_NAME(x);
-            char *type = GET_TYPE(x);
-            char *symbol = xcodeml_getAsString(name);
+            const char *type = GET_TYPE(x);
+            const char *symbol = xcodeml_getAsString(name);
 
             outf_decl(type, symbol, NULL, false, true);
             outf_flush();
@@ -638,7 +640,7 @@ int enter_taggedType(char *type_sig, char *tagname)
 
 int enter_interfaceDecl(XcodeMLNode *intfDecl)
 {
-    char *name;
+    const char *name;
     char interface_spec[MAXBUFFER];
     int name_flag = 0;
     XcodeMLList *lp;
@@ -680,7 +682,7 @@ int enter_interfaceDecl(XcodeMLNode *intfDecl)
 
             FOR_ITEMS_IN_XCODEML_LIST (llp, x) {
                 XcodeMLNode *funcDef, *xx = XCODEML_LIST_NODE(llp);
-                char *funcName;
+                const char *funcName;
 
                 if (xx == x)
                     continue;
@@ -713,10 +715,10 @@ int enter_interfaceDecl(XcodeMLNode *intfDecl)
 
 int enter_functionDecl(XcodeMLNode *funcDecl)
 {
-    char *funcName;
-    char *type_sig;
-    char *ref = NULL;
-    char *result = NULL;
+    const char *funcName;
+    const char *type_sig;
+    const char *ref = NULL;
+    const char *result = NULL;
     xentry *entry;
     XcodeMLNode *symbols;
     XcodeMLNode *funcType;
@@ -800,11 +802,11 @@ int enter_functionDefinition(XcodeMLNode *funcDef)
     }
     is_inner_module = TRUE;
 #else
-    char *type_sig = GET_TYPE(GET_NAME(funcDef));
+    const char *type_sig = GET_TYPE(GET_NAME(funcDef));
     xentry *xe = typetable_dehash(type_sig);
 
     XcodeMLNode *funcType = NULL;
-    char *funcName = NULL;
+    const char *funcName = NULL;
 
     if (xe == NULL || !IS_FFUNCTIONTYPE(xe))
         return FALSE;
@@ -831,7 +833,7 @@ int enter_params(XcodeMLNode *params)
 
     FOR_ITEMS_IN_XCODEML_LIST (lp, params) {
         XcodeMLNode *x = XCODEML_LIST_NODE(lp);
-        char *name;
+        const char *name;
 
         if (x == params)
             continue;

@@ -1617,7 +1617,7 @@ intrinsic_entry intrinsic_table[] = {
     {INTR_SELECTED_REAL_KIND,
      INTR_NAME_GENERIC,
      "selected_real_kind",
-     {INTR_TYPE_INT, INTR_TYPE_INT, INTR_INT},
+     {INTR_TYPE_INT, INTR_TYPE_INT, INTR_TYPE_INT},
      INTR_TYPE_INT,
      3,
      -6,

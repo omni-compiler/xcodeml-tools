@@ -55,7 +55,7 @@ typedef enum array_assume_kind {
 
 #define KIND_PARAM_DOUBLE 8
 
-extern char *basic_type_names[];
+extern const char *basic_type_names[];
 #define BASIC_TYPE_NAMES                                                       \
     {                                                                          \
         "*undef*", "integer", "real", "double_real", "complex",                \
@@ -69,33 +69,7 @@ typedef struct _codims_desc {
     expr cobound_list;
 } codims_desc;
 
-/* FORTRAN 77 type descriptor */
-/* FORTRAN 77 does not have nested data structure */
-/* pointer type, TYPE_UNKNOWN and ref != NULL */
-/* array type, TYPE_ARRAY && ref != NULL */
-/* but, Fortran 90 has nested data structure */
-typedef struct type_descriptor {
-    struct type_descriptor *link;        /* global linked list */
-    struct type_descriptor *struct_link; /* struct linked list */
-    BASIC_DATA_TYPE basic_type;
-    struct type_descriptor *ref;      /* reference to other */
-    struct ident_descriptor *tagname; /* derived type tagname */
-    char is_referenced;
-    char *imported_id; /* original imported id, if imported */
-    expv kind;         /* kind parameter */
-    expv leng;         /* len parameter */
-    int size;          /* for TYPE_CHAR char length */
-    int is_declared;   /* boolean for type has declared.
-                          (only used by struct type) */
-    int is_imported;   /* type was imported from xmod */
-    int is_modified;   /* modified with VOLATILE or ASYNCHRONOUS */
-    expv bind_name;    /* ISO BIND C name attribute */
-
-    int is_access_inferred; /* boolean flag that tell if the access-spec is
-                               inferred or clearly stated */
-    int is_assumed_type;    /* TYPE(*) */
-    int is_replica;         /* Used while doing deep_copy of type */
-    struct type_attr {
+struct type_attr {
 #define TYPE_ATTR_PARAMETER 0x00000001
 #define TYPE_ATTR_ALLOCATABLE 0x00000002
 #define TYPE_ATTR_EXTERNAL 0x00000004
@@ -142,7 +116,35 @@ typedef struct type_descriptor {
 #define TYPE_EXFLAGS_UNCHANGABLE 0x00000020 /* type is not able to change */
 #define TYPE_EXFLAGS_READONLY 0x00000040    /* type is for read only */
         uint32_t exflags;
-    } attr; /* FbasicType */
+    };
+
+/* FORTRAN 77 type descriptor */
+/* FORTRAN 77 does not have nested data structure */
+/* pointer type, TYPE_UNKNOWN and ref != NULL */
+/* array type, TYPE_ARRAY && ref != NULL */
+/* but, Fortran 90 has nested data structure */
+typedef struct type_descriptor {
+    struct type_descriptor *link;        /* global linked list */
+    struct type_descriptor *struct_link; /* struct linked list */
+    BASIC_DATA_TYPE basic_type;
+    struct type_descriptor *ref;      /* reference to other */
+    struct ident_descriptor *tagname; /* derived type tagname */
+    char is_referenced;
+    char *imported_id; /* original imported id, if imported */
+    expv kind;         /* kind parameter */
+    expv leng;         /* len parameter */
+    int size;          /* for TYPE_CHAR char length */
+    int is_declared;   /* boolean for type has declared.
+                          (only used by struct type) */
+    int is_imported;   /* type was imported from xmod */
+    int is_modified;   /* modified with VOLATILE or ASYNCHRONOUS */
+    expv bind_name;    /* ISO BIND C name attribute */
+
+    int is_access_inferred; /* boolean flag that tell if the access-spec is
+                               inferred or clearly stated */
+    int is_assumed_type;    /* TYPE(*) */
+    int is_replica;         /* Used while doing deep_copy of type */
+    struct type_attr attr; /* FbasicType */
     struct {
         char n_dim;     /* dimension (max 15) */
         char dim_fixed; /* fixed or not */
@@ -204,7 +206,7 @@ typedef struct type_descriptor {
 struct type_attr_check {
     uint32_t flag;
     uint32_t acceptable_flags;
-    char *flag_name;
+    const char *flag_name;
 };
 
 extern struct type_attr_check type_attr_checker[];

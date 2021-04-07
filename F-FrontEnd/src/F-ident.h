@@ -39,7 +39,7 @@ enum name_class {
     CL_ENUM,        /* enum (dummy name) */
 };
 
-extern char *name_class_names[];
+extern const char *name_class_names[];
 #define NAME_CLASS_NAMES                                                       \
     {                                                                          \
         "CL_UNKNOWN", "CL_PARAM", "CL_VAR", "CL_ENTRY", "CL_MAIN",             \
@@ -64,7 +64,7 @@ enum proc_class {
        which is not defined, but used as function. */
 };
 
-extern char *proc_class_names[];
+extern const char *proc_class_names[];
 #define PROC_CLASS_NAMES                                                       \
     {                                                                          \
         "P_UNKNOWN", "P_EXTERNAL", "P_INTRINSIC", "P_STFUNCT", "P_THISPROC",   \
@@ -89,7 +89,7 @@ enum storage_class {
 
 };
 
-extern char *storage_class_names[];
+extern const char *storage_class_names[];
 #define STORAGE_CLASS_NAMES                                                    \
     {                                                                          \
         "STG_UNKNOWN", "STG_ARG", "STG_AUTO", "STG_SAVE", "STG_EXT",           \
@@ -107,7 +107,7 @@ typedef enum statement_label_type {
 /* FORTRAN identifier structure */
 typedef struct ident_descriptor {
     struct ident_descriptor *next; /* linked list */
-    enum name_class class;         /* name class */
+    enum name_class cls;         /* name class */
     char is_declared;
     char is_associative;            /* ASSOCIATE and associate-name */
     char could_be_implicitly_typed; /* id is declared in current scope */
@@ -253,7 +253,7 @@ typedef struct ident_descriptor {
 } * ID;
 
 #define ID_NEXT(id) ((id)->next)
-#define ID_CLASS(id) ((id)->class)
+#define ID_CLASS(id) ((id)->cls)
 #define ID_STORAGE(id) ((id)->stg)
 #define ID_SYM(id) ((id)->name)
 #define ID_NAME(id) SYM_NAME((id)->name)
@@ -412,26 +412,29 @@ struct use_assoc_info {
 
 #define ENUMERATOR_DEFINE(id) ((id)->info.enumerator_info.define)
 
+enum interface_info_class
+{
+    INTF_ASSIGNMENT,   /* for assignment interface */
+    INTF_OPERATOR,     /* for operator (override) interface */
+    INTF_USEROP,       /* for user defined operator interface */
+    INTF_GENERICS,     /* for generics interface but not yet defined */
+    INTF_GENERIC_FUNC, /* for generic 'functions' interface */
+    INTF_GENERIC_SUBR, /* for generic 'subroutines' interface */
+    INTF_GENERIC_WRITE_FORMATTED,   /* for generic 'WRITE(FORMATTED)'
+                                       interface */
+    INTF_GENERIC_WRITE_UNFORMATTED, /* for generic 'WRITE(UNFORMATTED)'
+                                       interface */
+    INTF_GENERIC_READ_FORMATTED, /* for generic 'READ(FORMATTED)' interface
+                                  */
+    INTF_GENERIC_READ_UNFORMATTED, /* for generic 'READ(UNFORMATTED)'
+                                      interface */
+    INTF_ABSTRACT,                 /* for abstract interface */
+    INTF_DECL /* for interface not above cases. (interface for function
+                 prottype)*/
+};
+
 struct interface_info {
-    enum {
-        INTF_ASSIGNMENT,   /* for assignment interface */
-        INTF_OPERATOR,     /* for operator (override) interface */
-        INTF_USEROP,       /* for user defined operator interface */
-        INTF_GENERICS,     /* for generics interface but not yet defined */
-        INTF_GENERIC_FUNC, /* for generic 'functions' interface */
-        INTF_GENERIC_SUBR, /* for generic 'subroutines' interface */
-        INTF_GENERIC_WRITE_FORMATTED,   /* for generic 'WRITE(FORMATTED)'
-                                           interface */
-        INTF_GENERIC_WRITE_UNFORMATTED, /* for generic 'WRITE(UNFORMATTED)'
-                                           interface */
-        INTF_GENERIC_READ_FORMATTED, /* for generic 'READ(FORMATTED)' interface
-                                      */
-        INTF_GENERIC_READ_UNFORMATTED, /* for generic 'READ(UNFORMATTED)'
-                                          interface */
-        INTF_ABSTRACT,                 /* for abstract interface */
-        INTF_DECL /* for interface not above cases. (interface for function
-                     prottype)*/
-    } class;
+    enum interface_info_class cls;
     int is_abstract; /* TRUE if the interface is abstract */
     /* NOTE: the following members are used in the .mod->xmod tranformation tool
      */
@@ -441,7 +444,7 @@ struct interface_info {
 };
 #define INTF_OPID(ii) ((ii)->operatorId)
 #define INTF_IMPL(ii) ((ii)->idlist) /* need it? */
-#define INTF_IS_ABSTRACT(ii) ((ii)->class == INTF_ABSTRACT)
+#define INTF_IS_ABSTRACT(ii) ((ii)->cls == INTF_ABSTRACT)
 
 enum ext_proc_class {
     EP_UNKNOWN,
@@ -514,10 +517,10 @@ typedef struct external_symbol {
 #define EXT_IS_OFMODULE(ep) ((ep)->is_ofModule)
 #define EXT_IS_DEFINED_IO(ep)                                                  \
     (ep != NULL && EXT_PROC_INTERFACE_INFO(ep) != NULL &&                      \
-     (EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_FORMATTED ||     \
-      EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_READ_UNFORMATTED ||   \
-      EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_FORMATTED ||    \
-      EXT_PROC_INTERFACE_INFO(ep)->class == INTF_GENERIC_WRITE_UNFORMATTED))
+     (EXT_PROC_INTERFACE_INFO(ep)->cls == INTF_GENERIC_READ_FORMATTED ||     \
+      EXT_PROC_INTERFACE_INFO(ep)->cls == INTF_GENERIC_READ_UNFORMATTED ||   \
+      EXT_PROC_INTERFACE_INFO(ep)->cls == INTF_GENERIC_WRITE_FORMATTED ||    \
+      EXT_PROC_INTERFACE_INFO(ep)->cls == INTF_GENERIC_WRITE_UNFORMATTED))
 #define EXT_IS_PRAGMA(ep) (EXT_TAG(ep) == STG_PRAGMA)
 
 #define EXT_PROC_TYPE(ep) ((ep)->info.proc_info.type)
@@ -535,7 +538,7 @@ typedef struct external_symbol {
     ((ep)->info.proc_info.interface_external_symbols)
 #define EXT_PROC_INTERFACE_INFO(ep) ((ep)->info.proc_info.interface_info)
 #define EXT_PROC_INTERFACE_CLASS(ep)                                           \
-    ((ep)->info.proc_info.interface_info->class)
+    ((ep)->info.proc_info.interface_info->cls)
 #define EXT_PROC_INTR_DEF_EXT_IDS(ep)                                          \
     ((ep)->info.proc_info.intr_def_external_symbols)
 #define EXT_PROC_CLASS(ep) ((ep)->info.proc_info.ext_proc_class)

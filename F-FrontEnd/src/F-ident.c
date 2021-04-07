@@ -4,7 +4,7 @@
 
 #include "F-front.h"
 
-ID new_ident_desc(sp) SYMBOL sp;
+ID new_ident_desc(SYMBOL sp)
 {
     ID id;
     id = XMALLOC(ID, sizeof(*id));
@@ -13,7 +13,7 @@ ID new_ident_desc(sp) SYMBOL sp;
 }
 
 EXT_ID
-new_external_id(sp) SYMBOL sp;
+new_external_id(SYMBOL sp)
 {
     EXT_ID id;
     id = XMALLOC(EXT_ID, sizeof(*id));
@@ -84,7 +84,7 @@ void id_multilize(ID id)
     ID_CLASS(id) = CL_MULTI;
 }
 
-ID multi_find_class(const ID id, const enum name_class class)
+ID multi_find_class(const ID id, const enum name_class cls)
 {
     ID ip;
 
@@ -93,13 +93,13 @@ ID multi_find_class(const ID id, const enum name_class class)
     }
 
     FOREACH_ID (ip, MULTI_ID_LIST(id)) {
-        if (ID_CLASS(ip) == class) {
+        if (ID_CLASS(ip) == cls) {
             return ip;
         }
     }
 
     FOREACH_ID (ip, ID_NEXT(id)) {
-        if (ID_SYM(id) == ID_SYM(ip) && ID_CLASS(ip) == class) {
+        if (ID_SYM(id) == ID_SYM(ip) && ID_CLASS(ip) == cls) {
             return ip;
         }
     }

@@ -17,15 +17,15 @@ static char fmtVBuf[1024];
 
 extern int order_sequence;
 
-static char *StatusLineToFormatVariableName(n) int n;
+static char *StatusLineToFormatVariableName(int n)
 {
     sprintf(fmtVBuf, "Fmt_%06d", n);
     return strdup(fmtVBuf);
 }
 
-static char *FormatVariableNameToStatusLineStr(name) char *name;
+static const char *FormatVariableNameToStatusLineStr(const char *name)
 {
-    char *s = strstr(name, "Fmt_");
+    const char *s = strstr(name, "Fmt_");
 
     if (s == NULL) {
         return name;
@@ -38,7 +38,8 @@ static char *FormatVariableNameToStatusLineStr(name) char *name;
     }
 }
 
-static SYMBOL nml = (struct symbol[]){{NULL, "nml", 0, 0}};
+static struct symbol nml_val = {NULL, "nml", S_IDENT, 0};
+static SYMBOL nml = &nml_val;
 
 static expv compile_io_arguments(enum expr_code code, expr args)
 {
@@ -151,8 +152,7 @@ static expv compile_io_arguments(enum expr_code code, expr args)
     return vargs;
 }
 
-void compile_FORMAT_decl(st_no, x) int st_no;
-expr x;
+void compile_FORMAT_decl(int st_no, expr x)
 {
     ID fId;
     SYMBOL sym = NULL;
@@ -207,7 +207,7 @@ void FinalizeFormat()
     }
 }
 
-void compile_IO_statement(x) expr x;
+void compile_IO_statement(expr x)
 {
     list lp;
     expv v = NULL, x2;
@@ -259,7 +259,7 @@ void compile_IO_statement(x) expr x;
     return;
 }
 
-void compile_OPEN_statement(x) expr x;
+void compile_OPEN_statement(expr x)
 {
     expr v, callArgs;
 
@@ -273,7 +273,7 @@ void compile_OPEN_statement(x) expr x;
     return;
 }
 
-void compile_CLOSE_statement(x) expr x;
+void compile_CLOSE_statement(expr x)
 {
     expr v, callArgs;
 
@@ -329,7 +329,7 @@ void compile_FPOS_statement(expr x)
     return;
 }
 
-void compile_INQUIRE_statement(x) expr x;
+void compile_INQUIRE_statement(expr x)
 {
     list lp;
     expv v, callArgs;
@@ -356,7 +356,7 @@ void compile_INQUIRE_statement(x) expr x;
     return;
 }
 
-void compile_NAMELIST_decl(x) expr x;
+void compile_NAMELIST_decl(expr x)
 {
     ID nlId;
     list lp, lq;
