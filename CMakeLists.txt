@@ -112,6 +112,7 @@ set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
 
 add_subdirectory(XcodeML-Common/src)
 add_subdirectory(F-BackEnd/src)
+add_subdirectory(C-BackEnd/src)
 add_subdirectory(Driver/bin)
 
 add_custom_target(build-c-install DEPENDS ffront om-f-back fback-driver std-lib-xmods)
