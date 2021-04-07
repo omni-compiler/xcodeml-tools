@@ -18,6 +18,7 @@ HEADERS = c-acc.h c-cmn.h c-comp.h c-const.h c-error.h c-expr.h c-gcctype.h c-le
 	  c-omp.h c-option.h c-pragma.h c-ptree.h c-xcodeml.h c-xmp.h ccol-cmn.h \
 	  ccol-hash.h ccol-list.h ccol.h ../../include/config.h c-exprcode.h c-parser.h c-token.h
 CREATE_FILES = c-exprcode.c c-token.c c-lexer.c c-exprcode.h c-parser.h c-token.h c-parser.c
+THIS_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 all: $(C_FRONT)
 $(C_FRONT): $(OBJECTS)
@@ -27,7 +28,7 @@ $(OBJECTS): $(HEADERS)
 
 c-exprcode.h: c-exprcode.c
 c-exprcode.c: c-exprcode.pl c-exprcode.def
-	$(PERL5) c-exprcode.pl
+	$(PERL5) c-exprcode.pl "$(THIS_DIR)"
 
 c-parser.o: c-exprcode.h
 c-parser.output: c-parser.h
@@ -40,7 +41,7 @@ c-parser.h: c-parser.y c-parser.c
 	$(CC) $(CFLAGS) $< -c
 
 c-token.c: c-token.pl c-parser.h
-	$(PERL5) c-token.pl
+	$(PERL5) c-token.pl "$(THIS_DIR)"
 c-token.h: c-token.c
 
 c-lexer.c: c-lexer.l

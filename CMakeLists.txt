@@ -28,6 +28,7 @@ ELSE()
 ENDIF()
 
 project("XCodeML-Tools-CPP ${BUILD_TYPE}" VERSION 1.0)
+set(C_PACKAGE_VERSION "1.3.0")
 
 # Recover commit hash for the top repositiory
 git_get_rev_hash(${CMAKE_SOURCE_DIR} XCODEML_TOOLS_GIT_HASH)
@@ -61,6 +62,7 @@ endif()
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(Perl 5 REQUIRED)
 
 find_program(AWK awk mawk gawk)
 
@@ -100,6 +102,8 @@ LIST(APPEND ADDITIONAL_CLEAN_FILES ${INT_OMNI_HOME})
 SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${ADDITIONAL_CLEAN_FILES}")
 
 add_subdirectory(include)
+
+add_subdirectory(C-FrontEnd/src)
 
 if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
   set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} -Werror)

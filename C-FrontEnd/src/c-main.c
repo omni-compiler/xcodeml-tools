@@ -9,6 +9,8 @@
  * C_Front main
  */
 
+#if !defined(__CMAKE_BUILD__) || defined(NDEBUG)
+
 #include "c-expr.h"
 #include "c-comp.h"
 #include "c-lexyacc.h"
@@ -119,4 +121,6 @@ main(int argc, char** argv)
 
     return s_hasError ? CEXIT_CODE_ERR : CEXIT_CODE_OK;
 }
+
+#endif //!defined(__CMAKE_BUILD__) || defined(NDEBUG)
 
