@@ -10,6 +10,23 @@
 #define ALIGNOF_SAMPLE_STRUCT(type)   struct { char a; type b; }
 #define ALIGNOF(type)                 OFFSETOF(ALIGNOF_SAMPLE_STRUCT(type), b)
 
+#ifdef __CMAKE_BUILD__
+
+#include "stdbool.h"
+
+#define ALIGNOF_VOID_P                ALIGNOF(void*)
+#define ALIGNOF_UNSIGNED_CHAR          ALIGNOF(unsigned char)
+#define ALIGNOF_UNSIGNED_LONG         ALIGNOF(unsigned long)
+#define ALIGNOF_UNSIGNED_SHORT        ALIGNOF(unsigned short)
+#define ALIGNOF_UNSIGNED_INT          ALIGNOF(unsigned int)
+#define ALIGNOF_UNSIGNED_LONG_LONG    ALIGNOF(unsigned long long)
+#define ALIGNOF_FLOAT                 ALIGNOF(float)
+#define ALIGNOF_DOUBLE                ALIGNOF(double)
+#define ALIGNOF_LONG_DOUBLE           ALIGNOF(long double)
+#define ALIGNOF__BOOL                 ALIGNOF(bool)
+
+#endif
+
 unsigned int s_sizeAddr         = SIZEOF_VOID_P;
 unsigned int s_sizeChar         = SIZEOF_UNSIGNED_CHAR;
 unsigned int s_sizeWChar        = SIZEOF_UNSIGNED_LONG;

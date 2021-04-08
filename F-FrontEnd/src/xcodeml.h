@@ -26,14 +26,14 @@ extern char *xmalloc _ANSI_ARGS_((int size));
 extern int module_debug_flag;
 extern int is_inner_module;
 
-extern char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr);
-extern char *xcodeml_GetElementValue(XcodeMLNode *ndPtr);
+extern const char *xcodeml_GetAttributeValue(XcodeMLNode *ndPtr);
+extern const char *xcodeml_GetElementValue(XcodeMLNode *ndPtr);
 
 extern XcodeMLNode *xcodeml_ParseFile(const char *file);
 extern void xcodeml_DumpTree(FILE *fd, XcodeMLNode *ndPtr, int lvl);
 
-extern XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, char *name);
-extern XcodeMLNode *xcodeml_getAttrByName(XcodeMLNode *ndPtr, char *name);
+extern XcodeMLNode *xcodeml_getByName(XcodeMLNode *ndPtr, const char *name);
+extern XcodeMLNode *xcodeml_getAttrByName(XcodeMLNode *ndPtr, const char *name);
 
 extern XcodeMLNode *xcodeml_getElem(XcodeMLNode *ndPtr, int order);
 
@@ -42,7 +42,7 @@ extern XcodeMLNode *xcodeml_getElem(XcodeMLNode *ndPtr, int order);
 #define GET_CHILD2(ndPtr) xcodeml_getElem(ndPtr, 2)
 
 extern bool xcodeml_getAsBool(XcodeMLNode *ndPtr);
-extern char *xcodeml_getAsString(XcodeMLNode *ndPtr);
+extern const char *xcodeml_getAsString(XcodeMLNode *ndPtr);
 
 /* macros for a xcodeProgram tag */
 #define GET_TYPETABLE(ndPtr) xcodeml_getByName((ndPtr), "typeTable")
@@ -150,7 +150,7 @@ extern char *xcodeml_getAsString(XcodeMLNode *ndPtr);
 struct xcodeml_type_entry {
     XcodeMLNode *content;
     struct xcodeml_type_entry *next;
-    char *tagname;
+    const char *tagname;
 };
 #define GET_CONTENT(x) ((x)->content)
 #define GET_NEXT(x) ((x)->next)
@@ -159,37 +159,37 @@ struct xcodeml_type_entry {
 typedef struct xcodeml_type_entry xentry;
 
 extern void typetable_enhash(XcodeMLNode *type);
-extern xentry *typetable_dehash(char *type_signature);
+extern xentry *typetable_dehash(const char *type_signature);
 
 extern void typetable_init();
-extern bool type_isPrimitive(char *type_signature);
+extern bool type_isPrimitive(const char *type_signature);
 
 /* for output */
 extern void init_outputf(FILE *fd);
 extern void outf_token(const char *token);
 extern void outf_tokenln(const char *token);
 extern void outf_flush();
-extern int outf_decl(char *type_signature, char *symbol, XcodeMLNode *node,
+extern int outf_decl(const char *type_signature, const char *symbol, XcodeMLNode *node,
                      bool convertSymbol, int force);
 
 extern XcodeMLNode *containsStmt;
-extern XcodeMLNode *get_funcDef(XcodeMLNode *defs, char *name);
+extern XcodeMLNode *get_funcDef(XcodeMLNode *defs, const char *name);
 extern int xcodeml_has_symbol(const char *symbol);
 
 struct priv_parm_list {
-    char *symbol;
+    const char *symbol;
     struct priv_parm_list *next;
 };
 
 extern struct priv_parm_list *priv_parm_list_head;
 extern struct priv_parm_list *priv_parm_list_tail;
 
-typedef struct symbol_stack {
+struct symbol_stack {
     XcodeMLList *id_list;
     struct symbol_stack *next;
-} symbol_stack;
+};
 
-symbol_stack *current_symbol_stack;
+extern struct symbol_stack *current_symbol_stack;
 
 #define PRIV_PARM_SYM(priv_parm_list) ((priv_parm_list)->symbol)
 #define PRIV_PARM_LINK(priv_parm_list) ((priv_parm_list)->next)

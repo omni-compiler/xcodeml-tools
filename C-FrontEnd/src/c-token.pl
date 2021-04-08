@@ -3,12 +3,16 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 use strict;
+use File::Spec;
 
+my $out_dir = "$ARGV[0]";
 my $cfile = "c-token.c";
 my $hfile = "c-token.h";
+my $c_parser_path = File::Spec->catfile(${out_dir}, "c-parser.h");
+my $cfile_path = File::Spec->catfile(${out_dir}, ${cfile});
 
-open(IN, "c-parser.h") || die "$!";
-open(COUT, ">${cfile}") || die "$!";
+open(IN, ${c_parser_path}) || die "$!";
+open(COUT, ">${cfile_path}") || die "$!";
 
 print COUT<<_EOL_;
 #include "c-token.h"

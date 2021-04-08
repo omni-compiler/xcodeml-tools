@@ -9,8 +9,8 @@ static void outf_expression(XcodeMLNode *expr);
 static void outf_constant(XcodeMLNode *expr);
 static void outf_varName(XcodeMLNode *expr);
 static void outf_complexConst(XcodeMLNode *expr);
-static void outf_unary_expression(XcodeMLNode *expr, char *op);
-static void outf_binary_expression(XcodeMLNode *expr, char *op);
+static void outf_unary_expression(XcodeMLNode *expr, const char *op);
+static void outf_binary_expression(XcodeMLNode *expr, const char *op);
 static void outf_functionCall(XcodeMLNode *expr);
 static void outf_memberRef(XcodeMLNode *expr);
 static void outf_characterRef(XcodeMLNode *expr);
@@ -87,7 +87,7 @@ void outf_token(const char *token)
 /**
  * Outputs a token with comma.
  */
-static void outf_tokenc(char *token, int comma)
+static void outf_tokenc(const char *token, int comma)
 {
     if (comma)
         outf_token(",");
@@ -106,7 +106,7 @@ void outf_tokenln(const char *token)
 /**
  * \brief Outputs a type signature as a primitive type.
  */
-static int outf_primitive(char *type_signature)
+static int outf_primitive(const char *type_signature)
 {
     if (type_signature == NULL)
         return FALSE;
@@ -133,9 +133,9 @@ static int outf_primitive(char *type_signature)
 /**
  * \brief Outputs type.
  */
-static int outf_basic_type(XcodeMLNode *basic_type, char *tagname)
+static int outf_basic_type(XcodeMLNode *basic_type, const char *tagname)
 {
-    char *type, *ref;
+    const char *type, *ref;
     XcodeMLNode *len, *kind;
     int outputed = FALSE;
 
@@ -212,7 +212,7 @@ static int outf_basic_type(XcodeMLNode *basic_type, char *tagname)
 static int outf_type_attribute(XcodeMLNode *first, XcodeMLNode *last,
                                int outputed)
 {
-    char *intent;
+    const char *intent;
 
     if (first == NULL)
         return FALSE;
@@ -320,11 +320,11 @@ static int outf_type_shape(XcodeMLNode *shape)
 /**
  * \brief Outputs a XcodeML declaration tag.
  */
-int outf_decl(char *type_signature, char *symbol, XcodeMLNode *value,
+int outf_decl(const char *type_signature, const char *symbol, XcodeMLNode *value,
               bool convertSymbol, int force)
 {
     xentry *first, *last, *func_org = NULL;
-    char *ref = NULL;
+    const char *ref = NULL;
     int outputed = FALSE;
     int is_private_parameter = FALSE;
 
@@ -441,8 +441,8 @@ int outf_decl(char *type_signature, char *symbol, XcodeMLNode *value,
  */
 static void outf_expression(XcodeMLNode *expr)
 {
-    char *op;
-    char *name;
+    const char *op;
+    const char *name;
 
     if (expr == NULL)
         return; /* error */
@@ -553,7 +553,7 @@ static void outf_expression(XcodeMLNode *expr)
  */
 static void outf_constant(XcodeMLNode *expr)
 {
-    char *content, *p;
+	const char *content, *p;
     const char sq[] = "'";
     const char dq[] = "\"";
     XcodeMLNode *kind;
@@ -584,7 +584,7 @@ static void outf_constant(XcodeMLNode *expr)
         if (kind != NULL) {
             int i;
             int num_kind = TRUE;
-            char *kind_symbol;
+            const char *kind_symbol;
             kind_symbol = xcodeml_getAsString(kind);
             outf_token("_");
             for (i = 0; kind_symbol[i] != '\0'; i++) {
@@ -605,7 +605,7 @@ static void outf_constant(XcodeMLNode *expr)
  */
 static void outf_varName(XcodeMLNode *expr)
 {
-    char *content;
+	const char *content;
 
     content = xcodeml_getAsString(expr);
 
@@ -644,7 +644,7 @@ static void outf_complexConst(XcodeMLNode *expr)
 /**
  * \brief Outputs a XcodeML tag as a binary expression.
  */
-static void outf_binary_expression(XcodeMLNode *expr, char *op)
+static void outf_binary_expression(XcodeMLNode *expr, const char *op)
 {
     outf_token("(");
     outf_expression(GET_CHILD0(expr));
@@ -658,7 +658,7 @@ static void outf_binary_expression(XcodeMLNode *expr, char *op)
 /**
  * \brief Outputs a XcodeML tag as a unary expression.
  */
-static void outf_unary_expression(XcodeMLNode *expr, char *op)
+static void outf_unary_expression(XcodeMLNode *expr, const char *op)
 {
     outf_token(op);
     outf_expression(GET_CHILD0(expr));
@@ -669,7 +669,7 @@ static void outf_unary_expression(XcodeMLNode *expr, char *op)
  */
 static void outf_functionCall(XcodeMLNode *expr)
 {
-    char *funcName;
+	const char *funcName;
     XcodeMLNode *arg;
     funcName = xcodeml_getAsString(GET_NAME(expr));
     arg = GET_ARGUMENTS(expr);
@@ -686,7 +686,7 @@ static void outf_functionCall(XcodeMLNode *expr)
  */
 static void outf_memberRef(XcodeMLNode *expr)
 {
-    char *member;
+	const char *member;
     member = GET_MEMBER(expr);
 
     outf_expression(GET_CHILD0(expr));
@@ -740,7 +740,7 @@ static void outf_arrayRef(XcodeMLNode *expr)
 static void outf_structConst(XcodeMLNode *expr)
 {
     xentry *xe;
-    char *type_sig;
+    const char *type_sig;
 
     type_sig = GET_TYPE(expr);
     xe = typetable_dehash(type_sig);
@@ -790,7 +790,7 @@ static void outf_indexRange(XcodeMLNode *expr)
  */
 static void outf_doLoop(XcodeMLNode *expr)
 {
-    char *var;
+    const char *var;
     XcodeMLList *lp;
     XcodeMLNode *indexRange, *step;
 
@@ -850,7 +850,7 @@ static void outf_expressionList(XcodeMLNode *expr)
             continue;
 
         if (strcmp(XCODEML_NAME(x), "namedValue") == 0) {
-            char *name = xcodeml_getAsString(GET_NAME(x));
+            const char *name = xcodeml_getAsString(GET_NAME(x));
             if (name != NULL) {
                 outf_token(name);
                 outf_token("=");

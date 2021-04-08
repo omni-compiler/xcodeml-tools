@@ -50,7 +50,7 @@ extern int auto_save_attr_kb;
 int XMP_coarray_flag = TRUE;
 
 /* control stack */
-static struct control _ctl_base = {0};
+static struct control _ctl_base = {CTL_NONE};
 CTL ctl_base = &_ctl_base;
 CTL ctl_top;
 CTL ctl_top_saved = NULL;
@@ -269,7 +269,7 @@ void initialize_compile_procedure()
     init_for_XMP_pragma();
 }
 
-void output_statement(v) expv v;
+void output_statement(expv v)
 {
     if (v == NULL)
         return;
@@ -317,7 +317,7 @@ static void output_pragma()
 }
 
 /* enter control block */
-void push_ctl(ctl) enum control_type ctl;
+void push_ctl(enum control_type ctl)
 {
     if (CTL_NEXT(ctl_top) == NULL) {
         CTL_NEXT(ctl_top) = new_ctl();
@@ -382,8 +382,7 @@ static expr list_find_type_expr(const expr lst)
     return type_expr;
 }
 
-void compile_statement(st_no, x) int st_no;
-expr x;
+void compile_statement(int st_no, expr x)
 {
     int doCont = 0;
     if (x == NULL)
@@ -4728,9 +4727,7 @@ static void end_procedure()
 /*
  * DO loop
  */
-static void compile_DO_statement(range_st_no, construct_name, var, init, limit,
-                                 incr) int range_st_no;
-expr construct_name, var, init, limit, incr;
+static void compile_DO_statement(int range_st_no, expr construct_name, expr var, expr init, expr limit, expr incr)
 {
     expv do_var = NULL, do_init = NULL, do_limit = NULL, do_incr = NULL;
     ID do_label = NULL;
@@ -4860,9 +4857,8 @@ expr construct_name, var, init, limit, incr;
               list5(LIST, do_var, do_init, do_limit, do_incr, NULL));
 }
 
-static void compile_DOWHILE_statement(range_st_no, cond,
-                                      construct_name) int range_st_no;
-expr cond, construct_name;
+static void compile_DOWHILE_statement(int range_st_no,
+		expr cond, expr construct_name)
 {
     expv v;
     ID do_label = NULL;
@@ -6194,7 +6190,7 @@ static void compile_INTERFACE_statement(expr x)
     int hasName;
     struct interface_info *info =
         XMALLOC(struct interface_info *, sizeof(struct interface_info));
-    info->class = INTF_DECL;
+    info->cls = INTF_DECL;
 
     identOrOp = EXPR_ARG1(x);
     hasName = identOrOp ? TRUE : FALSE;
@@ -6237,13 +6233,13 @@ static void compile_INTERFACE_statement(expr x)
             case F95_ASSIGNOP: {
                 /* user define assingment operator */
                 s = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(identOrOp)));
-                info->class = INTF_ASSIGNMENT;
+                info->cls = INTF_ASSIGNMENT;
             } break;
             case F95_USER_DEFINED: {
 #define END_LENGTH 2
 #define MAXLEN_USEROP 31
                 expr id = EXPR_ARG1(identOrOp);
-                char *name;
+                const char *name;
                 char operator_name[MAXLEN_USEROP];
                 assert(EXPR_CODE(id) == IDENT);
 
@@ -6258,7 +6254,7 @@ static void compile_INTERFACE_statement(expr x)
 
                 s = find_symbol(operator_name);
 
-                info->class = INTF_USEROP;
+                info->cls = INTF_USEROP;
             } break;
             case F95_POWEOP:
             case F95_MULOP:
@@ -6284,18 +6280,18 @@ static void compile_INTERFACE_statement(expr x)
             case F95_NEQVOP:
             case F95_CONCATOP: {
                 s = find_symbol(EXPR_CODE_SYMBOL(EXPR_CODE(identOrOp)));
-                info->class = INTF_OPERATOR;
+                info->cls = INTF_OPERATOR;
             } break;
             case F03_GENERIC_WRITE: {
                 expr formatted = EXPR_ARG1(identOrOp);
                 switch (EXPR_CODE(formatted)) {
                     case F03_FORMATTED:
                         s = find_symbol("_write_formatted");
-                        info->class = INTF_GENERIC_WRITE_FORMATTED;
+                        info->cls = INTF_GENERIC_WRITE_FORMATTED;
                         break;
                     case F03_UNFORMATTED:
                         s = find_symbol("_write_unformatted");
-                        info->class = INTF_GENERIC_WRITE_UNFORMATTED;
+                        info->cls = INTF_GENERIC_WRITE_UNFORMATTED;
                         break;
                     default:
                         /* never reach */
@@ -6307,11 +6303,11 @@ static void compile_INTERFACE_statement(expr x)
                 switch (EXPR_CODE(formatted)) {
                     case F03_FORMATTED:
                         s = find_symbol("_read_formatted");
-                        info->class = INTF_GENERIC_READ_FORMATTED;
+                        info->cls = INTF_GENERIC_READ_FORMATTED;
                         break;
                     case F03_UNFORMATTED:
                         s = find_symbol("_read_unformatted");
-                        info->class = INTF_GENERIC_READ_UNFORMATTED;
+                        info->cls = INTF_GENERIC_READ_UNFORMATTED;
                         break;
                     default:
                         /* never reach */
@@ -6320,7 +6316,7 @@ static void compile_INTERFACE_statement(expr x)
             } break;
             case F03_ABSTRACT_SPEC: {
                 hasName = FALSE;
-                info->class = INTF_ABSTRACT;
+                info->cls = INTF_ABSTRACT;
             } break;
             default:
                 NOT_YET();
@@ -6363,7 +6359,7 @@ static void compile_INTERFACE_statement(expr x)
 
 static int check_interface_type(EXT_ID ep, TYPE_DESC ftp)
 {
-    switch (EXT_PROC_INTERFACE_INFO(ep)->class) {
+    switch (EXT_PROC_INTERFACE_INFO(ep)->cls) {
         case INTF_GENERIC_READ_FORMATTED:
             return is_defined_io_read_formatted(ftp, NULL);
         case INTF_GENERIC_READ_UNFORMATTED:
@@ -6751,7 +6747,7 @@ expv compile_set_expr(expr x)
     if (EXPR_CODE(x) == F_SET_EXPR) {
         ret = compile_expression(EXPR_ARG2(x));
         if (ret != NULL) {
-            char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(x)));
+            const char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(x)));
             if (keyword != NULL && *keyword != '\0') {
                 /* allocate a copy of the expv element as it might be shared
                    and not all instance must be assigned the named-arg value */
@@ -8485,7 +8481,7 @@ static void fix_pointer_pointee_recursive(TYPE_DESC tp)
     }
 }
 
-expv create_implicit_decl_expv(TYPE_DESC tp, char *first, char *second)
+expv create_implicit_decl_expv(TYPE_DESC tp, const char *first, const char *second)
 {
     expr impl_expv, first_symbol, second_symbol;
 
@@ -8775,7 +8771,7 @@ static int compile_stat_args(expv st, expr x, int expect_acquired_lock)
 
         arg = compile_expression(EXPR_ARG2(v));
 
-        char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
+        const char *keyword = SYM_NAME(EXPR_SYM(EXPR_ARG1(v)));
         if (keyword == NULL || *keyword == '\0') {
             fatal("%s: invalid F_SET_EXPR.", __func__);
         }
@@ -8788,7 +8784,7 @@ static int compile_stat_args(expv st, expr x, int expect_acquired_lock)
             has_keyword_stat = TRUE;
 
             if (!IS_INT(EXPV_TYPE(arg))) {
-                error("stat variable should be interger");
+                error("stat variable should be integer");
                 return FALSE;
             }
 

@@ -5,15 +5,19 @@
 #  PLEASE DESCRIBE LICENSE AGREEMENT HERE
 #  $
 use strict;
+use File::Spec;
 
+my $out_dir = "$ARGV[0]";
 my $thisfile = "c-exprcode.pl";
 my $dfile = "c-exprcode.def";
 my $hfile = "c-exprcode.h";
 my $cfile = "c-exprcode.c";
+my $hfile_path = File::Spec->catfile(${out_dir}, ${hfile});
+my $cfile_path = File::Spec->catfile(${out_dir}, ${cfile});
 
 open(IN, $dfile) || die "$!";
-open(HOUT, ">${hfile}") || die "$!";
-open(COUT, ">${cfile}") || die "$!";
+open(HOUT, ">${hfile_path}") || die "$!";
+open(COUT, ">${cfile_path}") || die "$!";
 
 print HOUT<<_EOL_;
 /* This file is generated automatically by ${thisfile} */

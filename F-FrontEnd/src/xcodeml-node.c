@@ -17,7 +17,7 @@ XcodeMLNode *xcodeml_CreateGenericNode(XcodeMLNodeTypeT t, void *v)
     return ret;
 }
 
-XcodeMLNode *xcodeml_CreateValueNode(char *s)
+XcodeMLNode *xcodeml_CreateValueNode(const char *s)
 {
     XcodeMLNode *ret = xcodeml_CreateGenericNode(XcodeML_Value, NULL);
     XCODEML_VALUE(ret) = strdup(s);

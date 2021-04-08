@@ -1,0 +1,13 @@
+#!/bin/bash
+
+THIS_DIR=$(dirname "$(readlink -f "$0")")
+OMNI_HOME="${THIS_DIR}/.."
+OMNI_JAR1="${OMNI_HOME}/share/om-c-back.jar"
+OMNI_JAR2="${OMNI_HOME}/share/om-common.jar"
+
+if [ -z ${OMNI_JAVA+x} ]; then
+OMNI_JAVA=@Java_JAVA_EXECUTABLE@
+fi
+
+OMNI_JAVA_OPT="-cp ${OMNI_JAR2}:${OMNI_JAR1} xcodeml.c.util.omx2c"
+exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} $*
