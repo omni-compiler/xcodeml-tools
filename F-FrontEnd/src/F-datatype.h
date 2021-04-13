@@ -11,6 +11,7 @@
 #ifndef _F_DATATYPE_H_
 #define _F_DATATYPE_H_
 
+#include "C-expr.h"
 #include <stdint.h>
 
 /* f77 data types */

@@ -151,9 +151,10 @@ XcodeMLNode *xcodeml_ParseFile(const char *fileName)
 
     char buff[MAX_PATH_LEN];
     xmlDocPtr doc;
-    extern char *includeDirv[];
-    extern int includeDirvI;
-    extern char *modincludeDirv;
+    extern const char **  includeDirv;
+    extern size_t includeDirvI;
+    extern const char ** modincludeDirv;
+    extern const size_t modincludeDirvI;
     int i;
 
     XcodeMLNode *ret = NULL;
@@ -166,9 +167,9 @@ XcodeMLNode *xcodeml_ParseFile(const char *fileName)
 
     if (!doc) {
 
-        if (modincludeDirv) {
+        if (modincludeDirvI > 0) {
 
-            strcpy(buff, modincludeDirv);
+            strcpy(buff, modincludeDirv[0]);
             strcat(buff, "/");
             strcat(buff, fileName);
 

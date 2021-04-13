@@ -15,15 +15,15 @@
 // #define LEX_DEBUG 1
 
 /* Lexical analyzer, enable open mp.  */
-int OMP_flag = FALSE;
-int XMP_flag = FALSE;
-int ACC_flag = FALSE;
+bool OMP_flag = false;
+bool XMP_flag = false;
+bool ACC_flag = false;
 
 /* lexical analyzer, enable conditional compilation.  */
-int cond_compile_enabled = FALSE;
+bool cond_compile_enabled = false;
 
 /* leave comemnt in xcodeml file using TEXT */
-int leave_comment_flag = FALSE;
+bool leave_comment_flag = false;
 
 /* lexical analyzer */
 /* enable to parse for pragma.  */
@@ -48,13 +48,13 @@ int need_check_user_defined = TRUE; /* check the user defined dot id */
 
 int may_generic_spec = FALSE;
 
-int fixed_format_flag = FALSE;
+bool fixed_format_flag = false;
 
 int max_line_len = -1; /* -1 when value is not set yet. */
 int max_cont_line = 255;
 
 /* enable comment char, 'c' in free format.  */
-int flag_force_c_comment = FALSE; /* does not set yet.  */
+bool flag_force_c_comment = false; /* does not set yet.  */
 
 #define QUOTE '\002' /* special quote mark */
 
@@ -70,13 +70,13 @@ extern struct keyword_token end_keywords[];
 extern struct keyword_token type_keywords[];
 extern struct keyword_token do_keywords[];
 
-extern int ocl_flag;
-extern int cdir_flag;
-extern int pgi_flag;
+extern bool ocl_flag;
+extern bool cdir_flag;
+extern bool pgi_flag;
 extern int max_name_len; //  maximum identifier name length
-extern int dollar_ok;    // accept '$' in identifier or not.
+extern bool dollar_ok;    // accept '$' in identifier or not.
 
-int exposed_comma, exposed_eql;
+bool exposed_comma, exposed_eql;
 int paren_level;
 char *bufptr = NULL;        /* pointer running in st_buffer */
 char *st_buffer = NULL;     /* one statement buffer */
@@ -117,7 +117,7 @@ struct saved_file_state {
     char *save_buffer;
     char *save_stn_cols;
     /* when include by USE, must specify -force-free-format.  */
-    int save_fixed_format_flag;
+    bool save_fixed_format_flag;
     int save_no_countup; /* reach ';', we do not count up the line number.  */
 #ifdef ENABLE_UCHARDET
     iconv_t cd;
@@ -142,14 +142,14 @@ enum lex_state {
     LEX_RET_EOS
 };
 
-int st_CONDCOMPL_flag;
-int st_PRAGMA_flag;
-int st_OCL_flag;
-int st_OMP_flag;
-int st_XMP_flag;
-int st_ACC_flag;
-int st_comment_line_flag;
-int st_PGI_flag;
+bool st_CONDCOMPL_flag;
+bool st_PRAGMA_flag;
+bool st_OCL_flag;
+bool st_OMP_flag;
+bool st_XMP_flag;
+bool st_ACC_flag;
+bool st_comment_line_flag;
+bool st_PGI_flag;
 
 enum lex_state lexstate;
 
@@ -324,8 +324,8 @@ void initialize_lex()
         read_lineno.file_id = get_file_id("<stdin>");
 
     lexstate = LEX_NEW_STATEMENT;
-    exposed_comma = FALSE;
-    exposed_eql = FALSE;
+    exposed_comma = false;
+    exposed_eql = false;
     paren_level = 0;
 
     init_sentinel_list(&sentinels);
@@ -2291,7 +2291,7 @@ void include_file(char *name, int inside_use)
     if (inside_use) {
         /* in include_file invoked by USE, we must free format.  */
         /* sincse .modf is free format.  */
-        fixed_format_flag = FALSE;
+        fixed_format_flag = false;
     } else {
         read_lineno.file_id = get_file_id(name);
         read_lineno.ln_no = 0;
@@ -2469,8 +2469,8 @@ static int read_free_format()
     char oBuf[65536];
     int cont_line_num = 0;
 
-    exposed_comma = 0;
-    exposed_eql = 0;
+    exposed_comma = false;
+    exposed_eql = false;
     paren_level = 0;
     may_generic_spec = FALSE;
 
@@ -2482,14 +2482,14 @@ again:
     p = line_buffer;
 
     st_no = 0;
-    st_OMP_flag = FALSE;       /* flag for "!$OMP" */
-    st_XMP_flag = FALSE;       /* flag for "!$XMP" */
-    st_ACC_flag = FALSE;       /* flag for "!$ACC" */
-    st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
-    st_OCL_flag = FALSE;       /* flag for "!OCL" */
-    st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
-    st_comment_line_flag = FALSE;
-    st_PGI_flag = FALSE;
+    st_OMP_flag = false;       /* flag for "!$OMP" */
+    st_XMP_flag = false;       /* flag for "!$XMP" */
+    st_ACC_flag = false;       /* flag for "!$ACC" */
+    st_PRAGMA_flag = false;    /* flag for "!$+" */
+    st_OCL_flag = false;       /* flag for "!OCL" */
+    st_CONDCOMPL_flag = false; /* flag for "!$" */
+    st_comment_line_flag = false;
+    st_PGI_flag = false;
 
     if (flag_force_c_comment) {
         if ((p[0] == 'c') || (p[0] == 'C') || (p[0] == '*')) {
@@ -2513,46 +2513,46 @@ again:
             if (strcasecmp(sentinel_name(&sentinels, index), OMP_SENTINEL) ==
                 0) {
                 set_pragma_str("OMP");
-                st_OMP_flag = TRUE;
+                st_OMP_flag = true;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   XMP_SENTINEL) == 0) {
                 set_pragma_str("XMP");
-                st_XMP_flag = TRUE;
+                st_XMP_flag = true;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   ACC_SENTINEL) == 0) {
                 set_pragma_str("ACC");
-                st_ACC_flag = TRUE;
+                st_ACC_flag = true;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   OCL_SENTINEL) == 0) {
                 char buff[256] = "ocl";
                 strcat(buff, p);
                 set_pragma_str(buff);
-                st_PRAGMA_flag = TRUE;
+                st_PRAGMA_flag = true;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   CDIR_SENTINEL) == 0) {
                 char buff[256] = "cdir";
                 strcat(buff, p);
                 set_pragma_str(buff);
-                st_PRAGMA_flag = TRUE;
+                st_PRAGMA_flag = true;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   PGI_SENTINEL) == 0) {
                 char buff[256] = "pgi$";
                 strcat(buff, p);
                 set_pragma_str(buff);
-                st_PRAGMA_flag = TRUE;
+                st_PRAGMA_flag = true;
             } else if (strcasecmp(sentinel_name(&sentinels, index),
                                   DIR_SENTINEL) == 0) {
                 char buff[256] = "dir$";
                 strcat(buff, p);
                 set_pragma_str(buff);
-                st_PRAGMA_flag = TRUE;
+                st_PRAGMA_flag = true;
             } else {
                 set_pragma_str(&(sentinel_name(&sentinels, index)[2]));
-                st_PRAGMA_flag = TRUE;
+                st_PRAGMA_flag = true;
             }
         } else if (is_cond_compilation(&sentinels, p)) {
             p += 2; /* length of "!$" */
-            st_CONDCOMPL_flag = TRUE;
+            st_CONDCOMPL_flag = true;
             set_pragma_str("");
             if (OMP_flag || cond_compile_enabled) {
                 /* get statement label */
@@ -2570,7 +2570,7 @@ again:
             }
         } else if (leave_comment_flag) {
             set_pragma_str(p);
-            st_comment_line_flag = TRUE;
+            st_comment_line_flag = true;
         } else
             goto again; /* comment line */
     }
@@ -2715,10 +2715,10 @@ Done:
         goto Last;
     }
 
-    if (inQuote == TRUE) {
+    if (inQuote == true) {
         error("un-closed quotes");
     }
-    if (inH == TRUE) {
+    if (inH == true) {
         warning_lineno(&read_lineno, "un-terminated Hollerith code.");
         if (st_len < ST_BUF_SIZE) {
             *q++ = QUOTE;
@@ -2742,7 +2742,7 @@ static int anotherEOF()
     if (n_nested_file == 0 && mcLn_no != -1) {
         long l = ftell(source_file);
         if (l > mcEnd)
-            return TRUE;
+            return true;
     }
     return FALSE;
 }
@@ -2899,17 +2899,17 @@ static int read_fixed_format()
     int index; /* sentinel index in list */
     int cont_line_num = 0;
 
-    exposed_comma = 0;
-    exposed_eql = 0;
+    exposed_comma = false;
+    exposed_eql = false;
     paren_level = 0;
     may_generic_spec = FALSE;
 
-    st_OMP_flag = FALSE;       /* flag for "!$OMP" */
-    st_XMP_flag = FALSE;       /* flag for "!$XMP" */
-    st_ACC_flag = FALSE;       /* flag for "!$ACC" */
-    st_PRAGMA_flag = FALSE;    /* flag for "!$+" */
-    st_CONDCOMPL_flag = FALSE; /* flag for "!$" */
-    st_comment_line_flag = FALSE;
+    st_OMP_flag = false;       /* flag for "!$OMP" */
+    st_XMP_flag = false;       /* flag for "!$XMP" */
+    st_ACC_flag = false;       /* flag for "!$ACC" */
+    st_PRAGMA_flag = false;    /* flag for "!$+" */
+    st_CONDCOMPL_flag = false; /* flag for "!$" */
+    st_comment_line_flag = false;
 
 top:
     if (!pre_read) {
@@ -2927,57 +2927,57 @@ top:
     st_len = 0;
     if (is_pragma_sentinel(&sentinels, stn_cols, &index)) {
         if (strcasecmp(sentinel_name(&sentinels, index), OMP_SENTINEL) == 0) {
-            st_OMP_flag = TRUE;
+            st_OMP_flag = true;
             set_pragma_str("OMP");
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         } else if (strcasecmp(sentinel_name(&sentinels, index), XMP_SENTINEL) ==
                    0) {
-            st_XMP_flag = TRUE;
+            st_XMP_flag = true;
             set_pragma_str("XMP");
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         } else if (strcasecmp(sentinel_name(&sentinels, index), ACC_SENTINEL) ==
                    0) {
-            st_ACC_flag = TRUE;
+            st_ACC_flag = true;
             set_pragma_str("ACC");
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         } else if (strcasecmp(sentinel_name(&sentinels, index), OCL_SENTINEL) ==
                    0) {
-            st_PRAGMA_flag = TRUE;
-            st_OCL_flag = TRUE;
+            st_PRAGMA_flag = true;
+            st_OCL_flag = true;
             set_pragma_str(&(sentinel_name(&sentinels, index)[1]));
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         } else if (strcasecmp(sentinel_name(&sentinels, index), PGI_SENTINEL) ==
                    0) {
-            st_PRAGMA_flag = TRUE;
-            st_PGI_flag = TRUE;
+            st_PRAGMA_flag = true;
+            st_PGI_flag = true;
             set_pragma_str(&(sentinel_name(&sentinels, index)[1]));
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         } else if (strcasecmp(sentinel_name(&sentinels, index), DIR_SENTINEL) ==
                    0) {
-            st_PRAGMA_flag = TRUE;
+            st_PRAGMA_flag = true;
             set_pragma_str(&(sentinel_name(&sentinels, index)[1]));
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         } else {
-            st_PRAGMA_flag = TRUE;
+            st_PRAGMA_flag = true;
             set_pragma_str(&(sentinel_name(&sentinels, index)[2]));
             append_pragma_str(" ");
             append_pragma_str(line_buffer);
             goto copy_body;
         }
     } else if (is_cond_compilation(&sentinels, stn_cols)) {
-        st_CONDCOMPL_flag = TRUE;
+        st_CONDCOMPL_flag = true;
         set_pragma_str(&(stn_cols[2]));
         append_pragma_str(line_buffer);
         if (OMP_flag || cond_compile_enabled) {
@@ -3218,13 +3218,13 @@ static int readline_fixed_format()
     int index;         /* sentinel index in list */
     size_t linelen;
     int body_offset = 0;
-    int local_OMP_flag = FALSE;
-    int local_XMP_flag = FALSE;
-    int local_ACC_flag = FALSE;
-    int local_OCL_flag = FALSE;
-    int local_CONDCOMPL_flag = FALSE;
-    int local_SENTINEL_flag = FALSE;
-    int local_PGI_flag = FALSE;
+    bool local_OMP_flag = false;
+    bool local_XMP_flag = false;
+    bool local_ACC_flag = false;
+    bool local_OCL_flag = false;
+    bool local_CONDCOMPL_flag = false;
+    bool local_SENTINEL_flag = false;
+    bool local_PGI_flag = false;
     int iend;
 
     /* line # counter for each file in cpp.  */
@@ -3330,25 +3330,25 @@ next_line0:
     }
 
     if (is_pragma_sentinel(&sentinels, line_buffer, &index)) {
-        local_SENTINEL_flag = TRUE;
+        local_SENTINEL_flag = true;
         if (strcasecmp(sentinel_name(&sentinels, index), OMP_SENTINEL) == 0) {
-            local_OMP_flag = TRUE;
+            local_OMP_flag = true;
         } else if (strcasecmp(sentinel_name(&sentinels, index), XMP_SENTINEL) ==
                    0) {
-            local_XMP_flag = TRUE;
+            local_XMP_flag = true;
         } else if (strcasecmp(sentinel_name(&sentinels, index), ACC_SENTINEL) ==
                    0) {
-            local_ACC_flag = TRUE;
+            local_ACC_flag = true;
         } else if (strcasecmp(sentinel_name(&sentinels, index), OCL_SENTINEL) ==
                    0) {
-            local_OCL_flag = TRUE;
+            local_OCL_flag = true;
         } else if (strcasecmp(sentinel_name(&sentinels, index), PGI_SENTINEL) ==
                    0) {
-            local_PGI_flag = TRUE;
+            local_PGI_flag = true;
         }
     } else if (is_cond_compilation(&sentinels, line_buffer)) {
-        local_SENTINEL_flag = TRUE;
-        local_CONDCOMPL_flag = TRUE;
+        local_SENTINEL_flag = true;
+        local_CONDCOMPL_flag = true;
     } else {
         if (line_buffer[0] == '!') {
             /* now '!' on 1st place always means comment line. */
@@ -4156,9 +4156,9 @@ int ScanFortranLine(char *src,
                                   '=') /* || (*(src + 1) == '>') */)
                             ; /* else == ? */
                         else
-                            exposed_eql++; /* = (or maybe =>) */
+                            exposed_eql = true; /* = (or maybe =>) */
                     } else if (*src == ',') {
-                        exposed_comma++;
+                        exposed_comma = true;
                     }
                 }
             }

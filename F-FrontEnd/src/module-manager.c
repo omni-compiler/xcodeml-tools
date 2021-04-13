@@ -107,7 +107,7 @@ struct module *generate_current_module(SYMBOL mod_name, SYMBOL submod_name,
     list lp;
     struct depend_module *dep;
     struct module *mod = XMALLOC(struct module *, sizeof(struct module));
-    extern int flag_do_module_cache;
+    extern bool flag_do_module_cache;
 
     *mod = (struct module){0};
     MODULE_NAME(mod) = mod_name;
@@ -138,7 +138,7 @@ struct module *generate_current_module(SYMBOL mod_name, SYMBOL submod_name,
         }
     }
 
-    if (flag_do_module_cache == TRUE)
+    if (flag_do_module_cache)
         add_module(mod);
 
     if (nerrors == 0) {
@@ -153,10 +153,11 @@ static void intermediate_file_name(char *filename, size_t len,
                                    const char *extension)
 {
     char tmp[FILE_NAME_LEN];
-    extern char *modincludeDirv;
-    if (modincludeDirv) {
-        snprintf(filename, strnlen(modincludeDirv, FILE_NAME_LEN) + 2, "%s/",
-                 modincludeDirv);
+    extern const char ** modincludeDirv;
+    extern size_t modincludeDirvI;
+    if (modincludeDirvI > 0) {
+        snprintf(filename, strnlen(modincludeDirv[0], FILE_NAME_LEN) + 2, "%s/",
+                 modincludeDirv[0]);
     }
     if (MODULE_IS_MODULE(mod)) {
         snprintf(tmp, sizeof(tmp), "%s.%s", SYM_NAME(MODULE_NAME(mod)),
@@ -269,7 +270,7 @@ static int import_intermediate_file(const SYMBOL name,
                                     struct module **pmod, int as_for_submodule)
 {
     struct module *mod;
-    extern int flag_do_module_cache;
+    extern bool flag_do_module_cache;
     const char *extension;
 
     if (!as_for_submodule) {
@@ -284,7 +285,7 @@ static int import_intermediate_file(const SYMBOL name,
 
     if (input_intermediate_file(name, submodule_name, &mod, extension)) {
         *pmod = mod;
-        if (flag_do_module_cache == TRUE)
+        if (flag_do_module_cache)
             add_module(mod);
         return TRUE;
     }

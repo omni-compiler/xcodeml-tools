@@ -40,15 +40,12 @@ static long module_start_offset = 0;
 extern long last_initial_line_pos;
 extern long prelast_initial_line_pos;
 
-extern char xmodule_path[MAX_PATH_LEN];
-extern char *myName;
-extern int flag_module_compile;
-extern char *original_source_file_name;
+extern bool flag_module_compile;
 extern int fixed_line_len_kind;
 extern int auto_save_attr_kb;
 
 /* Translate image control statements to xmp subroutine call statements */
-int XMP_coarray_flag = TRUE;
+bool XMP_coarray_flag = true;
 
 /* control stack */
 static struct control _ctl_base = {CTL_NONE};
@@ -8547,7 +8544,7 @@ void cleanup_unit_ctl(UNIT_CTL uc)
 
     /* UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) is not cleared */
     // if (unit_ctl_level == 0) { /* for main */
-    if (doImplicitUndef == TRUE) {
+    if (doImplicitUndef) {
         UNIT_CTL_IMPLICIT_NONE(uc) = TRUE;
         set_implicit_type_uc(uc, NULL, 'a', 'z', TRUE);
         UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) = 0;

@@ -16,6 +16,7 @@
 
 #include "C-exprcode.h"
 #include <stdint.h>
+#include "bool.h"
 
 typedef int64_t omllint_t;
 typedef long double omldouble_t;
@@ -49,7 +50,7 @@ typedef struct symbol* SYMBOL;
 extern SYMBOL find_symbol(const char *name);
 extern SYMBOL find_symbol_without_allocate(const char *name);
 
-extern int endlineno_flag;
+extern bool endlineno_flag;
 
 typedef struct {
     int ln_no;

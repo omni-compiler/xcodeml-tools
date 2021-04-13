@@ -248,7 +248,7 @@ char           *xmalloc2( int size) ;
 int flag_do_module_cache = TRUE;
 
 int nerrors = 0;
-int debug_flag = 0;
+bool debug_flag = false;
 int XMP_flag = 0;
 
 int unit_ctl_level = 0;

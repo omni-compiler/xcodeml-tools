@@ -34,7 +34,7 @@ int Addr2Uint(void *x)
 int is_emitting_for_submodule;
 int is_inside_interface = FALSE;
 
-extern int flag_module_compile;
+extern bool flag_module_compile;
 
 static void outx_expv(int l, expv v);
 static void outx_functionDefinition(int l, EXT_ID ep);

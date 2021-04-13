@@ -3669,8 +3669,8 @@ const char *search_intrinsic_include_path(const char *filename)
     static char path[MAX_PATH_LEN];
     FILE *fp;
 
-    if (xmoduleIncludeDirv) {
-        strcpy(path, xmoduleIncludeDirv);
+    if (intrinsicXmodIncDir) {
+        strcpy(path, intrinsicXmodIncDir);
     } else {
         strcpy(path, DEFAULT_INSTRINSIC_XMODULES_PATH);
     }

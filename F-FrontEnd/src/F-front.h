@@ -61,6 +61,7 @@ extern int Addr2Uint(void *x);
 #include "C-OMP.h" /* OpenMP */
 #include "C-XMP.h" /* XcalableMP */
 #include "C-ACC.h" /* OpenACC */
+#include "bool.h"
 
 extern int lineno;
 extern int need_keyword;
@@ -76,7 +77,7 @@ extern BASIC_DATA_TYPE defaultSingleRealType;
 extern BASIC_DATA_TYPE defaultDoubleRealType;
 extern BASIC_DATA_TYPE defaultIntType;
 
-extern int doImplicitUndef;
+extern bool doImplicitUndef;
 extern int nerrors;
 
 /* max nam length */
@@ -92,7 +93,7 @@ extern int nerrors;
 #define DEFAULT_MAX_LINE_LEN_FREE 255
 
 extern unsigned long int maxStackSize;
-extern int debug_flag;
+extern bool debug_flag;
 extern FILE *debug_fp;
 extern FILE *diag_file;
 
@@ -114,21 +115,21 @@ extern lineno_info *current_line;
 extern lineno_info *new_line_info(int f_id, int ln);
 extern int get_file_id(const char *name);
 
-extern char *source_file_name, *output_file_name;
+extern const char *source_file_name, *output_file_name;
 extern FILE *source_file, *output_file;
 
 /* max number of include search path.  */
 #define MAXINCLUDEDIRV 256
 
-extern int fixed_format_flag;
-extern char *includeDirv[MAXINCLUDEDIRV + 1];
-extern int includeDirvI;
+extern bool fixed_format_flag;
+extern const char ** includeDirv;
+extern size_t includeDirvI;
 extern const char *search_include_path(const char *);
 
 /* max number of include search path.  */
 #define MAXMODINCLUDEDIRV 256
 
-extern char *xmoduleIncludeDirv;
+extern const char * intrinsicXmodIncDir;
 
 #include <libgen.h>
 
@@ -501,13 +502,13 @@ extern TYPE_DESC type_GNUMERIC_ALL;
 extern expv expv_constant_1, expv_constant_0, expv_constant_m1;
 extern expv expv_float_0;
 
-extern int OMP_flag;
-extern int XMP_flag;
-extern int XMP_coarray_flag;
-extern int ACC_flag;
+extern bool OMP_flag;
+extern bool XMP_flag;
+extern bool XMP_coarray_flag;
+extern bool ACC_flag;
 extern int PRAGMA_flag;
-extern int cond_compile_enabled;
-extern int leave_comment_flag;
+extern bool cond_compile_enabled;
+extern bool leave_comment_flag;
 
 #define EMPTY_LIST list0(LIST)
 

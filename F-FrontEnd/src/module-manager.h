@@ -3,7 +3,7 @@
  * \file module-manager.h
  *
  * This file should include module manager interfaces.
- * Don't include compiler funtions.
+ * Don't include compiler functions.
  */
 
 #ifndef _MODULE_MANAGER_H_
@@ -58,12 +58,12 @@ struct module {
 #define SUBMODULE_ANCESTOR(mod) ((mod)->name)
 
 /**
- * import module form module manager.
+ * import module from module manager.
  */
 int import_module(const SYMBOL, struct module **);
 
 /**
- * import submodule form module manager.
+ * import submodule from module manager.
  */
 int import_submodule(const SYMBOL, const SYMBOL, struct module **);
 
