@@ -214,15 +214,15 @@ static int token_history_count = 0;
 static int *token_history_buf = NULL;
 
 static int read_initial_line _ANSI_ARGS_((void));
-static int classify_statement _ANSI_ARGS_((void));
-static int token _ANSI_ARGS_((void));
+static int classify_statement(YYSTYPE* yylval);
+static int token(YYSTYPE* yylval);
 static int is_not_keyword _ANSI_ARGS_((void));
 static int get_keyword _ANSI_ARGS_((const struct keyword_token * ks));
 static int get_keyword_optional_blank _ANSI_ARGS_((int cls));
 static int readline_free_format _ANSI_ARGS_((void));
-static int read_number _ANSI_ARGS_((void));
+static int read_number(YYSTYPE* yylval);
 static int is_identifier_letter _ANSI_ARGS_((char c, int pos));
-static int read_identifier _ANSI_ARGS_((void));
+static int read_identifier(YYSTYPE* yylval);
 
 static void string_to_integer _ANSI_ARGS_((omllint_t * p, char *cp, int radix));
 static double convert_str_double _ANSI_ARGS_((const char *s));
@@ -241,9 +241,9 @@ static int find_last_ampersand _ANSI_ARGS_((char *buf, int *len));
 
 static void save_format_str _ANSI_ARGS_((void));
 
-static int OMP_lex_token();
-static int XMP_lex_token();
-static int ACC_lex_token();
+static int OMP_lex_token(YYSTYPE* yylval);
+static int XMP_lex_token(YYSTYPE* yylval);
+static int ACC_lex_token(YYSTYPE* yylval);
 
 /* for free format.  */
 /* pragma string setter. */
@@ -575,7 +575,7 @@ int check_ident_context(const char *name)
 }
 
 /* lexical analyzer */
-int yylex()
+int yylex(YYSTYPE* yylval, ffront_context* ctx)
 {
     if (token_history_buf == NULL)
         token_history_buf = (int*)malloc(sizeof(int) * token_history_buf_size);
@@ -584,9 +584,9 @@ int yylex()
 
     if (auxIdentX != NULL) {
         curToken = IDENTIFIER;
-        yylval.val = auxIdentX;
+        yylval->val = auxIdentX;
     } else {
-        curToken = yylex0();
+        curToken = yylex0(yylval, ctx);
     }
 
     // record history counter
@@ -620,7 +620,7 @@ int yylex()
             expect_next_token_is_keyword = FALSE;
         }
     } else if (curToken == IDENTIFIER) {
-        curToken = check_ident_context(SYM_NAME(EXPR_SYM(yylval.val)));
+        curToken = check_ident_context(SYM_NAME(EXPR_SYM(yylval->val)));
         token_history_buf[token_history_count - 1] = curToken;
     }
 
@@ -633,7 +633,7 @@ Done:
     return curToken;
 }
 
-static int yylex0()
+static int yylex0(YYSTYPE* yylval, ffront_context* ctx)
 {
     int t;
     static int tkn_cnt;
@@ -688,7 +688,7 @@ static int yylex0()
         first:
             tkn_cnt = 1;
 
-            st_class = classify_statement();
+            st_class = classify_statement(yylval);
             if (st_class == FORMAT) {
                 save_format_str();
                 lexstate = LEX_RET_EOS;
@@ -717,7 +717,7 @@ static int yylex0()
                 bufptr += 5;
                 return KW_WHILE;
             }
-            t = token();
+            t = token(yylval);
             if (t == FORMAT) {
                 /*
                  * "format" shouldn't be here...
@@ -734,19 +734,19 @@ static int yylex0()
             return (EOS);
 
         case LEX_OMP_TOKEN:
-            t = OMP_lex_token();
+            t = OMP_lex_token(yylval);
             if (t == EOS)
                 lexstate = LEX_NEW_STATEMENT;
             return t;
 
         case LEX_XMP_TOKEN:
-            t = XMP_lex_token();
+            t = XMP_lex_token(yylval);
             if (t == EOS)
                 lexstate = LEX_NEW_STATEMENT;
             return t;
 
         case LEX_ACC_TOKEN:
-            t = ACC_lex_token();
+            t = ACC_lex_token(yylval);
             if (t == EOS)
                 lexstate = LEX_NEW_STATEMENT;
             return t;
@@ -840,7 +840,7 @@ char *lex_get_line()
     return (s);
 }
 
-void yyerror(const char *s)
+void yyerror(ffront_context* ctx, const char *s)
 {
     error("%s", s);
 }
@@ -851,7 +851,7 @@ const char *lexline(int *n)
     return (bufptr);
 }
 
-static int token()
+static int token(YYSTYPE* yylval)
 {
     register char ch, *p;
     int t;
@@ -899,7 +899,7 @@ static int token()
             t = 0;
             while (isdigit((int)*bufptr))
                 t = t * 10 + *bufptr++ - '0';
-            yylval.val = GEN_NODE(INT_CONSTANT, t);
+            yylval->val = GEN_NODE(INT_CONSTANT, t);
             return CONSTANT;
         } else
             return *bufptr++;
@@ -916,7 +916,7 @@ static int token()
                 else
                     *p++ = ch;
             *p = 0;
-            yylval.val = GEN_NODE(STRING_CONSTANT, strdup(buffio));
+            yylval->val = GEN_NODE(STRING_CONSTANT, strdup(buffio));
             return (CONSTANT); /* hollerith */
         case '=':
             if (*bufptr == '=') {
@@ -983,7 +983,7 @@ static int token()
                 int save_n = need_keyword;
                 int save_p = paren_level;
                 need_keyword = TRUE;
-                t = token();
+                t = token(yylval);
 
                 switch (token_history_buf[token_history_count - 1]) {
                     case CLASS:
@@ -1133,7 +1133,7 @@ static int token()
                         user_defined[i] = *bufptr++;
                 }
                 s = find_symbol(user_defined);
-                yylval.val = GEN_NODE(IDENT, s);
+                yylval->val = GEN_NODE(IDENT, s);
                 return USER_DEFINED_OP;
             } else
                 return '.';
@@ -1162,7 +1162,7 @@ static int token()
         case '9':
         number:       /* reading number */
             bufptr--; /* back */
-            return read_number();
+            return read_number(yylval);
 
         case '[':
         case ']':
@@ -1171,7 +1171,7 @@ static int token()
         default:
             if (isalpha(ch) || ch == '_') {
                 bufptr--; /* back */
-                return read_identifier();
+                return read_identifier(yylval);
             } else
                 error("bad char %c(0x%x)", ch, ch & 0xFF);
             return UNKNOWN;
@@ -1189,7 +1189,7 @@ static int is_identifier_letter(char c, int pos)
     }
 }
 
-static int read_identifier()
+static int read_identifier(YYSTYPE* yylval)
 {
     int tkn_len;
     char *p, ch;
@@ -1251,7 +1251,7 @@ static int read_identifier()
             error("can't determine radix");
         }
         string_to_integer(&v, buffio, radix);
-        yylval.val = make_int_enode(v);
+        yylval->val = make_int_enode(v);
         return (CONSTANT);
     }
 #ifdef YYDEBUG
@@ -1279,7 +1279,7 @@ static int read_identifier()
             goto returnId;
         } else
             bufptr++;
-        t = token();
+		t = token(yylval);
         while (isspace(*bufptr)) /* skip white space */
             bufptr++;
         if (*bufptr != ')') {
@@ -1372,7 +1372,7 @@ static int read_identifier()
                     error("syntax error. ");
                     break;
             }
-            yylval.val = list1(F95_GENERIC_SPEC, list0(code));
+            yylval->val = list1(F95_GENERIC_SPEC, list0(code));
         } else if (defined_io != 0) {
             enum expr_code code = ERROR_NODE;
             switch (t) {
@@ -1386,19 +1386,19 @@ static int read_identifier()
                     error("syntax error. ");
                     break;
             }
-            yylval.val = list1(defined_io, list0(code));
+            yylval->val = list1(defined_io, list0(code));
         } else {
-            yylval.val = list1(F95_USER_DEFINED, yylval.val);
+            yylval->val = list1(F95_USER_DEFINED, yylval->val);
         }
         return GENERIC_SPEC;
     }
 
 returnId:
-    yylval.val = GEN_NODE(IDENT, find_symbol(buffio));
+    yylval->val = GEN_NODE(IDENT, find_symbol(buffio));
     return (IDENTIFIER);
 }
 
-static int read_number()
+static int read_number(YYSTYPE* yylval)
 {
     typedef enum {
         PREC_UNKNOWN = 0,
@@ -1481,12 +1481,12 @@ static int read_number()
                 break;
             }
         }
-        yylval.val = make_float_enode(exp_code, convert_str_double(buffio),
+        yylval->val = make_float_enode(exp_code, convert_str_double(buffio),
                                       strdup(buffio));
     } else {
         omllint_t v = 0;
         string_to_integer(&v, buffio, 10);
-        yylval.val = make_int_enode(v);
+        yylval->val = make_int_enode(v);
     }
     return (CONSTANT);
 }
@@ -1548,7 +1548,7 @@ static double convert_str_double(const char *s)
  * nature.
  */
 
-static int classify_statement()
+static int classify_statement(YYSTYPE* yylval)
 {
     register char *p, *save;
 
@@ -1739,7 +1739,7 @@ static int classify_statement()
                             int save_n = need_keyword;
                             int save_p = paren_level;
                             need_keyword = TRUE;
-                            int t = token();
+                            int t = token(yylval);
                             if (t == THEN) { /* then key?  */
                                 need_keyword = FALSE;
                                 bufptr = save; /* it is IFTHEN statement, not
@@ -4420,7 +4420,7 @@ struct keyword_token do_keywords[] = {
 /*
  * lex for OpenMP part
  */
-static int OMP_lex_token()
+static int OMP_lex_token(YYSTYPE* yylval)
 {
     int t;
     while (isspace(*bufptr))
@@ -4434,7 +4434,7 @@ static int OMP_lex_token()
                 return t;
         }
     }
-    return token();
+    return token(yylval);
 }
 
 const struct keyword_token OMP_keywords[] = {{"parallel", OMPKW_PARALLEL},
@@ -4489,7 +4489,7 @@ const struct keyword_token OMP_keywords[] = {{"parallel", OMPKW_PARALLEL},
 /*
  * lex for XcalableMP part
  */
-static int XMP_lex_token()
+static int XMP_lex_token(YYSTYPE* yylval)
 {
     int t;
     while (isspace(*bufptr))
@@ -4503,7 +4503,7 @@ static int XMP_lex_token()
                 return t;
         }
     }
-    return token();
+    return token(yylval);
 }
 
 /* sentinel list functions */
@@ -4681,7 +4681,7 @@ const struct keyword_token XMP_keywords[] = {{"end", XMPKW_END},
 /*
  * lex for OpenACC part
  */
-static int ACC_lex_token()
+static int ACC_lex_token(YYSTYPE* yylval)
 {
     int t;
     while (isspace(*bufptr))
@@ -4695,7 +4695,7 @@ static int ACC_lex_token()
                 return t;
         }
     }
-    return token();
+    return token(yylval);
 }
 
 const struct keyword_token ACC_keywords[] = {

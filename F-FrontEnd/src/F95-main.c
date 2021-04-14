@@ -5,6 +5,7 @@
 /* Fortran lanuage front-end */
 
 #include "F-front.h"
+#include "F-front-context.h"
 #include "F-output-xcodeml.h"
 #include "F-second-pass.h"
 #include <math.h>
@@ -12,7 +13,7 @@
 #include "cli_options.h"
 
 /* for debug */
-bool debug_flag = 0;
+bool debug_flag = false;
 FILE *debug_fp;
 FILE *diag_file;
 
@@ -42,7 +43,7 @@ bool pgi_flag = false;
 int max_name_len = -1;
 bool dollar_ok = false; // accept '$' in identifier or not.
 
-extern int yyparse _ANSI_ARGS_((void));
+extern int yyparse(ffront_context* ctx);
 static void check_nerrors _ANSI_ARGS_((void));
 
 static int getVarSize(const char *str)
@@ -349,6 +350,7 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
 
 int execute(const cli_options* opts)
 {
+    ffront_context ctx;
 #ifdef HAVE_SETLOCALE
     (void)setlocale(LC_ALL, "C");
 #endif /* HAVE_SETLOCALE */
@@ -485,7 +487,7 @@ int execute(const cli_options* opts)
     /* FEAST add start */
     second_pass_init();
     /* FEAST add  end  */
-    parseError = yyparse();
+    parseError = yyparse(&ctx);
     if (nerrors != 0 || parseError != 0) {
         goto Done;
     }
