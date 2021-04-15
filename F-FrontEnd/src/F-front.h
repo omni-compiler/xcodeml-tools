@@ -24,6 +24,7 @@
 #endif
 
 #include "exc_platform.h"
+#include "utils.h"
 
 #if !defined(SIZEOF_UNSIGNED_LONG_LONG)
 #define SIZEOF_UNSIGNED_LONG_LONG (SIZEOF_UNSIGNED_LONG * 2)
@@ -73,13 +74,6 @@ extern int need_check_user_defined;
 
 extern int lookup_col2(void);
 
-extern BASIC_DATA_TYPE defaultSingleRealType;
-extern BASIC_DATA_TYPE defaultDoubleRealType;
-extern BASIC_DATA_TYPE defaultIntType;
-
-extern bool doImplicitUndef;
-extern int nerrors;
-
 /* max nam length */
 /* #define MAX_NAME_LEN_F77          31    /\* limitation of fortran 77, 90 *\/
  */
@@ -93,9 +87,6 @@ extern int nerrors;
 #define DEFAULT_MAX_LINE_LEN_FREE 255
 
 extern unsigned long int maxStackSize;
-extern bool debug_flag;
-extern FILE *debug_fp;
-extern FILE *diag_file;
 
 /* max file path length */
 #define MAX_PATH_LEN 8192
@@ -111,25 +102,16 @@ extern char *file_names[];
 #define EXITCODE_OK 0
 #define EXITCODE_ERR (-1)
 
-extern lineno_info *current_line;
 extern lineno_info *new_line_info(int f_id, int ln);
 extern int get_file_id(const char *name);
-
-extern const char *source_file_name, *output_file_name;
-extern FILE *source_file, *output_file;
 
 /* max number of include search path.  */
 #define MAXINCLUDEDIRV 256
 
-extern bool fixed_format_flag;
-extern const char ** includeDirv;
-extern size_t includeDirvI;
-extern const char *search_include_path(const char *);
+bool search_include_path(const char *filename, sds_string* path);
 
 /* max number of include search path.  */
 #define MAXMODINCLUDEDIRV 256
-
-extern const char * intrinsicXmodIncDir;
 
 #include <libgen.h>
 
@@ -473,7 +455,6 @@ extern int unit_ctl_level;
 #define LANGSPEC_F2003_SET (LANGSPEC_F2003_STRICT_SET | LANGSPEC_NONSTD)
 #define LANGSPEC_F2008_SET (LANGSPEC_F2008_STRICT_SET | LANGSPEC_NONSTD)
 #define LANGSPEC_DEFAULT_SET LANGSPEC_F2008_SET
-extern int langSpecSet;
 
 #define INTRINSIC_CLASS_NONE 0x0000
 #define INTRINSIC_CLASS_ATOMIC 0x0001
@@ -502,13 +483,7 @@ extern TYPE_DESC type_GNUMERIC_ALL;
 extern expv expv_constant_1, expv_constant_0, expv_constant_m1;
 extern expv expv_float_0;
 
-extern bool OMP_flag;
-extern bool XMP_flag;
-extern bool XMP_coarray_flag;
-extern bool ACC_flag;
 extern int PRAGMA_flag;
-extern bool cond_compile_enabled;
-extern bool leave_comment_flag;
 
 #define EMPTY_LIST list0(LIST)
 

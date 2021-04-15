@@ -3,12 +3,11 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 #include "F-intrinsics-types.h"
 
 #define isValidType(tp) (tp != NULL && get_basic_type(tp) != TYPE_UNKNOWN)
 #define isValidTypedExpv(v) (v != NULL && isValidType(EXPV_TYPE(v)))
-
-int langSpecSet = LANGSPEC_DEFAULT_SET;
 
 static int compare_intrinsic_arg_type(expv arg, TYPE_DESC tp,
                                       INTR_DATA_TYPE iType);
@@ -35,7 +34,7 @@ void initialize_intrinsic()
 
     for (i = 0, ep = &intrinsic_table[0];
          INTR_OP((ep = &intrinsic_table[i])) != INTR_END; i++) {
-        if ((ep->langSpec & langSpecSet) == 0) {
+        if ((ep->langSpec & lang_spec_set()) == 0) {
             continue;
         }
         if (!(isValidString(INTR_NAME(ep)))) {

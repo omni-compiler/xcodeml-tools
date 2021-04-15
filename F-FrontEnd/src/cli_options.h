@@ -2,13 +2,10 @@
 #define CLI_OPTIONS_H
 
 #include "F-datatype.h"
-#include "sds/sds.h"
-#include "c_vector/vector.h"
+#include "utils.h"
 #include "bool.h"
+#include "c_vector/vector.h"
 #include <stdio.h>
-
-typedef sds sds_string;
-typedef sds *sds_string_vector;
 
 typedef struct {
     sds_string bin_name;
@@ -34,7 +31,6 @@ typedef struct {
     bool cond_compile_enabled;
     bool leave_comment_enabled;
     bool do_implicit_undef;
-    bool arr_range_check_enabled;
     bool force_fixed_format_enabled;
     bool force_c_comments_enabled;
     bool dollar_in_id_enabled;
@@ -52,28 +48,28 @@ void free_cli_options(cli_options *opts);
 void print_options(const cli_options* opts, FILE* out);
 
 static inline void set_bin_name(cli_options *opts, const char *name) {
-    opts->bin_name = sdscpy(opts->bin_name, name);
+    set_sds_string(&opts->bin_name, name);
 }
 static inline const sds get_bin_name(const cli_options *opts) {
     return opts->bin_name;
 }
 static inline void set_src_file_path(cli_options *opts,
         const char *src_file_path) {
-    opts->src_file_path = sdscpy(opts->src_file_path, src_file_path);
+    set_sds_string(&opts->src_file_path, src_file_path);
 }
 static inline const sds get_src_file_path(const cli_options *opts) {
     return opts->src_file_path;
 }
 static inline void set_out_file_path(cli_options *opts,
         const char *out_file_path) {
-    opts->out_file_path = sdscpy(opts->out_file_path, out_file_path);
+    set_sds_string(&opts->out_file_path, out_file_path);
 }
 static inline const sds get_out_file_path(const cli_options *opts) {
     return opts->out_file_path;
 }
 static inline void set_intrinsic_xmod_dir_path(cli_options *opts,
         const char *intrinsic_xmod_dir_path) {
-    opts->intrinsic_xmod_dir_path = sdscpy(opts->intrinsic_xmod_dir_path,
+    set_sds_string(&opts->intrinsic_xmod_dir_path,
             intrinsic_xmod_dir_path);
 }
 static inline const sds get_intrinsic_xmod_dir_path(const cli_options *opts) {
@@ -211,12 +207,7 @@ static inline void set_do_implicit_undef(cli_options *opts, bool val) {
 static inline bool get_do_implicit_undef(const cli_options *opts) {
     return opts->do_implicit_undef;
 }
-static inline void set_arr_range_check_enabled(cli_options *opts, bool val) {
-    opts->arr_range_check_enabled = val;
-}
-static inline bool get_arr_range_check_enabled(const cli_options *opts) {
-    return opts->arr_range_check_enabled;
-}
+
 static inline void set_force_fixed_format_enabled(cli_options *opts, bool val) {
     opts->force_fixed_format_enabled = val;
 }

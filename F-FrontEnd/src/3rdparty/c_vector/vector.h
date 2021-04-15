@@ -288,7 +288,7 @@ static inline int vector_empty(void *vector) {
  */
 #define vector_reserve(vector, new_capacity)                                   \
   if ((new_capacity) >= vector_capacity(vector)) {                             \
-    vector = __vector_alloc((vector), (new_capacity), sizeof(*(vector)));      \
+    vector = (TYPEOF(vector))__vector_alloc((vector), (new_capacity), sizeof(*(vector)));      \
   }
 
 /*

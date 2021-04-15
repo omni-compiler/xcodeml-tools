@@ -16,7 +16,6 @@ static const bool DEFAULT_ACC_ENABLED = false;
 static const bool DEFAULT_COND_COMPILE_ENABLED = false;
 static const bool DEFAULT_LEAVE_COMMENT_ENABLED = false;
 static const bool DEFAULT_DO_IMPLICIT_UNDEF = false;
-static const bool DEFAULT_ARR_RANGE_CHECK_ENABLED = false;
 static const bool DEFAULT_FORCE_FIXED_FORMAT_ENABLED = false;
 static const bool DEFAULT_FORCE_C_COMMENTS_ENABLED = false;
 static const bool DEFAULT_DOLLAR_IN_ID_ENABLED = false;
@@ -53,7 +52,6 @@ void init_cli_options(cli_options* opts)
     opts->cond_compile_enabled = DEFAULT_COND_COMPILE_ENABLED;
     opts->leave_comment_enabled = DEFAULT_LEAVE_COMMENT_ENABLED;
     opts->do_implicit_undef = DEFAULT_DO_IMPLICIT_UNDEF;
-    opts->arr_range_check_enabled = DEFAULT_ARR_RANGE_CHECK_ENABLED;
     opts->force_fixed_format_enabled = DEFAULT_FORCE_FIXED_FORMAT_ENABLED;
     opts->force_c_comments_enabled = DEFAULT_FORCE_C_COMMENTS_ENABLED;
     opts->dollar_in_id_enabled = DEFAULT_DOLLAR_IN_ID_ENABLED;
@@ -72,22 +70,8 @@ void free_cli_options(cli_options* opts)
     sdsfree(opts->src_file_path);
     sdsfree(opts->out_file_path);
     sdsfree(opts->intrinsic_xmod_dir_path);
-    {
-        size_t i, size = get_inc_dir_paths_size(opts);
-        for(i = 0; i < size; ++i)
-        {
-            sdsfree(opts->inc_dir_paths[i]);
-        }
-        vector_free(opts->inc_dir_paths);
-    }
-    {
-        size_t i, size = get_xmod_inc_dir_paths_size(opts);
-        for(i = 0; i < size; ++i)
-        {
-            sdsfree(opts->xmod_inc_dir_paths[i]);
-        }
-        vector_free(opts->xmod_inc_dir_paths);
-    }
+    free_sds_string_vector(&opts->inc_dir_paths);
+    free_sds_string_vector(&opts->xmod_inc_dir_paths);
 }
 
 #define PRINT_STRING(name) fprintf(out, "%s: %s\n", #name, get_ ## name(opts))
@@ -129,7 +113,6 @@ void print_options(const cli_options* opts, FILE* out)
     PRINT_BOOL(cond_compile_enabled);
     PRINT_BOOL(leave_comment_enabled);
     PRINT_BOOL(do_implicit_undef);
-    PRINT_BOOL(arr_range_check_enabled);
     PRINT_BOOL(force_fixed_format_enabled);
     PRINT_BOOL(force_c_comments_enabled);
     PRINT_BOOL(dollar_in_id_enabled);

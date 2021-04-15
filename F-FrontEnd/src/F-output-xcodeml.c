@@ -3,6 +3,7 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 #include "F-output-xcodeml.h"
 #include "module-manager.h"
 #include <limits.h>
@@ -33,8 +34,6 @@ int Addr2Uint(void *x)
 
 int is_emitting_for_submodule;
 int is_inside_interface = FALSE;
-
-extern bool flag_module_compile;
 
 static void outx_expv(int l, expv v);
 static void outx_functionDefinition(int l, EXT_ID ep);
@@ -3791,7 +3790,7 @@ static void outx_CRITICAL_statement(int l, expv v)
 {
     char buf[128];
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         outx_expv(l, EXPR_ARG1(v));
 
     } else {
@@ -4481,7 +4480,7 @@ static void outx_expv(int l, expv v)
         case EXPR_CODE_END:
         case F2008_ENDCRITICAL_STATEMENT:
 
-            if (debug_flag)
+            if (debug_enabled())
                 expv_output(v, stderr);
             fatal("invalid exprcode : %s", EXPR_CODE_NAME(code));
             FATAL_ERROR();
@@ -5107,7 +5106,7 @@ static void outx_functionType(int l, TYPE_DESC tp)
 
         if (!TYPE_IS_INTRINSIC(tp) &&
             (TYPE_IS_EXTERNAL(tp) ||
-             (XMP_flag && !TYPE_IS_FOR_FUNC_SELF(tp) &&
+             (xmp_enabled() && !TYPE_IS_FOR_FUNC_SELF(tp) &&
               !FUNCTION_TYPE_IS_INTERNAL(tp) &&
               !FUNCTION_TYPE_IS_MOUDLE_PROCEDURE(tp)))) {
             outx_true(TRUE, "is_external");
@@ -6543,7 +6542,7 @@ static void outx_globalDeclarations(int l)
  */
 void output_XcodeML_file()
 {
-    if (flag_module_compile)
+    if (module_compile_enabled())
         return; // DO NOTHING
 
     type_list = NULL;
@@ -6560,7 +6559,7 @@ void output_XcodeML_file()
     collect_types(EXTERNAL_SYMBOLS);
     SET_CRT_FUNCEP(NULL);
 
-    print_fp = output_file;
+    print_fp = src_output();
     const int l = 0, l1 = l + 1;
 
     outx_printi(
@@ -6570,7 +6569,7 @@ void output_XcodeML_file()
         "              time=\"%s\"\n"
         "              compiler-info=\"%s\"\n"
         "              version=\"%s\">\n",
-        getXmlEscapedStr((source_file_name) ? source_file_name : "<stdin>"),
+        getXmlEscapedStr(sdslen(ctx->src_file_path) != 0  ? ctx->src_file_path : "<stdin>"),
         F_TARGET_LANG, getTimestamp(), F_FRONTEND_NAME, F_FRONTEND_VER);
 
     outx_typeTable(l1);
@@ -6790,8 +6789,8 @@ int output_module_file(struct module *mod, const char *filename)
     list lp;
     expv v;
 
-    if (flag_module_compile) {
-        print_fp = stdout;
+    if (module_compile_enabled()) {
+        print_fp = src_output();
     } else {
         if ((print_fp = fopen(filename, "w")) == NULL) {
             fatal("couldn't open module file to write: %s", filename);
@@ -6864,7 +6863,7 @@ int output_module_file(struct module *mod, const char *filename)
 
     set_module_emission_mode(oEmitMode);
 
-    if (!flag_module_compile) {
+    if (!module_compile_enabled()) {
         fclose(print_fp);
     }
 

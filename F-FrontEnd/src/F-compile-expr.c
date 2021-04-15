@@ -3,6 +3,7 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 #include "F-second-pass.h"
 #include "F-second-pass.h"
 #include <math.h>
@@ -1342,7 +1343,7 @@ expv compile_ident_expression(expr x)
         ID_IS_DECLARED(id) = FALSE;
         switch_id_to_proc(id);
         ret = expv_sym_term(IDENT, ID_TYPE(id), ID_SYM(id));
-        sp_link_id(id, SP_ERR_FOWARD_FUNC, current_line);
+        sp_link_id(id, SP_ERR_FOWARD_FUNC, current_line());
     }
 
 done:
@@ -1352,7 +1353,7 @@ done:
         /* FEAST change start */
         /* fatal("%s: invalid code", __func__); */
         ret = expv_sym_term(EXPR_CODE(x), NULL, EXPR_SYM(x));
-        sp_link_expr((expr)ret, SP_ERR_FATAL, current_line);
+        sp_link_expr((expr)ret, SP_ERR_FATAL, current_line());
         /* FEAST change  end  */
     }
 #endif
@@ -2532,7 +2533,7 @@ expv compile_function_call_check_intrinsic_arg_type(ID f_id, expr args,
                     TYPE_UNKNOWN ||
                 TYPE_IS_NOT_FIXED(FUNCTION_TYPE_RETURN_TYPE(tp))) {
                 /* ID_TYPE(f_id) = NULL; */
-                sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line);
+                sp_link_id(f_id, SP_ERR_UNDEF_TYPE_FUNC, current_line());
             }
             /* FEAST add  end  */
 
@@ -2660,7 +2661,7 @@ line_info:
         if (args != NULL) {
             EXPR_LINE(v) = EXPR_LINE(args);
         } else {
-            EXPR_LINE(v) = current_line;
+            EXPR_LINE(v) = current_line();
         }
     }
     return v;
@@ -3611,8 +3612,8 @@ expv compile_type_bound_procedure_call(expv memberRef, expr args)
         if (ftp) {
             ret_type = FUNCTION_TYPE_RETURN_TYPE(ftp);
         } else {
-            if (debug_flag)
-                fprintf(debug_fp, "There is no appliable type-bound procedure");
+            if (debug_enabled())
+                fprintf(debug_output(), "There is no appliable type-bound procedure");
         }
         /* type-bound generic procedure type does not exist in XcodeML */
         EXPV_TYPE(memberRef) = NULL;

@@ -3,6 +3,7 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 #include "module-manager.h"
 #include "F-second-pass.h"
 #include <math.h>
@@ -18,7 +19,6 @@ static int markAsSave _ANSI_ARGS_((ID id));
 
 /* for module and use statement */
 extern char line_buffer[];
-extern SYMBOL current_module_name;
 
 /*
  * FIXME:
@@ -82,52 +82,52 @@ static int conflict_parent_vs_sub_program_unit(ID parent_id)
     if (parent_id == NULL)
         return FALSE;
 
-    if (debug_flag) {
-        fprintf(debug_fp, "checking conflict\n");
+    if (debug_enabled()) {
+        fprintf(debug_output(), "checking conflict\n");
     }
 
     if (ID_CLASS(parent_id) != CL_UNKNOWN) {
-        if (debug_flag)
-            fprintf(debug_fp, "parent_id has explicit class\n");
+        if (debug_enabled())
+            fprintf(debug_output(), "parent_id has explicit class\n");
 
         if (ID_CLASS(parent_id) == CL_PROC && ID_TYPE(parent_id) != NULL) {
             if (IS_VOID(FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id))) ||
                 FUNCTION_TYPE_HAS_IMPLICIT_RETURN_TYPE(ID_TYPE(parent_id)) ||
                 FUNCTION_TYPE_HAS_UNKNOWN_RETURN_TYPE(ID_TYPE(parent_id))) {
-                if (debug_flag)
-                    fprintf(debug_fp,
+                if (debug_enabled())
+                    fprintf(debug_output(),
                             "parent_id may be used as a function/subroutine\n");
                 /* continue checking */
             } else if (TYPE_IS_MODULE(ID_TYPE(parent_id)) &&
                        !FUNCTION_TYPE_IS_DEFINED(ID_TYPE(parent_id))) {
-                if (debug_flag)
-                    fprintf(debug_fp,
+                if (debug_enabled())
+                    fprintf(debug_output(),
                             "parent_id seems a module function/subroutine\n");
                 return FALSE;
             } else if (PROC_CLASS(parent_id) == P_UNDEFINEDPROC &&
                        IS_PROCEDURE_TYPE(ID_TYPE(parent_id))) {
-                if (debug_flag)
+                if (debug_enabled())
                     fprintf(
-                        debug_fp,
+                        debug_output(),
                         "parent_id seems a undefined function/subroutine\n");
                 return FALSE;
 
             } else {
-                if (debug_flag)
-                    fprintf(debug_fp, "parent_id is an explicit function\n");
+                if (debug_enabled())
+                    fprintf(debug_output(), "parent_id is an explicit function\n");
                 return TRUE;
             }
         } else {
             if (ID_TYPE(parent_id) == NULL ||
                 TYPE_IS_IMPLICIT(ID_TYPE(parent_id))) {
-                if (debug_flag)
+                if (debug_enabled())
                     fprintf(
-                        debug_fp,
+                        debug_output(),
                         "parent_id is used as an implicit declared variable\n");
                 /* continue checking */
             } else {
-                if (debug_flag)
-                    fprintf(debug_fp,
+                if (debug_enabled())
+                    fprintf(debug_output(),
                             "parent_id be used as a non-function/subroutine\n");
                 return TRUE;
             }
@@ -137,8 +137,8 @@ static int conflict_parent_vs_sub_program_unit(ID parent_id)
     if ((ID_TYPE(parent_id) && !TYPE_IS_IMPLICIT(ID_TYPE(parent_id))) &&
         !TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
         TYPE_HAS_NON_ACCESSIBILITY_FLAGS(parent_id)) {
-        if (debug_flag)
-            fprintf(debug_fp, "parent_id has non-accessibility attribute\n");
+        if (debug_enabled())
+            fprintf(debug_output(), "parent_id has non-accessibility attribute\n");
         return TRUE;
     }
 
@@ -148,27 +148,27 @@ static int conflict_parent_vs_sub_program_unit(ID parent_id)
         if (!TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) &&
             !TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
             TYPE_HAS_NON_ACCESSIBILITY_FLAGS(parent_id)) {
-            if (debug_flag)
-                fprintf(debug_fp,
+            if (debug_enabled())
+                fprintf(debug_output(),
                         "parent_id has non-accessibility attribute\n");
             return TRUE;
         }
 
         if (ID_TYPE(parent_id) && TYPE_IS_SAVE(ID_TYPE(parent_id))) {
-            if (debug_flag)
-                fprintf(debug_fp,
+            if (debug_enabled())
+                fprintf(debug_output(),
                         "parent_id has non-accessibility attribute\n");
             error("SAVE attirubte conflicts to the procedure");
             return TRUE;
         }
 
         if (IS_SUBR(ID_TYPE(parent_id))) {
-            if (debug_flag)
-                fprintf(debug_fp, "parent_id seems a subroutine\n");
+            if (debug_enabled())
+                fprintf(debug_output(), "parent_id seems a subroutine\n");
             if (ID_TYPE(parent_id) && !TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) &&
                 TYPE_HAS_NON_ACCESSIBILITY_FLAGS(parent_id)) {
-                if (debug_flag)
-                    fprintf(debug_fp,
+                if (debug_enabled())
+                    fprintf(debug_output(),
                             "parent_id seems an external subroutine\n");
                 return TRUE;
             }
@@ -176,16 +176,16 @@ static int conflict_parent_vs_sub_program_unit(ID parent_id)
         } else if (IS_FUNCTION_TYPE(ID_TYPE(parent_id))) {
             TYPE_DESC return_type =
                 FUNCTION_TYPE_RETURN_TYPE(ID_TYPE(parent_id));
-            if (debug_flag)
-                fprintf(debug_fp, "parent_id seems a function\n");
+            if (debug_enabled())
+                fprintf(debug_output(), "parent_id seems a function\n");
             if (return_type != NULL && !TYPE_IS_IMPLICIT(return_type) &&
                 TYPE_BASIC_TYPE(return_type) != TYPE_UNKNOWN) {
-                if (debug_flag)
-                    fprintf(debug_fp, "ID_TYPE(parent_id) has explicit type\n");
+                if (debug_enabled())
+                    fprintf(debug_output(), "ID_TYPE(parent_id) has explicit type\n");
                 if (!TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
                     !TYPE_HAS_ACCESSIBILITY_FLAGS(ID_TYPE(parent_id))) {
-                    if (debug_flag)
-                        fprintf(debug_fp,
+                    if (debug_enabled())
+                        fprintf(debug_output(),
                                 "parent_id and ID_TYPE(parent_id) don't have "
                                 "accessibility attributes\n");
                     return TRUE;
@@ -193,20 +193,20 @@ static int conflict_parent_vs_sub_program_unit(ID parent_id)
             }
 
         } else if (ID_IS_DECLARED(parent_id)) {
-            if (debug_flag)
-                fprintf(debug_fp, "parent_id seems like to be not declared\n");
+            if (debug_enabled())
+                fprintf(debug_output(), "parent_id seems like to be not declared\n");
 
         } else {
-            if (debug_flag)
-                fprintf(debug_fp, "parent_id seems like a variable\n");
+            if (debug_enabled())
+                fprintf(debug_output(), "parent_id seems like a variable\n");
             if (!TYPE_IS_IMPLICIT(ID_TYPE(parent_id)) &&
                 TYPE_BASIC_TYPE(ID_TYPE(parent_id)) != TYPE_UNKNOWN) {
-                if (debug_flag)
-                    fprintf(debug_fp, "ID_TYPE(parent_id) has explicit type\n");
+                if (debug_enabled())
+                    fprintf(debug_output(), "ID_TYPE(parent_id) has explicit type\n");
                 if (!TYPE_HAS_ACCESSIBILITY_FLAGS(parent_id) &&
                     !TYPE_HAS_ACCESSIBILITY_FLAGS(ID_TYPE(parent_id))) {
-                    if (debug_flag)
-                        fprintf(debug_fp,
+                    if (debug_enabled())
+                        fprintf(debug_output(),
                                 "parent_id and ID_TYPE(parent_id) don't have "
                                 "accessibility attributes\n");
                     return TRUE;
@@ -215,8 +215,8 @@ static int conflict_parent_vs_sub_program_unit(ID parent_id)
         }
     }
 
-    if (debug_flag)
-        fprintf(debug_fp, "NOT conflict\n");
+    if (debug_enabled())
+        fprintf(debug_output(), "NOT conflict\n");
 
     return FALSE;
 }
@@ -410,8 +410,8 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
     switch (cls) {
 
         case CL_MAIN:
-            if (debug_flag)
-                fprintf(diag_file, "  MAIN %s:\n", (name ? SYM_NAME(s) : ""));
+            if (debug_enabled())
+                fprintf(diag_output(), "  MAIN %s:\n", (name ? SYM_NAME(s) : ""));
 
             // Delete line because of [Xmp-dev:1896]
             // CURRENT_EXT_ID = declare_external_id(find_symbol(
@@ -427,8 +427,8 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
             break;
 
         case CL_BLOCK:
-            if (debug_flag)
-                fprintf(diag_file, "  BLOCK DATA %s:\n",
+            if (debug_enabled())
+                fprintf(diag_output(), "  BLOCK DATA %s:\n",
                         name ? SYM_NAME(s) : "");
             CURRENT_EXT_ID = declare_external_id(
                 find_symbol(name ? SYM_NAME(s) : "no__name__blkdata__"),
@@ -445,8 +445,8 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
             break;
 
         case CL_PROC: { /* subroutine or functions */
-            if (debug_flag)
-                fprintf(diag_file, "   %s:\n", SYM_NAME(s));
+            if (debug_enabled())
+                fprintf(diag_output(), "   %s:\n", SYM_NAME(s));
 
             if (unit_ctl_level > 0 && PARENT_STATE == ININTR) {
                 ID pid = find_ident_outer_scope(s);
@@ -580,8 +580,8 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
             TYPE_DESC tp = NULL;
             list lp;
 
-            if (debug_flag)
-                fprintf(diag_file, "   entry %s:\n", SYM_NAME(s));
+            if (debug_enabled())
+                fprintf(diag_output(), "   entry %s:\n", SYM_NAME(s));
 
             id = declare_ident(s, CL_ENTRY);
             if (IS_SUBR(ID_TYPE(CURRENT_PROCEDURE))) {
@@ -679,14 +679,12 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
 
         case CL_SUBMODULE: /* submodule */ /* fall through */
         case CL_MODULE: /* modules */ {
-            extern int mcLn_no;
-            current_module_name = s;
+            ctx->current_module_name = s;
             /* should print in module compile mode.  */
-            if (mcLn_no == -1)
-                if (debug_flag)
-                    fprintf(diag_file, "   %s %s:\n",
-                            cls == CL_MODULE ? "module" : "submodule",
-                            SYM_NAME(current_module_name));
+            if (debug_enabled())
+                fprintf(diag_output(), "   %s %s:\n",
+                        cls == CL_MODULE ? "module" : "submodule",
+                        SYM_NAME(current_module_name()));
             id = declare_ident(s, cls);
             declare_id_type(id, type);
             ID_LINE(id) = EXPR_LINE(name); /* set line_no */
@@ -917,7 +915,7 @@ void implicit_declaration(ID id)
                 /* FEAST delete start */
                 /* error("attempt to use undefined type variable, %s",
                  * ID_NAME(id)); */
-                sp_link_id(id, SP_ERR_UNDEF_TYPE_VAR, current_line);
+                sp_link_id(id, SP_ERR_UNDEF_TYPE_VAR, current_line());
                 /* FEAST delete  end  */
                 return;
             } else
@@ -985,7 +983,7 @@ ID declare_variable(ID id)
                 (!TYPE_IS_ALLOCATABLE(ID_TYPE(id))) && isSubprogram == FALSE &&
                 is_array_size_adjustable(ID_TYPE(id)) &&
                 !is_array_implicit_shape(ID_TYPE(id)) &&
-                !XMP_flag) { // For XMP, local adjustable array seems to be
+                !xmp_enabled()) { // For XMP, local adjustable array seems to be
                              // supported, because of LOCAL_ALIAS.
                 error("'%s' looks like a local adjustable array, "
                       "not supported yet.",
@@ -2061,8 +2059,8 @@ static TYPE_DESC declare_type_attributes(ID id, TYPE_DESC tp, expr attributes,
             }
         }
 
-        if (debug_flag)
-            fprintf(debug_fp, "<!-- %s -->\n", EXPR_CODE_NAME(EXPR_CODE(v)));
+        if (debug_enabled())
+            fprintf(debug_output(), "<!-- %s -->\n", EXPR_CODE_NAME(EXPR_CODE(v)));
 
         switch (EXPR_CODE(v)) {
             case F95_PARAMETER_SPEC:
@@ -4177,8 +4175,8 @@ void compile_struct_decl_end()
 
     check_type_parameters_declared(ctl_top);
 
-    if (endlineno_flag)
-        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    if (end_line_no_enabled())
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
     stp = EXPV_TYPE(CTL_BLOCK(ctl_top));
 

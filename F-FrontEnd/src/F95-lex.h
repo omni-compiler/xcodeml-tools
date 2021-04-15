@@ -14,17 +14,6 @@
 
 // #define LEX_DEBUG 1
 
-/* Lexical analyzer, enable open mp.  */
-bool OMP_flag = false;
-bool XMP_flag = false;
-bool ACC_flag = false;
-
-/* lexical analyzer, enable conditional compilation.  */
-bool cond_compile_enabled = false;
-
-/* leave comemnt in xcodeml file using TEXT */
-bool leave_comment_flag = false;
-
 /* lexical analyzer */
 /* enable to parse for pragma.  */
 int PRAGMA_flag = TRUE;
@@ -48,14 +37,6 @@ int need_check_user_defined = TRUE; /* check the user defined dot id */
 
 int may_generic_spec = FALSE;
 
-bool fixed_format_flag = false;
-
-int max_line_len = -1; /* -1 when value is not set yet. */
-int max_cont_line = 255;
-
-/* enable comment char, 'c' in free format.  */
-bool flag_force_c_comment = false; /* does not set yet.  */
-
 #define QUOTE '\002' /* special quote mark */
 
 struct keyword_token {
@@ -69,12 +50,6 @@ extern struct keyword_token dot_keywords[], keywords[];
 extern struct keyword_token end_keywords[];
 extern struct keyword_token type_keywords[];
 extern struct keyword_token do_keywords[];
-
-extern bool ocl_flag;
-extern bool cdir_flag;
-extern bool pgi_flag;
-extern int max_name_len; //  maximum identifier name length
-extern bool dollar_ok;    // accept '$' in identifier or not.
 
 bool exposed_comma, exposed_eql;
 int paren_level;
@@ -102,14 +77,13 @@ int prevline_is_inComment = FALSE;
 extern expr st_name; /* statement name */
 
 static int line_count = 0;
-lineno_info *current_line;
 int pre_read = 0;
 lineno_info read_lineno;
 
 int is_using_module = FALSE;
 
 struct saved_file_state {
-    FILE *save_fp;
+    str_stream save_in_str_strm;
     lineno_info *save_line;
     int save_pre_read;
     int is_using_module; /* TRUE if file is module file. */
@@ -271,27 +245,24 @@ static void debugOutStatement()
         *nlcr = '\0';
     }
 
-    if (fixed_format_flag) {
-        fprintf(debug_fp, "%6d:'%s'|\"%s\"\n", read_lineno.ln_no, stn_cols,
+    if (ctx->fixed_format_enabled) {
+        fprintf(debug_output(), "%6d:'%s'|\"%s\"\n", read_lineno.ln_no, stn_cols,
                 trimBuf);
     } else {
-        fprintf(debug_fp, "%6d:\"%s\"\n", read_lineno.ln_no, trimBuf);
+        fprintf(debug_output(), "%6d:\"%s\"\n", read_lineno.ln_no, trimBuf);
     }
-    fflush(debug_fp);
+    fflush(debug_output());
 }
 
 static int is_top_level(void) { return unit_ctl_level == 0; }
 
 void initialize_lex()
 {
-    extern int mcLn_no;
-    extern long mcStart;
-
-    if (fixed_format_flag)
+    if (ctx->fixed_format_enabled)
         line_buf_size = 300; // for bug #397
     else
-        line_buf_size = max_line_len + 2 + 1; /* CRLF + \0 */
-    st_buf_size = max_line_len * (max_cont_line + 1) + 1;
+        line_buf_size = max_line_len() + 2 + 1; /* CRLF + \0 */
+    st_buf_size = max_line_len() * (max_cont_line() + 1) + 1;
 
     line_buffer = XMALLOC(char *, line_buf_size);
     st_buffer = XMALLOC(char *, st_buf_size);
@@ -308,18 +279,9 @@ void initialize_lex()
     memset(last_ln_nos, 0, sizeof(last_ln_nos));
 
     /* set lineno info as default */
-    if (mcLn_no == -1)
-        read_lineno.ln_no = 0;
-    else {
-        if (fseek(source_file, mcStart, SEEK_SET) == -1) {
-            error("internal comiler error: cannot seek given start point in "
-                  "initialize_lex()");
-            FATAL_ERROR();
-        }
-        read_lineno.ln_no = mcLn_no;
-    }
-    if (source_file_name != NULL)
-        read_lineno.file_id = get_file_id(source_file_name);
+    read_lineno.ln_no = 0;
+    if (sdslen(ctx->src_file_path) != 0)
+        read_lineno.file_id = get_file_id(ctx->src_file_path);
     else
         read_lineno.file_id = get_file_id("<stdin>");
 
@@ -334,11 +296,11 @@ void initialize_lex()
     add_sentinel(&sentinels, XMP_SENTINEL);
     add_sentinel(&sentinels, ACC_SENTINEL);
     add_sentinel(&sentinels, DIR_SENTINEL);
-    if (ocl_flag)
+    if (ocl_enabled())
         add_sentinel(&sentinels, OCL_SENTINEL);
-    if (cdir_flag)
+    if (cdir_enabled())
         add_sentinel(&sentinels, CDIR_SENTINEL);
-    if (pgi_flag)
+    if (pgi_enabled())
         add_sentinel(&sentinels, PGI_SENTINEL);
 }
 
@@ -531,7 +493,7 @@ int check_ident_context(const char *name)
         case ELEMENTAL:
         case MODULE:
         case IMPURE:
-            if (fixed_format_flag) {
+            if (ctx->fixed_format_enabled) {
                 if (strncasecmp(name, "function", 8) == 0 &&
                     is_function_statement_context()) {
                     ret = FUNCTION;
@@ -653,26 +615,26 @@ static int yylex0(YYSTYPE* yylval, ffront_context* ctx)
 
             /* set bufptr st_buffer */
             bufptr = st_buffer;
-            if (st_OMP_flag && OMP_flag) {
+            if (st_OMP_flag && openmp_enabled()) {
                 lexstate = LEX_OMP_TOKEN;
                 for (p = bufptr; *p != '\0'; p++)
                     *p = TOLOWER(*p);
                 return OMPKW_LINE;
             }
-            if (st_XMP_flag && XMP_flag) {
+            if (st_XMP_flag && xmp_enabled()) {
                 lexstate = LEX_XMP_TOKEN;
                 for (p = bufptr; *p != '\0'; p++)
                     *p = TOLOWER(*p);
                 return XMPKW_LINE;
             }
-            if (st_ACC_flag && ACC_flag) {
+            if (st_ACC_flag && openacc_enabled()) {
                 lexstate = LEX_ACC_TOKEN;
                 for (p = bufptr; *p != '\0'; p++)
                     *p = TOLOWER(*p);
                 return ACCKW_LINE;
             }
             if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
-                (st_CONDCOMPL_flag && !OMP_flag && !cond_compile_enabled)) {
+                (st_CONDCOMPL_flag && !openmp_enabled() && !conditional_compile_enabled())) {
                 lexstate = LEX_PRAGMA_TOKEN;
                 return PRAGMA_HEAD;
             }
@@ -1180,7 +1142,7 @@ static int token(YYSTYPE* yylval)
 
 static int is_identifier_letter(char c, int pos)
 {
-    if (dollar_ok) {
+    if (dollar_in_id_enabled()) {
         /* '_' and '$' are never placed on beginning */
         return (isalnum((int)c) || ((pos >= 1) && ((c == '_') || (c == '$'))));
     } else {
@@ -1202,7 +1164,7 @@ static int read_identifier(YYSTYPE* yylval)
          p++, bufptr++) {
         *p = *bufptr;
         tkn_len++;
-        if (tkn_len > max_name_len && is_using_module == FALSE) {
+        if (tkn_len > max_id_name_len() && is_using_module == FALSE) {
             excess_name_length++;
         }
     }
@@ -1279,7 +1241,7 @@ static int read_identifier(YYSTYPE* yylval)
             goto returnId;
         } else
             bufptr++;
-		t = token(yylval);
+        t = token(yylval);
         while (isspace(*bufptr)) /* skip white space */
             bufptr++;
         if (*bufptr != ')') {
@@ -1492,8 +1454,8 @@ static int read_number(YYSTYPE* yylval)
 }
 
 static void string_to_integer(omllint_t *p,
-		char *cp,
-		int radix)
+        char *cp,
+        int radix)
 {
     char ch;
     int x;
@@ -1562,7 +1524,7 @@ static int classify_statement(YYSTYPE* yylval)
 
     /* st_name: ....? */
     if ((st_class == UNKNOWN) ||
-        (fixed_format_flag &&
+        (ctx->fixed_format_enabled &&
          (isalpha((int)*bufptr) || isdigit((int)*bufptr) || *bufptr == '_'))) {
         char *startp; /* point begin of st_name.  */
         char *endp;   /* end point for st_name.  */
@@ -1646,11 +1608,11 @@ static int classify_statement(YYSTYPE* yylval)
 
     switch (st_class) {
         case DO:
-            if (fixed_format_flag && exposed_eql) {
+            if (ctx->fixed_format_enabled && exposed_eql) {
                 if (!exposed_comma)
                     goto ret_LET;
             }
-            if (fixed_format_flag) {
+            if (ctx->fixed_format_enabled) {
                 /* when fixed format, it not blank mandatory for DO WHILE. */
                 if (strncmp(bufptr, "while", 5) == 0) {
                     bufptr = p + 5;
@@ -1663,7 +1625,7 @@ static int classify_statement(YYSTYPE* yylval)
         case WHERE: /* check whether ret_LET or WHERE?  */
             /* Caution:  must save plevel and need_keyword.
                special handling for '' */
-            if (fixed_format_flag && exposed_eql) {
+            if (ctx->fixed_format_enabled && exposed_eql) {
                 /* LOGIF such as 'if' '('...')' 'yyy' '=' 'zzz'.  */
                 /* or 'if' '(' ...'('...')'...')')  'yyy' '=' 'zzz'.  */
                 /* fixed_format_flag here, no need skip white space.  */
@@ -1816,7 +1778,7 @@ static int classify_statement(YYSTYPE* yylval)
         case SUBROUTINE:
         case VALUE:
         case TARGET:
-            if (fixed_format_flag && exposed_eql) {
+            if (ctx->fixed_format_enabled && exposed_eql) {
                 goto ret_LET;
             }
             break;
@@ -1964,7 +1926,7 @@ static int get_keyword(const struct keyword_token *ks)
 
     save = bufptr;
 
-    if (fixed_format_flag) {
+    if (ctx->fixed_format_enabled) {
         for (kp = ks; kp->k_name; kp++) {
             q = kp->k_name;
             if (*q == '_')
@@ -2029,7 +1991,7 @@ static int get_keyword(const struct keyword_token *ks)
                           *bufptr == '_' || *bufptr == '.';
              p++, bufptr++) {
             tkn_len++;
-            if (tkn_len > max_name_len && is_using_module == FALSE) {
+            if (tkn_len > max_id_name_len() && is_using_module == FALSE) {
                 excess_name_length++;
             }
 
@@ -2236,8 +2198,7 @@ int checkInsideUse() { return is_using_module; }
  */
 void include_file(char *name, int inside_use)
 {
-    const char *path;
-    FILE *fp;
+    sds_string path = sdsempty();
     struct saved_file_state *p;
 
     if (n_nested_file >= N_NESTED_FILE) {
@@ -2245,25 +2206,29 @@ void include_file(char *name, int inside_use)
         FATAL_ERROR();
     }
 
-    path = search_include_path(name);
-
-    if ((fp = fopen(path, "r")) == NULL) {
-        error("cannot open file '%s'", name);
+    if (!search_include_path(name, &path)) {
+        error("cannot open file '%s' (%s)", name, path);
+        FATAL_ERROR();
+    }
+    str_stream in;
+    init_str_stream(&in);
+    if(!open_in_file_str_stream(&in, path)) {
+        error("cannot open file '%s' (%s)", name, path);
         FATAL_ERROR();
     }
 
     assert(fp);
 
     p = &file_state[n_nested_file++];
-    p->save_fp = source_file;
-    p->save_line = current_line;
+    p->save_in_str_strm = ctx->src_input;
+    p->save_line = current_line();
     p->save_pre_read = pre_read;
     p->save_lineno = read_lineno;
     p->is_using_module = is_using_module;
     /* save the context for fixed_format_flag,
      * since we force change in USE.
      */
-    p->save_fixed_format_flag = fixed_format_flag;
+    p->save_fixed_format_flag = ctx->fixed_format_enabled;
     /* save the context for no count up of line number.  */
     p->save_no_countup = no_countup;
 #ifdef ENABLE_UCHARDET
@@ -2287,32 +2252,33 @@ void include_file(char *name, int inside_use)
     }
     bcopy(stn_cols, p->save_stn_cols, 7);
     /* set new state */
-    source_file = fp;
+    ctx->src_input = in;
     if (inside_use) {
         /* in include_file invoked by USE, we must free format.  */
         /* sincse .modf is free format.  */
-        fixed_format_flag = false;
+        ctx->fixed_format_enabled = false;
     } else {
         read_lineno.file_id = get_file_id(name);
         read_lineno.ln_no = 0;
     }
 
     pre_read = 0;
+    sdsfree(path);
 }
 
 static void restore_file()
 {
     struct saved_file_state *p;
 
-    fclose(source_file);
+    release_str_stream(&ctx->src_input);
     p = &file_state[--n_nested_file];
-    assert(p->save_fp);
-    source_file = p->save_fp;
-    current_line = p->save_line;
+    assert(p->save_in_str_strm.handle);
+    ctx->src_input = p->save_in_str_strm;
+    ctx->current_line = p->save_line;
     pre_read = p->save_pre_read;
     read_lineno = p->save_lineno;
     /* anyway restore, it may change in use.  */
-    fixed_format_flag = p->save_fixed_format_flag;
+    ctx->fixed_format_enabled = p->save_fixed_format_flag;
     /* restore the no conputup var. for no need line number count up.  */
     no_countup = p->save_no_countup;
     bcopy(p->save_buffer, line_buffer, LINE_BUF_SIZE);
@@ -2354,14 +2320,14 @@ static int read_initial_line()
     int ret;
     st_name = NULL;
 
-    if (fixed_format_flag) {
+    if (ctx->fixed_format_enabled) {
         prelast_initial_line_pos = last_offset[1];
         ret = read_fixed_format();
         last_initial_line_pos = last_offset[0];
     } else {
         ret = read_free_format();
         prelast_initial_line_pos = last_initial_line_pos;
-        last_initial_line_pos = ftell(source_file);
+        last_initial_line_pos = ftell(src_input());
     }
     return ret;
 }
@@ -2491,7 +2457,7 @@ again:
     st_comment_line_flag = false;
     st_PGI_flag = false;
 
-    if (flag_force_c_comment) {
+    if (force_c_comments_enabled()) {
         if ((p[0] == 'c') || (p[0] == 'C') || (p[0] == '*')) {
             *p = '!';
         }
@@ -2554,7 +2520,7 @@ again:
             p += 2; /* length of "!$" */
             st_CONDCOMPL_flag = true;
             set_pragma_str("");
-            if (OMP_flag || cond_compile_enabled) {
+            if (openmp_enabled() || conditional_compile_enabled()) {
                 /* get statement label */
                 while (isspace(*p))
                     p++; /* skip space */
@@ -2568,7 +2534,7 @@ again:
                                        "separator required after line number");
                 }
             }
-        } else if (leave_comment_flag) {
+        } else if (leave_comment_enabled()) {
             set_pragma_str(p);
             st_comment_line_flag = true;
         } else
@@ -2576,15 +2542,15 @@ again:
     }
 
     /* copy body */
-    if (debug_flag) {
+    if (debug_enabled()) {
         debugOutStatement();
     }
 
     /* first line number is set */
-    current_line = new_line_info(read_lineno.file_id, read_lineno.ln_no);
+    ctx->current_line = new_line_info(read_lineno.file_id, read_lineno.ln_no);
 
     q = st_buffer;
-    if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled) &&
+    if ((!openmp_enabled() && !xmp_enabled() && !openacc_enabled() && !conditional_compile_enabled()) &&
         (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
          st_CONDCOMPL_flag)) {
         /* dumb copy */
@@ -2601,9 +2567,9 @@ again:
     cont_line_num = 0;
     while (find_last_ampersand(st_buffer, &st_len)) {
         int index = 0;
-        if (cont_line_num >= max_cont_line) {
+        if (cont_line_num >= max_cont_line()) {
             error("number of continuation lines exceeded %d lines",
-                  max_cont_line);
+                  max_cont_line());
             goto Done;
         }
     next_line:
@@ -2679,7 +2645,7 @@ again:
         }
 
         /* oBuf => st_buffer */
-        if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
+        if (!openmp_enabled() && !xmp_enabled() && !openacc_enabled() && !conditional_compile_enabled() &&
             (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
              st_CONDCOMPL_flag)) {
             /* dumb copy */
@@ -2706,9 +2672,9 @@ again:
     /* done */
 Done:
 
-    if (endlineno_flag)
-        if (current_line->ln_no != read_lineno.ln_no)
-            current_line->end_ln_no = read_lineno.ln_no;
+    if (end_line_no_enabled())
+        if (current_line()->ln_no != read_lineno.ln_no)
+            ctx->current_line->end_ln_no = read_lineno.ln_no;
 
     if (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_CONDCOMPL_flag) {
         append_pragma_str(st_buffer); /* append the rest of line.  */
@@ -2736,14 +2702,6 @@ Last:
 /* check the module compile? and if reach the end of offset?  */
 static int anotherEOF()
 {
-    extern int mcLn_no;
-    extern long mcEnd;
-
-    if (n_nested_file == 0 && mcLn_no != -1) {
-        long l = ftell(source_file);
-        if (l > mcEnd)
-            return true;
-    }
     return FALSE;
 }
 
@@ -2779,16 +2737,16 @@ next_line0:
     if (!no_countup)
         line_count++;
     no_countup = FALSE;
-    c = getc(source_file);
+    c = getc(src_input());
     if (c == EOF)
         return ST_EOF;
     if (anotherEOF())
         return ST_EOF;
-    ungetc(c, source_file);
+    ungetc(c, src_input());
     /* handling the case string has ';'. */
     /* should handlig for holirith here?  */
     for (bp = line_buffer; bp < &line_buffer[LINE_BUF_SIZE];) {
-        c = getc(source_file);
+        c = getc(src_input());
         if (c == '\r')
             continue;
         if (c == '\n')
@@ -2817,7 +2775,7 @@ next_line0:
         *bp++ = c;
     }
     error("too long line, skipped");
-    while ((c = getc(source_file)) != '\n') {
+    while ((c = getc(src_input())) != '\n') {
         // if(c == EOF) goto unexpected_EOF;
         if (c == EOF)
             break;
@@ -2858,7 +2816,7 @@ done:
                 /* if first line is #line, then set it
                    as original source file name */
                 if (line_count == 1)
-                    source_file_name = strdup(buffio);
+                    set_sds_string(&ctx->src_file_path, buffio);
             }
         } else {
             warning_lineno(&read_lineno, "bad # line");
@@ -2866,9 +2824,9 @@ done:
         }
         goto next_line0;
     }
-    if ((bp - line_buffer) > max_line_len &&
+    if ((bp - line_buffer) > max_line_len() &&
         (!inComment || is_pragma_sentinel(&sentinels, line_buffer, &index)))
-        error("line contains more than %d characters", max_line_len);
+        error("line contains more than %d characters", max_line_len());
 
 #ifdef ENABLE_UCHARDET
     detect_encoding();
@@ -2980,7 +2938,7 @@ top:
         st_CONDCOMPL_flag = true;
         set_pragma_str(&(stn_cols[2]));
         append_pragma_str(line_buffer);
-        if (OMP_flag || cond_compile_enabled) {
+        if (openmp_enabled() || conditional_compile_enabled()) {
             memset(stn_cols, ' ', 2);
             /* need check statement label below */
         } else
@@ -2998,7 +2956,7 @@ top:
             if (isdigit((int)*p)) {
                 st_no = 10 * st_no + (*p - '0');
             } else {
-                if ((OMP_flag || cond_compile_enabled) && st_CONDCOMPL_flag) {
+                if ((openmp_enabled() || conditional_compile_enabled()) && st_CONDCOMPL_flag) {
                     /* in case of conditional compilation     */
                     /* stn_cols with errors treated as comment line */
                     pre_read = 0;
@@ -3012,17 +2970,17 @@ top:
     }
 
 copy_body:
-    if (debug_flag) {
+    if (debug_enabled()) {
         debugOutStatement();
     }
 
     /* first line number is set */
-    current_line = new_line_info(read_lineno.file_id, read_lineno.ln_no);
+    ctx->current_line = new_line_info(read_lineno.file_id, read_lineno.ln_no);
 
     /* copy to statement buffer */
     p = line_buffer;
     q = st_buffer;
-    if (!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled &&
+    if (!openmp_enabled() && !xmp_enabled() && !openacc_enabled() && !conditional_compile_enabled() &&
         (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
          st_CONDCOMPL_flag)) {
         /* dumb copy */
@@ -3044,9 +3002,9 @@ copy_body:
     current_st_PRAGMA_flag = st_PRAGMA_flag;
     while ((rv = readline_fixed_format()) == ST_CONT) {
         cont_line_num++;
-        if (cont_line_num > max_cont_line) {
+        if (cont_line_num > max_cont_line()) {
             error("number of continuation lines exceeded %d lines",
-                  max_cont_line);
+                  max_cont_line());
         }
         if (is_pragma_sentinel(&sentinels, stn_cols, &index)) {
             if (strcasecmp(sentinel_name(&sentinels, index), OMP_SENTINEL) ==
@@ -3118,7 +3076,7 @@ copy_body:
             }
         }
 
-        if (debug_flag) {
+        if (debug_enabled()) {
             debugOutStatement();
         }
 
@@ -3139,7 +3097,7 @@ copy_body:
             *(p + lnLen) = '\0';
         }
 
-        if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled) &&
+        if ((!openmp_enabled() && !xmp_enabled() && !openacc_enabled() && !conditional_compile_enabled()) &&
             (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
              st_CONDCOMPL_flag)) {
             /* dumb copy */
@@ -3161,9 +3119,9 @@ copy_body:
         memcpy(oBuf, st_buffer, st_len);
         oBuf[st_len] = '\0';
 
-        if (endlineno_flag)
-            if (current_line->ln_no != read_lineno.ln_no)
-                current_line->end_ln_no = read_lineno.ln_no;
+        if (end_line_no_enabled())
+            if (current_line()->ln_no != read_lineno.ln_no)
+                current_line()->end_ln_no = read_lineno.ln_no;
     }
 
     if (last_char_in_quote_is_quote) {
@@ -3234,12 +3192,12 @@ next_line:
 
     /* keep last line offset and line number.  */
     last_offset[1] = last_offset[0];
-    last_offset[0] = ftell(source_file);
+    last_offset[0] = ftell(src_input());
     last_ln_nos[1] = last_ln_nos[0];
     last_ln_no = last_ln_nos[1];
     last_ln_nos[0] = read_lineno.ln_no;
-    if (debug_flag) {
-        fprintf(debug_fp, "readline_fixed_format(): %d/%ld\n", last_ln_nos[0],
+    if (debug_enabled()) {
+        fprintf(debug_output(), "readline_fixed_format(): %d/%ld\n", last_ln_nos[0],
                 last_offset[0]);
     }
 
@@ -3257,12 +3215,12 @@ next_line0:
 
     /* before read, check '!' comment line leaded by " \t\b"
        and pragma sentinel. */
-    starting_pos = ftell(source_file);
+    starting_pos = ftell(src_input());
     if (starting_pos == -1) {
         error("ftell error");
     }
 
-    if (fgets(line_buffer, LINE_BUF_SIZE, source_file) == NULL) {
+    if (fgets(line_buffer, LINE_BUF_SIZE, src_input()) == NULL) {
         /* read error or eof */
         return ST_EOF;
     }
@@ -3280,12 +3238,12 @@ next_line0:
         }
     }
     // for bug #397
-    if (linelen > max_line_len) {
-        _warning_if_doubtfulLongLine(line_buffer, max_line_len);
-        line_buffer[max_line_len] = 0x0a;
-        for (int i = max_line_len + 1; i <= linelen;)
+    if (linelen > max_line_len()) {
+        _warning_if_doubtfulLongLine(line_buffer, max_line_len());
+        line_buffer[max_line_len()] = 0x0a;
+        for (int i = max_line_len() + 1; i <= linelen;)
             line_buffer[i++] = 0x0;
-        linelen = max_line_len;
+        linelen = max_line_len();
     }
 
 #ifdef ENABLE_UCHARDET
@@ -3323,10 +3281,10 @@ next_line0:
         line_buffer[0] = '!'; /* replace for pragma sentinel */
     }
 
-    if (linelen > max_line_len &&
+    if (linelen > max_line_len() &&
         (line_buffer[0] != '!' ||
          is_pragma_sentinel(&sentinels, line_buffer, &index))) {
-        error("line contains more than %d characters", max_line_len);
+        error("line contains more than %d characters", max_line_len());
     }
 
     if (is_pragma_sentinel(&sentinels, line_buffer, &index)) {
@@ -3353,10 +3311,10 @@ next_line0:
         if (line_buffer[0] == '!') {
             /* now '!' on 1st place always means comment line. */
             // skip succeeding characters
-            if (linelen == max_line_len + 1)
-                fseek(source_file, -1, 1);
-            if (linelen > max_line_len)
-                while (fgetc(source_file) != '\n')
+            if (linelen == max_line_len() + 1)
+                fseek(src_input(), -1, 1);
+            if (linelen > max_line_len())
+                while (fgetc(src_input()) != '\n')
                     ;
             goto next_line;
         }
@@ -3412,7 +3370,7 @@ next_line0:
                     /* if first line is #line, then set it
                        as original source file name */
                     if (line_count == 1)
-                        source_file_name = strdup(buffio);
+                        set_sds_string(&ctx->src_file_path, buffio);
                 }
             } else {
                 warning_lineno(&read_lineno, "bad # line");
@@ -3480,7 +3438,7 @@ read_num_column:
                 stn_cols[i] = tolower(line_buffer[i]);
         }
     }
-    if (OMP_flag && local_CONDCOMPL_flag) {
+    if (openmp_enabled() && local_CONDCOMPL_flag) {
         check_cont = TRUE;
     }
     body_offset = i;
@@ -3492,7 +3450,7 @@ KeepOnGoin:
      */
     bp = line_buffer;
     inQuote = prevline_is_inQuote;
-    maxChars = max_line_len - 6;
+    maxChars = max_line_len() - 6;
     if (line_buffer[body_offset] == '\n') {
         line_buffer[0] = '\0';
     } else {
@@ -3535,7 +3493,7 @@ KeepOnGoin:
             if (c == '!' && inQuote == 0) {
                 inComment = TRUE;
             } else if (c == ';' && inQuote == 0 && inComment == FALSE) {
-                if (!OMP_flag && (is_cond_compilation(
+                if (!openmp_enabled() && (is_cond_compilation(
                                      &sentinels, stn_cols))) { /* NEED FIX */
                     ; /* a line like 'c$ ... ;' with -no-omp is not
                          enable multi line as ';'.  */
@@ -3544,7 +3502,7 @@ KeepOnGoin:
                        number, and ungetc for \t since next line has
                        neither line number nor continuation. */
                     no_countup = TRUE;
-                    if (fseek(source_file, starting_pos + body_offset + i,
+                    if (fseek(src_input(), starting_pos + body_offset + i,
                               SEEK_SET) != 0) {
                         error("fseek error.");
                     }
@@ -4096,7 +4054,7 @@ int ScanFortranLine(char *src,
 
     while (*src != '\0' && dst <= dstMax) {
         if (isspace((int)*src)) {
-            if (fixed_format_flag && *inQuotePtr == FALSE &&
+            if (ctx->fixed_format_enabled && *inQuotePtr == FALSE &&
                 *inHollerithPtr == FALSE) {
                 src++;
             } else {

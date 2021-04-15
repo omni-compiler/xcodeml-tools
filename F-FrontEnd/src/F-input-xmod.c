@@ -4,6 +4,7 @@
 
 #include <libxml/xmlreader.h>
 #include "F-front.h"
+#include "F-front-context.h"
 #include "F-input-xmod.h"
 #include "hash.h"
 
@@ -3664,26 +3665,25 @@ static int input_module(xmlTextReaderPtr reader, struct module *mod,
 #define _XMPMOD_LEN 10
 #endif
 
-const char *search_intrinsic_include_path(const char *filename)
+bool search_intrinsic_include_path(const char *filename, sds_string* path)
 {
-    static char path[MAX_PATH_LEN];
-    FILE *fp;
-
-    if (intrinsicXmodIncDir) {
-        strcpy(path, intrinsicXmodIncDir);
+    if (sdslen(intrinsic_xmod_dir_path()) != 0) {
+        set_sds_string(path, intrinsic_xmod_dir_path());
     } else {
-        strcpy(path, DEFAULT_INSTRINSIC_XMODULES_PATH);
+        set_sds_string(path, DEFAULT_INSTRINSIC_XMODULES_PATH);
     }
 
-    strcat(path, "/");
-    strcat(path, filename);
+    *path = sdscat(*path, "/");
+    *path = sdscat(*path, filename);
 
-    if ((fp = fopen(path, "r")) != NULL) {
-        fclose(fp);
-        return path;
+    if(file_exists(*path)) {
+        return true;
+    }
+    else {
+        set_sds_string(path, "");
+        return false;
     }
 
-    return NULL;
 }
 
 /**
@@ -3693,73 +3693,78 @@ int input_intermediate_file(const SYMBOL mod_name, const SYMBOL submod_name,
                             struct module **pmod, const char *extension)
 {
     int ret;
-    char filename[FILE_NAME_LEN];
-    const char *filepath;
+    sds_string filename = sdsempty();
+    sds_string filepath = sdsempty();
     xmlTextReaderPtr reader;
     int is_intrinsic = FALSE;
 
     if (mod_name == NULL || pmod == NULL) {
-        return FALSE;
+        ret = FALSE;
+        goto input_intermediate_file_ret;
     }
 
     /* search for "xxx.xmod" */
-    bzero(filename, sizeof(filename));
     if (!submod_name) {
-        snprintf(filename, sizeof(filename), "%s.%s", SYM_NAME(mod_name),
+        filename = sdscatprintf(filename, "%s.%s", SYM_NAME(mod_name),
                  extension);
     } else {
-        snprintf(filename, sizeof(filename), "%s:%s.%s", SYM_NAME(mod_name),
+        filename = sdscatprintf(filename, "%s:%s.%s", SYM_NAME(mod_name),
                  SYM_NAME(submod_name), extension);
     }
 
-    filepath = search_include_path(filename);
+    search_include_path(filename, &filepath);
     reader = xmlNewTextReaderFilename(filepath);
 
 #if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
+    sds_string command = sdsempty();
+    sds_string command2 = sdsempty();
+    sds_string filename2 = sdsempty();
+    sds_string filepath2 = sdsempty();
     // if not found, then search for "xxx.mod" and convert it into "xxx.xmod"
     if (reader == NULL) {
 
-        char command2[6 + _XMPMOD_LEN];
-        bzero(command2, 6 + _XMPMOD_LEN);
-        strcpy(command2, "which ");
-        strcat(command2, _XMPMOD_NAME);
+        set_sds_string(&command2, "which ");
+        command2 = sdscat(command2, _XMPMOD_NAME);
         if (system(command2) != 0) {
             warning("No module translator found.");
-            return FALSE;
+            ret = FALSE;
+            goto input_intermediate_file_ret;
         }
 
-        char filename2[FILE_NAME_LEN];
-        const char *filepath2;
 
-        bzero(filename2, sizeof(filename));
-        strcpy(filename2, SYM_NAME(mod_name));
-        strcat(filename2, ".mod");
-        filepath2 = search_include_path(filename2);
+        set_sds_string(&filename2, SYM_NAME(mod_name));
+        filename2 = sdscat(filename2, ".mod");
+        if(!search_include_path(filename2, &filepath2))
+        {
+            ret = FALSE;
+            goto input_intermediate_file_ret;
+        }
 
-        if (!filepath2)
-            return FALSE;
-
-        char command[FILE_NAME_LEN + 9];
-        bzero(command, sizeof(filename2) + 9);
-        strcpy(command, _XMPMOD_NAME);
-        strcat(command, " ");
-        strcat(command, filepath2);
+        set_sds_string(&command, _XMPMOD_NAME);
+        command = sdscat(command, " ");
+        command = sdscat(command, filepath2);
         if (system(command) != 0)
-            return FALSE;
+        {
+            ret = FALSE;
+            goto input_intermediate_file_ret;
+        }
 
-        filepath = search_include_path(filename);
+        search_include_path(filename, &filepath);
         reader = xmlNewTextReaderFilename(filepath);
     }
 #endif
 
     if (reader == NULL) {
-        filepath = search_intrinsic_include_path(filename);
+        search_intrinsic_include_path(filename, &filepath);
         reader = xmlNewTextReaderFilename(filepath);
         is_intrinsic = TRUE;
     }
 
     if (reader == NULL)
-        return FALSE;
+    {
+        ret = FALSE;
+        goto input_intermediate_file_ret;
+    }
 
     *pmod = XMALLOC(struct module *, sizeof(struct module));
     MODULE_NAME(*pmod) = mod_name;
@@ -3769,6 +3774,14 @@ int input_intermediate_file(const SYMBOL mod_name, const SYMBOL submod_name,
     xmlTextReaderClose(reader);
 
     // (*pmod)->filepath = strdup(filepath);
-
+input_intermediate_file_ret:
+#if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
+    sdsfree(command);
+    sdsfree(command2);
+    sdsfree(filename2);
+    sdsfree(filepath2);
+#endif
+    sdsfree(filename);
+    sdsfree(filepath);
     return ret;
 }

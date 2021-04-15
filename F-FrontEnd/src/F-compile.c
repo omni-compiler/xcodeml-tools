@@ -3,6 +3,7 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 #include "F-module-procedure.h"
 #include "module-manager.h"
 
@@ -32,20 +33,14 @@ enum procedure_state current_proc_state;
 /* module context */
 enum module_state current_module_state = M_DEFAULT;
 
-SYMBOL current_module_name = NULL;
-#define INMODULE() (current_module_name != NULL)
+#define INMODULE() (current_module_name() != NULL)
 
 /* for partial module compile with fork.  */
 static long module_start_offset = 0;
 extern long last_initial_line_pos;
 extern long prelast_initial_line_pos;
 
-extern bool flag_module_compile;
 extern int fixed_line_len_kind;
-extern int auto_save_attr_kb;
-
-/* Translate image control statements to xmp subroutine call statements */
-bool XMP_coarray_flag = true;
 
 /* control stack */
 static struct control _ctl_base = {CTL_NONE};
@@ -273,7 +268,7 @@ void output_statement(expv v)
         return;
     /* check line number */
     if (EXPR_LINE(v) == NULL)
-        EXPR_LINE(v) = current_line;
+        EXPR_LINE(v) = current_line();
 
     if (CURRENT_STATEMENTS == NULL) {
         CURRENT_STATEMENTS = list1(LIST, v);
@@ -386,9 +381,9 @@ void compile_statement(int st_no, expr x)
     if (x == NULL)
         return; /* error recovery */
 
-    if (debug_flag) {
-        fprintf(debug_fp, "##line(%d):\n", st_no);
-        expr_print(x, debug_fp);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "##line(%d):\n", st_no);
+        expr_print(x, debug_output());
     }
 
     check_for_ACC_pragma(x);
@@ -476,7 +471,7 @@ void compile_statement1(int st_no, expr x)
         do_end_module:
             check_INDCL();
             // move into end_procedure()
-            // if (endlineno_flag)
+            // if (end_line_no_enabled())
             // ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
             end_procedure();
             end_module(EXPR_HAS_ARG1(x) ? EXPR_ARG1(x) : NULL);
@@ -593,7 +588,7 @@ void compile_statement1(int st_no, expr x)
         case F95_ENDBLOCKDATA_STATEMENT:
             check_INEXEC();
             // move into end_procedure()
-            // if (endlineno_flag)
+            // if (end_line_no_enabled())
             // ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
             end_procedure();
             break;
@@ -603,7 +598,7 @@ void compile_statement1(int st_no, expr x)
             if (!check_image_control_statement_available())
                 return;
             // move into end_procedure()
-            // if (endlineno_flag)
+            // if (end_line_no_enabled())
             // if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
             // EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
             end_procedure();
@@ -624,7 +619,7 @@ void compile_statement1(int st_no, expr x)
             } else {
                 check_INEXEC();
                 // move into end_procedure()
-                // if (endlineno_flag){
+                // if (end_line_no_enabled()){
                 //	      if (CURRENT_PROCEDURE)
                 // ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
                 // else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
@@ -819,13 +814,13 @@ void compile_statement1(int st_no, expr x)
                     compile_exec_statement(EXPR_ARG2(x));
                 }
                 CTL_IF_THEN(ctl_top) = CURRENT_STATEMENTS;
-                if (endlineno_flag) {
-                    if (current_line->end_ln_no) {
+                if (end_line_no_enabled()) {
+                    if (current_line()->end_ln_no) {
                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) =
-                            current_line->end_ln_no;
+                            current_line()->end_ln_no;
                     } else {
                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) =
-                            current_line->ln_no;
+                            current_line()->ln_no;
                     }
                 }
                 pop_ctl(); /* pop and output */
@@ -842,7 +837,7 @@ void compile_statement1(int st_no, expr x)
                 /* change to CTL_ELSE */
                 CTL_TYPE(ctl_top) = CTL_ELSE;
 
-                if (endlineno_flag) {
+                if (end_line_no_enabled()) {
                     st = list0(F_ELSE_STATEMENT);
                     output_statement(st);
                     CURRENT_STATEMENTS = NULL;
@@ -880,15 +875,15 @@ void compile_statement1(int st_no, expr x)
                 /* use current_statements */
                 CTL_IF_THEN(ctl_top) = CURRENT_STATEMENTS;
 
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
                 pop_ctl();
             } else if (CTL_TYPE(ctl_top) == CTL_ELSE) {
                 CTL_IF_ELSE(ctl_top) = CURRENT_STATEMENTS;
 
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
                 pop_ctl();
             } else
@@ -1033,7 +1028,7 @@ void compile_statement1(int st_no, expr x)
                     /* change to CTL_ELSE_WHERE */
                     CTL_TYPE(ctl_top) = CTL_ELSE_WHERE;
 
-                    if (endlineno_flag) {
+                    if (end_line_no_enabled()) {
                         st = list0(F_ELSEWHERE_STATEMENT);
                         output_statement(st);
                         CURRENT_STATEMENTS = NULL;
@@ -1074,8 +1069,8 @@ void compile_statement1(int st_no, expr x)
                 /* store current statements to 'then' part, and clear */
                 CTL_WHERE_THEN(ctl_top) = CURRENT_STATEMENTS;
 
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
                 pop_ctl();
 
@@ -1083,8 +1078,8 @@ void compile_statement1(int st_no, expr x)
                 /* store current statements to 'else' part, and clear */
                 CTL_WHERE_ELSE(ctl_top) = CURRENT_STATEMENTS;
 
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
                 pop_ctl();
 
@@ -1152,9 +1147,9 @@ void compile_statement1(int st_no, expr x)
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                     CURRENT_STATEMENTS = NULL;
 
-                    if (endlineno_flag)
+                    if (end_line_no_enabled())
                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) =
-                            current_line->ln_no;
+                            current_line()->ln_no;
 
                     parent_const_name = CTL_CASE_CONST_NAME(ctl_top);
 
@@ -1200,9 +1195,9 @@ void compile_statement1(int st_no, expr x)
                     CTL_CASE_BLOCK(ctl_top) = CURRENT_STATEMENTS;
                     CURRENT_STATEMENTS = NULL;
 
-                    if (endlineno_flag)
+                    if (end_line_no_enabled())
                         EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) =
-                            current_line->ln_no;
+                            current_line()->ln_no;
                     pop_ctl();
                     move_vars_to_parent_from_type_guard();
                     pop_env();
@@ -1278,8 +1273,8 @@ void compile_statement1(int st_no, expr x)
                 (void)check_valid_construction_name(parent_const_name,
                                                     const_name);
 
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
             } else if (CTL_TYPE(ctl_top) == CTL_CASE ||
                        CTL_TYPE(ctl_top) == CTL_TYPE_GUARD) {
@@ -1298,8 +1293,8 @@ void compile_statement1(int st_no, expr x)
                                                     const_name);
 
                 // For previous CASE.
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
                 pop_ctl();
 
@@ -1316,8 +1311,8 @@ void compile_statement1(int st_no, expr x)
                 CTL_SELECT_STATEMENT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
                 // For SELECT
-                if (endlineno_flag)
-                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+                if (end_line_no_enabled())
+                    EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
 
             } else {
                 error("'end select', out of place");
@@ -1334,7 +1329,7 @@ void compile_statement1(int st_no, expr x)
                 char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
                 expr new_pragma =
                     list1(F_PRAGMA_STATEMENT, make_enode(STRING_CONSTANT, str));
-                EXPR_LINE(new_pragma) = current_line;
+                EXPR_LINE(new_pragma) = current_line();
                 if (!preceding_pragmas)
                     preceding_pragmas = list0(LIST);
                 preceding_pragmas =
@@ -1349,7 +1344,7 @@ void compile_statement1(int st_no, expr x)
                 char *str = strdup(EXPR_STR(EXPR_ARG1(x)));
                 expr new_pragma =
                     list1(F_COMMENT_LINE, make_enode(STRING_CONSTANT, str));
-                EXPR_LINE(new_pragma) = current_line;
+                EXPR_LINE(new_pragma) = current_line();
                 if (!preceding_pragmas)
                     preceding_pragmas = list0(LIST);
                 preceding_pragmas =
@@ -1567,7 +1562,7 @@ static expv allocate_temp(TYPE_DESC tp)
     id = declare_ident(sym, CL_VAR);
     ID_TYPE(id) = tp;
     ID_STORAGE(id) = STG_AUTO;
-    ID_LINE(id) = new_line_info(get_file_id(source_file_name), 0);
+    ID_LINE(id) = new_line_info(get_file_id(ctx->src_file_path), 0);
     declare_variable(id);
     return ID_ADDR(id);
 }
@@ -2297,7 +2292,7 @@ static void update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls,
     BLOCK_ENV bp;
 
     FOREACH_ID (id, ids) {
-        if (ID_USEASSOC_INFO(id) && current_module_name != ID_MODULE_NAME(id)) {
+        if (ID_USEASSOC_INFO(id) && current_module_name() != ID_MODULE_NAME(id)) {
             continue;
         }
 
@@ -2323,7 +2318,7 @@ static void update_procedure_variables_forall(ID ids, TYPE_DESC struct_decls,
     FOREACH_STRUCTDECLS(stp, struct_decls)
     {
         if (TYPE_TAGNAME(stp) && ID_USEASSOC_INFO(TYPE_TAGNAME(stp)) &&
-            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(stp))) {
+            current_module_name() != ID_MODULE_NAME(TYPE_TAGNAME(stp))) {
             continue;
         }
 
@@ -2388,8 +2383,8 @@ void update_type_bound_procedures_forall(TYPE_DESC struct_decls, ID targets)
                 /*
                  * update function type
                  */
-                if (debug_flag) {
-                    fprintf(debug_fp, "bind %s to %s%%%s\n",
+                if (debug_enabled()) {
+                    fprintf(debug_output(), "bind %s to %s%%%s\n",
                             SYM_NAME(ID_SYM(target)),
                             SYM_NAME(ID_SYM(TYPE_TAGNAME(tp))),
                             SYM_NAME(ID_SYM(mem)));
@@ -2434,12 +2429,12 @@ static void end_declaration()
 
     CURRENT_STATE = INEXEC; /* the next status is EXEC */
 
-    if (debug_flag) {
-        fprintf(debug_fp, "--- end_declaration ---\n");
-        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-        print_IDs(LOCAL_COMMON_SYMBOLS, debug_fp, TRUE);
-        print_interface_IDs(LOCAL_SYMBOLS, debug_fp);
-        print_types(LOCAL_STRUCT_DECLS, debug_fp);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "--- end_declaration ---\n");
+        print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+        print_IDs(LOCAL_COMMON_SYMBOLS, debug_output(), TRUE);
+        print_interface_IDs(LOCAL_SYMBOLS, debug_output());
+        print_types(LOCAL_STRUCT_DECLS, debug_output());
     }
 
     if (CURRENT_PROCEDURE != NULL && CTL_TYPE(ctl_top) != CTL_BLK) {
@@ -2840,8 +2835,8 @@ static void end_declaration()
                     }
                     uint32_t a =
                         TYPE_ATTR_FLAGS(tp) & ~check->acceptable_flags & mask;
-                    if (debug_flag) {
-                        fprintf(debug_fp,
+                    if (debug_enabled()) {
+                        fprintf(debug_output(),
                                 "ID '%s' attr 0x%08x : "
                                 "matches 0x%08x ('%s'), "
                                 "flags allowed 0x%08x (negation: 0x%08x), "
@@ -3312,14 +3307,14 @@ static EXT_ID procedure_defined(ID f_id, EXT_ID unit_ctl_procs[],
     int i;
 
     if (f_id == NULL || ID_CLASS(f_id) != CL_PROC) {
-        if (debug_flag)
+        if (debug_enabled())
             warning("unexpected id '%s' in '%s', id is not procedure",
                     ID_NAME(f_id), __func__);
         return NULL;
     }
 
     if (PROC_CLASS(f_id) != P_UNDEFINEDPROC) {
-        if (debug_flag)
+        if (debug_enabled())
             warning("unexpected id '%s' in '%s', id is already defined",
                     ID_NAME(f_id), __func__);
         return NULL;
@@ -3350,31 +3345,31 @@ static void redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[],
         return;
     unit_ctl_procs[redefine_unit_ctl_level] = EXT_PROC_CONT_EXT_SYMS(proc);
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         for (i = redefine_unit_ctl_level; i >= 0; i--)
-            fprintf(debug_fp, "  ");
+            fprintf(debug_output(), "  ");
         if (EXT_SYM(proc)) {
-            fprintf(debug_fp, "running redefine_procedures at '%s'\n",
+            fprintf(debug_output(), "running redefine_procedures at '%s'\n",
                     SYM_NAME(EXT_SYM(proc)));
         } else {
-            fprintf(debug_fp, "running redefine_procedures at (anonymous)\n");
+            fprintf(debug_output(), "running redefine_procedures at (anonymous)\n");
         }
 
         for (i = redefine_unit_ctl_level; i >= 0; i--)
-            fprintf(debug_fp, "  ");
-        fprintf(debug_fp, "contain procedure : {\n");
+            fprintf(debug_output(), "  ");
+        fprintf(debug_output(), "contain procedure : {\n");
         FOREACH_EXT_ID (ep, unit_ctl_procs[redefine_unit_ctl_level]) {
             for (i = redefine_unit_ctl_level; i >= 0; i--)
-                fprintf(debug_fp, "  ");
+                fprintf(debug_output(), "  ");
             if (EXT_SYM(ep)) {
-                fprintf(debug_fp, "  %s\n", SYM_NAME(EXT_SYM(ep)));
+                fprintf(debug_output(), "  %s\n", SYM_NAME(EXT_SYM(ep)));
             } else {
-                fprintf(debug_fp, "  (anonymous)\n");
+                fprintf(debug_output(), "  (anonymous)\n");
             }
         }
         for (i = redefine_unit_ctl_level; i >= 0; i--)
-            fprintf(debug_fp, "  ");
-        fprintf(debug_fp, "}\n");
+            fprintf(debug_output(), "  ");
+        fprintf(debug_output(), "}\n");
     }
 
     FOREACH_EXT_ID (ep, EXT_PROC_CONT_EXT_SYMS(proc)) {
@@ -3390,10 +3385,10 @@ static void redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[],
         if (ID_CLASS(id) != CL_PROC || PROC_CLASS(id) != P_UNDEFINEDPROC)
             continue;
 
-        if (debug_flag) {
+        if (debug_enabled()) {
             for (i = redefine_unit_ctl_level; i >= 0; i--)
-                fprintf(debug_fp, "  ");
-            fprintf(debug_fp, "checking %s\n", ID_NAME(id));
+                fprintf(debug_output(), "  ");
+            fprintf(debug_output(), "checking %s\n", ID_NAME(id));
         }
 
         if (ID_TYPE(id) && ID_STORAGE(id) == STG_ARG) {
@@ -3439,10 +3434,10 @@ static void redefine_procedures(EXT_ID proc, EXT_ID unit_ctl_procs[],
             PROC_EXT_ID(id) = external_proc;
 
         } else {
-            if (debug_flag) {
+            if (debug_enabled()) {
                 for (i = redefine_unit_ctl_level; i >= 0; i--)
-                    fprintf(debug_fp, "  ");
-                fprintf(debug_fp, "found %s in CONTAINS block\n", ID_NAME(id));
+                    fprintf(debug_output(), "  ");
+                fprintf(debug_output(), "found %s in CONTAINS block\n", ID_NAME(id));
             }
 
             /* undefine procedure is defined in contains statement. */
@@ -3635,7 +3630,7 @@ static void check_procedure_variables_for_idlist(ID id_list,
     expv init_expr;
 
     FOREACH_ID (id, id_list) {
-        if (ID_USEASSOC_INFO(id) && current_module_name != ID_MODULE_NAME(id)) {
+        if (ID_USEASSOC_INFO(id) && current_module_name() != ID_MODULE_NAME(id)) {
             continue;
         }
 
@@ -3726,7 +3721,7 @@ static void check_procedure_variables_forall(int is_final)
     FOREACH_STRUCTDECLS(stp, LOCAL_STRUCT_DECLS)
     {
         if (TYPE_TAGNAME(stp) && ID_USEASSOC_INFO(TYPE_TAGNAME(stp)) &&
-            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(stp))) {
+            current_module_name() != ID_MODULE_NAME(TYPE_TAGNAME(stp))) {
             continue;
         }
 
@@ -4022,7 +4017,7 @@ static void check_type_bound_procedures()
     {
 
         if (TYPE_TAGNAME(tp) && ID_USEASSOC_INFO(TYPE_TAGNAME(tp)) &&
-            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(tp))) {
+            current_module_name() != ID_MODULE_NAME(TYPE_TAGNAME(tp))) {
             /*
              * This derived-type is defined in the other module,
              * skip check.
@@ -4219,7 +4214,7 @@ static void check_final_subroutines()
         ID final = NULL;
 
         if (TYPE_TAGNAME(tp) && ID_USEASSOC_INFO(TYPE_TAGNAME(tp)) &&
-            current_module_name != ID_MODULE_NAME(TYPE_TAGNAME(tp))) {
+            current_module_name() != ID_MODULE_NAME(TYPE_TAGNAME(tp))) {
             /*
              * This derived-type is defined in the other module,
              * skip check.
@@ -4374,11 +4369,11 @@ static void end_procedure()
 
     /*  next: */
 
-    if (endlineno_flag) {
+    if (end_line_no_enabled()) {
         if (CURRENT_PROCEDURE)
-            ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line->ln_no;
+            ID_END_LINE_NO(CURRENT_PROCEDURE) = current_line()->ln_no;
         else if (CURRENT_EXT_ID && EXT_LINE(CURRENT_EXT_ID))
-            EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line->ln_no;
+            EXT_END_LINE_NO(CURRENT_EXT_ID) = current_line()->ln_no;
     }
 
     if (CURRENT_PROC_CLASS != CL_MAIN && CURRENT_PROC_CLASS != CL_BLOCK &&
@@ -4394,7 +4389,7 @@ static void end_procedure()
      * Automatically add save attributes to varriables whose
      * rough size are larger than auto_save_attr_kb kbytes.
      */
-    if (auto_save_attr_kb >= 0 &&
+    if (auto_save_attr_kb() >= 0 &&
         (CURRENT_PROC_CLASS == CL_PROC || CURRENT_PROC_CLASS == CL_MAIN) &&
         TYPE_IS_RECURSIVE(EXT_PROC_TYPE(CURRENT_EXT_ID)) == FALSE) {
 
@@ -4405,7 +4400,7 @@ static void end_procedure()
                 t == NULL || TYPE_IS_SAVE(t) || IS_PROCEDURE_TYPE(t))
                 continue;
             sz = get_rough_type_size(ID_TYPE(id));
-            if (sz >= (auto_save_attr_kb << 10))
+            if (sz >= (auto_save_attr_kb() << 10))
                 TYPE_SET_SAVE(ID_TYPE(id));
         }
     }
@@ -4615,40 +4610,40 @@ static void end_procedure()
     switch (CURRENT_PROC_CLASS) {
         case CL_MAIN:
             setLocalInfoToCurrentExtId(FALSE);
-            if (debug_flag) {
-                fprintf(debug_fp, "\n*** CL_MAIN:\n");
-                print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-                print_types(LOCAL_STRUCT_DECLS, debug_fp);
-                expv_output(CURRENT_STATEMENTS, debug_fp);
+            if (debug_enabled()) {
+                fprintf(debug_output(), "\n*** CL_MAIN:\n");
+                print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+                print_types(LOCAL_STRUCT_DECLS, debug_output());
+                expv_output(CURRENT_STATEMENTS, debug_output());
             }
             break;
         case CL_BLOCK:
             setLocalInfoToCurrentExtId(FALSE);
-            if (debug_flag) {
-                fprintf(debug_fp, "\n*** CL_BLOCK:\n");
-                print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
+            if (debug_enabled()) {
+                fprintf(debug_output(), "\n*** CL_BLOCK:\n");
+                print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
             }
             break;
         case CL_PROC:
             if (CURRENT_EXT_ID != NULL) {
                 setLocalInfoToCurrentExtId(FALSE);
             }
-            if (debug_flag) {
-                fprintf(debug_fp, "\n*** CL_PROC('%s'):\n",
+            if (debug_enabled()) {
+                fprintf(debug_output(), "\n*** CL_PROC('%s'):\n",
                         SYM_NAME(CURRENT_PROC_NAME));
-                print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-                print_types(LOCAL_STRUCT_DECLS, debug_fp);
-                expv_output(CURRENT_STATEMENTS, debug_fp);
+                print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+                print_types(LOCAL_STRUCT_DECLS, debug_output());
+                expv_output(CURRENT_STATEMENTS, debug_output());
             }
             break;
         case CL_SUBMODULE: /* fall through */
         case CL_MODULE:
             setLocalInfoToCurrentExtId(TRUE);
-            if (debug_flag) {
-                fprintf(debug_fp, "\n*** CL_MODULE:\n");
-                print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-                print_types(LOCAL_STRUCT_DECLS, debug_fp);
-                expv_output(CURRENT_STATEMENTS, debug_fp);
+            if (debug_enabled()) {
+                fprintf(debug_output(), "\n*** CL_MODULE:\n");
+                print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+                print_types(LOCAL_STRUCT_DECLS, debug_output());
+                expv_output(CURRENT_STATEMENTS, debug_output());
             }
             break;
         default:
@@ -4675,7 +4670,7 @@ static void end_procedure()
     }
 
     fixup_all_module_procedures();
-    if (debug_flag) {
+    if (debug_enabled()) {
         dump_all_module_procedures(stderr);
     }
 
@@ -4686,7 +4681,7 @@ static void end_procedure()
     check_final_subroutines();
 
     if (CURRENT_PROC_CLASS == CL_MODULE) {
-        if (!export_module(current_module_name, LOCAL_SYMBOLS,
+        if (!export_module(current_module_name(), LOCAL_SYMBOLS,
                            LOCAL_USE_DECLS)) {
 #if 0
             error("internal error, fail to export module.");
@@ -4697,7 +4692,7 @@ static void end_procedure()
         }
     }
     if (CURRENT_PROC_CLASS == CL_SUBMODULE) {
-        if (!export_submodule(current_module_name,
+        if (!export_submodule(current_module_name(),
                               EXT_MODULE_ANCESTOR(CURRENT_EXT_ID)
                                   ?: EXT_MODULE_PARENT(CURRENT_EXT_ID),
                               LOCAL_SYMBOLS, LOCAL_USE_DECLS)) {
@@ -4892,17 +4887,17 @@ static void compile_DO_concurrent_end()
         return;
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "\n*** IN END DO:\n");
-        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-        print_types(LOCAL_STRUCT_DECLS, debug_fp);
-        expv_output(CURRENT_STATEMENTS, debug_fp);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "\n*** IN END DO:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_output());
+        expv_output(CURRENT_STATEMENTS, debug_output());
     }
 
     EXPR_ARG2(CTL_BLOCK(ctl_top)) = CURRENT_STATEMENTS;
 
-    if (endlineno_flag) {
-        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    if (end_line_no_enabled()) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
     }
 
     init = EXPR_ARG1(EXPR_ARG1(CTL_BLOCK(ctl_top)));
@@ -4931,8 +4926,8 @@ static void check_DO_end(ID label)
          * do ... enddo case.
          */
         if (CTL_TYPE(ctl_top) == CTL_DO) {
-            if (endlineno_flag) {
-                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            if (end_line_no_enabled()) {
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
             }
 
             if (EXPR_CODE(CTL_BLOCK(ctl_top)) == F_DOWHILE_STATEMENT) {
@@ -5015,8 +5010,8 @@ static void check_DO_end(ID label)
                 CTL_DO_BODY(ctl_top) = CURRENT_STATEMENTS;
             }
 
-            if (endlineno_flag) {
-                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            if (end_line_no_enabled()) {
+                EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
             }
             pop_ctl();
         }
@@ -5048,7 +5043,7 @@ void begin_module(expr name)
              * after the current_module_name != NULL.
              */
             module_procedure_manager_init();
-            current_module_name = s;
+            ctx->current_module_name = s;
             module_start_ln_no = last_ln_no;
             module_start_offset = prelast_initial_line_pos;
         } else {
@@ -5074,7 +5069,7 @@ void end_module(expr name)
     if (name) {
         if (EXPR_CODE(name) == IDENT && (s = EXPR_SYM(name)) != NULL &&
             SYM_NAME(s) != NULL) {
-            if (current_module_name != s) {
+            if (current_module_name() != s) {
                 error("expects module name '%s'", SYM_NAME(s));
             }
         } else {
@@ -5085,7 +5080,7 @@ void end_module(expr name)
     }
 
     current_module_state = M_DEFAULT;
-    current_module_name = NULL;
+    ctx->current_module_name = NULL;
     CURRENT_STATE = OUTSIDE; /* goto outer, outside state.  */
 }
 
@@ -5250,7 +5245,7 @@ void end_submodule(expr name)
     if (name) {
         if (EXPR_CODE(name) == IDENT && (s = EXPR_SYM(name)) != NULL &&
             SYM_NAME(s) != NULL) {
-            if (current_module_name != s) {
+            if (current_module_name() != s) {
                 error("expects submodule name '%s'", SYM_NAME(s));
             }
         } else {
@@ -5616,9 +5611,9 @@ static void solve_use_assoc_conflict(ID id, ID mid)
          * id is (sub)program name, argument name, or module name.
          * It is because that USE statement appear before any declaration.
          */
-        if (debug_flag) {
+        if (debug_enabled()) {
             fprintf(
-                debug_fp,
+                debug_output(),
                 "conflict symbol '%s' between current scope and module '%s'\n",
                 SYM_NAME(ID_SYM(mid)), SYM_NAME(mid->use_assoc->module_name));
         }
@@ -5632,8 +5627,8 @@ static void solve_use_assoc_conflict(ID id, ID mid)
         if ((id->use_assoc->module_name == mid->use_assoc->module_name) &&
             (id->use_assoc->original_name == mid->use_assoc->original_name)) {
             // DO NOTHING
-            if (debug_flag) {
-                fprintf(debug_fp,
+            if (debug_enabled()) {
+                fprintf(debug_output(),
                         "duplicate use assoc symbol '%s' (original '%s') from "
                         "module '%s'\n",
                         SYM_NAME(ID_SYM(mid)),
@@ -5641,8 +5636,8 @@ static void solve_use_assoc_conflict(ID id, ID mid)
                         SYM_NAME(mid->use_assoc->module_name));
             }
         } else {
-            if (debug_flag) {
-                fprintf(debug_fp,
+            if (debug_enabled()) {
+                fprintf(debug_output(),
                         "conflict symbol '%s' between the followings\n"
                         " - original '%s' from module '%s'\n"
                         " - original '%s' from module '%s'\n",
@@ -5771,11 +5766,11 @@ static void import_module_id(ID mid, ID *head, ID *tail, TYPE_DESC *sthead,
     if (fromParentModule)
         ID_IS_FROM_PARENT_MOD(id) = TRUE;
 
-    if (debug_flag) {
-        fprintf(debug_fp, "import '%s' from module '%s'\n",
+    if (debug_enabled()) {
+        fprintf(debug_output(), "import '%s' from module '%s'\n",
                 SYM_NAME(ID_SYM(mid)), SYM_NAME(mid->use_assoc->module_name));
         if (use_name)
-            fprintf(debug_fp, "as '%s'", SYM_NAME(use_name));
+            fprintf(debug_output(), "as '%s'", SYM_NAME(use_name));
     }
 
     if (ID_TYPE(id) != NULL) {
@@ -5859,15 +5854,15 @@ static int import_module_ids(struct module *mod, struct use_argument *args,
 
     initialize_replicated_type_ht();
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         if (!fromParentModule) {
-            fprintf(debug_fp, "######## BEGIN USE ASSOC #######\n");
+            fprintf(debug_output(), "######## BEGIN USE ASSOC #######\n");
         } else {
             fprintf(
-                debug_fp,
+                debug_output(),
                 "######## BEGIN HOST ASSOCIATION FROM SUBMODULE  #######\n");
         }
-        print_IDs(MODULE_ID_LIST(mod), debug_fp, TRUE);
+        print_IDs(MODULE_ID_LIST(mod), debug_output(), TRUE);
     }
 
     FOREACH_ID (id, LOCAL_SYMBOLS) {
@@ -5919,12 +5914,12 @@ static int import_module_ids(struct module *mod, struct use_argument *args,
 
     finalize_replicated_type_ht();
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         if (!fromParentModule) {
-            fprintf(debug_fp, "########   END USE ASSOC #######\n");
+            fprintf(debug_output(), "########   END USE ASSOC #######\n");
         } else {
             fprintf(
-                debug_fp,
+                debug_output(),
                 "########   END HOST ASSOCIATION FROM SUBMODULE  #######\n");
         }
     }
@@ -6397,9 +6392,9 @@ static void end_interface()
         extid_put_last(EXT_PROC_INTR_DEF_EXT_IDS(intr), localExtSyms);
     }
 
-    if (endlineno_flag) {
+    if (end_line_no_enabled()) {
         if (CURRENT_INTERFACE && EXT_LINE(CURRENT_INTERFACE))
-            EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line->ln_no;
+            EXT_END_LINE_NO(CURRENT_INTERFACE) = current_line()->ln_no;
     }
 
     ctl_top = UNIT_CTL_INTERFACE_SAVE_CTL(CURRENT_UNIT_CTL);
@@ -6616,7 +6611,7 @@ static void compile_interface_MODULEPROCEDURE_statement(expr x)
         }
     }
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         dump_all_module_procedures(stderr);
     }
 }
@@ -7333,8 +7328,8 @@ static void compile_CALL_member_procedure_statement(expr x)
             }
         }
         if (tp == NULL) {
-            if (debug_flag)
-                fprintf(debug_fp, "invalid argument for type-bound generic");
+            if (debug_enabled())
+                fprintf(debug_output(), "invalid argument for type-bound generic");
         }
         /* type-bound generic procedure type does not exist in XcodeML */
         tp = NULL;
@@ -8544,7 +8539,7 @@ void cleanup_unit_ctl(UNIT_CTL uc)
 
     /* UNIT_CTL_LOCAL_EXTERNAL_SYMBOLS(uc) is not cleared */
     // if (unit_ctl_level == 0) { /* for main */
-    if (doImplicitUndef) {
+    if (do_implicit_undef_enabled()) {
         UNIT_CTL_IMPLICIT_NONE(uc) = TRUE;
         set_implicit_type_uc(uc, NULL, 'a', 'z', TRUE);
         UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) = 0;
@@ -8557,11 +8552,11 @@ void cleanup_unit_ctl(UNIT_CTL uc)
         /* implicit type is not declared yet */
         UNIT_CTL_IMPLICIT_TYPE_DECLARED(uc) = 0;
         /* a - z : initialize all to real. */
-        set_implicit_type_uc(uc, BASIC_TYPE_DESC(defaultSingleRealType), 'a',
+        set_implicit_type_uc(uc, BASIC_TYPE_DESC(default_single_real_type()), 'a',
                              'z', TRUE);
         list_put_last(UNIT_CTL_IMPLICIT_DECLS(uc),
                       create_implicit_decl_expv(
-                          BASIC_TYPE_DESC(defaultSingleRealType), "a", "z"));
+                          BASIC_TYPE_DESC(default_single_real_type()), "a", "z"));
         /* i - n : initialize to int. */
         set_implicit_type_uc(uc, BASIC_TYPE_DESC(TYPE_INT), 'i', 'n', TRUE);
         list_put_last(
@@ -8629,7 +8624,7 @@ void push_unit_ctl(enum prog_state state)
         return;
     }
     if (CURRENT_EXT_ID && EXT_PROC_CONT_EXT_LINE(CURRENT_EXT_ID) == NULL)
-        EXT_PROC_CONT_EXT_LINE(CURRENT_EXT_ID) = current_line;
+        EXT_PROC_CONT_EXT_LINE(CURRENT_EXT_ID) = current_line();
 
     CURRENT_STATE = state;
     unit_ctl_level++;
@@ -8860,7 +8855,7 @@ static void compile_SYNCALL_statement(expr x)
     if (!compile_sync_stat_args(st, EXPR_ARG1(x)))
         return;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         if (EXPR_ARG1(x) == NULL) {
             replace_CALL_statement("xmpf_sync_all", NULL);
         } else {
@@ -8905,7 +8900,7 @@ static void compile_SYNCIMAGES_statement(expr x)
     if (!compile_sync_stat_args(sync_stat, EXPR_ARG2(x)))
         return;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         expr args;
         if (EXPR_ARG1(x) == NULL) {
             /* if NULL, change the argment to '*' for xmpf_sync_images */
@@ -8941,7 +8936,7 @@ static void compile_SYNCMEMORY_statement(expr x)
     if (!compile_sync_stat_args(st, EXPR_ARG1(x)))
         return;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         replace_CALL_statement("xmpf_sync_memory", EXPR_ARG1(x));
     } else {
         output_statement(st);
@@ -9005,7 +9000,7 @@ static void compile_LOCK_statement(expr x)
     if (!compile_lock_stat_args(sync_stat_list, EXPR_ARG2(x)))
         return;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         expr args;
         if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
             args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
@@ -9051,7 +9046,7 @@ static void compile_UNLOCK_statement(expr x)
     if (!compile_sync_stat_args(sync_stat_list, EXPR_ARG2(x)))
         return;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         expr args;
         if (EXPR_HAS_ARG2(x) && EXPR_ARG2(x) != NULL) {
             args = list_cons(EXPR_ARG1(x), EXPR_ARG2(x));
@@ -9091,16 +9086,16 @@ static void compile_CRITICAL_statement(expr x)
 
     CURRENT_STATEMENTS = NULL;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         replace_CALL_statement("xmpf_critical", NULL);
         /* No need to return. */
     }
 
-    if (endlineno_flag) {
-        if (current_line->end_ln_no) {
-            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+    if (end_line_no_enabled()) {
+        if (current_line()->end_ln_no) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->end_ln_no;
         } else {
-            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
         }
     }
 }
@@ -9137,14 +9132,14 @@ static void compile_ENDCRITICAL_statement(expr x)
                                        EXPR_ARG1(x)))
         return;
 
-    if (XMP_coarray_flag) {
+    if (xmp_coarray_enabled()) {
         replace_CALL_statement("xmpf_end_critical", NULL);
     }
 
     CTL_CRIT_BODY(ctl_top) = CURRENT_STATEMENTS;
 
-    if (endlineno_flag) {
-        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    if (end_line_no_enabled()) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
     }
 
     pop_ctl();
@@ -9267,11 +9262,11 @@ static void compile_BLOCK_statement(expr x)
     CURRENT_STATEMENTS = NULL;
     current_proc_state = P_DEFAULT;
 
-    if (endlineno_flag) {
-        if (current_line->end_ln_no) {
-            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->end_ln_no;
+    if (end_line_no_enabled()) {
+        if (current_line()->end_ln_no) {
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->end_ln_no;
         } else {
-            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+            EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
         }
     }
 }
@@ -9329,17 +9324,17 @@ static void compile_ENDBLOCK_statement(expr x)
         return;
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "\n*** IN BLOCK:\n");
-        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-        print_types(LOCAL_STRUCT_DECLS, debug_fp);
-        expv_output(CURRENT_STATEMENTS, debug_fp);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "\n*** IN BLOCK:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_output());
+        expv_output(CURRENT_STATEMENTS, debug_output());
     }
 
     CTL_BLOCK_BODY(ctl_top) = CURRENT_STATEMENTS;
 
-    if (endlineno_flag) {
-        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    if (end_line_no_enabled()) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
     }
 
     move_implicit_variables_to_parent();
@@ -9687,11 +9682,11 @@ static void compile_ENDFORALL_statement(expr x)
         return;
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "\n*** IN FORALL:\n");
-        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-        print_types(LOCAL_STRUCT_DECLS, debug_fp);
-        expv_output(CURRENT_STATEMENTS, debug_fp);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "\n*** IN FORALL:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+        print_types(LOCAL_STRUCT_DECLS, debug_output());
+        expv_output(CURRENT_STATEMENTS, debug_output());
     }
 
     CTL_FORALL_BODY(ctl_top) = CURRENT_STATEMENTS;
@@ -9714,8 +9709,8 @@ static void compile_ENDFORALL_statement(expr x)
         }
     }
 
-    if (endlineno_flag) {
-        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    if (end_line_no_enabled()) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
     }
 
     init = CTL_FORALL_INIT(ctl_top);
@@ -10109,10 +10104,10 @@ static void compile_ENDASSOCIATE_statement(expr x)
         return;
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "\n*** IN ASSOCIATE:\n");
-        print_IDs(LOCAL_SYMBOLS, debug_fp, TRUE);
-        expv_output(CURRENT_STATEMENTS, debug_fp);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "\n*** IN ASSOCIATE:\n");
+        print_IDs(LOCAL_SYMBOLS, debug_output(), TRUE);
+        expv_output(CURRENT_STATEMENTS, debug_output());
     }
 
     CTL_ASSOCIATE_BODY(ctl_top) = CURRENT_STATEMENTS;
@@ -10127,8 +10122,8 @@ static void compile_ENDASSOCIATE_statement(expr x)
     BLOCK_CHILDREN(current_block) = LOCAL_BLOCKS;
     EXPR_BLOCK(CTL_BLOCK(ctl_top)) = current_block;
 
-    if (endlineno_flag) {
-        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line->ln_no;
+    if (end_line_no_enabled()) {
+        EXPR_END_LINE_NO(CTL_BLOCK(ctl_top)) = current_line()->ln_no;
     }
 
     pop_ctl();

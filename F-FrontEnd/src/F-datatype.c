@@ -3,6 +3,7 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 
 TYPE_DESC
 new_type_desc()
@@ -1020,11 +1021,11 @@ int compare_derived_type_name(TYPE_DESC tp1, TYPE_DESC tp2)
         }
     }
 
-    if (debug_flag) {
-        fprintf(debug_fp, "   left is '%s', right is '%s'\n",
+    if (debug_enabled()) {
+        fprintf(debug_output(), "   left is '%s', right is '%s'\n",
                 sym1 ? SYM_NAME(sym1) : "(null)",
                 sym2 ? SYM_NAME(sym2) : "(null)");
-        fprintf(debug_fp, "   left module is '%s', right module is '%s'\n",
+        fprintf(debug_output(), "   left module is '%s', right module is '%s'\n",
                 module1 ? SYM_NAME(module1) : "(null)",
                 module2 ? SYM_NAME(module2) : "(null)");
     }
@@ -1225,13 +1226,13 @@ int derived_type_is_compatible(TYPE_DESC left, TYPE_DESC right,
         } else {
             if (derived_type_parameter_values_is_compatible(left, right,
                                                             for_argunemt)) {
-                if (debug_flag) {
-                    fprintf(debug_fp, " compatible\n");
+                if (debug_enabled()) {
+                    fprintf(debug_output(), " compatible\n");
                 }
                 return TRUE;
             }
-            if (debug_flag) {
-                fprintf(debug_fp, " not compatible\n");
+            if (debug_enabled()) {
+                fprintf(debug_output(), " not compatible\n");
             }
         }
     }
@@ -1459,8 +1460,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
     if (!type_is_strict_compatible(FUNCTION_TYPE_RETURN_TYPE(bftp1),
                                    FUNCTION_TYPE_RETURN_TYPE(bftp2), TRUE,
                                    TRUE)) {
-        if (debug_flag) {
-            fprintf(debug_fp, "return types are not match\n");
+        if (debug_enabled()) {
+            fprintf(debug_output(), "return types are not match\n");
         }
         return FALSE;
     }
@@ -1522,8 +1523,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
             break;
         }
 
-        if (debug_flag) {
-            fprintf(debug_fp, "comparing argument '%s' and '%s'\n",
+        if (debug_enabled()) {
+            fprintf(debug_output(), "comparing argument '%s' and '%s'\n",
                     SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
         }
 
@@ -1542,8 +1543,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
 
         if (!type_is_strict_compatible(ID_TYPE(arg1), ID_TYPE(arg2), TRUE,
                                        TRUE)) {
-            if (debug_flag) {
-                fprintf(debug_fp,
+            if (debug_enabled()) {
+                fprintf(debug_output(),
                         "argument types are not match ('%s' and '%s')\n",
                         SYM_NAME(ID_SYM(arg1)), SYM_NAME(ID_SYM(arg2)));
             }
@@ -1553,8 +1554,8 @@ static int function_type_is_compatible0(const TYPE_DESC ftp1,
 
     if (arg1 != NULL || arg2 != NULL) {
         /* arugment length are not same */
-        if (debug_flag) {
-            fprintf(debug_fp, "argument length not match\n");
+        if (debug_enabled()) {
+            fprintf(debug_output(), "argument length not match\n");
         }
         return FALSE;
     }
@@ -1921,56 +1922,56 @@ int struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
 
     assert(tp1 != NULL && TYPE_BASIC_TYPE(tp1) == TYPE_STRUCT);
 
-    if (debug_flag) {
-        fprintf(debug_fp, "\ncomparing derived-type %p and %p\n", tp1, tp2);
+    if (debug_enabled()) {
+        fprintf(debug_output(), "\ncomparing derived-type %p and %p\n", tp1, tp2);
     }
 
     if (tp2 == NULL) {
-        if (debug_flag)
-            fprintf(debug_fp, "* right side type is null, return false\n");
+        if (debug_enabled())
+            fprintf(debug_output(), "* right side type is null, return false\n");
         return FALSE;
     }
 
     if (IS_GNUMERIC_ALL(tp2)) {
-        if (debug_flag)
-            fprintf(debug_fp, "* right hand type is GNUMERIC ALL, return true");
+        if (debug_enabled())
+            fprintf(debug_output(), "* right hand type is GNUMERIC ALL, return true");
         return TRUE;
     }
 
-    if (debug_flag)
-        fprintf(debug_fp, "* compare addresses                   ... ");
+    if (debug_enabled())
+        fprintf(debug_output(), "* compare addresses                   ... ");
 
     if (tp1 == tp2) {
-        if (debug_flag)
-            fprintf(debug_fp, " match\n");
+        if (debug_enabled())
+            fprintf(debug_output(), " match\n");
         return TRUE;
     }
-    if (debug_flag)
-        fprintf(debug_fp, " not match\n");
+    if (debug_enabled())
+        fprintf(debug_output(), " not match\n");
 
-    if (debug_flag)
-        fprintf(debug_fp, "* check if left side type is CLASS(*) ... ");
+    if (debug_enabled())
+        fprintf(debug_output(), "* check if left side type is CLASS(*) ... ");
 
     if (TYPE_TAGNAME(getBaseType(tp1)) == NULL &&
         TYPE_IS_CLASS(getBaseType(tp1))) {
         /*
          * tp1 is CLASS(*)
          */
-        if (debug_flag)
-            fprintf(debug_fp, " match\n");
+        if (debug_enabled())
+            fprintf(debug_output(), " match\n");
         return TRUE;
     }
-    if (debug_flag)
-        fprintf(debug_fp, " not match\n");
+    if (debug_enabled())
+        fprintf(debug_output(), " not match\n");
 
     btp1 = getBaseParameterizedType(tp1);
     btp2 = getBaseParameterizedType(tp2);
 
-    if (debug_flag)
-        fprintf(debug_fp, "* compare type names\n");
+    if (debug_enabled())
+        fprintf(debug_output(), "* compare type names\n");
     if (!compare_derived_type_name(tp1, tp2)) {
-        if (debug_flag)
-            fprintf(debug_fp,
+        if (debug_enabled())
+            fprintf(debug_output(),
                     "                                      ... not match\n");
         /* Check if the imported id match. Type ID might be not identical
          * in case of multiple indirection in module hierachy. */
@@ -1979,37 +1980,37 @@ int struct_type_is_compatible_for_assignment(TYPE_DESC tp1, TYPE_DESC tp2,
             return TRUE;
         } else if ((TYPE_IS_CLASS(tp1) || TYPE_IS_POINTER(tp1)) &&
                    TYPE_PARENT(btp2) && is_pointer_set) {
-            if (debug_flag)
-                fprintf(debug_fp, "* compare PARENT type\n");
+            if (debug_enabled())
+                fprintf(debug_output(), "* compare PARENT type\n");
             return struct_type_is_compatible_for_assignment(
                 tp1, TYPE_PARENT_TYPE(btp2), is_pointer_set);
         } else {
-            if (debug_flag)
-                fprintf(debug_fp, "seems not compatible\n");
+            if (debug_enabled())
+                fprintf(debug_output(), "seems not compatible\n");
             return FALSE;
         }
     }
-    if (debug_flag)
-        fprintf(debug_fp, "                                      ... match\n");
+    if (debug_enabled())
+        fprintf(debug_output(), "                                      ... match\n");
 
     if (TYPE_TYPE_PARAM_VALUES(tp1) == NULL &&
         TYPE_TYPE_PARAM_VALUES(tp2) == NULL) {
         return TRUE;
     } else {
-        if (debug_flag)
-            fprintf(debug_fp, "* compare type parameters");
+        if (debug_enabled())
+            fprintf(debug_output(), "* compare type parameters");
         if (derived_type_parameter_values_is_compatible_for_assignment(
                 tp1, tp2, is_pointer_set)) {
-            if (debug_flag)
-                fprintf(debug_fp, " match\n");
+            if (debug_enabled())
+                fprintf(debug_output(), " match\n");
             return TRUE;
         }
-        if (debug_flag)
-            fprintf(debug_fp, " not match\n");
+        if (debug_enabled())
+            fprintf(debug_output(), " not match\n");
     }
 
-    if (debug_flag)
-        fprintf(debug_fp, "seems not compatible\n");
+    if (debug_enabled())
+        fprintf(debug_output(), "seems not compatible\n");
 
     return FALSE;
 }

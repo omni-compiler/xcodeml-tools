@@ -1,4 +1,5 @@
 #include "F-front.h"
+#include "F-front-context.h"
 
 extern CTL ctl_top_saved;
 extern expv CURRENT_STATEMENTS_saved;
@@ -150,7 +151,7 @@ void compile_OMP_directive(expr x)
     if (x == NULL)
         return; /* error */
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         fprintf(stderr, "OMP_directive:\n");
         expv_output(x, stderr);
         fprintf(stderr, "\n");
@@ -191,7 +192,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_PARALLEL, TRUE,
                                       &pclause, &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
         case OMP_F_END_PARALLEL:
             if (CTL_TYPE(ctl_top) == CTL_OMP &&
@@ -210,7 +211,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_FOR, TRUE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             OMP_do_required = TRUE;
             return;
         case OMP_F_END_PARALLEL_DO:
@@ -233,7 +234,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_FOR, FALSE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             OMP_do_required = TRUE;
             return;
         case OMP_F_END_DO:
@@ -269,7 +270,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SECTIONS, TRUE,
                                       &pclause, &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
         case OMP_F_END_PARALLEL_SECTIONS:
             if (CTL_TYPE(ctl_top) == CTL_OMP &&
@@ -290,7 +291,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SECTIONS, FALSE,
                                       &pclause, &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
         case OMP_F_END_SECTIONS:
             if (CTL_TYPE(ctl_top) == CTL_OMP &&
@@ -321,7 +322,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SINGLE, FALSE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
 
         case OMP_F_END_SINGLE:
@@ -347,7 +348,7 @@ void compile_OMP_directive(expr x)
         case OMP_F_ORDERED:
             push_ctl(CTL_OMP);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, NULL, NULL);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
 
         case OMP_F_END_MASTER:
@@ -380,7 +381,7 @@ void compile_OMP_directive(expr x)
                 break;
             }
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, c, NULL);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
 
         case OMP_F_END_CRITICAL:
@@ -449,7 +450,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_TASK, FALSE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
         case OMP_F_END_TASK:
             if (CTL_TYPE(ctl_top) == CTL_OMP &&
@@ -467,7 +468,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SIMD, TRUE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
 
         case OMP_F_END_SIMD:
@@ -486,7 +487,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SIMD, TRUE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
         case OMP_F_END_DO_SIMD:
             if (CTL_TYPE(ctl_top) == CTL_OMP &&
@@ -509,7 +510,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SIMD, TRUE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
         case OMP_F_END_DECLARE_SIMD:
             if (CTL_TYPE(ctl_top) == CTL_OMP &&
@@ -531,7 +532,7 @@ void compile_OMP_directive(expr x)
             compile_OMP_pragma_clause(EXPR_ARG2(x), OMP_SIMD, TRUE, &pclause,
                                       &dclause);
             CTL_OMP_ARG(ctl_top) = list3(LIST, dir, pclause, dclause);
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             return;
 
         case OMP_F_END_PARALLEL_DO_SIMD:
@@ -873,7 +874,7 @@ void check_OMP_runtime_function(ID id)
     TYPE_DESC tp;
     BASIC_DATA_TYPE t;
 
-    if (!OMP_flag)
+    if (!openmp_enabled())
         return;
 
     s = ID_NAME(id);
