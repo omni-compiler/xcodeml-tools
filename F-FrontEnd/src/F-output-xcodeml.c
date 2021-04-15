@@ -53,15 +53,58 @@ static void mark_type_desc_in_id_list(ID ids);
 char s_timestamp[CEXPR_OPTVAL_CHARLEN] = {0};
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN] = "  ";
 
-EXT_ID current_function_stack[MAX_UNIT_CTL_CONTAINS + 1];
+#define CURRENT_FUNCTION_STACK_MAX_SIZE MAX_UNIT_CTL_CONTAINS + 100
+
+static const size_t current_function_stack_max_size = CURRENT_FUNCTION_STACK_MAX_SIZE;
+EXT_ID current_function_stack[CURRENT_FUNCTION_STACK_MAX_SIZE];
 int current_function_top = 0;
-#define CRT_FUNCEP current_function_stack[current_function_top]
-#define CRT_FUNCEP_PUSH(ep)                                                    \
-    current_function_top++;                                                    \
-    current_function_stack[current_function_top] = (ep)
-#define CRT_FUNCEP_POP                                                         \
-    current_function_stack[current_function_top] = (ep);                       \
-    current_function_top--
+
+static inline EXT_ID GET_CRT_FUNCEP()
+{
+	if(current_function_top >= 0 && current_function_top < current_function_stack_max_size)
+	{
+		return current_function_stack[current_function_top];
+	}
+    else
+    {
+    	fatal("read out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
+    	return NULL;//Unreachable code
+    }
+}
+
+static inline void SET_CRT_FUNCEP(EXT_ID ep)
+{
+	if(current_function_top >= 0 && current_function_top < current_function_stack_max_size)
+	{
+		current_function_stack[current_function_top] = ep;
+	}
+    else
+    {
+    	fatal("write out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
+    }
+}
+
+static inline void CRT_FUNCEP_PUSH(EXT_ID ep)
+{
+    current_function_top++;
+    if(current_function_top < current_function_stack_max_size)
+    {
+    	current_function_stack[current_function_top] = (ep);
+    }
+    else
+    {
+    	fatal("write out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
+    }
+}
+
+static inline void CRT_FUNCEP_POP()
+{
+	if(current_function_top == 0)
+	{
+		fatal("current_function_stack is already empty");
+	}
+    current_function_top--;
+}
 
 typedef struct type_ext_id {
     EXT_ID ep;
@@ -5323,14 +5366,14 @@ static int id_is_visibleVar(ID id)
              */
             return TRUE;
         }
-        if (ID_CLASS(id) == CL_PROC && CRT_FUNCEP != NULL &&
-            CRT_FUNCEP != PROC_EXT_ID(id)) {
+        if (ID_CLASS(id) == CL_PROC && GET_CRT_FUNCEP() != NULL &&
+        	GET_CRT_FUNCEP() != PROC_EXT_ID(id)) {
             return FALSE;
         }
         if (TYPE_IS_MODIFIED(tp)) {
             return TRUE;
         }
-        if ((is_outputed_module && CRT_FUNCEP == NULL) &&
+        if ((is_outputed_module && GET_CRT_FUNCEP() == NULL) &&
             (TYPE_IS_PUBLIC(tp) || TYPE_IS_PRIVATE(tp))) {
             return TRUE;
         }
@@ -5355,7 +5398,7 @@ static int id_is_visibleVar(ID id)
             if (PROC_CLASS(id) == P_DEFINEDPROC) {
                 /* this id is of function.
                    Checkes if this id is of the current function or not. */
-                if (CRT_FUNCEP == PROC_EXT_ID(id)) {
+                if (GET_CRT_FUNCEP() == PROC_EXT_ID(id)) {
                     return TRUE;
                 } else if (TYPE_IS_MODIFIED(ID_TYPE(id))) {
                     return TRUE;
@@ -5640,16 +5683,16 @@ static void emit_decl(int l, ID id)
         return;
     }
 
-    if (!is_inside_interface && CRT_FUNCEP != NULL &&
-        EXT_PROC_IS_PROCEDUREDECL(CRT_FUNCEP)) {
+    if (!is_inside_interface && GET_CRT_FUNCEP() != NULL &&
+        EXT_PROC_IS_PROCEDUREDECL(GET_CRT_FUNCEP())) {
 
         /*
          * In the Separate Module Procedure,
          * a function, argments, and a result variable are not decleared
          */
-        TYPE_DESC ftp = EXT_PROC_TYPE(CRT_FUNCEP);
+        TYPE_DESC ftp = EXT_PROC_TYPE(GET_CRT_FUNCEP());
 
-        if (ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id) == CRT_FUNCEP) {
+        if (ID_CLASS(id) == CL_PROC && PROC_EXT_ID(id) == GET_CRT_FUNCEP()) {
             /* id is this procedure */
             return;
         }
@@ -5693,7 +5736,7 @@ static void emit_decl(int l, ID id)
 
             if (ID_TYPE(id) && IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
                 FUNCTION_TYPE_IS_INTERFACE(ID_TYPE(id)) &&
-                CRT_FUNCEP != PROC_EXT_ID(id)) {
+				GET_CRT_FUNCEP() != PROC_EXT_ID(id)) {
                 outx_function_as_interfaceDecl(l, PROC_EXT_ID(id));
                 // outx_varDecl(l, id);
                 break;
@@ -6044,7 +6087,7 @@ static void outx_functionDecl(int l, EXT_ID ep)
     outx_definition_symbols(l1, ep);
     outx_declarations(l1, ep);
     outx_close(l, "FfunctionDecl");
-    CRT_FUNCEP_POP;
+    CRT_FUNCEP_POP();
 }
 
 static void outx_innerDefinitions(int l, EXT_ID extids, SYMBOL parentName,
@@ -6115,7 +6158,7 @@ static void outx_function_as_interfaceDecl(int l, EXT_ID ep)
     outx_functionDecl(l + 1, ep);
     outx_close(l, "FinterfaceDecl");
     is_inside_interface = FALSE;
-    CRT_FUNCEP_POP;
+    CRT_FUNCEP_POP();
 }
 
 static int is_generic_interface(EXT_ID ep)
@@ -6190,7 +6233,7 @@ static void outx_interfaceDecl(int l, EXT_ID ep)
     outx_moduleProcedureDecls(l + 1, extids, EXT_SYM(ep));
     outx_close(l, "FinterfaceDecl");
     is_inside_interface = FALSE;
-    CRT_FUNCEP_POP;
+    CRT_FUNCEP_POP();
 }
 
 /**
@@ -6220,7 +6263,7 @@ static void outx_functionDefinition(int l, EXT_ID ep)
     outx_close(l1, "body");
     outx_close(l, tag);
 
-    CRT_FUNCEP_POP;
+    CRT_FUNCEP_POP();
 }
 
 /**
@@ -6232,7 +6275,7 @@ static void outx_moduleDefinition(int l, EXT_ID ep)
 
     is_outputed_module = TRUE;
 
-    CRT_FUNCEP = NULL;
+    SET_CRT_FUNCEP(NULL);
 
     outx_tagOfDeclNoClose(l, "%s name=\"%s\"", GET_EXT_LINE(ep),
                           "FmoduleDefinition", SYM_NAME(EXT_SYM(ep)));
@@ -6514,7 +6557,7 @@ void output_XcodeML_file()
     tbp_list_tail = NULL;
 
     collect_types(EXTERNAL_SYMBOLS);
-    CRT_FUNCEP = NULL;
+    SET_CRT_FUNCEP(NULL);
 
     print_fp = output_file;
     const int l = 0, l1 = l + 1;
