@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <alloca.h>
+#include "omni_errors.h"
 
 #ifdef ENABLE_UCHARDET
 #include <iconv.h>
@@ -313,7 +314,7 @@ void initialize_lex()
         if (fseek(source_file, mcStart, SEEK_SET) == -1) {
             error("internal comiler error: cannot seek given start point in "
                   "initialize_lex()");
-            exit(-1);
+            FATAL_ERROR();
         }
         read_lineno.ln_no = mcLn_no;
     }
@@ -2241,14 +2242,14 @@ void include_file(char *name, int inside_use)
 
     if (n_nested_file >= N_NESTED_FILE) {
         error("too nested include file (max = %d)", N_NESTED_FILE);
-        exit(EXITCODE_ERR);
+        FATAL_ERROR();
     }
 
     path = search_include_path(name);
 
     if ((fp = fopen(path, "r")) == NULL) {
         error("cannot open file '%s'", name);
-        exit(EXITCODE_ERR);
+        FATAL_ERROR();
     }
 
     assert(fp);

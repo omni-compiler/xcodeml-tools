@@ -8,6 +8,7 @@
 #include "F-output-xcodeml.h"
 #include "F-second-pass.h"
 #include <math.h>
+#include "omni_errors.h"
 
 /* for debug */
 int debug_flag = 0;
@@ -70,7 +71,7 @@ static void cmd_error_exit EXC_VARARGS_DEF(const char *, fmt)
     fprintf(stderr, "\n");
     fflush(stderr);
     check_nerrors();
-    exit(EXITCODE_ERR);
+    FATAL_ERROR();
 }
 
 static void cmd_warning EXC_VARARGS_DEF(const char *, fmt)
@@ -395,7 +396,7 @@ int main(int argc, char *argv[])
             pgi_flag = 1;
         } else if (strcmp(argv[0], "--help") == 0) {
             usage();
-            exit(0);
+            return EXITCODE_OK;
         } else if (strcmp(argv[0], "-no-module-cache") == 0) {
             flag_do_module_cache = FALSE;
         } else {
@@ -667,7 +668,7 @@ static void check_nerrors()
         fprintf(
             stderr,
             "too many error, cannot recover from earlier errors: goodbye!\n");
-        exit(EXITCODE_ERR);
+        FATAL_ERROR();
     }
 }
 
@@ -684,7 +685,7 @@ void fatal EXC_VARARGS_DEF(const char *, fmt)
     va_end(args);
     fprintf(stderr, "\n");
     fflush(stderr);
-    abort();
+    FATAL_ERROR();
 }
 
 int warning_flag = FALSE;

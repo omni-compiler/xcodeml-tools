@@ -52,15 +52,16 @@ target_link_libraries(ffront ${LIBXML2_LIBRARY})
 
 add_subdirectory(fincludes)
 
-set(FFRONT_CPP_DIR ${CMAKE_CURRENT_BINARY_DIR}/cpp)
-file(MAKE_DIRECTORY ${FFRONT_CPP_DIR})
+set(FFRONT_GEN_SRC_CPP_DIR ${CMAKE_CURRENT_BINARY_DIR}/cpp)
+file(MAKE_DIRECTORY ${FFRONT_GEN_SRC_CPP_DIR})
 
 set(FFRONT_CPP_SRC "")
+file(GLOB FFRONT_CPP_SRC "cpp/*.cpp")
 
 message(STATUS "Generating CPP wrappers")
 foreach(C_FILEPATH ${ffront_SRC} ${C_EXPRCODE_C} ${F95_PARSER_C})
   get_filename_component(SRC_FILE_BASENAME ${C_FILEPATH} NAME_WE)
-  set(CPP_SRC_FILE_PATH ${FFRONT_CPP_DIR}/${SRC_FILE_BASENAME}.cpp)
+  set(CPP_SRC_FILE_PATH ${FFRONT_GEN_SRC_CPP_DIR}/${SRC_FILE_BASENAME}.cpp)
   set(FFRONT_CPP_SRC ${FFRONT_CPP_SRC} ${CPP_SRC_FILE_PATH})
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/wrapper.cpp.in"
                  "${CPP_SRC_FILE_PATH}"

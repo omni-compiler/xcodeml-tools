@@ -10,6 +10,7 @@
 #include "external/klib/khash.h"
 
 #include <sys/wait.h>
+#include "omni_errors.h"
 
 /* program unit control stack */
 UNIT_CTL unit_ctls[MAX_UNIT_CTL];
@@ -4692,7 +4693,7 @@ static void end_procedure()
                            LOCAL_USE_DECLS)) {
 #if 0
             error("internal error, fail to export module.");
-            exit(1);
+            FATAL_ERROR();
 #else
             return;
 #endif
@@ -4705,7 +4706,7 @@ static void end_procedure()
                               LOCAL_SYMBOLS, LOCAL_USE_DECLS)) {
 #if 0
             error("internal error, fail to export module.");
-            exit(1);
+            FATAL_ERROR();
 #else
             return;
 #endif
@@ -6712,7 +6713,7 @@ compile_scene_range_expression_list(expr scene_range_expression_list)
 
     if (EXPR_CODE(r) != LIST) {
         error("internal error, unexpected code.");
-        abort();
+        FATAL_ERROR();
     }
 
     FOR_ITEMS_IN_LIST (lp, r) {
@@ -6987,7 +6988,9 @@ static int isVarSetTypeAttr(expv v, uint32_t typeAttrFlags)
         default:
             break;
     }
-    abort();
+    FATAL_ERROR();
+    //Unreachable code
+    return 0;
 }
 
 extern int is_in_alloc;
@@ -8286,7 +8289,7 @@ static void compile_TARGET_POINTER_ALLOCATABLE_statement(expr x)
                 TYPE_SET_ALLOCATABLE(id);
                 break;
             default:
-                abort();
+                FATAL_ERROR();
         }
 
         if (dims) {
@@ -8398,7 +8401,7 @@ static void compile_INTENT_statement(expr x)
                 TYPE_SET_INTENT_INOUT(id);
                 break;
             default:
-                abort();
+                FATAL_ERROR();
         }
     }
 }

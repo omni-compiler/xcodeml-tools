@@ -6,6 +6,7 @@
 #include "module-manager.h"
 #include "F-second-pass.h"
 #include <math.h>
+#include "omni_errors.h"
 
 #define ROUND(a, b) (b * ((a + b - 1) / b))
 
@@ -320,7 +321,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
 
     if (name) {
         if (EXPR_CODE(name) != IDENT)
-            abort();
+            FATAL_ERROR();
         s = EXPR_SYM(name);
     }
 
@@ -632,7 +633,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
                     }
                     if (ID_TYPE(arg) == NULL) {
                         error("'%s' has no implicit type.", SYM_NAME(s));
-                        abort();
+                        FATAL_ERROR();
                     }
                 }
             }
@@ -715,7 +716,7 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
 
         if (cls != CL_PROC) {
             error("unexpected statement in interface block");
-            abort();
+            FATAL_ERROR();
         }
 
         interface = CURRENT_INTERFACE;
@@ -3129,7 +3130,7 @@ max_type(TYPE_DESC tp1, TYPE_DESC tp2)
         default:
             if (t == TYPE_BASIC_TYPE(tp2))
                 return (tp2);
-            abort();
+            FATAL_ERROR();
     }
     return NULL;
 }
@@ -4468,7 +4469,7 @@ void fix_array_dimensions(TYPE_DESC tp)
             if (upper == NULL) {
                 error("internal compiler error on fix_array_dimensions(): "
                       "assertion fail on upper as NULL.");
-                exit(1);
+                FATAL_ERROR();
             }
 
             if (lower == NULL)
