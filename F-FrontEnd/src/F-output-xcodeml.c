@@ -61,26 +61,26 @@ int current_function_top = 0;
 
 static inline EXT_ID GET_CRT_FUNCEP()
 {
-	if(current_function_top >= 0 && current_function_top < current_function_stack_max_size)
-	{
-		return current_function_stack[current_function_top];
-	}
+    if(current_function_top >= 0 && current_function_top < current_function_stack_max_size)
+    {
+        return current_function_stack[current_function_top];
+    }
     else
     {
-    	fatal("read out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
-    	return NULL;//Unreachable code
+        fatal("read out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
+        return NULL;//Unreachable code
     }
 }
 
 static inline void SET_CRT_FUNCEP(EXT_ID ep)
 {
-	if(current_function_top >= 0 && current_function_top < current_function_stack_max_size)
-	{
-		current_function_stack[current_function_top] = ep;
-	}
+    if(current_function_top >= 0 && current_function_top < current_function_stack_max_size)
+    {
+        current_function_stack[current_function_top] = ep;
+    }
     else
     {
-    	fatal("write out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
+        fatal("write out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
     }
 }
 
@@ -89,20 +89,20 @@ static inline void CRT_FUNCEP_PUSH(EXT_ID ep)
     current_function_top++;
     if(current_function_top < current_function_stack_max_size)
     {
-    	current_function_stack[current_function_top] = (ep);
+        current_function_stack[current_function_top] = (ep);
     }
     else
     {
-    	fatal("write out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
+        fatal("write out of bounds, current_function_stack_max_size (%d)", current_function_stack_max_size);
     }
 }
 
 static inline void CRT_FUNCEP_POP()
 {
-	if(current_function_top == 0)
-	{
-		fatal("current_function_stack is already empty");
-	}
+    if(current_function_top == 0)
+    {
+        fatal("current_function_stack is already empty");
+    }
     current_function_top--;
 }
 
@@ -5367,7 +5367,7 @@ static int id_is_visibleVar(ID id)
             return TRUE;
         }
         if (ID_CLASS(id) == CL_PROC && GET_CRT_FUNCEP() != NULL &&
-        	GET_CRT_FUNCEP() != PROC_EXT_ID(id)) {
+            GET_CRT_FUNCEP() != PROC_EXT_ID(id)) {
             return FALSE;
         }
         if (TYPE_IS_MODIFIED(tp)) {
@@ -5736,7 +5736,7 @@ static void emit_decl(int l, ID id)
 
             if (ID_TYPE(id) && IS_PROCEDURE_TYPE(ID_TYPE(id)) &&
                 FUNCTION_TYPE_IS_INTERFACE(ID_TYPE(id)) &&
-				GET_CRT_FUNCEP() != PROC_EXT_ID(id)) {
+                GET_CRT_FUNCEP() != PROC_EXT_ID(id)) {
                 outx_function_as_interfaceDecl(l, PROC_EXT_ID(id));
                 // outx_varDecl(l, id);
                 break;
