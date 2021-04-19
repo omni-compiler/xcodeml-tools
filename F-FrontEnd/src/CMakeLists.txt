@@ -7,6 +7,12 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/F-input-xmod.h.in"
 file(GLOB ffront_SRC "*.c")
 file(GLOB ffront_HEADERS "*.h")
 
+file(GLOB_RECURSE 3rdparty_SRC "3rdparty/*.c")
+file(GLOB_RECURSE 3rdparty_HEADERS  "3rdparty/*.h")
+
+set(ffront_SRC ${ffront_SRC} ${3rdparty_SRC})
+set(ffront_HEADERS ${ffront_HEADERS} ${3rdparty_HEADERS})
+
 set(C_EXPRCODE_H "${CMAKE_CURRENT_BINARY_DIR}/C-exprcode.h")
 set(C_EXPRCODE_C "${CMAKE_CURRENT_BINARY_DIR}/C-exprcode.c")
 
@@ -34,7 +40,7 @@ BISON_TARGET(F95_parser "${CMAKE_CURRENT_SOURCE_DIR}/F95-parser.y" "${F95_PARSER
              COMPILE_FLAGS --yacc)
 
 set(FFRONT_INC_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/include
-    ${CMAKE_CURRENT_BINARY_DIR} ${LIBXML2_INCLUDE_DIR})
+    ${CMAKE_CURRENT_BINARY_DIR} ${LIBXML2_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty)
 set(FFRONT_DEFINES NDEBUG BUGFIX __XCODEML__ YYDEBUG)
 
 add_executable(ffront ${ffront_SRC} "${F_INPUT_XMOD_H}" "${C_EXPRCODE_H}" "${C_EXPRCODE_C}" ${BISON_F95_parser_OUTPUTS})

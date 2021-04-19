@@ -3,6 +3,7 @@
  */
 
 #include "F-front.h"
+#include "F-front-context.h"
 
 static struct list_node *cons_list _ANSI_ARGS_((expr x, struct list_node *l));
 
@@ -114,7 +115,7 @@ expr make_enode(enum expr_code code, void *v)
 
     ep = XMALLOC(expr, sizeof(*ep));
     ep->e_code = code;
-    ep->e_line = current_line;
+    ep->e_line = current_line();
     ep->v.e_gen = v;
     return (ep);
 }
@@ -125,7 +126,7 @@ expr make_float_enode(enum expr_code code, omldouble_t d, const char *token)
 
     ep = XMALLOC(expr, sizeof(*ep));
     ep->e_code = code;
-    ep->e_line = current_line;
+    ep->e_line = current_line();
     ep->v.e_lfval = d;
     ep->e_original_token = token;
     return (ep);
@@ -137,7 +138,7 @@ expr make_int_enode(omllint_t i)
 
     ep = XMALLOC(expr, sizeof(*ep));
     ep->e_code = INT_CONSTANT;
-    ep->e_line = current_line;
+    ep->e_line = current_line();
     ep->v.e_llval = i;
     return (ep);
 }

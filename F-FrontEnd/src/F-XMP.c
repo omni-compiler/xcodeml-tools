@@ -1,4 +1,5 @@
 #include "F-front.h"
+#include "F-front-context.h"
 
 expv XMP_check_TASK(expr x);
 expv XMP_pragma_list(enum XMP_pragma pragma, expv arg1, expv arg2);
@@ -134,7 +135,7 @@ void compile_XMP_directive(expr x)
     if (x == NULL)
         return; /* error */
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         printf("XMP_directive:\n");
         expv_output(x, stdout);
         printf("\n");
@@ -252,7 +253,7 @@ void compile_XMP_directive(expr x)
             c = list2(LIST, x1, x2);
             push_ctl(CTL_XMP);
             CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_TASK, c, NULL);
-            EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line();
             return;
 
         case XMP_END_TASK:
@@ -273,7 +274,7 @@ void compile_XMP_directive(expr x)
             push_ctl(CTL_XMP);
             // CTL_XMP_ARG(ctl_top) = x;
             CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_TASKS, EMPTY_LIST, NULL);
-            EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line();
             break;
 
         case XMP_END_TASKS:
@@ -311,7 +312,7 @@ void compile_XMP_directive(expr x)
             push_ctl(CTL_XMP);
             CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_LOOP, c, NULL);
             ;
-            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
             XMP_do_required = TRUE;
             break;
         }
@@ -412,7 +413,7 @@ void compile_XMP_directive(expr x)
             XMP_io_desired_statements = EXPR_INT(EXPR_ARG1(EXPR_ARG2(x)));
             push_ctl(CTL_XMP);
             CTL_XMP_ARG(ctl_top) = x;
-            EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line;
+            EXPR_LINE(CTL_XMP_ARG(ctl_top)) = current_line();
             break;
 
         case XMP_END_GLOBAL_IO:
@@ -612,7 +613,7 @@ static int close_XMP_IO_closure(int st_no, expr x)
         CTL_BLOCK(ctl_top) = XMP_pragma_list(
             p, arg, (XMP_io_desired_statements > 1) ? x : list1(LIST, x));
         EXPR_LINE(CTL_BLOCK(ctl_top)) = (XMP_io_desired_statements > 1)
-                                            ? current_line
+                                            ? current_line()
                                             : EXPR_LINE(CTL_XMP_ARG(ctl_top));
         pop_ctl();
         XMP_io_desired_statements = 0;

@@ -147,7 +147,7 @@ if(${Python3_FOUND})
    COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_CPP_WORKING_DIR}
    COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_CPP_WORKING_DIR}
    COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
-             -w ${TEST_FFRONT_C_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
+             -w ${TEST_FFRONT_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront CPP executable")
   add_dependencies(test-ffront-cpp build-cpp-install)
 else()

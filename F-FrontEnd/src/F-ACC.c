@@ -5,6 +5,7 @@
  *  $
  */
 #include "F-front.h"
+#include "F-front-context.h"
 
 extern CTL *ctl_top_saved;
 extern expv CURRENT_STATEMENTS_saved;
@@ -108,7 +109,7 @@ static void push_ACC_construct(enum ACC_pragma dir, expv clauses)
 {
     push_ctl(CTL_ACC);
     CTL_ACC_ARG(ctl_top) = ACC_pragma_list(dir, clauses, NULL);
-    EXPR_LINE(CTL_ACC_ARG(ctl_top)) = current_line;
+    EXPR_LINE(CTL_ACC_ARG(ctl_top)) = current_line();
 }
 
 static void pop_ACC_construct(enum ACC_pragma dir)
@@ -280,7 +281,7 @@ void compile_ACC_directive(expr x)
     if (x == NULL)
         return; /* error */
 
-    if (debug_flag) {
+    if (debug_enabled()) {
         fprintf(stderr, "ACC_directive:\n");
         expv_output(x, stderr);
         fprintf(stderr, "\n");

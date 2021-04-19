@@ -1,1 +1,1 @@
-#include "@SRC_FILE_BASENAME@.c"
+#include "@C_FILEPATH@"

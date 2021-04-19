@@ -16,6 +16,7 @@
 
 #include "C-exprcode.h"
 #include <stdint.h>
+#include "bool.h"
 
 typedef int64_t omllint_t;
 typedef long double omldouble_t;
@@ -49,13 +50,13 @@ typedef struct symbol* SYMBOL;
 extern SYMBOL find_symbol(const char *name);
 extern SYMBOL find_symbol_without_allocate(const char *name);
 
-extern int endlineno_flag;
-
-typedef struct {
+struct s_lineno_info {
     int ln_no;
     int end_ln_no;
     int file_id;
-} lineno_info;
+};
+
+typedef struct s_lineno_info lineno_info;
 
 /* de-syntax program is represented by this data structure. */
 typedef struct expression_node {

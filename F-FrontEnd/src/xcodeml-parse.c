@@ -1,4 +1,5 @@
 #include "xcodeml.h"
+#include "F-front-context.h"
 
 static const char *sanitizeText(const char *str)
 {
@@ -148,12 +149,13 @@ const char *xcodeml_GetElementValue(XcodeMLNode *ndPtr)
 
 XcodeMLNode *xcodeml_ParseFile(const char *fileName)
 {
+    sds_string buff = sdsempty();
 
-    char buff[MAX_PATH_LEN];
     xmlDocPtr doc;
-    extern char *includeDirv[];
-    extern int includeDirvI;
-    extern char *modincludeDirv;
+    const size_t includeDirvI = vector_size(inc_dir_paths());
+    const size_t modincludeDirvI = vector_size(xmod_inc_dir_paths());
+    char** const includeDirv = (char** const)inc_dir_paths();
+    char** const modincludeDirv = (char** const)xmod_inc_dir_paths();
     int i;
 
     XcodeMLNode *ret = NULL;
@@ -166,11 +168,10 @@ XcodeMLNode *xcodeml_ParseFile(const char *fileName)
 
     if (!doc) {
 
-        if (modincludeDirv) {
-
-            strcpy(buff, modincludeDirv);
-            strcat(buff, "/");
-            strcat(buff, fileName);
+        if (modincludeDirvI > 0) {
+            set_sds_string(&buff, modincludeDirv[0]);
+            buff = sdscat(buff, "/");
+            buff = sdscat(buff, fileName);
 
             doc = xmlReadFile(buff, NULL,
                               XML_PARSE_NOBLANKS | XML_PARSE_NONET |
@@ -181,10 +182,9 @@ XcodeMLNode *xcodeml_ParseFile(const char *fileName)
     if (!doc) {
 
         for (i = 0; i < includeDirvI; i++) {
-
-            strcpy(buff, includeDirv[i]);
-            strcat(buff, "/");
-            strcat(buff, fileName);
+            set_sds_string(&buff, includeDirv[i]);
+            buff = sdscat(buff, "/");
+            buff = sdscat(buff, fileName);
 
             doc = xmlReadFile(buff, NULL,
                               XML_PARSE_NOBLANKS | XML_PARSE_NONET |
@@ -211,6 +211,7 @@ XcodeMLNode *xcodeml_ParseFile(const char *fileName)
     }
 
 Done:
+    sdsfree(buff);
     if (doc != NULL) {
         (void)xmlFreeDoc(doc);
     }

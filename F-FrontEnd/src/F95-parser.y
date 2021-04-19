@@ -18,6 +18,10 @@ state 2058
 	xmp_obj_ref : '*' .  (795)
 */
 
+%define api.pure full
+%parse-param {ffront_context * ctx}
+%lex-param {ffront_context * ctx}
+
 /* F95 parser */
 %token EOS              /* end of statement */
 %token CONSTANT         /* any constant */
@@ -481,6 +485,7 @@ state 2058
 
 %{
 #include "F-front.h"
+#include "F-front-context.h"
 static int st_no;
 
 static char *formatString = NULL;
@@ -495,10 +500,10 @@ typedef union {
 
 #define YYSTYPE yyStackType
 
-extern void     yyerror _ANSI_ARGS_((const char *s));
-extern int      yylex _ANSI_ARGS_((void));
-static int      yylex0 _ANSI_ARGS_((void));
-static void     flush_line _ANSI_ARGS_((void));
+extern void     yyerror(ffront_context* ctx, const char *s);
+extern int      yylex(YYSTYPE* yylval, ffront_context* ctx);
+static int      yylex0(YYSTYPE* yylval, ffront_context* ctx);
+static void     flush_line(void);
 
 static void set_pragma_str _ANSI_ARGS_((const char *p));
 static void append_pragma_str _ANSI_ARGS_((const char *p));
@@ -650,10 +655,10 @@ statement:      /* entry */
           {
               if (unit_ctl_level > 0 && (PARENT_STATE == INCONT)) {
                   if ($2 == COL2) {
-                      yyerror("unexpected collon");
+                      yyerror(ctx, "unexpected collon");
                   }
                   if (EXPR_LIST2($3) != NULL) {
-                      yyerror("too many identifiers");
+                      yyerror(ctx, "too many identifiers");
                   }
               }
               $$ = list2(F95_MODULEPROCEDURE_STATEMENT, $3, make_int_enode(1));
@@ -667,7 +672,7 @@ statement:      /* entry */
                 list lp = NULL;
                 FOR_ITEMS_IN_LIST(lp, $3) {
                     if (EXPR_CODE(LIST_ITEM(lp)) != IDENT) {
-                        yyerror("syntax error");
+                        yyerror(ctx, "syntax error");
                     }
                 }
                 $$ = list2(F08_PROCEDURE_STATEMENT, $3, make_int_enode(0));
