@@ -164,34 +164,10 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
                 "Array range check is not supported, just ignore this option.");
         } else if (strncmp(argv[0], "-r", 2) == 0) {
             int sz = getVarSize(argv[0] + 2);
-            switch (sz) {
-                case SIZEOF_FLOAT:
-                    set_default_single_real_type(opts, TYPE_REAL);
-                    break;
-                case SIZEOF_DOUBLE:
-                    set_default_single_real_type(opts, TYPE_DREAL);
-                    break;
-                default: {
-                    cmd_error_exit(
-                        "invalid single-real size %d, must be %d or %d.", sz,
-                        SIZEOF_FLOAT, SIZEOF_DOUBLE);
-                }
-            }
+            set_default_single_real_type_size(opts, sz);
         } else if (strncmp(argv[0], "-d", 2) == 0) {
             int sz = getVarSize(argv[0] + 2);
-            switch (sz) {
-                case SIZEOF_FLOAT:
-                    set_default_double_real_type(opts, TYPE_REAL);
-                    break;
-                case SIZEOF_DOUBLE:
-                    set_default_double_real_type(opts, TYPE_DREAL);
-                    break;
-                default: {
-                    cmd_error_exit(
-                        "invalid double-real size %d, must be %d or %d.", sz,
-                        SIZEOF_FLOAT, SIZEOF_DOUBLE);
-                }
-            }
+            set_default_double_real_type_size(opts, sz);
         } else if (strcmp(argv[0], "-force-fixed-format") == 0) {
             if (get_force_fixed_format_enabled(opts))
                 cmd_warning("it seems to be set both of -force-fixed-format "
@@ -247,11 +223,11 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
             }
             set_intrinsic_xmod_dir_path(opts, path);
         } else if (strcmp(argv[0], "-f77") == 0) {
-            set_lang_spec_set(opts, LANGSPEC_F77_SET);
+            set_lang_spec_set(opts, F77_SPEC);
         } else if (strcmp(argv[0], "-f90") == 0) {
-            set_lang_spec_set(opts, LANGSPEC_F90_SET);
+            set_lang_spec_set(opts, F90_SPEC);
         } else if (strcmp(argv[0], "-f95") == 0) {
-            set_lang_spec_set(opts, LANGSPEC_F95_SET);
+            set_lang_spec_set(opts, F95_SPEC);
         } else if (strcmp(argv[0], "-force-c-comment") == 0) {
             /* enable c comment in free format.  */
             set_force_c_comments_enabled(opts, true);
@@ -301,6 +277,22 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
     }
 }
 
+static inline int to_lang_spec_set(int spec) {
+	switch (spec) {
+	case F77_SPEC:
+		return LANGSPEC_F77_SET;
+	case F90_SPEC:
+		return LANGSPEC_F90_SET;
+	case F95_SPEC:
+		return LANGSPEC_F95_SET;
+	case FDEFAULT_SPEC:
+		return LANGSPEC_DEFAULT_SET;
+	default:
+        cmd_error_exit("unknown Fortran lang spec : %d", spec);
+        return 0; //Unreachable code
+	}
+}
+
 void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* opts)
 {
     ffront_params* params = (ffront_params*)local_ctx->params;
@@ -331,13 +323,37 @@ void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* op
     params->leave_comment_enabled = get_leave_comment_enabled(opts);
     params->max_cont_line = get_max_cont_line(opts);
     params->do_implicit_undef_enabled= get_do_implicit_undef(opts);
-    params->default_single_real_type = get_default_single_real_type(opts);
-    params->default_double_real_type = get_default_double_real_type(opts);
+    int sz = get_default_single_real_type_size(opts);
+	switch (sz) {
+		case SIZEOF_FLOAT:
+			params->default_single_real_type = TYPE_REAL;
+			break;
+		case SIZEOF_DOUBLE:
+			params->default_single_real_type = TYPE_DREAL;
+			break;
+		default: {
+			cmd_error_exit("invalid single-real size %d, must be %d or %d.", sz,
+			SIZEOF_FLOAT, SIZEOF_DOUBLE);
+		}
+	}
+    sz = get_default_double_real_type_size(opts);
+	switch (sz) {
+		case SIZEOF_FLOAT:
+			params->default_double_real_type = TYPE_REAL;
+			break;
+		case SIZEOF_DOUBLE:
+			params->default_double_real_type = TYPE_DREAL;
+			break;
+		default: {
+			cmd_error_exit("invalid double-real size %d, must be %d or %d.", sz,
+			SIZEOF_FLOAT, SIZEOF_DOUBLE);
+		}
+	}
     params->module_compile_enabled = get_module_compile_enabled(opts);
     copy_sds_string_vector(&params->inc_dir_paths, get_inc_dir_paths(opts));
     copy_sds_string_vector(&params->xmod_inc_dir_paths, get_xmod_inc_dir_paths(opts));
     set_sds_string(&params->intrinsic_xmod_dir_path, get_intrinsic_xmod_dir_path(opts));
-    params->lang_spec_set= get_lang_spec_set(opts);
+    params->lang_spec_set =to_lang_spec_set(get_lang_spec_set(opts));
     params->force_c_comments_enabled= get_force_c_comments_enabled(opts);
     params->auto_save_attr_kb = get_auto_save_attr_kb(opts);
     params->dollar_in_id_enabled = get_dollar_in_id_enabled(opts);/* enable using '$' in identifier */
@@ -470,7 +486,7 @@ int main(int argc, char *argv[])
     }
     else if(get_print_opts(&opts))
     {
-        print_options(&opts, stdout);
+    	print_cli_options(&opts, stdout);
         return EXITCODE_OK;
     }
     ffront_params params;

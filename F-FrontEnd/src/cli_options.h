@@ -7,6 +7,14 @@
 #include "c_vector/vector.h"
 #include <stdio.h>
 
+enum FORTRAN_SPEC
+{
+	F77_SPEC = 77,
+	F90_SPEC = 90,
+	F95_SPEC = 95,
+	FDEFAULT_SPEC = 2008
+};
+
 typedef struct {
     sds_string bin_name;
     sds_string src_file_path;
@@ -16,11 +24,11 @@ typedef struct {
     sds_string_vector xmod_inc_dir_paths;
     int max_line_len;
     int max_cont_line;
-    int lang_spec_set;
+    enum FORTRAN_SPEC lang_spec_set;
     int auto_save_attr_kb;
     int max_name_len;
-    BASIC_DATA_TYPE default_single_real_type;
-    BASIC_DATA_TYPE default_double_real_type;
+    int default_single_real_type_size;
+    int default_double_real_type_size;
     bool debug_enabled;
     bool yacc_debug_enabled;
     bool module_compile_enabled;
@@ -46,7 +54,7 @@ typedef struct {
 
 void init_cli_options(cli_options *opts);
 void free_cli_options(cli_options *opts);
-void print_options(const cli_options* opts, FILE* out);
+void print_cli_options(const cli_options* opts, FILE* out);
 
 static inline void set_bin_name(cli_options *opts, const char *name) {
     set_sds_string(&opts->bin_name, name);
@@ -114,10 +122,10 @@ static inline void set_max_cont_line(cli_options *opts, int val) {
 static inline int get_max_cont_line(const cli_options *opts) {
     return opts->max_cont_line;
 }
-static inline void set_lang_spec_set(cli_options *opts, int val) {
+static inline void set_lang_spec_set(cli_options *opts, enum FORTRAN_SPEC val) {
     opts->lang_spec_set = val;
 }
-static inline int get_lang_spec_set(const cli_options *opts) {
+static inline enum FORTRAN_SPEC get_lang_spec_set(const cli_options *opts) {
     return opts->lang_spec_set;
 }
 static inline void set_auto_save_attr_kb(cli_options *opts, int val) {
@@ -132,21 +140,21 @@ static inline void set_max_name_len(cli_options *opts, int val) {
 static inline int get_max_name_len(const cli_options *opts) {
     return opts->max_name_len;
 }
-static inline void set_default_single_real_type(cli_options *opts,
-        BASIC_DATA_TYPE val) {
-    opts->default_single_real_type = val;
+static inline void set_default_single_real_type_size(cli_options *opts,
+        int val) {
+    opts->default_single_real_type_size = val;
 }
-static inline BASIC_DATA_TYPE get_default_single_real_type(
+static inline int get_default_single_real_type_size(
         const cli_options *opts) {
-    return opts->default_single_real_type;
+    return opts->default_single_real_type_size;
 }
-static inline void set_default_double_real_type(cli_options *opts,
-        BASIC_DATA_TYPE val) {
-    opts->default_double_real_type = val;
+static inline void set_default_double_real_type_size(cli_options *opts,
+        int val) {
+    opts->default_double_real_type_size = val;
 }
-static inline BASIC_DATA_TYPE get_default_double_real_type(
+static inline int get_default_double_real_type_size(
         const cli_options *opts) {
-    return opts->default_double_real_type;
+    return opts->default_double_real_type_size;
 }
 static inline void set_debug_enabled(cli_options *opts, bool val) {
     opts->debug_enabled = val;
