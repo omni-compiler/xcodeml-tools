@@ -74,6 +74,21 @@ foreach(C_FILEPATH ${ffront_SRC} ${C_EXPRCODE_C} ${F95_PARSER_C})
                   @ONLY)
 endforeach()
 
+add_library(ffront-cpp-shared SHARED EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC} ${BISON_F95_parser_OUTPUT_HEADER})
+add_dependencies(ffront-cpp-shared generate_ffront_src create_int_install_dirs)
+set_target_properties(ffront-cpp-shared
+                      PROPERTIES
+                      LIBRARY_OUTPUT_DIRECTORY ${INT_OMNI_HOME_SHARE}
+                      OUTPUT_NAME ffront-cpp)
+target_link_libraries(ffront-cpp-shared ${LIBXML2_LIBRARY})
+target_include_directories(ffront-cpp-shared PUBLIC ${FFRONT_INC_DIRS})
+target_compile_definitions(ffront-cpp-shared PRIVATE ${FFRONT_DEFINES})
+if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
+  # Make shared object runnable
+  target_compile_options(ffront-cpp-shared PUBLIC "-pie")
+  target_link_libraries(ffront-cpp-shared "-pie -Wl,-E")
+endif()
+
 add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC} ${BISON_F95_parser_OUTPUT_HEADER})
 add_dependencies(ffront-cpp generate_ffront_src create_int_install_dirs)
 set_target_properties(ffront-cpp

@@ -17,6 +17,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug build")
   set(BUILD_TYPE "Debug")
@@ -89,7 +91,7 @@ set(OMNI_HOME "${CMAKE_INSTALL_PREFIX}")
 add_custom_target(create_int_install_dirs ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_BIN}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_SHARE})
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_SHARE}
 
 install(
     DIRECTORY ${INT_OMNI_HOME}/
@@ -121,16 +123,16 @@ add_subdirectory(Driver/bin)
 
 add_custom_target(build-c-install DEPENDS ffront om-f-back fback-driver std-lib-xmods)
 add_custom_target(build-cpp-install DEPENDS ffront-cpp om-f-back fback-driver std-lib-xmods)
+add_custom_target(build-cpp-shared-install DEPENDS ffront-cpp-shared om-f-back fback-driver std-lib-xmods)
 
 find_package(Python3 3.6 COMPONENTS Interpreter)
 
 if(${Python3_FOUND})
-  set(TEST_FFRONT_C_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-c)
-  set(TEST_FFRONT_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-cpp)
   set(TESTS_RUNNER ${CMAKE_SOURCE_DIR}/F-FrontEnd/src/tests-runner.py)
 
   ProcessorCount(MAX_PARALLEL_TESTS)
 
+  set(TEST_FFRONT_C_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-c)
   add_custom_target(test-ffront-c)
   add_custom_command(
    TARGET test-ffront-c
@@ -141,6 +143,7 @@ if(${Python3_FOUND})
    COMMENT "Testing ffront C executable")
   add_dependencies(test-ffront-c build-c-install)
 
+  set(TEST_FFRONT_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-cpp)
   add_custom_target(test-ffront-cpp)
   add_custom_command(
    TARGET test-ffront-cpp
@@ -150,6 +153,19 @@ if(${Python3_FOUND})
              -w ${TEST_FFRONT_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront CPP executable")
   add_dependencies(test-ffront-cpp build-cpp-install)
+
+  set(TEST_FFRONT_SHARED_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-shared-cpp)
+  set(INT_OMNI_FFRONT_SHARED_CPP ${INT_OMNI_HOME_SHARE}/libffront-cpp.so)
+  add_custom_target(test-ffront-cpp-shared)
+  add_custom_command(
+   TARGET test-ffront-cpp-shared
+   COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_SHARED_CPP_WORKING_DIR}
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_SHARED_CPP_WORKING_DIR}
+   COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_SHARED_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+             -w ${TEST_FFRONT_SHARED_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
+   COMMENT "Testing ffront shared CPP library as executable")
+  add_dependencies(test-ffront-cpp-shared build-cpp-shared-install)
+
 else()
   message(WARNING "Python not found, testing targets will be unavailable")
 endif()
