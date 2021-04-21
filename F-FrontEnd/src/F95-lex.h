@@ -866,6 +866,7 @@ static int token(YYSTYPE* yylval)
         } else
             return *bufptr++;
     }
+    fflush(stdout);
 
     switch (ch = *bufptr++) {
         case '\0':
@@ -2432,7 +2433,8 @@ static int read_free_format()
     int l;
     int inQuote = FALSE;
     char *bufMax = st_buffer + ST_BUF_SIZE - 1;
-    char oBuf[65536];
+    sds_string oBuf = sdsempty();
+    oBuf = sdsgrowzero(oBuf, 65536);
     int cont_line_num = 0;
 
     exposed_comma = false;
@@ -2443,7 +2445,10 @@ static int read_free_format()
 again:
     rv = readline_free_format();
     if (rv == ST_EOF)
+    {
+        sdsfree(oBuf);
         return rv;
+    }
     /* for first line, check line number and sentinels */
     p = line_buffer;
 
@@ -2576,6 +2581,7 @@ again:
         rv = readline_free_format();
         if (rv == ST_EOF) {
             error("unexpected EOF");
+            sdsfree(oBuf);
             return rv;
         }
         cont_line_num++;
@@ -2696,6 +2702,7 @@ Last:
     memcpy(st_buffer_org, st_buffer, st_len);
     st_buffer_org[st_len] = '\0';
 
+    sdsfree(oBuf);
     return ST_ONE;
 }
 
@@ -2849,7 +2856,8 @@ static int read_fixed_format()
     int hLen = 0;
     int qChar = '\0';
     char *bufMax = st_buffer + ST_BUF_SIZE - 1;
-    char oBuf[ST_BUF_SIZE];
+    sds_string oBuf = sdsempty();
+    oBuf = sdsgrowzero(oBuf, ST_BUF_SIZE);
     int newLen;
     int lnLen;
     int inQuote = FALSE;
@@ -2873,6 +2881,7 @@ top:
     if (!pre_read) {
         pre_read = 0;
         if ((rv = readline_fixed_format()) == ST_EOF) {
+            sdsfree(oBuf);
             return ST_EOF;
         }
         if (rv == ST_CONT) {
@@ -3157,6 +3166,7 @@ Last:
     st_buffer_org[st_len] = '\0';
 
     pre_read = (rv == ST_INIT) ? 1 : 0;
+    sdsfree(oBuf);
     return ST_ONE;
 }
 
