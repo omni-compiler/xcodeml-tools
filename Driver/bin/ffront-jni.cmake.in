@@ -1,0 +1,15 @@
+#!/bin/bash
+
+THIS_DIR=$(dirname "$(readlink -f "$0")")
+OMNI_HOME="${THIS_DIR}/.."
+OMNI_SHARE="${OMNI_HOME}/share"
+OMNI_SHARE_3RDPARTY="${OMNI_HOME}/share/3rdparty"
+FFRONT_JAR="${OMNI_SHARE}/ffront.jar"
+ARGPARSE_JAR="${OMNI_SHARE_3RDPARTY}/argparse4j-0.9.0.jar"
+
+if [ -z ${OMNI_JAVA+x} ]; then
+OMNI_JAVA=@Java_JAVA_EXECUTABLE@
+fi
+
+OMNI_JAVA_OPT="-cp ${FFRONT_JAR}:${ARGPARSE_JAR} -Djava.library.path=${OMNI_SHARE} xcodeml.f.util.FxCompiler"
+exec ${OMNI_JAVA} ${OMNI_JAVA_OPT} $*

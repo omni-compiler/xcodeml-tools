@@ -1,3 +1,4 @@
+/* Author: Mikhail Zhigun */
 #include "omni_errors.h"
 #include <sstream>
 #include <exception>

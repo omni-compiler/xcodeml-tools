@@ -270,7 +270,7 @@ class TestcaseRunner:
             dep_xml_file = join_path(self.working_dir, dep_xml_file_basename)
             # Generate xmod files
             frontend_dep_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] + \
-                                [dep, '-o', dep_xml_file_basename]
+                                ['-o', dep_xml_file_basename, dep]
             p = self.__run_exec(frontend_dep_args, TestCaseStageID.DEPENDENCIES_PREP, True)
             if p.returncode != 0:
                 return self.__result
@@ -298,7 +298,7 @@ class TestcaseRunner:
 
     def __test_frontend(self) -> Optional[TestCaseResult]:
         frontend_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] +\
-                        [self.test_case, '-o', self.xml_out_file_basename]
+                        ['-o', self.xml_out_file_basename, self.test_case]
         self.__run_exec(frontend_args, TestCaseStageID.FRONTEND)
         return self.__result
 

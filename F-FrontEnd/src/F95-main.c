@@ -113,7 +113,7 @@ static void usage(const cli_options* opts)
 
 void parse_cli_args(cli_options* opts, int argc, char *argv[])
 {
-        set_bin_name(opts, argv[0]);
+    set_bin_name(opts, argv[0]);
     --argc;
     ++argv;
 
@@ -278,19 +278,19 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
 }
 
 static inline int to_lang_spec_set(int spec) {
-	switch (spec) {
-	case F77_SPEC:
-		return LANGSPEC_F77_SET;
-	case F90_SPEC:
-		return LANGSPEC_F90_SET;
-	case F95_SPEC:
-		return LANGSPEC_F95_SET;
-	case FDEFAULT_SPEC:
-		return LANGSPEC_DEFAULT_SET;
-	default:
+    switch (spec) {
+    case F77_SPEC:
+        return LANGSPEC_F77_SET;
+    case F90_SPEC:
+        return LANGSPEC_F90_SET;
+    case F95_SPEC:
+        return LANGSPEC_F95_SET;
+    case FDEFAULT_SPEC:
+        return LANGSPEC_DEFAULT_SET;
+    default:
         cmd_error_exit("unknown Fortran lang spec : %d", spec);
         return 0; //Unreachable code
-	}
+    }
 }
 
 void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* opts)
@@ -324,31 +324,31 @@ void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* op
     params->max_cont_line = get_max_cont_line(opts);
     params->do_implicit_undef_enabled= get_do_implicit_undef(opts);
     int sz = get_default_single_real_type_size(opts);
-	switch (sz) {
-		case SIZEOF_FLOAT:
-			params->default_single_real_type = TYPE_REAL;
-			break;
-		case SIZEOF_DOUBLE:
-			params->default_single_real_type = TYPE_DREAL;
-			break;
-		default: {
-			cmd_error_exit("invalid single-real size %d, must be %d or %d.", sz,
-			SIZEOF_FLOAT, SIZEOF_DOUBLE);
-		}
-	}
+    switch (sz) {
+        case SIZEOF_FLOAT:
+            params->default_single_real_type = TYPE_REAL;
+            break;
+        case SIZEOF_DOUBLE:
+            params->default_single_real_type = TYPE_DREAL;
+            break;
+        default: {
+            cmd_error_exit("invalid single-real size %d, must be %d or %d.", sz,
+            SIZEOF_FLOAT, SIZEOF_DOUBLE);
+        }
+    }
     sz = get_default_double_real_type_size(opts);
-	switch (sz) {
-		case SIZEOF_FLOAT:
-			params->default_double_real_type = TYPE_REAL;
-			break;
-		case SIZEOF_DOUBLE:
-			params->default_double_real_type = TYPE_DREAL;
-			break;
-		default: {
-			cmd_error_exit("invalid double-real size %d, must be %d or %d.", sz,
-			SIZEOF_FLOAT, SIZEOF_DOUBLE);
-		}
-	}
+    switch (sz) {
+        case SIZEOF_FLOAT:
+            params->default_double_real_type = TYPE_REAL;
+            break;
+        case SIZEOF_DOUBLE:
+            params->default_double_real_type = TYPE_DREAL;
+            break;
+        default: {
+            cmd_error_exit("invalid double-real size %d, must be %d or %d.", sz,
+            SIZEOF_FLOAT, SIZEOF_DOUBLE);
+        }
+    }
     params->module_compile_enabled = get_module_compile_enabled(opts);
     copy_sds_string_vector(&params->inc_dir_paths, get_inc_dir_paths(opts));
     copy_sds_string_vector(&params->xmod_inc_dir_paths, get_xmod_inc_dir_paths(opts));
@@ -471,6 +471,29 @@ Done:
     return num_errors() != 0 ? EXITCODE_ERR : EXITCODE_OK;
 }
 
+int execute_cli_opts(const cli_options* opts)
+{
+    if(get_print_help(opts))
+    {
+        usage(opts);
+        return EXITCODE_OK;
+    }
+    else if(get_print_opts(opts))
+    {
+        print_cli_options(opts, stdout);
+        return EXITCODE_OK;
+    }
+#ifdef HAVE_SETLOCALE
+    (void)setlocale(LC_ALL, "C");
+#endif /* HAVE_SETLOCALE */
+    ffront_params params;
+    ffront_context local_ctx = {&params};
+    init_context_from_cli_opts(&local_ctx, opts);
+    set_ffront_context(&local_ctx);
+    const int ret_code = execute();
+    return ret_code;
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef HAVE_SETLOCALE
@@ -479,21 +502,7 @@ int main(int argc, char *argv[])
     cli_options opts;
     init_cli_options(&opts);
     parse_cli_args(&opts, argc, argv);
-    if(get_print_help(&opts))
-    {
-        usage(&opts);
-        return EXITCODE_OK;
-    }
-    else if(get_print_opts(&opts))
-    {
-    	print_cli_options(&opts, stdout);
-        return EXITCODE_OK;
-    }
-    ffront_params params;
-    ffront_context local_ctx = {&params};
-    init_context_from_cli_opts(&local_ctx, &opts);
-    set_ffront_context(&local_ctx);
-    const int ret_code = execute();
+    const int ret_code = execute_cli_opts(&opts);
     free_cli_options(&opts);
     return ret_code;
 }
