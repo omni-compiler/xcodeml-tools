@@ -47,7 +47,7 @@ set_target_properties(ffront-jni
                       OUTPUT_NAME ffront-jni)
 target_include_directories(ffront-jni PRIVATE ${FFRONT_INC_DIRS} ${JAVA_C_HEADERS_DIR} ${JNI_INCLUDE_DIRS})
 target_compile_definitions(ffront-jni PRIVATE ${FFRONT_DEFINES})
-target_link_libraries(ffront-jni ffront-cpp-shared ${JNI_LIBRARIES} ${LIBXML2_LIBRARY})
+target_link_libraries(ffront-jni ffront-cpp-shared ${JNI_LIBRARIES} ${LIBXML2_LIBRARY} "-Wl,-rpath,'$ORIGIN/.'")
 
 else()
   message(WARNING "JNI not found, java bindings will be unavailable")

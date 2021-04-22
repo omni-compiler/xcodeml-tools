@@ -494,7 +494,11 @@ int execute_cli_opts(const cli_options* opts)
     return ret_code;
 }
 
-int main(int argc, char *argv[])
+#if defined(__cplusplus)
+extern "C"
+{
+#endif
+int execute_args(int argc, char *argv[])
 {
 #ifdef HAVE_SETLOCALE
     (void)setlocale(LC_ALL, "C");
@@ -506,6 +510,9 @@ int main(int argc, char *argv[])
     free_cli_options(&opts);
     return ret_code;
 }
+#if defined(__cplusplus)
+}
+#endif
 
 bool search_include_path(const char *filename, sds_string* path)
 {

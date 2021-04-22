@@ -127,7 +127,6 @@ add_subdirectory(Driver/bin)
 
 add_custom_target(build-c-install DEPENDS ffront om-f-back fback-driver std-lib-xmods)
 add_custom_target(build-cpp-install DEPENDS ffront-cpp om-f-back fback-driver std-lib-xmods)
-add_custom_target(build-cpp-shared-install DEPENDS ffront-cpp-shared om-f-back fback-driver std-lib-xmods)
 
 if(${JNI_FOUND})
 add_custom_target(build-jni-install DEPENDS ffront-jni om-f-back fback-driver std-lib-xmods)
@@ -161,18 +160,6 @@ if(${Python3_FOUND})
              -w ${TEST_FFRONT_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront CPP executable")
   add_dependencies(test-ffront-cpp build-cpp-install)
-
-  set(TEST_FFRONT_SHARED_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-shared-cpp)
-  set(INT_OMNI_FFRONT_SHARED_CPP ${INT_OMNI_HOME_SHARE}/libffront-cpp.so)
-  add_custom_target(test-ffront-cpp-shared)
-  add_custom_command(
-   TARGET test-ffront-cpp-shared
-   COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_SHARED_CPP_WORKING_DIR}
-   COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_SHARED_CPP_WORKING_DIR}
-   COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_SHARED_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
-             -w ${TEST_FFRONT_SHARED_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
-   COMMENT "Testing ffront shared CPP library as executable")
-  add_dependencies(test-ffront-cpp-shared build-cpp-shared-install)
 
   if(${JNI_FOUND})
     set(TEST_FFRONT_JNI_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-jni)

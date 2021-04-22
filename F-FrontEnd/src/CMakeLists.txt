@@ -32,7 +32,6 @@ add_custom_command(OUTPUT "${C_EXPRCODE_C}"
 
 add_custom_target(generate_ffront_src DEPENDS "${C_EXPRCODE_H}" "${C_EXPRCODE_C}")
 
-
 set(F95_PARSER_C "${CMAKE_CURRENT_BINARY_DIR}/F95-parser.c")
 set(F95_PARSER_BISON_REPORT "${CMAKE_CURRENT_BINARY_DIR}/F95-parser-report.txt")
 
@@ -83,18 +82,12 @@ set_target_properties(ffront-cpp-shared
 target_link_libraries(ffront-cpp-shared ${LIBXML2_LIBRARY})
 target_include_directories(ffront-cpp-shared PUBLIC ${FFRONT_INC_DIRS})
 target_compile_definitions(ffront-cpp-shared PRIVATE ${FFRONT_DEFINES})
-if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
-  # Make shared object runnable
-  target_compile_options(ffront-cpp-shared PUBLIC "-pie")
-  target_link_libraries(ffront-cpp-shared "-pie -Wl,-E")
-endif()
 
-add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC} ${BISON_F95_parser_OUTPUT_HEADER})
-add_dependencies(ffront-cpp generate_ffront_src create_int_install_dirs)
+add_executable(ffront-cpp EXCLUDE_FROM_ALL "${CMAKE_CURRENT_SOURCE_DIR}/F-driver.c")
+add_dependencies(ffront-cpp ffront-cpp-shared)
 set_target_properties(ffront-cpp
                       PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY ${INT_OMNI_HOME_BIN}
                       OUTPUT_NAME ffront-cpp)
-target_link_libraries(ffront-cpp ${LIBXML2_LIBRARY})
-target_include_directories(ffront-cpp PRIVATE ${FFRONT_INC_DIRS})
-target_compile_definitions(ffront-cpp PRIVATE ${FFRONT_DEFINES})
+target_link_libraries(ffront-cpp ffront-cpp-shared "-Wl,-rpath,'$ORIGIN/../share'")
+

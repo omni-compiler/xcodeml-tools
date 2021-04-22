@@ -61,7 +61,7 @@ public class CLIOptions
         Namespace parsedArgs = null;
         try
         {
-            parser.addArgument("fortran-file").help("Input file");
+            parser.addArgument("fortran-file").nargs("?").help("Input file");
             parser.addArgument("-o", "--output-file").help("output file path");
             parser.addArgument("-fintrinsic-xmodules-path").help("intrinsic xmod include dir");
             parser.addArgument("-I", "--pp-include-dir").nargs("*").action(Arguments.append()).help(
