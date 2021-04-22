@@ -3464,16 +3464,16 @@ KeepOnGoin:
     if (line_buffer[body_offset] == '\n') {
         line_buffer[0] = '\0';
     } else {
-        char scanBuf[4096];
-        int scanLen = 0;
+        char* scan_buf = vector_init(char, linelen);
+        static const int MAX_SCAN_BUF_LEN = 4096;
         /* int getNL = FALSE; */
         /* handle ';' */
         // char c;
         // int i;
 
-        for (i = 0; i < sizeof(scanBuf) && (i + body_offset) < LINE_BUF_SIZE;
+        for (i = 0; i < MAX_SCAN_BUF_LEN && (i + body_offset) < LINE_BUF_SIZE;
              i++) {
-            c = line_buffer[i + body_offset];
+            const char c = line_buffer[i + body_offset];
             if (c == '&' && !inComment && !inQuote) {
                 /* only space and comments are allowed after '&' */
                 only_space_or_comment = TRUE;
@@ -3522,24 +3522,25 @@ KeepOnGoin:
             Newline:
                 /* getNL = TRUE; */
                 inComment = FALSE;
-                scanBuf[i] = '\0';
-                scanLen = i;
+                vector_push_back(scan_buf, '\0');
                 if (i > maxChars) {
                     goto Crip;
                 }
                 break;
             }
-            scanBuf[i] = c;
+            vector_push_back(scan_buf, c);
         }
-        if (i == sizeof(scanBuf)) {
+        if (i == MAX_SCAN_BUF_LEN) {
         Crip:
-            scanBuf[maxChars] = '\0';
-            scanLen = maxChars;
+            vector_push_back(scan_buf, '\0');
         }
 
-        memcpy(line_buffer, scanBuf, scanLen);
-        line_buffer[scanLen] = '\0';
-        bp = line_buffer + scanLen;
+        const size_t scan_len = vector_size(scan_buf);
+
+        memcpy(line_buffer, scan_buf, scan_len);
+        line_buffer[scan_len] = '\0';
+        bp = line_buffer + scan_len;
+        vector_free(scan_buf);
     }
 
     /* skip null line */
