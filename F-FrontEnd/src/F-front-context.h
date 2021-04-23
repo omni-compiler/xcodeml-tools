@@ -1,6 +1,7 @@
 #ifndef _F_FRONT_CONTEXT_H_
 #define _F_FRONT_CONTEXT_H_
 
+#include "F-output-xcodeml-context.h"
 #include "F-datatype.h"
 #include "bool.h"
 #include "utils.h"
@@ -55,6 +56,7 @@ typedef struct {
     str_stream debug_output;
     SYMBOL current_module_name;
     lineno_info* current_line;
+    out_xcodeml_context out_xcodeml_ctx;
 } ffront_context;
 
 extern THREAD_LOCAL ffront_context* ctx;

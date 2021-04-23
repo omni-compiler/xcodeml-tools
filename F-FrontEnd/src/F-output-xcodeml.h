@@ -31,7 +31,4 @@ extern int output_module_file(struct module *, const char *);
 #define F_FRONTEND_VER "1.0"
 #define F_MODULE_VER "1.0"
 
-extern char s_timestamp[];
-extern char s_xmlIndent[];
-
 #endif /* _F_XCODEML_H_ */

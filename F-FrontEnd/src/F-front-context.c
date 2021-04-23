@@ -27,6 +27,7 @@ void init_ffront_context(ffront_context* ctx)
     ctx->num_errors = 0;
     ctx->current_module_name = NULL;
     ctx->current_line = NULL;
+    init_out_xcodeml_context(&ctx->out_xcodeml_ctx);
 }
 
 void free_ffront_context(ffront_context* ctx)
@@ -36,6 +37,7 @@ void free_ffront_context(ffront_context* ctx)
     release_str_stream(&ctx->src_output);
     release_str_stream(&ctx->diag_output);
     release_str_stream(&ctx->debug_output);
+    free_out_xcodeml_context(&ctx->out_xcodeml_ctx);
 }
 
 THREAD_LOCAL ffront_context* ctx;
@@ -43,4 +45,5 @@ THREAD_LOCAL ffront_context* ctx;
 void set_ffront_context(ffront_context* in_ctx)
 {
     ctx = in_ctx;
+    set_out_xcodeml_context(&ctx->out_xcodeml_ctx);
 }
