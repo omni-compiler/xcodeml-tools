@@ -99,6 +99,7 @@ static void usage(const cli_options* opts)
         "-endlineno                output the endlineno attribute.", "",
         "internal options:", "-d                        enable debug mode.",
         "-no-module-cache          always load module from file.",
+        "-no-time                  do not add timestamp to xcodeml.",
 
         NULL};
     const char *const *p = usages;
@@ -290,7 +291,9 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
             break;
         } else if (strcmp(argv[0], "-no-module-cache") == 0) {
             set_module_cache_enabled(opts, false);
-        } else {
+        } else if (strcmp(argv[0], "-no-time") == 0) {
+            set_add_timestamp_enabled(opts, false);
+        }  else {
             cmd_error_exit("unknown option : %s", argv[0]);
         }
         --argc;
@@ -343,6 +346,7 @@ void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* op
     params->cdir_enabled = get_cdir_enabled(opts);
     params->pgi_enabled = get_pgi_enabled(opts);
     params->module_cache_enabled = get_module_cache_enabled(opts);
+    params->add_timestamp_enabled = get_add_timestamp_enabled(opts);
     const bool force_fixed_format = get_force_fixed_format_enabled(opts);
 
     local_ctx->fixed_format_enabled = force_fixed_format;

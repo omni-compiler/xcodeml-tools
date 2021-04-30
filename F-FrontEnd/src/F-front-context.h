@@ -36,6 +36,7 @@ typedef struct {
     bool cdir_enabled;
     bool pgi_enabled;
     bool module_cache_enabled;
+    bool add_timestamp_enabled;
 } ffront_params;
 
 struct symbol;
@@ -127,5 +128,6 @@ static inline bool ocl_enabled() { return ctx->params->ocl_enabled; }
 static inline bool cdir_enabled() { return ctx->params->cdir_enabled; }
 static inline bool pgi_enabled() { return ctx->params->pgi_enabled; }
 static inline bool module_cache_enabled() { return ctx->params->module_cache_enabled; }
+static inline bool add_timestamp_enabled() { return ctx->params->add_timestamp_enabled; }
 
 #endif //_F_FRONT_CONTEXT_H_

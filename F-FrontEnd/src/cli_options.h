@@ -39,6 +39,7 @@ typedef struct {
     bool cdir_enabled;
     bool pgi_enabled;
     bool module_cache_enabled;
+    bool add_timestamp_enabled;
     bool print_help;
     bool print_opts;
 } cli_options;
@@ -255,6 +256,12 @@ static inline void set_module_cache_enabled(cli_options *opts, bool val) {
 }
 static inline bool get_module_cache_enabled(const cli_options *opts) {
     return opts->module_cache_enabled;
+}
+static inline void set_add_timestamp_enabled(cli_options *opts, bool val) {
+    opts->add_timestamp_enabled = val;
+}
+static inline bool get_add_timestamp_enabled(const cli_options *opts) {
+    return opts->add_timestamp_enabled;
 }
 static inline void set_print_help(cli_options *opts, bool val) {
     opts->print_help = val;

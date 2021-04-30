@@ -6762,7 +6762,7 @@ void output_XcodeML_file()
             "              compiler-info=\"%s\"\n"
             "              version=\"%s\">\n",
             s,
-            F_TARGET_LANG, getTimestamp(), F_FRONTEND_NAME, F_FRONTEND_VER);
+            F_TARGET_LANG, add_timestamp_enabled() ? getTimestamp() : "", F_FRONTEND_NAME, F_FRONTEND_VER);
         sdsfree(s);
     }
 
