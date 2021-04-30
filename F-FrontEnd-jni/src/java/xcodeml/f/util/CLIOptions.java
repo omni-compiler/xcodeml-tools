@@ -51,6 +51,7 @@ public class CLIOptions
     final Boolean cdir_enabled;
     final Boolean pgi_enabled;
     final Boolean module_cache_enabled;
+    final Boolean add_timestamp_enabled;
     final Boolean print_help;
     final Boolean print_opts;
 
@@ -106,6 +107,7 @@ public class CLIOptions
             parser.addArgument("-endlineno").action(Arguments.storeTrue()).help("output the endlineno attribute");
             parser.addArgument("-ocl").action(Arguments.storeTrue()).help("enable ocl");
             parser.addArgument("-cdir").action(Arguments.storeTrue()).help("enable cdir");
+            parser.addArgument("-no-time").action(Arguments.storeFalse()).help("do not add timestamp to xcodeml");
             parsedArgs = parser.parseArgs(args);
         } catch (HelpScreenException hse)
         {
@@ -155,6 +157,7 @@ public class CLIOptions
         print_opts = parsedArgs.getBoolean("print_opts");
         ocl_enabled = parsedArgs.getBoolean("ocl");
         cdir_enabled = parsedArgs.getBoolean("cdir");
+        add_timestamp_enabled = parsedArgs.getBoolean("no_time");
     }
 
     static Path getOptionalPath(Namespace parsedArgs, Path workingDir, String name)
@@ -364,5 +367,10 @@ public class CLIOptions
     public Boolean getPrint_opts()
     {
         return print_opts;
+    }
+
+    public Boolean addTimestamp_enabled()
+    {
+        return add_timestamp_enabled;
     }
 }

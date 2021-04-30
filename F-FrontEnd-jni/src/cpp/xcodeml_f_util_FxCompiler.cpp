@@ -237,46 +237,47 @@ void set_cli_opts(const jni::Context& ctxJNI, cli_options* opts, jobject optsJav
     set_int(default_single_real_type_size);
     set_int(default_double_real_type_size);
     {
-    	auto f77 = get_boolean_field(ctxJNI, ctxJNI.CLIOptions, optsJava, "lang_f77");
-    	if(f77 && (*f77))
-    	{
-    		set_lang_spec_set(opts, F77_SPEC);
-    	}
+        auto f77 = get_boolean_field(ctxJNI, ctxJNI.CLIOptions, optsJava, "lang_f77");
+        if(f77 && (*f77))
+        {
+            set_lang_spec_set(opts, F77_SPEC);
+        }
     }
     {
-    	auto f90 = get_boolean_field(ctxJNI, ctxJNI.CLIOptions, optsJava, "lang_f90");
-    	if(f90 && (*f90))
-    	{
-    		set_lang_spec_set(opts, F90_SPEC);
-    	}
+        auto f90 = get_boolean_field(ctxJNI, ctxJNI.CLIOptions, optsJava, "lang_f90");
+        if(f90 && (*f90))
+        {
+            set_lang_spec_set(opts, F90_SPEC);
+        }
     }
     {
-    	auto f95 = get_boolean_field(ctxJNI, ctxJNI.CLIOptions, optsJava, "lang_f95");
-    	if(f95 && (*f95))
-    	{
-    		set_lang_spec_set(opts, F95_SPEC);
-    	}
+        auto f95 = get_boolean_field(ctxJNI, ctxJNI.CLIOptions, optsJava, "lang_f95");
+        if(f95 && (*f95))
+        {
+            set_lang_spec_set(opts, F95_SPEC);
+        }
     }
     set_bool(debug_enabled);
-	set_bool(yacc_debug_enabled);
-	set_bool(module_compile_enabled);
-	set_bool(omp_enabled);
-	set_bool(xmp_enabled);
-	set_bool(xmp_coarray_enabled);
-	set_bool(acc_enabled);
-	set_bool(cond_compile_enabled);
-	set_bool(leave_comment_enabled);
-	set_bool(do_implicit_undef);
-	set_bool(force_fixed_format_enabled);
-	set_bool(force_c_comments_enabled);
-	set_bool(dollar_in_id_enabled);
-	set_bool(end_line_no_enabled);
-	set_bool(ocl_enabled);
-	set_bool(cdir_enabled);
-	set_bool(pgi_enabled);
-	set_bool(module_cache_enabled);
-	set_bool(print_help);
-	set_bool(print_opts);
+    set_bool(yacc_debug_enabled);
+    set_bool(module_compile_enabled);
+    set_bool(omp_enabled);
+    set_bool(xmp_enabled);
+    set_bool(xmp_coarray_enabled);
+    set_bool(acc_enabled);
+    set_bool(cond_compile_enabled);
+    set_bool(leave_comment_enabled);
+    set_bool(do_implicit_undef);
+    set_bool(force_fixed_format_enabled);
+    set_bool(force_c_comments_enabled);
+    set_bool(dollar_in_id_enabled);
+    set_bool(end_line_no_enabled);
+    set_bool(ocl_enabled);
+    set_bool(cdir_enabled);
+    set_bool(pgi_enabled);
+    set_bool(module_cache_enabled);
+    set_bool(add_timestamp_enabled);
+    set_bool(print_help);
+    set_bool(print_opts);
 }
 
 /*
