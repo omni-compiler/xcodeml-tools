@@ -356,12 +356,10 @@ expv compile_intrinsic_call0(ID id, expv args, int ignoreTypeMismatch)
         }
 
         if (IS_VOID(tp)) {
-            TYPE_DESC ret = new_type_desc();
-            *ret = *tp;
+            TYPE_DESC ret = clone_type_shallow(tp);
             tp = intrinsic_subroutine_type();
         } else {
-            TYPE_DESC ret = new_type_desc();
-            *ret = *tp;
+            TYPE_DESC ret = clone_type_shallow(tp);
             tp = intrinsic_function_type(ret);
         }
 

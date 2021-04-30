@@ -2668,8 +2668,7 @@ static void end_declaration()
             if (ep != NULL && EXT_PROC_TYPE(ep) != NULL) {
                 /* Copy type to avoid modifying TYPE_ATTR_FLAGS */
                 if (TYPE_IS_EXTERNAL(ip)) {
-                    tp = new_type_desc();
-                    *tp = *EXT_PROC_TYPE(ep);
+                    tp = clone_type_shallow(EXT_PROC_TYPE(ep));
                 } else {
                     tp = EXT_PROC_TYPE(ep);
                 }
@@ -5435,12 +5434,8 @@ static int type_is_replica(const TYPE_DESC tp)
  */
 static TYPE_DESC shallow_copy_type_for_module_id(TYPE_DESC original)
 {
-    TYPE_DESC new_tp;
-
-    new_tp = new_type_desc();
+    TYPE_DESC new_tp = clone_type_shallow(original);
     assert(new_tp != NULL);
-
-    *new_tp = *original;
 
     /* PUBLIC/PRIVATE attribute may be given by the module user */
     TYPE_UNSET_PUBLIC(new_tp);
@@ -8140,8 +8135,7 @@ accept:
                     int extattrs = TYPE_EXTATTR_FLAGS(vPteTyp);
 
                     *vPteTyp = *ftp;
-                    tp = new_type_desc();
-                    *tp = *FUNCTION_TYPE_RETURN_TYPE(vPteTyp);
+                    tp = clone_type_shallow(FUNCTION_TYPE_RETURN_TYPE(vPteTyp));
                     FUNCTION_TYPE_RETURN_TYPE(vPteTyp) = tp;
                     TYPE_ATTR_FLAGS(vPteTyp) =
                         attrs & !(TYPE_ATTR_PUBLIC | TYPE_ATTR_PRIVATE);
@@ -9463,8 +9457,7 @@ static expv compile_forall_header(expr x)
                 } else if (!IS_INT(ID_TYPE(id))) {
                     error("%s is not integer", SYM_NAME(sym));
                 }
-                tp = new_type_desc();
-                *tp = *ID_TYPE(id);
+                tp = clone_type_shallow(ID_TYPE(id));
                 id = declare_ident(sym, CL_VAR);
             } else {
                 id = declare_ident(sym, CL_VAR);

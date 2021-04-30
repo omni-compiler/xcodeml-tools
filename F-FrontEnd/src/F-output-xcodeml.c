@@ -12,23 +12,99 @@
 
 #define ARRAY_LEN(a) (sizeof(a) / sizeof(a[0]))
 
-#ifdef SIMPLE_TYPE
-#define ADDR2UINT_TABLE_SIZE 1024
-static void *addr2uint_table[ADDR2UINT_TABLE_SIZE];
-static int addr2uint_idx = 0;
-int Addr2Uint(void *x)
+static uint64_t get_type_idx(const TYPE_DESC td)
 {
-    int i;
-    for (i = 0; i < addr2uint_idx; ++i) {
-        if (addr2uint_table[i] == x)
-            return i;
+    if(td)
+    {
+        int ret;
+        const int64_t td_addr = (int64_t)td;
+        const khiter_t it = kh_put(type_to_idx_map, outx_ctx->t_to_idx, td_addr, &ret);
+        if(ret != 0)
+        {
+            uint64_t* t_to_idx_counter = NULL;
+            switch (TYPE_BASIC_TYPE(td)) {
+                case TYPE_INT:
+                    t_to_idx_counter = &outx_ctx->type_int_counter;
+                    break;
+                case TYPE_CHAR:
+                    t_to_idx_counter = &outx_ctx->type_char_counter;
+                    break;
+                case TYPE_LOGICAL:
+                    t_to_idx_counter = &outx_ctx->type_logical_counter;
+                    break;
+                case TYPE_REAL: /* fall through */
+                case TYPE_DREAL:
+                    t_to_idx_counter = &outx_ctx->type_real_counter;
+                    break;
+                case TYPE_COMPLEX: /* fall through */
+                case TYPE_DCOMPLEX:
+                    t_to_idx_counter = &outx_ctx->type_complex_counter;
+                    break;
+                case TYPE_FUNCTION: /* fall through */
+                case TYPE_SUBR:
+                    t_to_idx_counter = &outx_ctx->type_func_counter;
+                    break;
+                case TYPE_ARRAY:
+                    t_to_idx_counter = &outx_ctx->type_arr_counter;
+                    break;
+                case TYPE_STRUCT:
+                    t_to_idx_counter = &outx_ctx->type_struct_counter;
+                    break;
+                case TYPE_GNUMERIC:
+                    t_to_idx_counter = &outx_ctx->type_gnumeric_counter;
+                    break;
+                case TYPE_GENERIC: /* fall through */
+                case TYPE_LHS:     /* fall through too */
+                case TYPE_GNUMERIC_ALL:
+                    t_to_idx_counter = &outx_ctx->type_generic_counter;
+                    break;
+                case TYPE_NAMELIST:
+                    t_to_idx_counter = &outx_ctx->type_namelist_counter;
+                    break;
+                case TYPE_ENUM:
+                    t_to_idx_counter = &outx_ctx->type_enum_counter;
+                    break;
+                default:
+                    FATAL_ERROR();
+            };
+            kh_val(outx_ctx->t_to_idx, it) = ++(*t_to_idx_counter);
+        }
+        const uint64_t idx = kh_val(outx_ctx->t_to_idx, it);
+        return idx;
     }
-    if (addr2uint_idx >= ADDR2UINT_TABLE_SIZE)
-        fatal("type too much");
-    addr2uint_table[addr2uint_idx++] = x;
-    return addr2uint_idx - 1;
+    else
+    {
+        return 0;
+    }
 }
-#endif
+
+static void reset_type_counters(out_xcodeml_context* ctx)
+{
+    ctx->type_int_counter = 0;
+    ctx->type_char_counter = 0;
+    ctx->type_logical_counter = 0;
+    ctx->type_real_counter = 0;
+    ctx->type_complex_counter = 0;
+    ctx->type_func_counter = 0;
+    ctx->type_arr_counter = 0;
+    ctx->type_struct_counter = 0;
+    ctx->type_gnumeric_counter = 0;
+    ctx->type_generic_counter = 0;
+    ctx->type_namelist_counter = 0;
+    ctx->type_enum_counter = 0;
+}
+
+static void init_type_to_idx()
+{
+    outx_ctx->t_to_idx = kh_init(type_to_idx_map);
+    reset_type_counters(outx_ctx);
+}
+
+static void free_type_to_idx()
+{
+    kh_destroy(type_to_idx_map, outx_ctx->t_to_idx);
+    reset_type_counters(outx_ctx);
+}
 
 static void outx_expv(int l, expv v);
 static void outx_functionDefinition(int l, EXT_ID ep);
@@ -66,7 +142,7 @@ static inline void SET_CRT_FUNCEP(EXT_ID ep)
 {
     if(outx_ctx->current_function_top >= 0 && outx_ctx->current_function_top < current_function_stack_max_size)
     {
-    	outx_ctx->current_function_stack[outx_ctx->current_function_top] = ep;
+        outx_ctx->current_function_stack[outx_ctx->current_function_top] = ep;
     }
     else
     {
@@ -79,7 +155,7 @@ static inline void CRT_FUNCEP_PUSH(EXT_ID ep)
     outx_ctx->current_function_top++;
     if(outx_ctx->current_function_top < current_function_stack_max_size)
     {
-    	outx_ctx->current_function_stack[outx_ctx->current_function_top] = (ep);
+        outx_ctx->current_function_stack[outx_ctx->current_function_top] = (ep);
     }
     else
     {
@@ -956,8 +1032,11 @@ void getTypeID(TYPE_DESC tp, sds_string* res)
             default:
                 FATAL_ERROR();
         }
-
-        *res = sdscatprintf(*res, "%c" ADDRX_PRINT_FMT, pfx, Addr2Uint(tp));
+        *res = sdscatprintf(*res, "%c%lu", pfx, get_type_idx(tp));
+        if(outx_ctx->mod_name)
+        {
+            *res = sdscatprintf(*res, "_%s", outx_ctx->mod_name);
+        }
     }
 }
 
@@ -2185,11 +2264,11 @@ static void outx_STOPPAUSE_statement(int l, expv v)
     if (v1) {
         switch (EXPV_CODE(v1)) {
             case INT_CONSTANT:
-            	buf = sdscatprintf(buf, " code=\"" OMLL_DFMT "\"", EXPV_INT_VALUE(v1));
+                buf = sdscatprintf(buf, " code=\"" OMLL_DFMT "\"", EXPV_INT_VALUE(v1));
                 break;
             case STRING_CONSTANT:
                 {
-                	sds_string s = sdsempty();
+                    sds_string s = sdsempty();
                     getXmlEscapedStr(EXPV_STR(v1), &s);
                     buf = sdscatprintf(buf, " message=\"%s\"", s);
                     sdsfree(s);
@@ -4946,13 +5025,16 @@ static void outx_characterType(int l, TYPE_DESC tp)
     }
 
     if (tRef) {
+        sds_string tid_str = sdsempty();
+        getTypeID(tRef, &tid_str);
         if (tp->codims && !(tRef->codims)) {
-            outx_print(" ref=\"C" ADDRX_PRINT_FMT "\">\n", Addr2Uint(tRef));
+            outx_print(" ref=\"%s\">\n", tid_str);
             outx_coShape(l + 1, tp);
             outx_close(l, "FbasicType");
         } else {
-            outx_print(" ref=\"C" ADDRX_PRINT_FMT "\"/>\n", Addr2Uint(tRef));
+            outx_print(" ref=\"%s\"/>\n", tid_str);
         }
+        sdsfree(tid_str);
     } else if (TYPE_KIND(tp) || charLen != 1 || vcharLen != NULL ||
                tp->codims) {
         outx_print(" ref=\"%s\">\n", tid);
@@ -6652,6 +6734,8 @@ void output_XcodeML_file()
     if (module_compile_enabled())
         return; // DO NOTHING
 
+    init_type_to_idx();
+
     outx_ctx->type_list = NULL;
 
     init_sets();
@@ -6689,6 +6773,8 @@ void output_XcodeML_file()
     outx_close(l, "XcodeProgram");
 
     reset_sets();
+
+    free_type_to_idx();
 }
 
 /*
@@ -6892,6 +6978,8 @@ void unmark_ids(EXT_ID ep)
  */
 int output_module_file(struct module *mod, const char *filename)
 {
+    init_type_to_idx();
+
     ID id;
     EXT_ID ep;
     TYPE_EXT_ID te;
@@ -6902,6 +6990,8 @@ int output_module_file(struct module *mod, const char *filename)
     expr modTypeList;
     list lp;
     expv v;
+
+    outx_ctx->mod_name = SYM_NAME(mod->name);
 
     if (module_compile_enabled()) {
         outx_ctx->print_fp = src_output();
@@ -6981,6 +7071,8 @@ int output_module_file(struct module *mod, const char *filename)
 
     outx_ctx->is_emitting_for_submodule = false;
 
+    free_type_to_idx();
+    outx_ctx->mod_name = NULL;
     return TRUE;
 }
 
@@ -7053,6 +7145,10 @@ void init_out_xcodeml_context(out_xcodeml_context* ctx)
     ctx->is_outputed_module = false;
     ctx->is_emitting_module = false;
     memset(ctx->s_timestamp, 0, CEXPR_OPTVAL_CHARLEN);
+    ctx->print_fp = NULL;
+    ctx->mod_name = NULL;
+    ctx->t_to_idx = NULL;
+    reset_type_counters(ctx);
 }
 
 void free_out_xcodeml_context(out_xcodeml_context* ctx)

@@ -17,6 +17,9 @@ typedef struct type_ext_id {
 static const int type_desc_set = 33;
 KHASH_SET_INIT_INT64(type_desc_set);
 
+static const int type_to_idx_map = 34;
+KHASH_MAP_INIT_INT64(type_to_idx_map, uint64_t);
+
 struct s_out_xcodeml_context {
 	char s_timestamp[CEXPR_OPTVAL_CHARLEN];
     bool is_emitting_for_submodule;
@@ -32,6 +35,20 @@ struct s_out_xcodeml_context {
     FILE *print_fp;
     bool is_outputed_module;
     bool is_emitting_module;
+    const char* mod_name;
+    khash_t(type_to_idx_map) * t_to_idx;
+    uint64_t type_int_counter;
+    uint64_t type_char_counter;
+    uint64_t type_logical_counter;
+    uint64_t type_real_counter;
+    uint64_t type_complex_counter;
+    uint64_t type_func_counter;
+    uint64_t type_arr_counter;
+    uint64_t type_struct_counter;
+    uint64_t type_gnumeric_counter;
+    uint64_t type_generic_counter;
+    uint64_t type_namelist_counter;
+    uint64_t type_enum_counter;
 };
 
 typedef struct s_out_xcodeml_context out_xcodeml_context;
