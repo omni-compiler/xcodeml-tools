@@ -44,5 +44,5 @@ add_custom_command(OUTPUT ${INT_FFRONT_JNI_DRIVER}
                    DEPENDS create_int_install_dirs
                    VERBATIM)
 
-add_custom_target(ffront-jni-driver ALL DEPENDS ${INT_FFRONT_JNI_DRIVER})
+add_custom_target(ffront-jni-driver DEPENDS ${INT_FFRONT_JNI_DRIVER})
 add_dependencies(ffront-jni-driver ffront-jni)

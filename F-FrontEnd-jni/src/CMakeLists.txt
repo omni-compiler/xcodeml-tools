@@ -11,6 +11,7 @@ include(ExternalProject)
 
 ExternalProject_Add(
     argparse4j
+    EXCLUDE_FROM_ALL ON
     URL "${ARGPARSE4J_URL}"
     DOWNLOAD_DIR "${CMAKE_CURRENT_BINARY_DIR}/3rdparty"
     DOWNLOAD_NO_EXTRACT OFF
@@ -35,6 +36,8 @@ add_jar(ffront-java
         ENTRY_POINT xcodeml.f.util.main
         OUTPUT_DIR ${INT_OMNI_HOME_SHARE}
         GENERATE_NATIVE_HEADERS ffront-java-native-headers DESTINATION ${JAVA_C_HEADERS_DIR})
+set_property(TARGET ffront-java
+             PROPERTY EXCLUDE_FROM_ALL true)
 add_dependencies(ffront-java create_int_install_dirs argparse4j argparse4j_jar)
 
 file(GLOB FFRONT_JNI_CPP_SRC "cpp/*.cpp")
