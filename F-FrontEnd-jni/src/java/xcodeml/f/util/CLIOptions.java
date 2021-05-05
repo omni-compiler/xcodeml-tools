@@ -12,6 +12,7 @@ import java.util.List;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.HelpScreenException;
 import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.ArgumentGroup;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.MutuallyExclusiveGroup;
@@ -22,8 +23,10 @@ public class CLIOptions
     final Path src_file_path;
     final Path out_file_path;
     final Path intrinsic_xmod_dir_path;
+    final Path stdout_file_path;
     final List<Path> inc_dir_paths;
     final List<Path> xmod_inc_dir_paths;
+    final List<Path> xmod_inc_paths;
     final Integer max_line_len;
     final Integer max_cont_line;
     final Integer auto_save_attr_kb;
@@ -54,6 +57,8 @@ public class CLIOptions
     final Boolean add_timestamp_enabled;
     final Boolean print_help;
     final Boolean print_opts;
+    final Boolean native_in_mem_mode_enabled;
+    final Boolean fsync_enabled;
 
     public static CLIOptions parseCmdlineArguments(String[] args, Path workingDir) throws Exception
     {
@@ -108,6 +113,14 @@ public class CLIOptions
             parser.addArgument("-ocl").action(Arguments.storeTrue()).help("enable ocl");
             parser.addArgument("-cdir").action(Arguments.storeTrue()).help("enable cdir");
             parser.addArgument("-no-time").action(Arguments.storeFalse()).help("do not add timestamp to xcodeml");
+            ArgumentGroup jniOpts = parser.addArgumentGroup("JNI-only options");
+            jniOpts.addArgument("-m", "--input-xmod").nargs("*").action(Arguments.append())
+                    .help("Add xmod file to import cache");
+            jniOpts.addArgument("--in-memory-mode").action(Arguments.storeTrue()).help(
+                    "In this mode native code is not allowed to access files or IO streams. All external IO will be performed by java wrapper");
+            jniOpts.addArgument("-so", "--stdout-file").nargs("?").help("Path to file where stdout should be written");
+            jniOpts.addArgument("--no-fsync").action(Arguments.storeFalse())
+                    .help("Do not explicitly flush output files to disk");
             parsedArgs = parser.parseArgs(args);
         } catch (HelpScreenException hse)
         {
@@ -158,6 +171,10 @@ public class CLIOptions
         ocl_enabled = parsedArgs.getBoolean("ocl");
         cdir_enabled = parsedArgs.getBoolean("cdir");
         add_timestamp_enabled = parsedArgs.getBoolean("no_time");
+        xmod_inc_paths = getPathList(parsedArgs, workingDir, "input_xmod");
+        native_in_mem_mode_enabled = parsedArgs.getBoolean("in_memory_mode");
+        stdout_file_path = getOptionalPath(parsedArgs, workingDir, "stdout_file");
+        fsync_enabled = parsedArgs.getBoolean("no_fsync");
     }
 
     static Path getOptionalPath(Namespace parsedArgs, Path workingDir, String name)

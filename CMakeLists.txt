@@ -170,7 +170,7 @@ if(${Python3_FOUND})
      COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_JNI_WORKING_DIR}
      COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_JNI_WORKING_DIR}
      COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_JNI} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
-               -w ${TEST_FFRONT_JNI_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
+               -w ${TEST_FFRONT_JNI_WORKING_DIR} -j ${MAX_PARALLEL_TESTS} --in-memory
      COMMENT "Testing ffront JNI bindings")
     add_dependencies(test-ffront-jni build-jni-install ffront-jni-driver)
   endif() #JNI_FOUND

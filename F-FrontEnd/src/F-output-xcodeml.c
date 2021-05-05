@@ -6996,9 +6996,11 @@ int output_module_file(struct module *mod, const char *filename)
     if (module_compile_enabled()) {
         outx_ctx->print_fp = src_output();
     } else {
-        if ((outx_ctx->print_fp = fopen(filename, "w")) == NULL) {
+        if(!(ctx->files_cache && (outx_ctx->print_fp = io_cache_get_output_file(ctx->files_cache, filename)))) {
+            if ((outx_ctx->print_fp = fopen(filename, "w")) == NULL) {
             fatal("couldn't open module file to write: %s", filename);
             return FALSE;
+            }
         }
     }
 

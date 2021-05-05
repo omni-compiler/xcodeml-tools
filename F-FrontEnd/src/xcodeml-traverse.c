@@ -148,7 +148,7 @@ int xcodeml_has_symbol(const char *symbol)
  * module.
  *
  * @param module_filename the file name of XcodeML.
- * @param fortran_filename the file name wrriten the declarations inside the
+ * @param fortran_filename the file name written the declarations inside the
  * module.
  * @return returns 0 if fail to read XcodeML, otherwise returns 1.
  */

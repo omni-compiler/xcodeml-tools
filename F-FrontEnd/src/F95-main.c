@@ -11,6 +11,7 @@
 #include <math.h>
 #include "omni_errors.h"
 #include "cli_options.h"
+#include "io_cache.h"
 
 extern int yyparse(ffront_context* local_ctx);
 static void check_nerrors();
@@ -293,11 +294,12 @@ static inline int to_lang_spec_set(int spec) {
     }
 }
 
-void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* opts)
+void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* opts, io_cache files_cache)
 {
     ffront_params* params = (ffront_params*)local_ctx->params;
     init_ffront_params(params);
     init_ffront_context(local_ctx);
+    local_ctx->files_cache = files_cache;
     set_sds_string(&local_ctx->src_file_path, get_src_file_path(opts));
     params->debug_enabled = get_debug_enabled(opts);
 #if YYDEBUG != 0
@@ -308,12 +310,24 @@ void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* op
     set_sds_string(&params->out_file_path, get_out_file_path(opts));
     if(sdslen(params->out_file_path) > 0)
     {
-        if (!open_out_file_str_stream(&local_ctx->src_output, params->out_file_path))
-            cmd_error_exit("cannot open file : %s", params->out_file_path);
+        FILE* out_strm = NULL;
+        if(local_ctx->files_cache && (out_strm = io_cache_get_output_file(local_ctx->files_cache, params->out_file_path))) {
+            set_str_stream(&local_ctx->src_output, MEM_STREAM, out_strm);
+        }
+        else {
+            if (!open_out_file_str_stream(&local_ctx->src_output, params->out_file_path))
+                cmd_error_exit("cannot open file : %s", params->out_file_path);
+        }
     }
     else
     {
-        set_str_stream(&local_ctx->src_output, STD_IO_STREAM, stdout);
+        FILE* out_strm = NULL;
+        if(local_ctx->files_cache && (out_strm = io_cache_get_output_file(local_ctx->files_cache, "stdout"))) {
+            set_str_stream(&local_ctx->src_output, MEM_STREAM, out_strm);
+        }
+        else {
+            set_str_stream(&local_ctx->src_output, STD_IO_STREAM, stdout);
+        }
     }
     params->omp_enabled = get_omp_enabled(opts);
     params->xmp_enabled = get_xmp_enabled(opts);
@@ -367,10 +381,26 @@ void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* op
 
     local_ctx->fixed_format_enabled = force_fixed_format;
     if (sdslen(local_ctx->src_file_path) == 0) {
-        set_str_stream(&local_ctx->src_input, STD_IO_STREAM, stdin);
+        FILE* src_strm = NULL;
+        if(local_ctx->files_cache && (src_strm = io_cache_get_input_file(local_ctx->files_cache, "stdin")))
+        {
+            set_str_stream(&local_ctx->src_input, MEM_STREAM, src_strm);
+        }
+        else
+        {
+            set_str_stream(&local_ctx->src_input, STD_IO_STREAM, stdin);
+        }
     } else {
-        if(!open_in_file_str_stream(&local_ctx->src_input, local_ctx->src_file_path))
-            cmd_error_exit("cannot open file : %s", local_ctx->src_file_path);
+        FILE* src_strm = NULL;
+        if(local_ctx->files_cache && (src_strm = io_cache_get_input_file(local_ctx->files_cache, local_ctx->src_file_path)))
+        {
+            set_str_stream(&local_ctx->src_input, MEM_STREAM, src_strm);
+        }
+        else
+        {
+            if(!open_in_file_str_stream(&local_ctx->src_input, local_ctx->src_file_path))
+                cmd_error_exit("cannot open file : %s", local_ctx->src_file_path);
+        }
         /* file name checking for fixed-format.  */
         if (!force_fixed_format) { /* unset?  */
             const char *dotPos = strrchr(local_ctx->src_file_path, '.');
@@ -409,8 +439,17 @@ void init_context_from_cli_opts(ffront_context* local_ctx, const cli_options* op
     }
 
     /* DEBUG */
-    set_str_stream(&local_ctx->debug_output, STD_IO_STREAM, stderr);
-    set_str_stream(&local_ctx->diag_output, STD_IO_STREAM, stderr);
+    {
+        FILE* err_strm = NULL;
+        if(local_ctx->files_cache && (err_strm = io_cache_get_output_file(local_ctx->files_cache, "stderr")))
+        {
+            set_str_stream(&local_ctx->debug_output, MEM_STREAM, err_strm);
+        }
+        else
+        {
+            set_str_stream(&local_ctx->debug_output, STD_IO_STREAM, stderr);
+        }
+    }
 }
 
 int execute()
@@ -471,7 +510,7 @@ Done:
     return num_errors() != 0 ? EXITCODE_ERR : EXITCODE_OK;
 }
 
-int execute_cli_opts(const cli_options* opts)
+int execute_cli_opts(const cli_options* opts, io_cache files_cache)
 {
     if(get_print_help(opts))
     {
@@ -488,7 +527,7 @@ int execute_cli_opts(const cli_options* opts)
 #endif /* HAVE_SETLOCALE */
     ffront_params params;
     ffront_context local_ctx = {&params};
-    init_context_from_cli_opts(&local_ctx, opts);
+    init_context_from_cli_opts(&local_ctx, opts, files_cache);
     set_ffront_context(&local_ctx);
     const int ret_code = execute();
     return ret_code;
@@ -506,7 +545,7 @@ int execute_args(int argc, char *argv[])
     cli_options opts;
     init_cli_options(&opts);
     parse_cli_args(&opts, argc, argv);
-    const int ret_code = execute_cli_opts(&opts);
+    const int ret_code = execute_cli_opts(&opts, NULL);
     free_cli_options(&opts);
     return ret_code;
 }

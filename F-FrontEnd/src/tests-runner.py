@@ -17,7 +17,7 @@ assert sys.version_info[0] >= 3 and sys.version_info[1] >= 6, 'Python >= 3.6 is 
 import argparse, os, locale, shutil, pathlib, tempfile, multiprocessing, subprocess, traceback, time, re
 from os.path import join as join_path, realpath as real_path
 from enum import Enum, IntEnum
-from typing import Tuple, NamedTuple, List, Optional, Dict, Union
+from typing import Tuple, NamedTuple, List, Optional, Dict, Union, Set
 from textwrap import wrap
 from contextlib import contextmanager
 import datetime as dt
@@ -63,6 +63,7 @@ class TesterArgs(NamedTuple):
     obj_sym_reader: str
     jobs_num: int
     break_on_failed: bool
+    process_in_mem: bool
 
 
 class TestCaseStageID(Enum):
@@ -193,12 +194,15 @@ class TestcaseRunner:
     def syms_out_file_basename(self): return self.__syms_out_file_basename
     @property
     def syms_out_file(self): return join_path(self.working_dir, self.syms_out_file_basename)
+    @property
+    def has_includes(self): return self.__has_includes
 
     def __init__(self,
                  basename: str,
                  tester_args: TesterArgs,
                  working_dir: str,
-                 dependencies: Tuple[str, ...]):
+                 dependencies: Tuple[str, ...],
+                 has_includes: bool):
         self.__basename = basename
         self.__args = tester_args
         self.__input_dir = tester_args.test_data_dir
@@ -232,6 +236,7 @@ class TestcaseRunner:
         self.__result = None
         self.__start_timestamp = None
         self.__stage_start_timestamp = None
+        self.__has_includes = has_includes
 
     def __add_stage_info_from_process(self, stage_type: TestCaseStageID, process: subprocess.CompletedProcess):
         res = process.returncode == 0
@@ -297,8 +302,15 @@ class TestcaseRunner:
         return self.__result
 
     def __test_frontend(self) -> Optional[TestCaseResult]:
-        frontend_args = [self.args.frontend] + list(self.frontend_opts) + ['-I', '.', '-I', self.input_dir] +\
-                        ['-o', self.xml_out_file_basename, self.test_case]
+        frontend_args = [self.args.frontend] + list(self.frontend_opts)
+        if not self.args.process_in_mem or self.has_includes:
+            frontend_args += ['-I', '.', '-I', self.input_dir]
+        else:
+            frontend_args += ['--in-memory-mode']
+            for file in os.listdir(self.working_dir):
+                if file.endswith(".xmod"):
+                    frontend_args += ['-m', os.path.join(self.working_dir, file)]
+        frontend_args += ['-o', self.xml_out_file_basename, self.test_case]
         self.__run_exec(frontend_args, TestCaseStageID.FRONTEND)
         return self.__result
 
@@ -439,14 +451,15 @@ def prepare_dir(dir_path=None, parent_dir=None):
 
 def run_test_case(working_dir: str, test_case: str, tester_args: TesterArgs, dependencies: Tuple[str, ...],
                   add_subdir: bool,
-                  working_dir_is_tmp):
+                  working_dir_is_tmp: bool,
+                  has_includes: bool):
     if add_subdir:
         testcase_working_dir = join_path(working_dir, os.path.basename(test_case).replace('.', '-'))
     else:
         testcase_working_dir = working_dir
     os.makedirs(testcase_working_dir, exist_ok=True)
     try:
-        tc = TestcaseRunner(test_case, tester_args, testcase_working_dir, dependencies)
+        tc = TestcaseRunner(test_case, tester_args, testcase_working_dir, dependencies, has_includes)
         res = tc.run()
     finally:
         if working_dir_is_tmp:
@@ -515,6 +528,8 @@ class TestRunner:
                             help='Number of tests to run simultaneously')
         parser.add_argument('-r', '--break-on-failed', action='store_true',
                             help='Stop test run on failed test. Does not apply to parallel jobs')
+        parser.add_argument('--in-memory', action='store_true',
+                            help='Use in-memory processing. Only available in JNI build of FFront')
         p_args = parser.parse_args()
         assert file_exists(p_args.frontend_bin), 'Frontend executable  not found'
         assert file_exists(p_args.backend_bin), 'Backend executable not found'
@@ -552,11 +567,12 @@ class TestRunner:
                           verbose_output=p_args.verbose,
                           obj_sym_reader=obj_sym_reader,
                           jobs_num=p_args.jobs,
-                          break_on_failed=p_args.break_on_failed)
+                          break_on_failed=p_args.break_on_failed,
+                          process_in_mem=p_args.in_memory)
         return args
 
     def __run(self, print_progress=False) -> Tuple[ReturnCode, List[Tuple[str, TestCaseResult]]]:
-        test_cases, testcase_deps = self.scan_for_dependencies(self.args.test_data_dir)
+        test_cases, testcase_deps, test_cases_with_includes = self.scan_for_dependencies(self.args.test_data_dir)
         results = []
         with prepare_dir(self.args.working_dir, TMPFS_DIR) as working_dir:
             working_dir_is_tmp = self.args.working_dir is None
@@ -568,7 +584,7 @@ class TestRunner:
                         if print_progress:
                             print('[%s of %s] %s' % (k, num_test_cases, test_case))
                         res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], True,
-                                            working_dir_is_tmp)
+                                            working_dir_is_tmp, test_case in test_cases_with_includes)
                         results.append((test_case, res))
                         k = k + 1
                         if not res.result:
@@ -578,7 +594,7 @@ class TestRunner:
                                 return RC.FAILURE, results
                 else:
                     mp_args = [(working_dir, test_case, self.args, testcase_deps[test_case], True,
-                                working_dir_is_tmp) for test_case in test_cases]
+                                working_dir_is_tmp, test_case in test_cases_with_includes) for test_case in test_cases]
                     results = [None] * num_test_cases
                     num_failed_testcases = 0
                     num_finished_testcases = 0
@@ -602,7 +618,7 @@ class TestRunner:
                 if print_progress:
                     print(test_case)
                 res = run_test_case(working_dir, test_case, self.args, testcase_deps[test_case], False,
-                                    working_dir_is_tmp)
+                                    working_dir_is_tmp, test_case in test_cases_with_includes)
                 results = [(test_case, res)]
                 if not res.result:
                     if print_progress:
@@ -623,7 +639,7 @@ class TestRunner:
 
     @staticmethod
     def scan_for_dependencies(dir_path: str,
-                              debug_output: bool = False) -> Tuple[Tuple[str, ...], Dict[str, Tuple[str, ...]]]:
+                              debug_output: bool = False) -> Tuple[Tuple[str, ...], Dict[str, Tuple[str, ...]], Set[str]]:
         test_cases = []
         reg_comment = re.compile('!.*')
         spaces = '[\s]+'
@@ -641,6 +657,7 @@ class TestRunner:
         for pattern in ('*.f', '*.f90', '*.f08'):
             test_cases += [os.path.basename(str(path)) for path in pathlib.Path(dir_path).glob(pattern)]
         test_cases = sorted(test_cases)
+        has_includes = set()
         # Order of the tests is currently relevant, as some files depend on each other!!!
         start_time = time.time()
         k = 1
@@ -652,11 +669,14 @@ class TestRunner:
                 deps = testcase_deps[test_case] = set()
                 lines = f.readlines()
                 this_testcase_mods = set()
+                testcase_has_includes = False
                 for line in lines:
                     # Remove comments and leading spaces
                     line = reg_comment.sub('', line)
                     line = line.strip()
                     line = line.lower()
+                    if 'include' in line:
+                        testcase_has_includes = True
                     # Find module declarations and uses
                     module_decl_line = reg_module_decl.match(line)
                     submodule_decl_line = reg_submodule_decl.match(line)
@@ -693,6 +713,8 @@ class TestRunner:
                     for dep in sorted(deps):
                         if debug_output:
                             print('\t\t' + dep)
+                if testcase_has_includes:
+                    has_includes.add(test_case)
         testcase_dep_lst = {}
         # Convert dependency trees into lists
         for test_case, test_case_direct_deps in testcase_deps.items():
@@ -714,7 +736,7 @@ class TestRunner:
         end_time = time.time()
         if debug_output:
             print('Elapsed time: ', end_time - start_time)
-        return tuple(test_cases), testcase_dep_lst
+        return tuple(test_cases), testcase_dep_lst, has_includes
 
 
 if __name__ == '__main__':

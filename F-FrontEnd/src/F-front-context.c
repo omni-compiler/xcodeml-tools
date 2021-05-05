@@ -22,12 +22,12 @@ void init_ffront_context(ffront_context* ctx)
     ctx->src_file_path = sdsempty();
     init_str_stream(&ctx->src_input);
     init_str_stream(&ctx->src_output);
-    init_str_stream(&ctx->diag_output);
     init_str_stream(&ctx->debug_output);
     ctx->num_errors = 0;
     ctx->current_module_name = NULL;
     ctx->current_line = NULL;
     init_out_xcodeml_context(&ctx->out_xcodeml_ctx);
+    ctx->files_cache = NULL;
 }
 
 void free_ffront_context(ffront_context* ctx)
@@ -35,12 +35,11 @@ void free_ffront_context(ffront_context* ctx)
     sdsfree(ctx->src_file_path);
     release_str_stream(&ctx->src_input);
     release_str_stream(&ctx->src_output);
-    release_str_stream(&ctx->diag_output);
     release_str_stream(&ctx->debug_output);
     free_out_xcodeml_context(&ctx->out_xcodeml_ctx);
 }
 
-THREAD_LOCAL ffront_context* ctx;
+ffront_context* ctx;
 
 void set_ffront_context(ffront_context* in_ctx)
 {
