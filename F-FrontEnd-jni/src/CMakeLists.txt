@@ -1,6 +1,10 @@
 if(${JNI_FOUND})
 
+set(APP_CONSTANTS_JAVA "${CMAKE_CURRENT_BINARY_DIR}/java/AppConstants.java")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/java/AppConstants.java.in" ${APP_CONSTANTS_JAVA} @ONLY)
+
 file(GLOB_RECURSE ffront_java_SRC "${CMAKE_CURRENT_SOURCE_DIR}/java/*.java")
+set(ffront_java_SRC ${ffront_java_SRC} ${APP_CONSTANTS_JAVA})
 
 set(ARGPARSE4J_VERSION "0.9.0")
 set(ARGPARSE4J_FILENAME "argparse4j-${ARGPARSE4J_VERSION}.jar")

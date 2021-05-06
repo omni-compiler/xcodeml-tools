@@ -1,0 +1,9 @@
+package xcodeml.f.util;
+
+public class AppConstants
+{
+    private AppConstants() {}
+    public static final String PACKAGE_NAME = "@C_PACKAGE_NAME@";
+    public static final String PACKAGE_VERSION = "@C_PACKAGE_VERSION@";
+    public static final String PACKAGE_VERSION_TAG = "@XCODEML_TOOLS_GIT_HASH@";
+};

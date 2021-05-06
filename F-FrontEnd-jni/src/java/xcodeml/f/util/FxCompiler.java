@@ -129,6 +129,16 @@ public class FxCompiler
         CLIOptions opts = CLIOptions.parseCmdlineArguments(args, WORKING_DIR);
         if (opts != null)
         {
+            if(opts.print_version)
+            {
+                System.out.print(AppConstants.PACKAGE_VERSION);
+                System.exit(0);
+            }
+            else if(opts.print_version_tag)
+            {
+                System.out.print(AppConstants.PACKAGE_VERSION_TAG);
+                System.exit(0);
+            }
             checkCLIArgs(opts);
             System.loadLibrary("ffront-jni");
             if (opts.native_in_mem_mode_enabled)
