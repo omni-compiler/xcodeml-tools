@@ -706,14 +706,12 @@ void debug EXC_VARARGS_DEF(const char *, fmt)
     if (!debug_enabled())
         return;
 
-    inc_num_errors();
     where(current_line());
     EXC_VARARGS_START(const char *, fmt, args);
     vfprintf(debug_output(), fmt, args);
     va_end(args);
     fprintf(debug_output(), "\n");
     fflush(debug_output());
-    check_nerrors();
 }
 
 static void check_nerrors()
