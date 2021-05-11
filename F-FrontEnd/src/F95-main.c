@@ -42,7 +42,10 @@ static void cmd_error_exit EXC_VARARGS_DEF(const char *, fmt)
     va_end(args);
     fprintf(stderr, "\n");
     fflush(stderr);
-    check_nerrors();
+    if(ctx)
+    {
+        check_nerrors();
+    }
     FATAL_ERROR();
 }
 
@@ -271,6 +274,7 @@ void parse_cli_args(cli_options* opts, int argc, char *argv[])
         } else if (strcmp(argv[0], "-no-time") == 0) {
             set_add_timestamp_enabled(opts, false);
         }  else {
+        	ctx = NULL;
             cmd_error_exit("unknown option : %s", argv[0]);
         }
         --argc;
