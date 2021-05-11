@@ -6,6 +6,7 @@
 #include "F-front-context.h"
 #include "F-second-pass.h"
 #include "F-second-pass.h"
+#include "omni_errors.h"
 #include <math.h>
 
 static expv compile_data_args _ANSI_ARGS_((expr args));
@@ -3483,6 +3484,10 @@ static expv compile_array_constructor(expr x)
     FOR_ITEMS_IN_LIST (lp, EXPR_ARG1(x)) {
         v = compile_expression(LIST_ITEM(lp));
         list_put_last(l, v);
+        if(!v)
+        {
+            FATAL_ERROR_WITH_MSG("Trying to read null pointer");
+        }
         tp = EXPV_TYPE(v);
 
         if (IS_ARRAY_TYPE(tp)) {
