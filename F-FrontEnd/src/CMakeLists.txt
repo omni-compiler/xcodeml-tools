@@ -79,7 +79,11 @@ set_target_properties(ffront-cpp-shared
                       PROPERTIES
                       LIBRARY_OUTPUT_DIRECTORY ${INT_OMNI_HOME_SHARE}
                       OUTPUT_NAME ffront-cpp)
-target_link_libraries(ffront-cpp-shared ${LIBXML2_LIBRARY})
+set(FFRONT_CPP_SHARED_LINK_FLAGS ${LIBXML2_LIBRARY})
+if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") AND ${LINK_STATIC_GNU_LIBSTDCXX})
+  set(FFRONT_CPP_SHARED_LINK_FLAGS ${FFRONT_CPP_SHARED_LINK_FLAGS} -static-libstdc++)
+endif()
+target_link_libraries(ffront-cpp-shared ${FFRONT_CPP_SHARED_LINK_FLAGS})
 target_include_directories(ffront-cpp-shared PUBLIC ${FFRONT_INC_DIRS})
 target_compile_definitions(ffront-cpp-shared PRIVATE ${FFRONT_DEFINES})
 
@@ -90,4 +94,6 @@ set_target_properties(ffront-cpp
                       RUNTIME_OUTPUT_DIRECTORY ${INT_OMNI_HOME_BIN}
                       OUTPUT_NAME ffront-cpp)
 target_link_libraries(ffront-cpp ffront-cpp-shared "-Wl,-rpath,'$ORIGIN/../share'")
+
+
 
