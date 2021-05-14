@@ -119,6 +119,7 @@ endif()
 option(LINK_STATIC_GNU_LIBSTDCXX "Link static libstdc++ when using GNU compiler" OFF)
 
 add_subdirectory(F-FrontEnd/src)
+add_subdirectory(F-FrontEnd-cpp/src)
 add_subdirectory(F-FrontEnd-jni/src)
 
 set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
