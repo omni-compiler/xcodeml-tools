@@ -59,6 +59,9 @@ public class XmOption
     private static boolean _coarrayUseStatement = false;
     private static ArrayList<String> _coarrayEntryNames = new ArrayList<>();
 
+    /** if METAX is enabled */
+    private static boolean _metax = false;
+    
     private static int _pointer_scalar_size = 8;  // This value for gcc-8.3.0
     private static int _pointer_array_size  = 40; // This value for gcc-8.3.0
     private static int _pointer_diff_size   = 24; // This value for gcc-8.3.0
@@ -375,6 +378,22 @@ public class XmOption
         _isAtomicIO = atomicIO;
     }
 
+    /**
+     * Get if or not METAX is enabled.
+     */
+    public static boolean isMETAX()
+    {
+        return _metax;
+    }
+
+    /**
+     * Set if or not METAX is enabled.
+     */
+    public static void setIsMETAX(boolean metax)
+    {
+        _metax = metax;
+    }
+    
     /**
      * Set/get suboption -fcoarray-use-statement (boolean)
      */

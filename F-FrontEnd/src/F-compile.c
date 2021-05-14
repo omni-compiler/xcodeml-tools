@@ -969,12 +969,12 @@ void compile_statement1(int st_no, expr x)
                     CURRENT_STATEMENTS_saved = CURRENT_STATEMENTS;
                     pop_ctl();
                 }
-            } else if (CTL_TYPE(ctl_top) == CTL_OMN) {
-                CTL_BLOCK(ctl_top) = OMN_pragma_list(
-                    OMN_PRAGMA, CTL_OMN_ARG_DIR(ctl_top),
-                    CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS);
-                EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top));
-                pop_ctl();
+            /* } else if (CTL_TYPE(ctl_top) == CTL_OMN) { */
+            /*     CTL_BLOCK(ctl_top) = OMN_pragma_list( */
+            /*         OMN_PRAGMA, CTL_OMN_ARG_DIR(ctl_top), */
+            /*         CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS); */
+            /*     EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMP_ARG(ctl_top)); */
+            /*     pop_ctl(); */
             }
 
             break;

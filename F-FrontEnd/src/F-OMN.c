@@ -210,13 +210,31 @@ void compile_OMN_directive(expr x)
         fprintf(stderr, "\n");
     }
 
-    char *dir_name = EXPR_STR(EXPR_ARG1(x)); /* direcive name */
-    expv clauses = compile_clause_list(EXPR_ARG2(x));
+    expr dir = EXPR_ARG1(x); /* OMN_BEGIN or OMN_END */
+    char *dir_name = EXPR_STR(EXPR_ARG2(x)); /* direcive name */
+    expv clauses = compile_clause_list(EXPR_ARG3(x));
 
-    check_INEXEC();
-    push_OMN_construct(dir_name, clauses);
-    _OMN_do_required = TRUE;
-
+    switch (EXPR_INT(dir)) {
+    case OMN_BEGIN:
+      check_INEXEC();
+      push_OMN_construct(dir_name, clauses);
+      //_OMN_do_required = TRUE;
+      break;
+    case OMN_END:
+      check_INEXEC();
+      if (CTL_TYPE(ctl_top) == CTL_OMN &&
+	  strcmp(CTL_OMN_ARG_DIR(ctl_top), dir_name) == 0){
+	CTL_BLOCK(ctl_top) = OMN_pragma_list(OMN_PRAGMA, CTL_OMN_ARG_DIR(ctl_top),
+					     CTL_OMN_ARG_CLAUSE(ctl_top), CURRENT_STATEMENTS);
+	EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_OMN_ARG(ctl_top));
+	pop_ctl();
+      }
+      else
+	error("OMN block is not closed");
+      break;
+    default:
+      fatal("unknown OMN pragma");
+    }
     return;
 }
 
@@ -243,10 +261,10 @@ expv OMN_pragma_list(int pragma, char *dir_name, expv arg1, expv arg2)
 {
     expv xx = arg2;
 
-    if (arg2 != NULL && EXPR_CODE(arg2) == LIST &&
-        EXPR_CODE(EXPR_ARG1(arg2)) == F_DO_STATEMENT) {
-        xx = EXPR_ARG1(arg2);
-    }
+    /* if (arg2 != NULL && EXPR_CODE(arg2) == LIST && */
+    /*     EXPR_CODE(EXPR_ARG1(arg2)) == F_DO_STATEMENT) { */
+    /*     xx = EXPR_ARG1(arg2); */
+    /* } */
 
     return list3(pragma, expv_str_term(STRING_CONSTANT, NULL, dir_name), arg1,
                  xx);

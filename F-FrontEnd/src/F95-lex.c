@@ -188,6 +188,7 @@ static char *pragmaBuf = NULL;
 extern struct keyword_token OMP_keywords[];
 extern struct keyword_token XMP_keywords[];
 extern struct keyword_token ACC_keywords[];
+extern struct keyword_token OMN_keywords[];
 
 /* read_line return value */
 #define ST_EOF 0
@@ -249,6 +250,7 @@ static void save_format_str _ANSI_ARGS_((void));
 static int OMP_lex_token();
 static int XMP_lex_token();
 static int ACC_lex_token();
+static int OMN_lex_token();
 
 /* for free format.  */
 /* pragma string setter. */
@@ -771,7 +773,7 @@ static int yylex0()
             return t;
 
         case LEX_OMN_TOKEN:
-            t = OMP_lex_token();
+            t = OMN_lex_token();
             if (t == EOS)
                 lexstate = LEX_NEW_STATEMENT;
             return t;
@@ -2423,6 +2425,7 @@ static int find_last_ampersand(char *buf, int *len)
         for (; l > 0; l--) {
             if (buf[l] == '!' &&
                 (st_PRAGMA_flag | st_ACC_flag | st_OMP_flag | st_XMP_flag |
+		 st_OMN_flag | st_OMD_flag |
                  st_CONDCOMPL_flag | st_OCL_flag | st_PGI_flag)) {
                 flag = FALSE;
                 break;
@@ -2621,8 +2624,8 @@ again:
     current_line = new_line_info(read_lineno.file_id, read_lineno.ln_no);
 
     q = st_buffer;
-    if ((!OMP_flag && !XMP_flag && !ACC_flag && !cond_compile_enabled) &&
-        (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_PRAGMA_flag ||
+    if ((!OMP_flag && !XMP_flag && !ACC_flag && !OMN_flag && !cond_compile_enabled) &&
+        (st_OMP_flag || st_XMP_flag || st_ACC_flag || st_OMN_flag || st_PRAGMA_flag ||
          st_CONDCOMPL_flag)) {
         /* dumb copy */
         st_len = strlen(p);
@@ -2674,6 +2677,18 @@ again:
                     goto Done;
                 }
                 p += strlen(ACC_SENTINEL);
+            } else if (st_OMN_flag) {
+                if (index != sentinel_index(&sentinels, OMN_SENTINEL)) {
+                    error("bad OMN sentinel continuation line");
+                    goto Done;
+                }
+                p += strlen(OMN_SENTINEL);
+            } else if (st_OMD_flag) {
+                if (index != sentinel_index(&sentinels, OMD_SENTINEL)) {
+                    error("bad OMD sentinel continuation line");
+                    goto Done;
+                }
+                p += strlen(OMD_SENTINEL);
             }
         } else {
             if (is_cond_compilation(&sentinels, p)) {
@@ -4814,5 +4829,29 @@ struct keyword_token ACC_keywords[] = {
 /*
  * lex for OpenACC part end
  */
+
+/*
+ * lex for OMN part
+ */
+static int OMN_lex_token()
+{
+    int t;
+    while (isspace(*bufptr))
+        bufptr++; /* skip white space */
+
+    if (isalpha(*bufptr)) {
+        if (need_keyword == TRUE || paren_level == 0) { /* require keyword */
+            need_keyword = FALSE;
+            t = get_keyword(OMN_keywords);
+            if (t != UNKNOWN)
+                return t;
+        }
+    }
+    return token();
+}
+
+struct keyword_token OMN_keywords[] = {{"end", OMNKW_END},
+
+                                       {0, 0}};
 
 /* EOF */

@@ -57,6 +57,7 @@ extern int Addr2Uint(void *x);
 #include "C-OMP.h" /* OpenMP */
 #include "C-XMP.h" /* XcalableMP */
 #include "C-ACC.h" /* OpenACC */
+#include "F-OMN.h" /* Metax */
 
 extern int lineno;
 extern int need_keyword;
