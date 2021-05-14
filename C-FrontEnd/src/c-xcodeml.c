@@ -12,7 +12,6 @@
 #include "c-omp.h"
 #include "c-xmp.h"
 #include "c-acc.h"
-#include "c-omn.h"
 
 void outxTag1(FILE *fp, int indent, CExpr *expr, const char *tag,
                         int xattrFlag);
@@ -1991,9 +1990,7 @@ out_PRAGMA_COMP_STMT(FILE *fp, int indent, CExpr* expr)
     CExprOfList *clauseList = (CExprOfList *)body->e_aux_info;
     int code = clauseList->e_aux;
     
-    if(IS_OMN_PRAGMA_CODE(code))
-	out_OMN_PRAGMA(fp,indent,code,expr);
-    else if(IS_OMP_PRAGMA_CODE(code)) 
+    if(IS_OMP_PRAGMA_CODE(code)) 
 	out_OMP_PRAGMA(fp,indent,code,expr);
     else if(IS_XMP_PRAGMA_CODE(code))
 	out_XMP_PRAGMA(fp,indent,code,expr);
