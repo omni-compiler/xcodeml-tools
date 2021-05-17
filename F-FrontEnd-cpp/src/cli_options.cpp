@@ -48,11 +48,17 @@ vector<string> CLIOptions::correctOptsStyle(int argc, char *argv[])
     vector<string> opts(argc);
     for (int i = 0; i < argc; ++i)
     {
-        string opt
-        { argv[i] };
+        string opt{ argv[i] };
         if (opt.size() > 2 && opt[0] == '-' && opt[1] != '-')
         {
-            opt = "-" + opt;
+            if(opt.compare(0, 2, "-I") == 0)
+            {
+                opt.insert(2, "=");
+            }
+            else
+            {
+                opt = "-" + opt;
+            }
         }
         opts[i] = opt;
     }

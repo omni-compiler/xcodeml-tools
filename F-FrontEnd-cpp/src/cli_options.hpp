@@ -13,207 +13,207 @@ public:
     static std::unique_ptr<CLIOptions> parseCmdlineArguments(int argc,
             char *argv[], const std::string &workingDir);
 
-    const std::unique_ptr<bool>& getAccEnabled() const
+    const std::unique_ptr<bool>& get_acc_enabled() const
     {
         return acc_enabled;
     }
 
-    const std::unique_ptr<bool>& getAddTimestampEnabled() const
+    const std::unique_ptr<bool>& get_add_timestamp_enabled() const
     {
         return add_timestamp_enabled;
     }
 
-    const std::unique_ptr<int>& getAutoSaveAttrKb() const
+    const std::unique_ptr<int>& get_auto_save_attr_kb() const
     {
         return auto_save_attr_kb;
     }
 
-    const std::unique_ptr<bool>& getCdirEnabled() const
+    const std::unique_ptr<bool>& get_cdir_enabled() const
     {
         return cdir_enabled;
     }
 
-    const std::unique_ptr<bool>& getCondCompileEnabled() const
+    const std::unique_ptr<bool>& get_cond_compile_enabled() const
     {
         return cond_compile_enabled;
     }
 
-    const std::unique_ptr<bool>& getDebugEnabled() const
+    const std::unique_ptr<bool>& get_debug_enabled() const
     {
         return debug_enabled;
     }
 
-    const std::unique_ptr<int>& getDefaultDoubleRealTypeSize() const
+    const std::unique_ptr<int>& get_default_double_real_type_size() const
     {
         return default_double_real_type_size;
     }
 
-    const std::unique_ptr<int>& getDefaultSingleRealTypeSize() const
+    const std::unique_ptr<int>& get_default_single_real_type_size() const
     {
         return default_single_real_type_size;
     }
 
-    const std::unique_ptr<bool>& getDoImplicitUndef() const
+    const std::unique_ptr<bool>& get_do_implicit_undef() const
     {
         return do_implicit_undef;
     }
 
-    const std::unique_ptr<bool>& getDollarInIdEnabled() const
+    const std::unique_ptr<bool>& get_dollar_in_id_enabled() const
     {
         return dollar_in_id_enabled;
     }
 
-    const std::unique_ptr<bool>& getEndLineNoEnabled() const
+    const std::unique_ptr<bool>& get_end_line_no_enabled() const
     {
         return end_line_no_enabled;
     }
 
-    const std::unique_ptr<bool>& getForceCCommentsEnabled() const
+    const std::unique_ptr<bool>& get_force_c_comments_enabled() const
     {
         return force_c_comments_enabled;
     }
 
-    const std::unique_ptr<bool>& getForceFixedFormatEnabled() const
+    const std::unique_ptr<bool>& get_force_fixed_format_enabled() const
     {
         return force_fixed_format_enabled;
     }
 
-    const std::unique_ptr<bool>& getFsyncEnabled() const
+    const std::unique_ptr<bool>& get_fsync_enabled() const
     {
         return fsync_enabled;
     }
 
-    const std::vector<std::string>& getIncDirPaths() const
+    const std::vector<std::string>& get_inc_dir_path() const
     {
         return inc_dir_paths;
     }
 
-    const std::unique_ptr<std::string>& getIntrinsicXmodDirPath() const
+    const std::unique_ptr<std::string>& get_intrinsic_xmod_dir_path() const
     {
         return intrinsic_xmod_dir_path;
     }
 
-    const std::unique_ptr<bool>& getLangF77() const
+    const std::unique_ptr<bool>& get_lang_f77() const
     {
         return lang_f77;
     }
 
-    const std::unique_ptr<bool>& getLangF90() const
+    const std::unique_ptr<bool>& get_lang_f90() const
     {
         return lang_f90;
     }
 
-    const std::unique_ptr<bool>& getLangF95() const
+    const std::unique_ptr<bool>& get_lang_f95() const
     {
         return lang_f95;
     }
 
-    const std::unique_ptr<bool>& getLeaveCommentEnabled() const
+    const std::unique_ptr<bool>& get_leave_comment_enabled() const
     {
         return leave_comment_enabled;
     }
 
-    const std::unique_ptr<int>& getMaxContLine() const
+    const std::unique_ptr<int>& get_max_cont_line() const
     {
         return max_cont_line;
     }
 
-    const std::unique_ptr<int>& getMaxLineLen() const
+    const std::unique_ptr<int>& get_max_line_len() const
     {
         return max_line_len;
     }
 
-    const std::unique_ptr<int>& getMaxNameLen() const
+    const std::unique_ptr<int>& get_max_name_len() const
     {
         return max_name_len;
     }
 
-    const std::unique_ptr<bool>& getModuleCacheEnabled() const
+    const std::unique_ptr<bool>& get_module_cache_enabled() const
     {
         return module_cache_enabled;
     }
 
-    const std::unique_ptr<bool>& getModuleCompileEnabled() const
+    const std::unique_ptr<bool>& get_module_compile_enabled() const
     {
         return module_compile_enabled;
     }
 
-    const std::unique_ptr<bool>& getNativeInMemModeEnabled() const
+    const std::unique_ptr<bool>& get_native_in_mem_mode_enabled() const
     {
         return native_in_mem_mode_enabled;
     }
 
-    const std::unique_ptr<bool>& getOclEnabled() const
+    const std::unique_ptr<bool>& get_ocl_enabled() const
     {
         return ocl_enabled;
     }
 
-    const std::unique_ptr<bool>& getOmpEnabled() const
+    const std::unique_ptr<bool>& get_omp_enabled() const
     {
         return omp_enabled;
     }
 
-    const std::unique_ptr<std::string>& getOutFilePath() const
+    const std::unique_ptr<std::string>& get_out_file_path() const
     {
         return out_file_path;
     }
 
-    const std::unique_ptr<bool>& getPgiEnabled() const
+    const std::unique_ptr<bool>& get_pgi_enabled() const
     {
         return pgi_enabled;
     }
 
-    const std::unique_ptr<bool>& getPrintHelp() const
+    const std::unique_ptr<bool>& get_print_help() const
     {
         return print_help;
     }
 
-    const std::unique_ptr<bool>& getPrintOpts() const
+    const std::unique_ptr<bool>& get_print_opts() const
     {
         return print_opts;
     }
 
-    const std::unique_ptr<bool>& getPrintVersion() const
+    const std::unique_ptr<bool>& get_print_version() const
     {
         return print_version;
     }
 
-    const std::unique_ptr<bool>& getPrintVersionTag() const
+    const std::unique_ptr<bool>& get_print_version_tag() const
     {
         return print_version_tag;
     }
 
-    const std::unique_ptr<std::string>& getSrcFilePath() const
+    const std::unique_ptr<std::string>& get_src_file_path() const
     {
         return src_file_path;
     }
 
-    const std::unique_ptr<std::string>& getStdoutFilePath() const
+    const std::unique_ptr<std::string>& get_stdout_file_path() const
     {
         return stdout_file_path;
     }
 
-    const std::vector<std::string>& getXmodIncDirPaths() const
+    const std::vector<std::string>& get_xmod_inc_dir_paths() const
     {
         return xmod_inc_dir_paths;
     }
 
-    const std::vector<std::string>& getXmodIncPaths() const
+    const std::vector<std::string>& get_xmod_inc_paths() const
     {
         return xmod_inc_paths;
     }
 
-    const std::unique_ptr<bool>& getXmpCoarrayEnabled() const
+    const std::unique_ptr<bool>& get_xmp_coarray_enabled() const
     {
         return xmp_coarray_enabled;
     }
 
-    const std::unique_ptr<bool>& getXmpEnabled() const
+    const std::unique_ptr<bool>& get_xmp_enabled() const
     {
         return xmp_enabled;
     }
 
-    const std::unique_ptr<bool>& getYaccDebugEnabled() const
+    const std::unique_ptr<bool>& get_yacc_debug_enabled() const
     {
         return yacc_debug_enabled;
     }
