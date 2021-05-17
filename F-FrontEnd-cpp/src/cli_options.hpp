@@ -10,7 +10,8 @@ class CLIOptions
 {
 public:
 
-    static std::unique_ptr<CLIOptions> parseCmdlineArguments(int argc, char *argv[], const std::string& workingDir);
+    static std::unique_ptr<CLIOptions> parseCmdlineArguments(int argc,
+            char *argv[], const std::string &workingDir);
 
     const std::unique_ptr<bool>& getAccEnabled() const
     {
@@ -221,9 +222,12 @@ private:
 
     static std::vector<std::string> correctOptsStyle(int argc, char *argv[]);
     static std::vector<const char*> toCOpts(const std::vector<std::string>&);
-    static std::string toAbsPath(const std::string& workingDir, const std::string&  pathStr);
-    static void normalizePath(const std::string& workingDir, std::unique_ptr<std::string>&  pathStr);
-    static void normalizePaths(const std::string& workingDir, std::vector<std::string>&  paths);
+    static std::string toAbsPath(const std::string &workingDir,
+            const std::string &pathStr);
+    static void normalizePath(const std::string &workingDir,
+            std::unique_ptr<std::string> &pathStr);
+    static void normalizePaths(const std::string &workingDir,
+            std::vector<std::string> &paths);
 
     std::unique_ptr<std::string> src_file_path;
     std::unique_ptr<std::string> out_file_path;

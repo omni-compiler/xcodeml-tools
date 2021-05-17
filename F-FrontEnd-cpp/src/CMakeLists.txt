@@ -1,6 +1,9 @@
+set(APP_CONSTANTS_CPP "${CMAKE_CURRENT_BINARY_DIR}/app_constants.hpp")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/app_constants.hpp.in" ${APP_CONSTANTS_CPP} @ONLY)
+
 file(GLOB FFRONT_CPP_SRC "*.cpp")
 
-set(FFRONT_CPP_INC_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty)
+set(FFRONT_CPP_INC_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty ${CMAKE_CURRENT_SOURCE_DIR}/ ${CMAKE_CURRENT_BINARY_DIR})
 
 #add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC})
 add_executable(ffront-cpp ${FFRONT_CPP_SRC})
