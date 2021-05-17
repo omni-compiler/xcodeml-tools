@@ -6,8 +6,7 @@ file(GLOB FFRONT_CPP_SRC "*.cpp")
 set(FFRONT_CPP_INC_DIRS ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty ${CMAKE_CURRENT_SOURCE_DIR}/
     ${CMAKE_CURRENT_BINARY_DIR})
 
-#add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC})
-add_executable(ffront-cpp ${FFRONT_CPP_SRC})
+add_executable(ffront-cpp EXCLUDE_FROM_ALL ${FFRONT_CPP_SRC})
 add_dependencies(ffront-cpp ffront-cpp-shared)
 set_target_properties(ffront-cpp
                       PROPERTIES
