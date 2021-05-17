@@ -28,8 +28,13 @@ static void on_fatal_error(const char* msg,
 #else
 
 #include <cstddef>
+#include <string>
 
 void on_fatal_error(const char* msg, const char *fileName, const size_t lineNumber);
+inline void on_fatal_error(const std::string& msg, const char* fileName, const size_t lineNumber)
+{
+    on_fatal_error(msg.c_str(), fileName, lineNumber);
+}
 
 #endif
 

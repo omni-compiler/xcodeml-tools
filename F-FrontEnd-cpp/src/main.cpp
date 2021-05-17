@@ -1,7 +1,9 @@
+/* Author: Mikhail Zhigun */
 #include "cli_options.hpp"
 #include "cli_options.h"
-#include "io_cache.h"
+#include "io_cache.hpp"
 #include "app_constants.hpp"
+#include "omni_errors.h"
 #if __cplusplus > 201703L
 #include <filesystem>
 namespace std_fs = std::filesystem;
@@ -14,7 +16,8 @@ namespace std_fs = std::experimental::filesystem;
 
 int execute_cli_opts(const cli_options *opts, io_cache files_cache);
 
-void fwd_cli_opts(const CLIOptions &inOpts, cli_options *outOpts);
+static void fwd_cli_opts(const CLIOptions &inOpts, cli_options *outOpts);
+static void check_cli_args(const CLIOptions& opts);
 
 int main(int argc, char *argv[])
 {
@@ -22,6 +25,7 @@ int main(int argc, char *argv[])
     auto opts = CLIOptions::parseCmdlineArguments(argc, argv, WORKING_DIR);
     if (opts)
     {
+        check_cli_args(*opts);
         if (opts->get_print_version())
         {
             std::cout << AppConstants::PACKAGE_VERSION;
@@ -36,27 +40,22 @@ int main(int argc, char *argv[])
         }
         else
         {
+            std::unique_ptr<IOCache> ioCache;
+            if(opts->get_native_in_mem_mode_enabled() && *opts->get_native_in_mem_mode_enabled())
+            {
+                ioCache = std::make_unique<IOCache>(*opts, WORKING_DIR);
+            }
             cli_options c_opts;
             init_cli_options(&c_opts);
             fwd_cli_opts(*opts, &c_opts);
-            const int ret_code = execute_cli_opts(&c_opts, nullptr);
+            const int ret_code = execute_cli_opts(&c_opts, ioCache ? ioCache->get_data() : nullptr);
+            if(ioCache)
+            {
+                ioCache->update();
+            }
             free_cli_options(&c_opts);
             return ret_code;
         }
-        /*checkCLIArgs(opts);
-         System.loadLibrary("ffront-jni");
-         if (opts.native_in_mem_mode_enabled)
-         {
-         try (IOCache filesCache = createCache(opts))
-         {
-         final int retCode = execute(opts, filesCache);
-         updateCache(filesCache, opts);
-         System.exit(retCode);
-         }
-         } else
-         {
-         System.exit(execute(opts, null));
-         }*/
     }
     else
     {
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
     }
 }
 
-void fwd_cli_opts(const CLIOptions &inOpts, cli_options *outOpts)
+static void fwd_cli_opts(const CLIOptions &inOpts, cli_options *outOpts)
 {
 #define set_path(field_name) \
     { \
@@ -138,4 +137,23 @@ void fwd_cli_opts(const CLIOptions &inOpts, cli_options *outOpts)
     set_bool(add_timestamp_enabled);
     set_bool(print_help);
     set_bool(print_opts);
+}
+
+static void check_cli_args(const CLIOptions& opts)
+{
+    if (opts.get_native_in_mem_mode_enabled() && (*opts.get_native_in_mem_mode_enabled()))
+    {
+        if (!opts.get_inc_dir_path().empty())
+        {
+            FATAL_ERROR_WITH_MSG("Include directories not allowed in the in-memory mode");
+        }
+        if (!opts.get_xmod_inc_dir_paths().empty())
+        {
+            FATAL_ERROR_WITH_MSG("Xmod include directories not allowed in the in-memory mode");
+        }
+        if (!opts.get_src_file_path())
+        {
+            FATAL_ERROR_WITH_MSG("Input file must be specified in the in-memory mode");
+        }
+    }
 }

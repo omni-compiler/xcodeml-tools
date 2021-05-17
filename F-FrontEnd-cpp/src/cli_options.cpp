@@ -1,3 +1,4 @@
+/* Author: Mikhail Zhigun */
 #include "cli_options.hpp"
 #include <sstream>
 #if __cplusplus > 201703L
@@ -165,8 +166,8 @@ unique_ptr<CLIOptions> CLIOptions::parseCmdlineArguments(int argc, char *argv[],
         app.parse(argc, toCOpts(opts).data());
     } catch (const CLI::CallForHelp &e)
     {
-        return
-        {};
+        app.exit(e);
+        return {};
     } catch (const CLI::ParseError &e)
     {
         app.exit(e);
