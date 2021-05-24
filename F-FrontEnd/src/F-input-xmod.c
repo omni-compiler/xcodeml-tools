@@ -3286,25 +3286,25 @@ static int input_FfunctionDecl(xmlTextReaderPtr reader, HashTable *ht,
 
 static enum interface_info_class to_interface_info_class(int val)
 {
-	switch(val)
-	{
-	case INTF_ASSIGNMENT: return INTF_ASSIGNMENT;
-	case INTF_OPERATOR: return INTF_OPERATOR;
-	case INTF_USEROP: return INTF_USEROP;
-	case INTF_GENERICS: return INTF_GENERICS;
-	case INTF_GENERIC_FUNC: return INTF_GENERIC_FUNC;
-	case INTF_GENERIC_SUBR: return INTF_GENERIC_SUBR;
-	case INTF_GENERIC_WRITE_FORMATTED: return INTF_GENERIC_WRITE_FORMATTED;
-	case INTF_GENERIC_WRITE_UNFORMATTED: return INTF_GENERIC_WRITE_UNFORMATTED;
-	case INTF_GENERIC_READ_FORMATTED: return INTF_GENERIC_READ_FORMATTED;
-	case INTF_GENERIC_READ_UNFORMATTED: return INTF_GENERIC_READ_UNFORMATTED;
-	case INTF_ABSTRACT: return INTF_ABSTRACT;
-	case INTF_DECL : return INTF_DECL;
-	default:
-		fatal("unexepected value");
-		//Unreachable code
-		return INTF_ASSIGNMENT;
-	};
+    switch(val)
+    {
+    case INTF_ASSIGNMENT: return INTF_ASSIGNMENT;
+    case INTF_OPERATOR: return INTF_OPERATOR;
+    case INTF_USEROP: return INTF_USEROP;
+    case INTF_GENERICS: return INTF_GENERICS;
+    case INTF_GENERIC_FUNC: return INTF_GENERIC_FUNC;
+    case INTF_GENERIC_SUBR: return INTF_GENERIC_SUBR;
+    case INTF_GENERIC_WRITE_FORMATTED: return INTF_GENERIC_WRITE_FORMATTED;
+    case INTF_GENERIC_WRITE_UNFORMATTED: return INTF_GENERIC_WRITE_UNFORMATTED;
+    case INTF_GENERIC_READ_FORMATTED: return INTF_GENERIC_READ_FORMATTED;
+    case INTF_GENERIC_READ_UNFORMATTED: return INTF_GENERIC_READ_UNFORMATTED;
+    case INTF_ABSTRACT: return INTF_ABSTRACT;
+    case INTF_DECL : return INTF_DECL;
+    default:
+        fatal("unexepected value");
+        //Unreachable code
+        return INTF_ASSIGNMENT;
+    };
 
 }
 
@@ -3352,10 +3352,10 @@ static int input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable *ht,
 
       id = find_ident_head(find_symbol(name), id_list);
       if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
-	id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+    id = find_ident_head(ID_SYM(id), ID_NEXT(id));
       } else if (ID_CLASS(id) == CL_MULTI) {
-	id = multi_find_class(id, CL_PROC);
-	PROC_CLASS(id) = P_UNDEFINEDPROC;
+    id = multi_find_class(id, CL_PROC);
+    PROC_CLASS(id) = P_UNDEFINEDPROC;
       }
 
       interface_class = INTF_GENERICS;
@@ -3369,10 +3369,10 @@ static int input_FinterfaceDecl(xmlTextReaderPtr reader, HashTable *ht,
       
       id = find_ident_head(find_symbol(name), id_list);
       if (ID_CLASS(id) == CL_TAGNAME) { /* for multi class */
-	id = find_ident_head(ID_SYM(id), ID_NEXT(id));
+    id = find_ident_head(ID_SYM(id), ID_NEXT(id));
       } else if (ID_CLASS(id) == CL_MULTI) {
-	id = multi_find_class(id, CL_PROC);
-	PROC_CLASS(id) = P_UNDEFINEDPROC;
+    id = multi_find_class(id, CL_PROC);
+    PROC_CLASS(id) = P_UNDEFINEDPROC;
       }
 
       interface_class = INTF_OPERATOR;
@@ -3711,8 +3711,19 @@ int input_intermediate_file(const SYMBOL mod_name, const SYMBOL submod_name,
                  SYM_NAME(submod_name), extension);
     }
 
-    search_include_path(filename, &filepath);
-    reader = xmlNewTextReaderFilename(filepath);
+    {
+        void* startAddress = NULL;
+        size_t size = 0;
+        if(ctx->files_cache && io_cache_get_input_file_as_mem(ctx->files_cache, filename, &startAddress, &size))
+        {
+            reader = xmlReaderForMemory((const char *) startAddress, size, NULL, NULL, 0);
+        }
+        else
+        {
+            search_include_path(filename, &filepath);
+            reader = xmlNewTextReaderFilename(filepath);
+        }
+    }
 
 #if defined(_FC_IS_GFORTRAN) || defined(_FC_IS_FRTPX)
     sds_string command = sdsempty();

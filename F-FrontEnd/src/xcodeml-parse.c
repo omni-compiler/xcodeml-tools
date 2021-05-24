@@ -162,9 +162,21 @@ XcodeMLNode *xcodeml_ParseFile(const char *fileName)
     xmlNode *rootNode = NULL;
     bool succeeded = false;
 
-    doc =
-        xmlReadFile(fileName, NULL,
-                    XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
+    {
+        void* startAddress = NULL;
+        size_t size = 0;
+
+          if(ctx->files_cache && io_cache_get_input_file_as_mem(ctx->files_cache, fileName, &startAddress, &size))
+        {
+              doc = xmlReadMemory((const char *)startAddress, size, NULL, NULL,
+                              XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
+        }
+        else
+        {
+            doc = xmlReadFile(fileName, NULL,
+                                          XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOWARNING);
+        }
+    }
 
     if (!doc) {
 

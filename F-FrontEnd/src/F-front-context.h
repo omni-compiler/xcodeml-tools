@@ -3,6 +3,7 @@
 
 #include "F-output-xcodeml-context.h"
 #include "F-datatype.h"
+#include "io_cache.h"
 #include "bool.h"
 #include "utils.h"
 #include "c_vector/vector.h"
@@ -53,14 +54,14 @@ typedef struct {
     str_stream src_input;
     str_stream src_output;
     unsigned num_errors;
-    str_stream diag_output;
     str_stream debug_output;
     SYMBOL current_module_name;
     lineno_info* current_line;
     out_xcodeml_context out_xcodeml_ctx;
+    io_cache files_cache;
 } ffront_context;
 
-extern THREAD_LOCAL ffront_context* ctx;
+extern ffront_context* ctx;
 
 void init_ffront_params(ffront_params* params);
 void free_ffront_params(ffront_params* params);
@@ -76,7 +77,7 @@ static inline FILE* src_output() {
     return ctx->src_output.handle;
 }
 static inline FILE* diag_output() {
-    return ctx->diag_output.handle;
+    return ctx->debug_output.handle;
 }
 static inline FILE* debug_output() {
     return ctx->debug_output.handle;
