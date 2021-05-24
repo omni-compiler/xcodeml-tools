@@ -424,7 +424,9 @@ void dump_module_procedure(mod_proc_t mp, FILE *fd)
         const char *genName = (gp != NULL) ? GEN_PROC_NAME(gp) : "";
         const char *modName = MOD_PROC_NAME(mp);
 
-        tp = get_bottom_ref_type(tp);
+        if(tp) {
+            tp = get_bottom_ref_type(tp);
+        }
 
         fprintf(fd, "'%s:%s', returns: ", genName, modName);
         if (MOD_PROC_TYPE(mp) != NULL) {
@@ -434,16 +436,23 @@ void dump_module_procedure(mod_proc_t mp, FILE *fd)
         }
         fprintf(fd, "\nargs =\n");
 
-        if (FUNCTION_TYPE_ARGS(tp) != NULL) {
-            ID ip;
-            FOREACH_ID (ip, FUNCTION_TYPE_ARGS(tp)) {
-                fprintf(fd, "\t'%s', ", SYM_NAME(ID_SYM(ip)));
-                print_type(ID_TYPE(ip), fd, TRUE);
+        if(tp)
+        {
+            if (FUNCTION_TYPE_ARGS(tp) != NULL) {
+                ID ip;
+                FOREACH_ID (ip, FUNCTION_TYPE_ARGS(tp)) {
+                    fprintf(fd, "\t'%s', ", SYM_NAME(ID_SYM(ip)));
+                    print_type(ID_TYPE(ip), fd, TRUE);
+                }
+            } else {
+                fprintf(fd, "()");
             }
-        } else {
-            fprintf(stderr, "()");
         }
-        fprintf(stderr, "\n");
+        else
+        {
+            fprintf(fd, "unknown");
+        }
+        fprintf(fd, "\n");
     }
 }
 

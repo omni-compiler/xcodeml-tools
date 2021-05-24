@@ -116,7 +116,10 @@ if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQU
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -fno-permissive)
 endif()
 
+option(LINK_STATIC_GNU_LIBSTDCXX "Link static libstdc++ when using GNU compiler" OFF)
+
 add_subdirectory(F-FrontEnd/src)
+add_subdirectory(F-FrontEnd-cpp/src)
 add_subdirectory(F-FrontEnd-jni/src)
 
 set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
@@ -161,6 +164,16 @@ if(${Python3_FOUND})
              -w ${TEST_FFRONT_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront CPP executable")
   add_dependencies(test-ffront-cpp build-cpp-install)
+
+  add_custom_target(test-ffront-cpp-in-mem)
+  add_custom_command(
+   TARGET test-ffront-cpp-in-mem
+   COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_CPP_WORKING_DIR}
+   COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_CPP_WORKING_DIR}
+   COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_CPP} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+             -w ${TEST_FFRONT_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS} --in-memory
+   COMMENT "Testing ffront CPP executable with in-memory mode")
+  add_dependencies(test-ffront-cpp-in-mem build-cpp-install)
 
   if(${JNI_FOUND})
     set(TEST_FFRONT_JNI_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-jni)

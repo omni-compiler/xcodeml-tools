@@ -1,0 +1,6 @@
+namespace AppConstants
+{
+    const char* PACKAGE_NAME = "@C_PACKAGE_NAME@";
+    const char* PACKAGE_VERSION = "@C_PACKAGE_VERSION@";
+    const char* PACKAGE_VERSION_TAG = "@XCODEML_TOOLS_GIT_HASH@";
+};

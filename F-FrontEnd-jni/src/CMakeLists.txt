@@ -54,7 +54,11 @@ set_target_properties(ffront-jni
                       OUTPUT_NAME ffront-jni)
 target_include_directories(ffront-jni PRIVATE ${FFRONT_INC_DIRS} ${JAVA_C_HEADERS_DIR} ${JNI_INCLUDE_DIRS})
 target_compile_definitions(ffront-jni PRIVATE ${FFRONT_DEFINES})
-target_link_libraries(ffront-jni ffront-cpp-shared ${JNI_LIBRARIES} ${LIBXML2_LIBRARY} "-Wl,-rpath,'$ORIGIN/.'")
+set(FFRONT_JNI_LINK_FLAGS ffront-cpp-shared ${JNI_LIBRARIES} ${LIBXML2_LIBRARY} "-Wl,-rpath,'$ORIGIN/.'")
+if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") AND ${LINK_STATIC_GNU_LIBSTDCXX})
+  set(FFRONT_JNI_LINK_FLAGS ${FFRONT_JNI_LINK_FLAGS} -static-libstdc++)
+endif()
+target_link_libraries(ffront-jni ${FFRONT_JNI_LINK_FLAGS})
 
 else()
   message(WARNING "JNI not found, java bindings will be unavailable")
