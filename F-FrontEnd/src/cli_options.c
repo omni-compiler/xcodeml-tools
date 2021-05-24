@@ -1,5 +1,4 @@
 #include "cli_options.h"
-#include "F-front.h"
 
 static const int DEFAULT_MAX_PATHS = 256;
 static const int DEFAULT_MAX_CONT_LINE = 255;
@@ -38,11 +37,11 @@ void init_cli_options(cli_options* opts)
     opts->xmod_inc_dir_paths = vector_init(sds_string, DEFAULT_MAX_PATHS);
     opts->max_line_len = DEFAULT_MAX_LINE_LEN;
     opts->max_cont_line = DEFAULT_MAX_CONT_LINE;
-    opts->lang_spec_set = LANGSPEC_DEFAULT_SET;
+    opts->lang_spec_set = FDEFAULT_SPEC;
     opts->auto_save_attr_kb = DEFAULT_AUTO_SAVE_ATTR_KB;
     opts->max_name_len = DEFAULT_MAX_NAME_LEN;
-    opts->default_single_real_type = TYPE_REAL;
-    opts->default_double_real_type = TYPE_DREAL;
+    opts->default_single_real_type_size = SIZEOF_FLOAT;
+    opts->default_double_real_type_size = SIZEOF_DOUBLE;
     opts->debug_enabled = DEFAULT_DEBUG_ENABLED;
     opts->yacc_debug_enabled = DEFAULT_YACC_DEBUG_ENABLED;
     opts->module_compile_enabled = DEFAULT_MODULE_COMPILE_ENABLED;
@@ -87,10 +86,9 @@ void free_cli_options(cli_options* opts)
     } \
 }
 #define PRINT_INT(name) fprintf(out, "%s: %i\n", #name, get_ ## name(opts))
-#define PRINT_ENUM(name) fprintf(out, "%s: %i\n", #name, (int)get_ ## name(opts))
 #define PRINT_BOOL(name) fprintf(out, "%s: %s\n", #name, get_ ## name(opts) ? "true" : "false")
 
-void print_options(const cli_options* opts, FILE* out)
+void print_cli_options(const cli_options* opts, FILE* out)
 {
     PRINT_STRING(bin_name);
     PRINT_STRING(src_file_path);
@@ -103,8 +101,8 @@ void print_options(const cli_options* opts, FILE* out)
     PRINT_INT(lang_spec_set);
     PRINT_INT(auto_save_attr_kb);
     PRINT_INT(max_name_len);
-    PRINT_ENUM(default_single_real_type);
-    PRINT_ENUM(default_double_real_type);
+    PRINT_INT(default_single_real_type_size);
+    PRINT_INT(default_double_real_type_size);
     PRINT_BOOL(debug_enabled);
     PRINT_BOOL(yacc_debug_enabled);
     PRINT_BOOL(module_compile_enabled);

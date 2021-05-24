@@ -17,6 +17,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
   message("Debug build")
   set(BUILD_TYPE "Debug")
@@ -58,6 +60,7 @@ else()
     message(FATAL_ERROR "Java ${Java_VERSION_STRING} is not supported")
   endif()
 endif()
+find_package(JNI)
 
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
@@ -83,13 +86,15 @@ set(INT_OMNI_FFRONT_CPP "${INT_OMNI_HOME_BIN}/ffront-cpp")
 set(INT_OMNI_FBACK "${INT_OMNI_HOME_BIN}/F_Back")
 set(INT_OMNI_HOME_FINCLUDES "${INT_OMNI_HOME}/fincludes")
 set(INT_OMNI_HOME_SHARE "${INT_OMNI_HOME}/share")
+set(INT_OMNI_HOME_SHARE_3RDPARTY "${INT_OMNI_HOME}/share/3rdparty")
 
 set(OMNI_HOME "${CMAKE_INSTALL_PREFIX}")
 
 add_custom_target(create_int_install_dirs ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_BIN}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_SHARE})
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_SHARE}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${INT_OMNI_HOME_SHARE_3RDPARTY})
 
 install(
     DIRECTORY ${INT_OMNI_HOME}/
@@ -111,6 +116,7 @@ if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQU
 endif()
 
 add_subdirectory(F-FrontEnd/src)
+add_subdirectory(F-FrontEnd-jni/src)
 
 set(CMAKE_JAVA_COMPILE_FLAGS -encoding utf8 -Xlint:deprecation,unchecked)
 
@@ -122,15 +128,18 @@ add_subdirectory(Driver/bin)
 add_custom_target(build-c-install DEPENDS ffront om-f-back fback-driver std-lib-xmods)
 add_custom_target(build-cpp-install DEPENDS ffront-cpp om-f-back fback-driver std-lib-xmods)
 
+if(${JNI_FOUND})
+add_custom_target(build-jni-install DEPENDS ffront-jni om-f-back fback-driver std-lib-xmods)
+endif()
+
 find_package(Python3 3.6 COMPONENTS Interpreter)
 
 if(${Python3_FOUND})
-  set(TEST_FFRONT_C_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-c)
-  set(TEST_FFRONT_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-cpp)
   set(TESTS_RUNNER ${CMAKE_SOURCE_DIR}/F-FrontEnd/src/tests-runner.py)
 
   ProcessorCount(MAX_PARALLEL_TESTS)
 
+  set(TEST_FFRONT_C_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-c)
   add_custom_target(test-ffront-c)
   add_custom_command(
    TARGET test-ffront-c
@@ -141,6 +150,7 @@ if(${Python3_FOUND})
    COMMENT "Testing ffront C executable")
   add_dependencies(test-ffront-c build-c-install)
 
+  set(TEST_FFRONT_CPP_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-cpp)
   add_custom_target(test-ffront-cpp)
   add_custom_command(
    TARGET test-ffront-cpp
@@ -150,7 +160,20 @@ if(${Python3_FOUND})
              -w ${TEST_FFRONT_CPP_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
    COMMENT "Testing ffront CPP executable")
   add_dependencies(test-ffront-cpp build-cpp-install)
+
+  if(${JNI_FOUND})
+    set(TEST_FFRONT_JNI_WORKING_DIR ${CMAKE_BINARY_DIR}/tests/ffront-jni)
+    set(INT_OMNI_FFRONT_JNI ${INT_OMNI_HOME_BIN}/ffront-jni)
+    add_custom_target(test-ffront-jni)
+    add_custom_command(
+     TARGET test-ffront-jni
+     COMMAND ${CMAKE_COMMAND} -E remove_directory ${TEST_FFRONT_JNI_WORKING_DIR}
+     COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_FFRONT_JNI_WORKING_DIR}
+     COMMAND ${Python3_EXECUTABLE} ${TESTS_RUNNER} -f ${INT_OMNI_FFRONT_JNI} -b ${INT_OMNI_FBACK} -x ${INT_OMNI_HOME_FINCLUDES}
+               -w ${TEST_FFRONT_JNI_WORKING_DIR} -j ${MAX_PARALLEL_TESTS}
+     COMMENT "Testing ffront JNI bindings")
+    add_dependencies(test-ffront-jni build-jni-install ffront-jni-driver)
+  endif() #JNI_FOUND
 else()
   message(WARNING "Python not found, testing targets will be unavailable")
 endif()
-

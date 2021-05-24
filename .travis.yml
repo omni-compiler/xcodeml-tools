@@ -38,6 +38,7 @@ script:
 - make install
 - make -j test-ffront-c
 - make -j test-ffront-cpp
+- make -j test-ffront-jni
 - echo "Testing in-source GNU Make build"
 - cd ${OMNI_SRC}
 - ./configure && make && make test
