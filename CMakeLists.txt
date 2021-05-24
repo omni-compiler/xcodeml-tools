@@ -29,12 +29,13 @@ ELSE()
   message( FATAL_ERROR "Unsupported build type ${CMAKE_BUILD_TYPE}")
 ENDIF()
 
-project("XCodeML-Tools-CPP ${BUILD_TYPE}" VERSION 1.0)
+set(C_PACKAGE_NAME "XCodeML-Tools")
 set(C_PACKAGE_VERSION "1.3.0")
+project("${C_PACKAGE_NAME} ${BUILD_TYPE}" VERSION ${C_PACKAGE_VERSION})
 
 # Recover commit hash for the top repositiory
 git_get_rev_hash(${CMAKE_SOURCE_DIR} XCODEML_TOOLS_GIT_HASH)
-message(STATUS "XCodeML-Tools-CPP version ${XCODEML_TOOLS_GIT_HASH}")
+message(STATUS "XCodeML-Tools version ${XCODEML_TOOLS_GIT_HASH}")
 
 enable_language(C)
 enable_language(CXX)

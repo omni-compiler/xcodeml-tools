@@ -59,6 +59,8 @@ public class CLIOptions
     final Boolean print_opts;
     final Boolean native_in_mem_mode_enabled;
     final Boolean fsync_enabled;
+    final Boolean print_version;
+    final Boolean print_version_tag;
 
     public static CLIOptions parseCmdlineArguments(String[] args, Path workingDir) throws Exception
     {
@@ -121,6 +123,8 @@ public class CLIOptions
             jniOpts.addArgument("-so", "--stdout-file").nargs("?").help("Path to file where stdout should be written");
             jniOpts.addArgument("--no-fsync").action(Arguments.storeFalse())
                     .help("Do not explicitly flush output files to disk");
+            jniOpts.addArgument("-v", "--version").action(Arguments.storeTrue()).help("display frontend version information");
+            jniOpts.addArgument("-vt", "--version-tag").action(Arguments.storeTrue()).help("display frontend version tag");
             parsedArgs = parser.parseArgs(args);
         } catch (HelpScreenException hse)
         {
@@ -175,6 +179,8 @@ public class CLIOptions
         native_in_mem_mode_enabled = parsedArgs.getBoolean("in_memory_mode");
         stdout_file_path = getOptionalPath(parsedArgs, workingDir, "stdout_file");
         fsync_enabled = parsedArgs.getBoolean("no_fsync");
+        print_version = parsedArgs.getBoolean("version");
+        print_version_tag = parsedArgs.getBoolean("version_tag");
     }
 
     static Path getOptionalPath(Namespace parsedArgs, Path workingDir, String name)
