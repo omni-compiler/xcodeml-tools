@@ -1265,8 +1265,7 @@ static int input_indexRange(xmlTextReaderPtr reader, HashTable *ht,
         return FALSE;
 
     bottom = tp;
-    base = new_type_desc();
-    *base = *bottom;
+    base = clone_type_shallow(bottom);
     TYPE_BASIC_TYPE(bottom) = TYPE_ARRAY;
     TYPE_REF(bottom) = base;
     TYPE_N_DIM(bottom) = TYPE_N_DIM(base) + 1;
@@ -1664,7 +1663,7 @@ static int input_FbasicType(xmlTextReaderPtr reader, HashTable *ht)
     TYPE_ENTRY baseTep;
     TYPE_ENTRY refTep;
     char *typeId = NULL;
-    char *ref;
+    char *ref = NULL;
     int isEmpty;
 
     if (!xmlMatchNode(reader, XML_READER_TYPE_ELEMENT, "FbasicType"))

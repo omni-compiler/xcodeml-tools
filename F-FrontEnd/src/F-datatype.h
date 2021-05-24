@@ -13,6 +13,7 @@
 
 #include "C-expr.h"
 #include <stdint.h>
+#include <stddef.h>
 
 /* f77 data types */
 typedef enum datatype {
@@ -516,11 +517,11 @@ extern TYPE_DESC basic_type_desc[];
 #define IS_STRUCT_TYPE(tp) ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_STRUCT)
 #define IS_ARRAY_TYPE(tp) ((tp) != NULL && TYPE_BASIC_TYPE(tp) == TYPE_ARRAY)
 #define IS_ELEMENT_TYPE(tp) ((tp) != NULL && (tp)->ref == NULL)
-#define IS_FUNCTION_TYPE(tp)                                                   \
-    ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION))
-#define IS_SUBR(tp) ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_SUBR))
+static inline bool IS_FUNCTION_TYPE(TYPE_DESC tp)
+{ return (tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_FUNCTION); }
+static inline bool IS_SUBR(TYPE_DESC tp) { return (tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_SUBR); }
 #define IS_VOID(tp) ((tp) != NULL && (TYPE_BASIC_TYPE(tp) == TYPE_VOID))
-#define IS_PROCEDURE_TYPE(tp) (IS_FUNCTION_TYPE(tp) || IS_SUBR(tp))
+static inline bool IS_PROCEDURE_TYPE(TYPE_DESC tp) { return IS_FUNCTION_TYPE(tp) || IS_SUBR(tp); }
 #define IS_PROCEDURE_POINTER(tp)                                               \
     ((tp) != NULL && IS_PROCEDURE_TYPE(tp) && TYPE_REF(tp) != NULL)
 #define IS_GENERIC_PROCEDURE_TYPE(tp)                                          \
@@ -674,5 +675,7 @@ extern TYPE_DESC basic_type_desc[];
 #define FUNCTION_TYPE_IS_INTERFACE(tp) ((tp)->proc_info.is_interface == TRUE)
 #define FUNCTION_TYPE_SET_INTERFACE(tp) ((tp)->proc_info.is_interface = TRUE)
 #define FUNCTION_TYPE_UNSET_INTERFACE(tp) ((tp)->proc_info.is_interface = FALSE)
+
+TYPE_DESC clone_type_shallow(TYPE_DESC tp);
 
 #endif /* _F_DATATYPE_H_ */

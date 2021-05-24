@@ -2467,8 +2467,7 @@ copy_type_partially(TYPE_DESC tp, int doCopyAttr)
 {
     TYPE_DESC ret = NULL;
     if (tp != NULL) {
-        ret = new_type_desc();
-        *ret = *tp;
+        ret = clone_type_shallow(tp);
         if (doCopyAttr == FALSE) {
             TYPE_ATTR_FLAGS(ret) = 0;
             TYPE_EXTATTR_FLAGS(ret) = 0;
@@ -2477,5 +2476,12 @@ copy_type_partially(TYPE_DESC tp, int doCopyAttr)
             TYPE_REF(ret) = copy_type_partially(TYPE_REF(tp), doCopyAttr);
         }
     }
+    return ret;
+}
+
+TYPE_DESC clone_type_shallow(TYPE_DESC tp)
+{
+    TYPE_DESC ret = new_type_desc();
+    *ret = *tp;
     return ret;
 }

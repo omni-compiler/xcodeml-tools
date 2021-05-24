@@ -33,10 +33,6 @@
 #define TRUE 1
 #define FALSE 0
 
-#ifdef SIMPLE_TYPE
-extern int Addr2Uint(void *x);
-#define ADDRX_PRINT_FMT "%d"
-#else /* SIMPLE_TYPE */
 #define Addr2Uint(X) ((uintptr_t)(X))
 
 #if __WORDSIZE == 64
@@ -44,7 +40,6 @@ extern int Addr2Uint(void *x);
 #else
 #define ADDRX_PRINT_FMT "%x"
 #endif
-#endif /* SIMPLE_TYPE */
 
 /*
  * Safe for the case if iter(p) (i.e. ID_NEXT(ip), EXT_ID_NEXT(ep)) is

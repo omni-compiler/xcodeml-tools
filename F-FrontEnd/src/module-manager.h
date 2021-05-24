@@ -37,7 +37,7 @@ struct module {
     ID head;               /* public elements of this module. */
     ID last;
     int is_intrinsic;  /* TRUE if this module is an intrinsic module. */
-    int for_submodule; /* module for submodule */
+    bool for_submodule; /* module for submodule */
     char *filepath;    /* path for module file */
 };
 

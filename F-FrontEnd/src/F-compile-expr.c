@@ -915,8 +915,7 @@ expv compile_expression(expr x)
                     TYPE_SET_NOT_FIXED(tp);
                 } else if (IS_ARRAY_TYPE(tp)) {
                     TYPE_DESC tq;
-                    TYPE_DESC new_tp = new_type_desc();
-                    *new_tp = *bottom_type(tp);
+                    TYPE_DESC new_tp = clone_type_shallow(bottom_type(tp));
                     tq = tp;
                     while (IS_ARRAY_TYPE(tq)) {
                         if (!IS_ARRAY_TYPE(TYPE_REF(tq)))
@@ -926,8 +925,7 @@ expv compile_expression(expr x)
                     TYPE_REF(tq) = new_tp;
                     TYPE_SET_NOT_FIXED(new_tp);
                 } else {
-                    TYPE_DESC new_tp = new_type_desc();
-                    *new_tp = *tp;
+                    TYPE_DESC new_tp = clone_type_shallow(tp);
                     tp = new_tp;
                     TYPE_SET_NOT_FIXED(tp);
                 }

@@ -19,7 +19,7 @@ struct module_manager {
 
 static struct module *find_module(const SYMBOL module_name,
                                   const SYMBOL submodule_name,
-                                  int for_submodule)
+                                  bool for_submodule)
 {
     struct module *mp;
     assert(module_name != NULL);
@@ -271,7 +271,7 @@ int export_submodule(SYMBOL submod_name, SYMBOL mod_name, ID ids,
 
 static int import_intermediate_file(const SYMBOL name,
                                     const SYMBOL submodule_name,
-                                    struct module **pmod, int as_for_submodule)
+                                    struct module **pmod, bool as_for_submodule)
 {
     struct module *mod;
     const char *extension;
@@ -304,7 +304,7 @@ static int import_intermediate_file(const SYMBOL name,
  */
 int import_module(const SYMBOL name, struct module **pmod)
 {
-    return import_intermediate_file(name, NULL, pmod, FALSE);
+    return import_intermediate_file(name, NULL, pmod, false);
 }
 
 /**
@@ -313,7 +313,7 @@ int import_module(const SYMBOL name, struct module **pmod)
 int import_submodule(const SYMBOL module_name, const SYMBOL submodule_name,
                      struct module **pmod)
 {
-    return import_intermediate_file(module_name, submodule_name, pmod, TRUE);
+    return import_intermediate_file(module_name, submodule_name, pmod, true);
 }
 
 void include_module_file(FILE *fp, SYMBOL mod_name)
@@ -322,7 +322,7 @@ void include_module_file(FILE *fp, SYMBOL mod_name)
     FILE *mod_fp;
     int ch;
 
-    mod = find_module(mod_name, NULL, FALSE);
+    mod = find_module(mod_name, NULL, false);
     if (mod == NULL || mod->filepath == NULL)
         return;
     if ((mod_fp = fopen(mod->filepath, "r")) == NULL) {

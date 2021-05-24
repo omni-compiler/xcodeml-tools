@@ -599,12 +599,9 @@ void declare_procedure(enum name_class cls, expr name, TYPE_DESC type,
                 /*
                  * Copy the type of the current procedure.
                  */
-                tp = new_type_desc();
-                *tp = *type;
+                tp = clone_type_shallow(type);
                 TYPE_ATTR_FLAGS(tp) = 0;
-                FUNCTION_TYPE_RETURN_TYPE(tp) = new_type_desc();
-                *FUNCTION_TYPE_RETURN_TYPE(tp) =
-                    *FUNCTION_TYPE_RETURN_TYPE(type);
+                FUNCTION_TYPE_RETURN_TYPE(tp) = clone_type_shallow(FUNCTION_TYPE_RETURN_TYPE(type));
             }
             declare_id_type(id, tp);
 
@@ -829,14 +826,6 @@ static void declare_dummy_args(expr l, enum name_class cls)
             }
         }
     }
-}
-
-TYPE_DESC
-copy_type_shallow(TYPE_DESC tp)
-{
-    TYPE_DESC ret = new_type_desc();
-    *ret = *tp;
-    return ret;
 }
 
 static void copy_parent_type(ID id)
@@ -5250,7 +5239,7 @@ static TYPE_DESC type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     } else if (TYPE_KIND(tp)) {
         v = expv_apply_type_parameter(TYPE_KIND(tp), type_params);
         if (v != TYPE_KIND(tp)) {
-            tp = copy_type_shallow(tp);
+            tp = clone_type_shallow(tp);
             TYPE_KIND(tp) = v;
             while (TYPE_REF(tp) && TYPE_KIND(TYPE_REF(tp))) {
                 TYPE_REF(tp) = TYPE_REF(TYPE_REF(tp));
@@ -5260,7 +5249,7 @@ static TYPE_DESC type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     } else if (TYPE_LENG(tp)) {
         v = expv_apply_type_parameter(TYPE_LENG(tp), type_params);
         if (v != TYPE_LENG(tp)) {
-            tp = copy_type_shallow(tp);
+            tp = clone_type_shallow(tp);
             TYPE_LENG(tp) = v;
             while (TYPE_REF(tp) && TYPE_KIND(TYPE_REF(tp))) {
                 TYPE_REF(tp) = TYPE_REF(TYPE_REF(tp));
@@ -5270,7 +5259,7 @@ static TYPE_DESC type_apply_type_parameter0(TYPE_DESC tp, ID type_params)
     } else if (TYPE_REF(tp)) {
         tq = type_apply_type_parameter0(TYPE_REF(tp), type_params);
         if (tq != TYPE_REF(tp)) {
-            tp = copy_type_shallow(tp);
+            tp = clone_type_shallow(tp);
             TYPE_REF(tp) = tq;
         }
     }
@@ -5323,7 +5312,7 @@ type_apply_type_parameter(TYPE_DESC tp, expv type_param_values)
 
     type_param_values = compiled_type_param_values;
 
-    tq = copy_type_shallow(tp);
+    tq = clone_type_shallow(tp);
 
     if (TYPE_PARENT(tq)) {
         /*

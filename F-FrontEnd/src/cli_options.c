@@ -24,6 +24,7 @@ static const bool DEFAULT_OCL_ENABLED = false;
 static const bool DEFAULT_PGI_ENABLED = false;
 static const bool DEFAULT_CDIR_ENABLED = false;
 static const bool DEFAULT_MODULE_CACHE_ENABLED = true;
+static const bool DEFAULT_ADD_TIMESTAMP_ENABLED = true;
 static const bool DEFAULT_PRINT_HELP = false;
 static const bool DEFAULT_PRINT_OPTS = false;
 
@@ -60,6 +61,7 @@ void init_cli_options(cli_options* opts)
     opts->cdir_enabled = DEFAULT_CDIR_ENABLED;
     opts->pgi_enabled = DEFAULT_PGI_ENABLED;
     opts->module_cache_enabled = DEFAULT_MODULE_CACHE_ENABLED;
+    opts->add_timestamp_enabled = DEFAULT_ADD_TIMESTAMP_ENABLED;
     opts->print_help = DEFAULT_PRINT_HELP;
     opts->print_opts = DEFAULT_PRINT_OPTS;
 }
