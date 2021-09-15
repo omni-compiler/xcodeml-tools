@@ -5,9 +5,9 @@ import xcodeml.util.XmLanguage;
 
 /**
  * Decompile option.
- * @deprecated Not thread-safe.
+// * @deprecated Not thread-safe.
  */
-@Deprecated
+// @Deprecated  // avoid warning
 public class XmOption
 {
     public static final int COMP_VENDOR_GNU = 'G';

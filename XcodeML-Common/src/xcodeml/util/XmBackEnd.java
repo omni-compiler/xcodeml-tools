@@ -199,7 +199,7 @@ public class XmBackEnd
             }
 
             XmDecompiler decompiler = _toolFactory.createDecompiler();
-            XmDecompilerContext context = _toolFactory.createDecompilerContext(_xmOption);
+            XmDecompilerContext context = _toolFactory.createDecompilerContext();
             
             if(maxColumns > 0) {
                 context.setProperty(XmDecompilerContext.KEY_MAX_COLUMNS, "" + maxColumns);
