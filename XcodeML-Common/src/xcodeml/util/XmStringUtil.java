@@ -67,17 +67,20 @@ public final class XmStringUtil
             throw new XmBindingException("not integer value '" + str + "'");
 
         do {
-            if(str.startsWith("0x") && radix == Radix.ALL || radix == Radix.HEX) {
-                
+            if(str.startsWith("0x")){
                 if(str.length() <= 2)
                     break;
-                
                 try {
-                    return Long.parseLong(str.substring(2, str.length()), 16);
+                    return Long.parseUnsignedLong(str.substring(2, str.length()), 16);
                 } catch(Exception e) {
                     break;
                 }
-                
+	    } else if(radix == Radix.HEX) {
+                try {
+                    return Long.parseLong(str, 16);
+                } catch(Exception e) {
+                    break;
+                }
             }
             
             if(radix == Radix.ALL || radix == Radix.DEC) {

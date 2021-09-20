@@ -18,6 +18,7 @@ state 2058
 	xmp_obj_ref : '*' .  (795)
 */
 
+/* NOTE: byacc does not support "reentrant paerser generation" */
 %define api.pure full
 %parse-param {ffront_context * ctx}
 %lex-param {ffront_context * ctx}
