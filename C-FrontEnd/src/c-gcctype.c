@@ -272,6 +272,7 @@ CGccBuiltinFuncInfo s_gccBuiltinFuncs[] = {
     { "__builtin_ctzll",                    0, BT_INT,                 GBF_FIXED },
     { "__builtin_popcountll",               0, BT_INT,                 GBF_FIXED },
     { "__builtin_parityll",                 0, BT_INT,                 GBF_FIXED },
+    { "__builtin_bswap16",                  0, BT_INT,                 GBF_FIXED },
     { "__builtin_bswap32",                  0, BT_INT,                 GBF_FIXED },
     { "__builtin_bswap64",                  0, BT_UNDEF,               GBF_INT64 },
     { "__builtin_alloca",                   0, BT_UNDEF,               GBF_VOIDPTR },

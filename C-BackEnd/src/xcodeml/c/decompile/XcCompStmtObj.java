@@ -78,8 +78,10 @@ public class XcCompStmtObj extends XcStmtObj
             _decls = (XcDeclsObj)child;
         else if(child instanceof XcStAndDeclObj)
             _stmtAndDeclList.add((XcStAndDeclObj)child);
-        else
+        else {
+	    System.out.println("child="+child);
             throw new IllegalArgumentException(child.getClass().getName());
+	}
     }
 
     @Override
