@@ -75,6 +75,7 @@ unsigned int s_dispParseTree            = 0;
 #define COPT_ALIGN      "--align-"
 #define COPT_NO_WARN    "--no-warn-"
 
+#define DEFAULT_SOURCE_FILE_NAME "<stdin>"
 
 const char *s_inFile = NULL;
 const char *s_outFile = NULL;
@@ -84,7 +85,7 @@ char s_tmpVarPrefix[CEXPR_OPTVAL_CHARLEN]                   = "tmp_var_";
 char s_gccLocalLabelPrefix[CEXPR_OPTVAL_CHARLEN]            = "local_label_";
 char s_xmlIndent[CEXPR_OPTVAL_CHARLEN]                      = "  ";
 char s_xmlEncoding[CEXPR_OPTVAL_CHARLEN]                    = "ISO-8859-1";
-char s_sourceFileName[CEXPR_OPTVAL_CHARLEN]                 = "<stdin>";
+char *s_sourceFileName                                      = NULL;
 
 char s_timeStamp[128];
 CCOL_SList s_noWarnIds;
@@ -452,6 +453,17 @@ procOptions(int argc, char **argv)
 
     memset(&s_noWarnIds, 0, sizeof(s_noWarnIds));
 
+    /* set default. */
+    if (s_sourceFileName != NULL) {
+      free(s_sourceFileName);
+    }
+    s_sourceFileName = strdup(DEFAULT_SOURCE_FILE_NAME);
+    if (s_sourceFileName == NULL) {
+      fprintf(stderr, CERR_508);
+      fprintf(stderr, "\n");
+      return 0;
+    }
+
     for(int i = 1; i < argc; ++i) {
         char *arg, *narg = NULL, *val = NULL;
         arg = argv[i];
@@ -463,7 +475,15 @@ procOptions(int argc, char **argv)
         if(arg[0] != '-') {
             if(s_inFile == NULL){
                 s_inFile = arg;
-                strcpy(s_sourceFileName, s_inFile);
+                if (s_sourceFileName != NULL) {
+                  free(s_sourceFileName);
+                }
+                s_sourceFileName = strdup(s_inFile);
+                if (s_sourceFileName == NULL) {
+                  fprintf(stderr, CERR_508);
+                  fprintf(stderr, "\n");
+                  return 0;
+                }
             }
             else {
                 fprintf(stderr, CERR_504, arg);

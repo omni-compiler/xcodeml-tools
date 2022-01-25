@@ -107,7 +107,7 @@ extern char s_xmlIndent[];
 //! xml encoding attribute
 extern char s_xmlEncoding[];
 //! XcodeProgram source attribute
-extern char s_sourceFileName[];
+extern char *s_sourceFileName;
 //! timestamp
 extern char s_timeStamp[];
 

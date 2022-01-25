@@ -170,7 +170,7 @@
 #define CERR_505 "E505: needs value after %s=\n"
 #define CERR_506 "E506: illegal value for %s*"
 #define CERR_507 "E507: illegal type name for %s*"
-#define CERR_508 
+#define CERR_508 "E508: insufficient memory"
 #define CERR_509 
 
 #define CWRN_001 "W001: no type or storage class"
