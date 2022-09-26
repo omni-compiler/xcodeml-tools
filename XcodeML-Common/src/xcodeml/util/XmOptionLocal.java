@@ -26,7 +26,7 @@ public class XmOptionLocal implements IXmOption
     private boolean _openMP = false;
 
     /** if compiling OpenMP only target is enabled */
-    private boolean _openMPonlyTarget = false;
+    private boolean _openMPTarget = false;
 
     /** if compiling coarray is enabled */
     private boolean _coarray = false;
@@ -228,9 +228,9 @@ public class XmOptionLocal implements IXmOption
      * @param enable true then translate OpenMP only target directive.
      */
     @Override
-    public void setIsOpenMPonlyTarget(boolean enable)
+    public void setIsOpenMPTarget(boolean enable)
     {
-     	_openMPonlyTarget = enable;
+     	_openMPTarget = enable;
     }
 
     /**
@@ -245,14 +245,14 @@ public class XmOptionLocal implements IXmOption
     }
 
     /**
-     * Checks does compiler translate OpenMP only target directive.
+     * Checks does compiler translate OpenMP target directive.
      *
-     * @return true if compiler translate OpenMP only target directive.
+     * @return true if compiler translate OpenMP otarget directive.
      */
     @Override
-    public boolean isOpenMPOnlyTarget()
+    public boolean isOpenMPTarget()
     {
-        return _openMPonlyTarget;
+        return _openMPTarget;
     }
 
     /**

@@ -173,14 +173,14 @@ public class XmOptionStatic implements IXmOption
     }
 
     /**
-     * Sets compiler to or not to translate OpenMP only target directive.
+     * Sets compiler to or not to translate OpenMP target directive.
      *
-     * @param enable true then translate OpenMP only target directive.
+     * @param enable true then translate OpenMP target directive.
      */
-    @Override
-    public void setIsOpenMPonlyTarget(boolean enable)
+    // @Override
+    public void setIsOpenMPTarget(boolean enable)
     {
-        XmOption.setIsOpenMPonlyTarget(enable);
+        XmOption.setIsOpenMPTarget(enable);
     }
 
     /**
@@ -199,10 +199,10 @@ public class XmOptionStatic implements IXmOption
      *
      * @return true if compiler translate OpenMP only target directive.
      */
-    @Override
-    public boolean isOpenMPOnlyTarget()
+    // @Override
+    public boolean isOpenMPTarget()
     {
-        return XmOption.isOpenMPOnlyTarget();
+        return XmOption.isOpenMPTarget();
     }
 
     /**

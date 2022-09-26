@@ -102,7 +102,7 @@ public interface IXmOption {
      *
      * @param enable true then translate OpenMP only target directive.
      */
-    void setIsOpenMPonlyTarget(boolean enable);
+    void setIsOpenMPTarget(boolean enable);
 
     /**
      * Checks does compiler translate OpenMP directive.
@@ -116,7 +116,7 @@ public interface IXmOption {
      *
      * @return true if compiler translate OpenMP only target directive.
      */
-    boolean isOpenMPOnlyTarget();
+    boolean isOpenMPTarget();
 
     /**
      * Sets compiler to or not to translate coarrays

@@ -96,6 +96,7 @@ public class XmcXcodeToXcTranslator {
         if (visitor == null) {
             throw new XmTranslationException(null, "unknown node : " + n.getNodeName());
         }
+        // System.out.println("visitor="+visitor+", n="+n);
         visitor.enter(tc, n, parent);
     }
 
@@ -2946,6 +2947,14 @@ public class XmcXcodeToXcTranslator {
 	  enterNodes(tc, arrayObj, getContent(arrayAddrNode));
 	}
 	else {
+          System.out.println("nodeName="+nodeName);
+          // for debug
+          System.out.println("arrayRefNode="+arrayRefNode);
+          NodeList list = arrayRefNode.getChildNodes();
+          for (int i = 0; i < list.getLength(); i++) {
+            Node childNode = list.item(i);
+            System.out.println("["+i+"] = "+childNode);
+          }
 	  throw new XmTranslationException(arrayRefNode, "Invalid arrayRef: arrayAddr not found.");
 	}
 	

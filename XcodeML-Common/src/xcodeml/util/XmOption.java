@@ -31,8 +31,8 @@ public class XmOption
     /** if compiling OpenMP is enabled */
     private static boolean _openMP = false;
 
-    /** if compiling OpenMP only target is enabled */
-    private static boolean _openMPonlyTarget = false;
+    /** if compiling OpenMP target is enabled */
+    private static boolean _openMPTarget = false;
 
     /** if compiling coarray is enabled */
     private static boolean _coarray = false;
@@ -212,13 +212,13 @@ public class XmOption
     }
 
     /**
-     * Sets compiler to or not to translate OpenMP only target directive.
+     * Sets compiler to or not to translate OpenMP target directive.
      *
-     * @param enable true then translate OpenMP only target directive.
+     * @param enable true then translate OpenMP target directive.
      */
-    public static void setIsOpenMPonlyTarget(boolean enable)
+    public static void setIsOpenMPTarget(boolean enable)
     {
-     	_openMPonlyTarget = enable;
+     	_openMPTarget = enable;
     }
 
     /**
@@ -232,13 +232,13 @@ public class XmOption
     }
 
     /**
-     * Checks does compiler translate OpenMP only target directive.
+     * Checks does compiler translate OpenMP target directive.
      *
-     * @return true if compiler translate OpenMP only target directive.
+     * @return true if compiler translate OpenMP target directive.
      */
-    public static boolean isOpenMPOnlyTarget()
+    public static boolean isOpenMPTarget()
     {
-        return _openMPonlyTarget;
+        return _openMPTarget;
     }
 
     /**
