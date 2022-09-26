@@ -71,6 +71,7 @@ compile_acc_clause(CExpr *clause, CExpr *parent)
     case ACC_UPDATE_CLAUSE:
     case ACC_CAPTURE:
     case ACC_NOHOST:
+    case ACC_DEFAULT:
         return;
 
     case ACC_IF:

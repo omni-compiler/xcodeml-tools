@@ -55,10 +55,13 @@ static CExpr* parse_ACC_clauses(void);
 static CExpr* parse_ACC_namelist(void);
 static CExpr* parse_ACC_reduction_namelist(int *r);
 static CExpr* parse_ACC_clause_arg(void);
+static CExpr* parse_ACC_clause_arg_list(void);
 static CExpr* parse_ACC_C_subscript_list(void);
 
 #define ACC_PG_LIST(pg,args) _omp_pg_list(pg,args)
-#define ACC_LIST2(arg1,arg2) (CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
+#define ACC_LIST1(arg1)         (CExpr*)allocExprOfList1(EC_UNDEF,arg1)
+#define ACC_LIST2(arg1,arg2) 	(CExpr*)allocExprOfList2(EC_UNDEF,arg1,arg2)
+#define ACC_LIST3(arg1,arg2,arg3)                (CExpr*)allocExprOfList3(EC_UNDEF,arg1,arg2,arg3)
 
 static CExpr* _omp_pg_list(int omp_code,CExpr* args)
 {
@@ -189,11 +192,9 @@ int parse_ACC_pragma()
 	pg_ACC_pragma = ACC_WAIT;
 	pg_get_token();
 	if(pg_tok == '('){
-	    CExpr *x;
-	    if((x = parse_ACC_clause_arg()) == NULL) 
-		goto syntax_err;
-	    pg_ACC_list = (CExpr*)allocExprOfList1(EC_UNDEF,x);
-	} else pg_ACC_list = NULL;
+	  if((pg_ACC_list = parse_ACC_clause_arg_list()) == NULL) 
+	    goto syntax_err;
+	} else goto syntax_err;
 	ret= PRAGMA_EXEC;
 	goto chk_end;
     }
@@ -335,6 +336,15 @@ static CExpr* parse_ACC_clauses()
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT,v);
+      } else if(PG_IS_IDENT("default")){
+	  pg_get_token();
+	  if(pg_tok != '(') goto syntax_err;
+	  pg_get_token();
+	  if(pg_tok != PG_IDENT) goto syntax_err;
+	  c = ACC_PG_LIST(ACC_DEFAULT,ACC_LIST1(pg_tok_val));
+	  pg_get_token();
+	  if(pg_tok != ')') goto syntax_err;
+	  pg_get_token();
       } else if(PG_IS_IDENT("present_or_copy") || PG_IS_IDENT("pcopy")){
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
@@ -388,6 +398,12 @@ static CExpr* parse_ACC_clauses()
 	  if(pg_tok != '(') v = NULL;
 	    else if((v = parse_ACC_clause_arg()) == NULL) goto syntax_err;
 	    c = ACC_PG_LIST(ACC_ASYNC,v);
+      } else if(PG_IS_IDENT("wait")){  // arg
+	  pg_get_token();
+	  if(pg_tok != '(') goto syntax_err;
+	  else if((v = parse_ACC_clause_arg_list()) == NULL) goto syntax_err;
+	  c = ACC_PG_LIST(ACC_WAIT_CLAUSE,v);
+	  // printf("c="); dumpExpr(stdout,c);
       } else if(PG_IS_IDENT("gang")){
 	  pg_get_token();
 	  if(pg_tok != '(') v = NULL;
@@ -554,7 +570,7 @@ static CExpr* parse_ACC_clause_arg()
     CExpr *v;
 
     if(pg_tok != '('){
-      addError(NULL,"ACC reduction clause requires argument");
+      addError(NULL,"ACC clause requires argument");
       return NULL;
     }
     pg_get_token();
@@ -562,6 +578,33 @@ static CExpr* parse_ACC_clause_arg()
     if(pg_tok != ')') goto syntax_err;
     pg_get_token();
     return v;
+
+  syntax_err:
+    addError(NULL,"ACC: syntax error in ACC pragma clause");
+    return NULL;
+}
+
+static CExpr* parse_ACC_clause_arg_list()
+{
+    CExpr *v;
+    CExpr* list;
+
+    if(pg_tok != '('){
+      addError(NULL,"ACC clause requires the list of expression");
+      return NULL;
+    }
+    pg_get_token();
+    list = EMPTY_LIST;
+ next:
+    if((v = pg_parse_expr()) == NULL) goto syntax_err;
+    list = exprListAdd(list, v);
+    if(pg_tok == ','){
+      pg_get_token();
+      goto next;
+    } else if(pg_tok == ')') {
+      pg_get_token();
+      return list;
+    }
 
   syntax_err:
     addError(NULL,"ACC: syntax error in ACC pragma clause");

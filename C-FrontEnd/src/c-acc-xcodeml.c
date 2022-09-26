@@ -114,8 +114,9 @@ void out_ACC_name_list(FILE *fp,int indent, CExprOfList *list)
 	if(EXPR_CODE(node) == EC_ARRAY_REF){
 	  out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
 	}else{
-	outxPrint(fp,indent1,"<Var>%s</Var>\n",
-		  ((CExprOfSymbol *)node)->e_symName);
+	  outxContext(fp,indent1,node);
+	  //	  outxPrint(fp,indent1,"<Var>%s</Var>\n",
+	  //		    ((CExprOfSymbol *)node)->e_symName);
 	}
     }
     outxPrint(fp,indent,"</list>\n");
@@ -190,6 +191,7 @@ char *accDirectiveName(int c)
   case ACC_SYNC: return "SYNC";
   case ACC_FLUSH: return "FLUSH";
   case ACC_YIELD: return "YIELD";
+  case ACC_DEFAULT: return "DEFAULT";
   default: return "??ACC??";
   }
 }
@@ -225,6 +227,7 @@ char *accClauseName(int c)
   case ACC_COPYIN: return "COPYIN";
   case ACC_COPYOUT: return "COPYOUT";
   case ACC_DELETE: return "DELETE";
+  case ACC_DEFAULT: return "DEFAULT";
 
   case ACC_PRESENT: return "PRESENT";
   case ACC_PRESENT_OR_CREATE: return "PRESENT_OR_CREATE";
@@ -251,6 +254,8 @@ char *accClauseName(int c)
   case ACC_BIND: return "BIND";
   case ACC_NOHOST: return "NOHOST";
   case ACC_ROUTINE_ARG: return "ROUTINE_ARG";
+
+  case ACC_WAIT_CLAUSE: return "WAIT_CLAUSE";
 
   default:  return "???ACC clause???";
   }
