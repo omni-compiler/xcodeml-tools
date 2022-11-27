@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil ; -*- */
 #include <sys/param.h>
 #include <ctype.h>
 #include <string.h>
@@ -460,6 +461,9 @@ static CExpr* parse_ACC_clauses()
 	} else if(PG_IS_IDENT("nohost")){
 	    pg_get_token();
 	    c = ACC_PG_LIST(ACC_NOHOST,NULL);
+	} else if(PG_IS_IDENT("auto")){
+	    pg_get_token();
+	    c = ACC_PG_LIST(ACC_AUTO,NULL);
 	} else {
 	  addError(NULL,"unknown ACC directive clause '%s'",pg_tok_buf);
 	    goto syntax_err;
@@ -497,6 +501,7 @@ static CExpr* parse_ACC_namelist()
     pg_get_token();
 
     if(pg_tok != '['){
+        // printf("acc map v="); dumpExpr(stdout,v); // debug
       args = exprListAdd(args, v);
     }
     else{
@@ -519,14 +524,18 @@ static CExpr* parse_ACC_namelist()
 
 static CExpr* parse_ACC_reduction_namelist(int *r)
 {
-  CExpr* args;
+    CExpr* args;
+    CExpr* v = NULL;
+    CExpr* list = NULL;
 
   args = EMPTY_LIST;
-    if(pg_tok != '('){
+  if(pg_tok != '('){
       addError(NULL,"ACC reduction clause requires name list");
 	return NULL;
     }
+
     pg_get_token();
+
     switch(pg_tok){
     case '+': *r = ACC_REDUCTION_PLUS; break;
     case '-': *r = ACC_REDUCTION_MINUS; break;
@@ -551,8 +560,19 @@ static CExpr* parse_ACC_reduction_namelist(int *r)
       addError(NULL,"empty name list in ACC reduction clause");
 	return NULL;
     }
-    args = exprListAdd(args,pg_tok_val);
+
+    v = pg_tok_val;
     pg_get_token();
+
+    if(pg_tok != '['){
+      args = exprListAdd(args, v);
+    }
+    else{
+      list = parse_ACC_C_subscript_list();
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      args = exprListAdd(args, (CExpr*)arrayRef);
+    }
+
     if(pg_tok == ','){
 	pg_get_token();
 	goto next;

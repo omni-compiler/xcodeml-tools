@@ -131,6 +131,9 @@ enum OMP_pragma_clause {
     OMP_SAFELEN = 51,
     OMP_SIMDLEN = 52,
     OMP_ALIGNED = 53,
+    OMP_UNIFORM = 54,
+    OMP_INBRANCH = 55,
+    OMP_NOTINBRANCH = 56,
 };
 
 enum OMP_sched_clause {
@@ -205,5 +208,6 @@ const char *ompDependClauseTypeString(OMP_depend_type dt);
 	
 CExpr* lexParsePragmaOMP(char *p, int *token);
 void out_OMP_PRAGMA(FILE *fp, int indent, int code, CExpr* expr);
+void compile_OMP_pragma(CExpr *expr, CExpr *parent);
 
 #endif

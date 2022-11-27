@@ -110,6 +110,7 @@ void out_ACC_name_list(FILE *fp,int indent, CExprOfList *list)
     outxPrint(fp,indent,"<list>\n");
     EXPR_FOREACH(ite, list) {
 	CExpr *node = EXPR_L_DATA(ite);
+	
 	// outx_IDENT(fp,indent1+1,(CExprOfSymbol *)node);
 	if(EXPR_CODE(node) == EC_ARRAY_REF){
 	  out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
@@ -192,6 +193,7 @@ char *accDirectiveName(int c)
   case ACC_FLUSH: return "FLUSH";
   case ACC_YIELD: return "YIELD";
   case ACC_DEFAULT: return "DEFAULT";
+  case ACC_AUTO: return "AUTO";
   default: return "??ACC??";
   }
 }
@@ -256,6 +258,7 @@ char *accClauseName(int c)
   case ACC_ROUTINE_ARG: return "ROUTINE_ARG";
 
   case ACC_WAIT_CLAUSE: return "WAIT_CLAUSE";
+  case ACC_AUTO: return "AUTO";
 
   default:  return "???ACC clause???";
   }

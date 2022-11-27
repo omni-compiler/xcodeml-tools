@@ -198,6 +198,7 @@ usage(const char *argv0)
         "--no-xinfo                suppress XcodeProgram attributes and line number",
         "                          attributes.",
         "-fxmp                     translate xmp pragma directive.",
+        "-facc                     translate openacc pragma directive.",
         "--verbose                 print syntax tree transformation statistics and",
         "                          processing status.",
         "--debug                   dump parse tree to stdout.",

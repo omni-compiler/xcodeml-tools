@@ -9,6 +9,7 @@
 #include "c-pragma.h"
 #include "c-xmp.h"
 #include "c-acc.h"
+#include "c-omp.h"
 
 PRIVATE_STATIC void
 compile_typeDesc(CExprOfTypeDesc *td, CDeclaratorContext declrContext);
@@ -2150,6 +2151,7 @@ compile1(CExpr *expr, CExpr *parent)
                 }
             }
 
+            if(IS_OMP_PRAGMA_CODE(code)) compile_OMP_pragma(expr, parent);
             if(IS_ACC_PRAGMA_CODE(code)) compile_acc_pragma(expr, parent);
         }
     }

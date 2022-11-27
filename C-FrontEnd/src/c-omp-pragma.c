@@ -54,7 +54,9 @@ static int parse_OMP_pragma(void);
 static CExpr* parse_OMP_clauses(void);
 static CExpr* parse_OMP_namelist(void);
 static CExpr* parse_OMP_reduction_namelist(int *r);
-static CExpr* parse_OMP_array_list(void);
+// static CExpr* parse_OMP_array_list(void);
+static CExpr* parse_map_namelist(void);
+
 static CExpr* parse_OMP_to(int *r);
 static CExpr* parse_OMP_dist_schedule(void);
 static CExpr* parse_OMP_proc_bind(void);
@@ -935,7 +937,8 @@ parse_map_type_seq(pg_token_context_t *prevctx)
   return ret;
 }
 
-static CExpr *parse_array_list()
+
+static CExpr *parse_map_namelist()
 {
   CExpr *args = EMPTY_LIST;
   pg_token_context_t pgctx;
@@ -1087,7 +1090,7 @@ static CExpr *parse_array_list()
         }
         if (map_type_val < 0) {
           addError(NULL, "OMP: OpenMP map clause: an internal error around "
-                   "map-type/map-type-modifer combination analisys.");
+                   "map-type/map-type-modifer combination analysis.");
           return NULL;
         }
         pg_seek_token(&pgctx);
@@ -1129,10 +1132,11 @@ static CExpr *parse_array_list()
   pg_get_token();
 
   if (pg_tok != '[') {
-    CExpr *varRef = EMPTY_LIST;
-    varRef = exprListAdd(varRef, v);
-    varRef = exprListAdd(varRef, EMPTY_LIST);
-    args = exprListAdd(args, varRef);
+    // CExpr *varRef = EMPTY_LIST;
+    // varRef = exprListAdd(varRef, v);
+    // varRef = exprListAdd(varRef, EMPTY_LIST);
+    // args = exprListAdd(args, varRef);
+    args = exprListAdd(args, v);
   } else{
     CExpr *list = parse_OMP_C_subscript_list();
     CExpr *arrayRef = exprBinary(EC_ARRAY_REF, v, list);
@@ -1168,6 +1172,42 @@ static CExpr *parse_array_list()
   return NULL;
 }
 
+
+#if 0
+/* ------------------------------- */
+static CExpr* parse_map_namelist()
+{
+
+ next:
+    if(pg_tok != PG_IDENT){
+      addError(NULL,"ACC: empty name list in ACC directive clause");
+      return NULL;
+    }
+
+    v = pg_tok_val;
+    pg_get_token();
+
+    if(pg_tok != '['){
+      args = exprListAdd(args, v);
+    }
+    else{
+      list = parse_ACC_C_subscript_list();
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      args = exprListAdd(args, (CExpr*)arrayRef);
+    }
+
+    if(pg_tok == ','){
+      pg_get_token();
+      goto next;
+    } else if(pg_tok == ')'){
+      pg_get_token();
+      return args;
+    } 
+
+    addError(NULL,"ACC: syntax error in ACC pragma clause");
+    return NULL;
+}
+#endif
 
 /*
   depend([depend-modifier,] dependency-type : locator-list)
@@ -1850,7 +1890,7 @@ static CExpr* parse_OMP_clauses()
     else if(PG_IS_IDENT("map")){
       pg_get_token();
       if(pg_tok != '(') goto syntax_err;
-      if((v = parse_array_list()) == NULL) goto syntax_err;
+      if((v = parse_map_namelist()) == NULL) goto syntax_err;
       c = OMP_PG_LIST(OMP_TARGET_DATA_MAP, v);
     } else if(PG_IS_IDENT("to")){
       pg_get_token();
@@ -2232,6 +2272,9 @@ static CExpr* parse_OMP_if(int *r) {
 static CExpr* parse_OMP_namelist()
 {
     CExpr* args = EMPTY_LIST;
+    CExpr* v = NULL;
+    CExpr* list = NULL;
+
     if(pg_tok != '(') {
       addError(NULL,"OMP: OMP directive clause requires name list");
       return NULL;
@@ -2244,8 +2287,20 @@ static CExpr* parse_OMP_namelist()
 	return NULL;
     }
 
-    args = exprListAdd(args, pg_tok_val);
+    v = pg_tok_val;
     pg_get_token();
+
+    if(pg_tok != '['){
+      args = exprListAdd(args, v);
+    }
+    else{
+      list = parse_OMP_C_subscript_list();
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      args = exprListAdd(args, (CExpr*)arrayRef);
+    }
+
+    // args = exprListAdd(args, pg_tok_val);
+    // pg_get_token();
     if(pg_tok == ','){
       pg_get_token();
       goto next;
@@ -2261,12 +2316,17 @@ static CExpr* parse_OMP_namelist()
 
 static CExpr* parse_OMP_reduction_namelist(int *r)
 {
-  CExpr* args = EMPTY_LIST;
+    CExpr* args = EMPTY_LIST;
+    CExpr* v = NULL;
+    CExpr* list = NULL;
+
     if(pg_tok != '('){
       addError(NULL,"OMP reduction clause requires name list");
 	return NULL;
     }
+
     pg_get_token();
+
     switch(pg_tok){
     case '+': *r = OMP_DATA_REDUCTION_PLUS;         break;
     case '-': *r = OMP_DATA_REDUCTION_MINUS;        break;
@@ -2291,8 +2351,21 @@ static CExpr* parse_OMP_reduction_namelist(int *r)
       addError(NULL,"empty name list in OMP reduction clause");
 	return NULL;
     }
-    args = exprListAdd(args,pg_tok_val);
+
+    v = pg_tok_val;
     pg_get_token();
+
+    if(pg_tok != '['){
+      args = exprListAdd(args, v);
+    }
+    else{
+      list = parse_OMP_C_subscript_list();
+      CExpr* arrayRef = exprBinary(EC_ARRAY_REF, v, list);
+      args = exprListAdd(args, (CExpr*)arrayRef);
+    }
+
+    // args = exprListAdd(args,pg_tok_val);
+    // pg_get_token();
     if(pg_tok == ','){
 	pg_get_token();
 	goto next;

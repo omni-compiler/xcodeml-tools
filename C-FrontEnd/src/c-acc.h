@@ -88,6 +88,7 @@ enum ACC_pragma_clause {
 
     ACC_BIND,
     ACC_NOHOST,
+    ACC_AUTO,
     ACC_ROUTINE_ARG,
     ACC_DEFAULT,
     ACC_WAIT_CLAUSE,

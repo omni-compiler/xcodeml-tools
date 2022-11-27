@@ -13,8 +13,8 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list);
 void out_ACC_subscript(FILE *fp,int indent, CExpr *subscript);
 void out_ACC_arrayRef(FILE *fp,int indent, CExprOfBinaryNode *arrayRef);
 
-static void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
-static void out_OMP_map(FILE *fp, int indent, CExprOfList *list);
+// static void out_OMP_IF(FILE *fp, int indent, CExpr *arg);
+static void out_OMP_map_namelist(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_depend(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_atomic(FILE *fp, int indent, CExprOfList *list);
 static void out_OMP_schedule(FILE *fp, int indent, CExpr *arg);
@@ -85,7 +85,8 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
       break;
 
   case OMP_DIR_IF:
-      out_OMP_IF(fp, indent1 + 1, arg);
+      outxContext(fp,indent1+1,arg);
+      /* out_OMP_IF(fp, indent1 + 1, arg); */
       break;
 
   case OMP_DIR_NUM_THREADS:
@@ -168,8 +169,9 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
 
   case OMP_TARGET_DATA_MAP:
     namelist = (CExprOfList *)arg;
-    if(EXPR_L_SIZE(namelist) != 0)
-      out_OMP_map(fp, indent1, namelist);
+    if(EXPR_L_SIZE(namelist) != 0){
+      out_OMP_map_namelist(fp, indent1, namelist);
+    }
     break;
 
   case OMP_PROC_BIND:
@@ -197,6 +199,7 @@ outx_OMP_Clause(FILE *fp, int indent, CExprOfList* clause)
   outxPrint(fp,indent,"</list>\n");
 }
 
+#ifdef not
 static void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
 {
   switch(((CExprOfList *)arg)->e_aux) {
@@ -220,6 +223,7 @@ static void out_OMP_IF(FILE *fp, int indent, CExpr *arg)
     break;
   }
 }
+#endif
 
 void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
 {
@@ -239,7 +243,7 @@ void out_OMP_name_list(FILE *fp,int indent, CExprOfList *list)
     outxPrint(fp,indent,"</list>\n");
 }
 
-static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
+static void out_OMP_map_namelist(FILE *fp,int indent, CExprOfList *list)
 {
   int indent1 = indent+1;
   int cur_indent = indent1;
@@ -259,7 +263,7 @@ static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
 
     if (EXPR_CODE(v) == EC_NUMBER_CONST) {
       const char *map_type;
-      const char *always;
+      const char *always = NULL;
       long long l = EXPR_NUMBERCONST(v)->e_numValue.ll;
       int i = (int)(-l);
 
@@ -283,12 +287,13 @@ static void out_OMP_map(FILE *fp,int indent, CExprOfList *list)
     } else if (EXPR_CODE(v) == EC_ARRAY_REF) {
       out_ACC_arrayRef(fp, cur_indent, (CExprOfBinaryNode *)v);
     } else {
-      CExpr *var = EXPR_L_DATA(EXPR_L_AT(v, 0));
-      outxPrint(fp, cur_indent, "<list>\n");
-      outxPrint(fp, cur_indent + 1, "<Var>%s</Var>\n",
-                ((CExprOfSymbol *)var)->e_symName);
-      outxPrint(fp, cur_indent + 1, "<list></list>\n");
-      outxPrint(fp, cur_indent, "</list>\n");      
+      outxContext(fp,cur_indent,v);
+      // CExpr *var = EXPR_L_DATA(EXPR_L_AT(v, 0));
+      // outxPrint(fp, cur_indent, "<list>\n");
+      // outxPrint(fp, cur_indent + 1, "<Var>%s</Var>\n",
+      // ((CExprOfSymbol *)var)->e_symName);
+      // outxPrint(fp, cur_indent + 1, "<list></list>\n");
+      // outxPrint(fp, cur_indent, "</list>\n");      
     }
   }
   cur_indent--;
@@ -355,12 +360,13 @@ static void out_OMP_depend(FILE *fp,int indent, CExprOfList *list)
           if (EXPR_CODE(v2) == EC_ARRAY_REF) {
             out_ACC_arrayRef(fp, cur_indent, (CExprOfBinaryNode *)v2);
           } else {
-            CExpr *var = EXPR_L_DATA(EXPR_L_AT(v2, 0));
-            outxPrint(fp, cur_indent, "<list>\n");
-            outxPrint(fp, cur_indent + 1, "<Var>%s</Var>\n",
-                      ((CExprOfSymbol *)var)->e_symName);
-            outxPrint(fp, cur_indent + 1, "<list></list>\n");
-            outxPrint(fp, cur_indent, "</list>\n");      
+            outxContext(fp,cur_indent,v2);
+            // CExpr *var = EXPR_L_DATA(EXPR_L_AT(v2, 0));
+            // outxPrint(fp, cur_indent, "<list>\n");
+            // outxPrint(fp, cur_indent + 1, "<Var>%s</Var>\n",
+            // ((CExprOfSymbol *)var)->e_symName);
+            // outxPrint(fp, cur_indent + 1, "<list></list>\n");
+            // outxPrint(fp, cur_indent, "</list>\n");      
           }
         }
       }
@@ -381,13 +387,17 @@ static void out_OMP_atomic(FILE *fp,int indent, CExprOfList *list)
     outxPrint(fp,indent,"<list>\n");
     EXPR_FOREACH(ite, list) {
       CExpr *node = EXPR_L_DATA(ite);
-      if(EXPR_CODE(node) == EC_ARRAY_REF){
-        out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+      if(EXPR_CODE(node) != EC_IDENT){
+        addError(NULL,"fatal: out_OMP_atomic");
+        continue;
       }
-      else{
-        outxPrint(fp,indent1,"<string>%s</string>\n",
-                  ((CExprOfSymbol *)node)->e_symName);
-      }
+      // if(EXPR_CODE(node) == EC_ARRAY_REF){
+      // out_ACC_arrayRef(fp,indent1, (CExprOfBinaryNode*)node);
+      // }
+      // else{
+      outxPrint(fp,indent1,"<string>%s</string>\n",
+                ((CExprOfSymbol *)node)->e_symName);
+      //}
     }
     outxPrint(fp,indent,"</list>\n");
 }
