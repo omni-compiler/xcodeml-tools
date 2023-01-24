@@ -123,11 +123,23 @@ compile_OMP_clause(CExpr *clause, CExpr *parent)
       if(EXPR_L_SIZE(map_namelist) == 0) break;
 
       CCOL_DListNode *ite;
+
+#if 1
+    EXPR_FOREACH(ite, map_namelist) {
+	CExpr *node = EXPR_L_DATA(ite);
+	if(EXPR_CODE(node) == EC_ARRAY_REF){
+	  compile_OMP_arrayRef((CExprOfBinaryNode*)node, parent);
+	} else {
+	  compile1(node, parent);
+	}
+    }
+#else      
       EXPR_FOREACH(ite, map_namelist) {
 	CExpr *v = EXPR_L_DATA(ite);
 	if (EXPR_CODE(v) == EC_NUMBER_CONST) continue;
 	compile1(v, parent);
       }
+#endif
     }
     break;
 
