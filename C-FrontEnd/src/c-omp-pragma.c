@@ -466,7 +466,6 @@ int parse_OMP_target_pragma()
   int ret = PRAGMA_PREFIX; /* default */
 
   if(PG_IS_IDENT("data")){ /* target data */
-    ret = PRAGMA_EXEC;
     pg_OMP_pragma = OMP_TARGET_DATA;
     pg_get_token();
     goto chk_end;
