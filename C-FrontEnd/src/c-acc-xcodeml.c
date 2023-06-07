@@ -92,6 +92,7 @@ outx_ACC_Clause(FILE *fp, int indent, CExprOfList* clause)
   case ACC_VECT_LEN:
   case ACC_COLLAPSE:
   case ACC_DEVICE_TYPE:
+  case ACC_UNROLL:
       outxContext(fp,indent1+1,arg);
       break;
 
@@ -259,6 +260,8 @@ char *accClauseName(int c)
 
   case ACC_WAIT_CLAUSE: return "WAIT_CLAUSE";
   case ACC_AUTO: return "AUTO";
+
+  case ACC_UNROLL: return "unroll";
 
   default:  return "???ACC clause???";
   }

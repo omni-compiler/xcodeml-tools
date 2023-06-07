@@ -84,6 +84,7 @@ compile_acc_clause(CExpr *clause, CExpr *parent)
     case ACC_VECT_LEN:
     case ACC_DEVICE_TYPE:
     case ACC_COLLAPSE:
+    case ACC_UNROLL:
         compile1(arg, parent);
         return;
 

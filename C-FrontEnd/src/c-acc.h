@@ -92,6 +92,8 @@ enum ACC_pragma_clause {
     ACC_ROUTINE_ARG,
     ACC_DEFAULT,
     ACC_WAIT_CLAUSE,
+
+    ACC_UNROLL, /* extention */
 };
 
 void out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr);
