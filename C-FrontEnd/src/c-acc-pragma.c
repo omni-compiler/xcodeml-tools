@@ -337,6 +337,10 @@ static CExpr* parse_ACC_clauses()
 	  pg_get_token();
 	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
 	  c = ACC_PG_LIST(ACC_PRESENT,v);
+      } else if(PG_IS_IDENT("cache")){
+	  pg_get_token();
+	  if((v = parse_ACC_namelist()) == NULL) goto syntax_err;
+	  c = ACC_PG_LIST(ACC_CACHE_CL,v);
       } else if(PG_IS_IDENT("default")){
 	  pg_get_token();
 	  if(pg_tok != '(') goto syntax_err;

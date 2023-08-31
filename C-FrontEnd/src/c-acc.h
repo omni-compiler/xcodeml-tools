@@ -94,6 +94,7 @@ enum ACC_pragma_clause {
     ACC_WAIT_CLAUSE,
 
     ACC_UNROLL, /* extention */
+    ACC_CACHE_CL, /* cache clause */
 };
 
 void out_ACC_PRAGMA(FILE *fp, int indent, int pragma_code, CExpr* expr);

@@ -261,7 +261,8 @@ char *accClauseName(int c)
   case ACC_WAIT_CLAUSE: return "WAIT_CLAUSE";
   case ACC_AUTO: return "AUTO";
 
-  case ACC_UNROLL: return "unroll";
+  case ACC_UNROLL: return "UNROLL";
+  case ACC_CACHE_CL: return "CACHE";
 
   default:  return "???ACC clause???";
   }
