@@ -117,6 +117,9 @@ static enum XMP_pragma to_XMP_pragma(omllint_t val)
     case XMP_GLOBAL_IO_BEGIN: return XMP_GLOBAL_IO_BEGIN;
     case XMP_END_GLOBAL_IO: return XMP_END_GLOBAL_IO;
 
+    case XMP_PARALLEL_FOR: return XMP_PARALLEL_FOR;
+    case XMP_PARALLEL_REDUCE: return XMP_PARALLEL_REDUCE;
+      
     default:
     {
         fatal("unknown XMP pragma");
@@ -444,6 +447,19 @@ void compile_XMP_directive(expr x)
             XMP_io_desired_statements = 0;
             break;
 
+        case XMP_PARALLEL_FOR: {
+	    check_INEXEC();
+            /* check arg: (index_list on_ref reduction_opt opt)  */
+            x1 = XMP_compile_list(EXPR_ARG1(c));
+            x2 = XMP_compile_list(EXPR_ARG2(c));
+            c = list2(LIST, x1, x2);
+            push_ctl(CTL_XMP);
+            CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_PARALLEL_FOR, c, NULL);
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
+            XMP_do_required = TRUE;
+            break;
+        }
+
         default:
             fatal("unknown XMP pragma");
     }
@@ -515,7 +531,8 @@ int check_for_XMP_pragma(int st_no, expr x)
     }
 
     /* check DO directive, close it */
-    if (CTL_TYPE(ctl_top) == CTL_XMP && CTL_XMP_ARG_DIR(ctl_top) == XMP_LOOP) {
+    if (CTL_TYPE(ctl_top) == CTL_XMP && (CTL_XMP_ARG_DIR(ctl_top) == XMP_LOOP ||
+					 CTL_XMP_ARG_DIR(ctl_top) == XMP_PARALLEL_FOR)) {
         statements = CURRENT_STATEMENTS;
         if (EXPR_CODE(statements) == LIST) {
             list lp;
@@ -536,7 +553,7 @@ int check_for_XMP_pragma(int st_no, expr x)
             fatal("XMP LOOP directive must be followed by do statements");
         }
         CTL_BLOCK(ctl_top) =
-            XMP_pragma_list(XMP_LOOP, CTL_XMP_ARG_CLAUSE(ctl_top), statements);
+            XMP_pragma_list(CTL_XMP_ARG_DIR(ctl_top), CTL_XMP_ARG_CLAUSE(ctl_top), statements);
         EXPR_LINE(CTL_BLOCK(ctl_top)) = EXPR_LINE(CTL_XMP_ARG(ctl_top));
         pop_ctl();
         goto done;

@@ -41,6 +41,9 @@ enum XMP_pragma {
     XMP_GLOBAL_IO_BEGIN,
     XMP_END_GLOBAL_IO,
 
+    XMP_PARALLEL_FOR,
+    XMP_PARALLEL_REDUCE,
+
     XMP_DIR_END
 };
 

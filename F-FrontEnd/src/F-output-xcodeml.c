@@ -1164,12 +1164,12 @@ static void outx_lineno(lineno_info *li)
  * output tag with format and lineno attribute
  */
 static void outx_vtagLineno(int l, const char *tag, lineno_info *li,
-                            va_list args)
+                            va_list *args)
 {
     sds_string buf1 = sdsempty(), buf2 = sdsempty();
     buf1 = sdscatprintf(buf1, "<%s", tag);
     if (args != NULL) {
-        buf2 = sdscatvprintf(buf2, buf1, args);
+        buf2 = sdscatvprintf(buf2, buf1, *args);
     } else {
         buf2 = sdscpy(buf2, buf1);
     }
@@ -1193,7 +1193,7 @@ static void outx_tagOfStatement1(int l, expv v, const char *attrs, ...)
     s_charBuf = sdscatprintf(s_charBuf, "%s%s", XTAG(v), attrs ? attrs : "");
     va_list args;
     va_start(args, attrs);
-    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), args);
+    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), &args);
     va_end(args);
     outx_puts(">\n");
     sdsfree(s_charBuf);
@@ -1240,7 +1240,7 @@ static void outx_tagOfStatementNoChild(int l, expv v, const char *attrs, ...)
     s_charBuf = sdscatprintf(s_charBuf, "%s%s", XTAG(v), attrs ? attrs : "");
     va_list args;
     va_start(args, attrs);
-    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), args);
+    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), &args);
     va_end(args);
     outx_puts("/>\n");
     sdsfree(s_charBuf);
@@ -1249,7 +1249,7 @@ static void outx_tagOfStatementNoChild(int l, expv v, const char *attrs, ...)
 static void outx_vtagOfDecl(int l, const char *tag, lineno_info *li,
                             va_list args)
 {
-    outx_vtagLineno(l, tag, li, args);
+    outx_vtagLineno(l, tag, li, &args);
 }
 
 static void outx_tagOfDecl1(int l, const char *tag, lineno_info *li, ...)
@@ -3273,6 +3273,10 @@ static void outx_XMP_dir_string(int l, expv v)
         case XMP_GLOBAL_IO:
             s = "XMP_GLOBAL_IO";
             break;
+
+        case XMP_PARALLEL_FOR:
+	  s = "XMP_PARALLEL_FOR";
+	  break;
 
         default:
             fatal("out_XMP_dir_string: unknown value=%d\n", EXPV_INT_VALUE(v));
