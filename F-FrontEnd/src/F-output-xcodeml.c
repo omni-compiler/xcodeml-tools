@@ -3275,7 +3275,7 @@ static void outx_XMP_dir_string(int l, expv v)
             break;
 
         case XMP_PARALLEL_FOR:
-	  s = "XMP_PARALLEL_FOR";
+	  s = "PARALLEL_FOR";
 	  break;
 
         default:

@@ -200,6 +200,8 @@ public class XmBackEnd
 
             XmDecompiler decompiler = _toolFactory.createDecompiler();
             XmDecompilerContext context = _toolFactory.createDecompilerContext();
+
+	    ((XmDecompilerContextWithXmOption)context).getXmOption().setIsSuppressLineDirective(_xmOption.isSuppressLineDirective());
             
             if(maxColumns > 0) {
                 context.setProperty(XmDecompilerContext.KEY_MAX_COLUMNS, "" + maxColumns);
