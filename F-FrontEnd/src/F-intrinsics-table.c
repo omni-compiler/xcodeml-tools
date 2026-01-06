@@ -2871,18 +2871,18 @@ intrinsic_entry intrinsic_table[] = {
      LANGSPEC_F90,
      INTR_CLASS_I},
 
-    // SIZE (ARRAY [, DIM])
+    // SIZE (ARRAY [, DIM, KIND])
     {INTR_SIZE,
      INTR_NAME_GENERIC,
      "size",
-     {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT},
+     {INTR_TYPE_ANY_ARRAY, INTR_TYPE_INT, INTR_TYPE_INT},
      INTR_TYPE_INT,
-     2,
+     3,
      -1,
      LANGSPEC_F90,
      INTR_CLASS_I,
      ARG0,
-     {"array", "dim"}},
+     {"array", "dim", "kind"}},
 
     // UBOUND (ARRAY [, DIM, KIND])
     {INTR_UBOUND,
