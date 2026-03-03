@@ -4647,6 +4647,7 @@ const struct keyword_token XMP_keywords[] = {{"end", XMPKW_END},
 
 				       {"parallel_for", XMPKW_PARALLEL_FOR},
 				       {"parallel_reduce", XMPKW_PARALLEL_REDUCE},
+				       {"tile", XMPKW_TILE},
 				       
                                        {0, 0}};
 

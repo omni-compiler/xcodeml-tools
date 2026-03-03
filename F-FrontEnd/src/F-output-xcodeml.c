@@ -3278,6 +3278,10 @@ static void outx_XMP_dir_string(int l, expv v)
 	  s = "PARALLEL_FOR";
 	  break;
 
+        case XMP_PARALLEL_REDUCE:
+	  s = "PARALLEL_REDUCE";
+	  break;
+	  
         default:
             fatal("out_XMP_dir_string: unknown value=%d\n", EXPV_INT_VALUE(v));
     }

@@ -449,7 +449,7 @@ void compile_XMP_directive(expr x)
 
         case XMP_PARALLEL_FOR: {
 	    check_INEXEC();
-            /* check arg: (index_list on_ref reduction_opt opt)  */
+            /* check arg: (index_list on_ref opt)  */
             x1 = XMP_compile_list(EXPR_ARG1(c));
             x2 = XMP_compile_list(EXPR_ARG2(c));
             c = list2(LIST, x1, x2);
@@ -460,6 +460,20 @@ void compile_XMP_directive(expr x)
             break;
         }
 
+        case XMP_PARALLEL_REDUCE: {
+	    check_INEXEC();
+            x1 = XMP_compile_list(EXPR_ARG1(c));
+            x2 = XMP_compile_list(EXPR_ARG2(c));
+	    x3 = EXPR_ARG3(c);
+	    x4 = XMP_compile_list(EXPR_ARG4(c));
+            c = list4(LIST, x1, x2, x3, x4);
+            push_ctl(CTL_XMP);
+            CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_PARALLEL_REDUCE, c, NULL);
+            EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
+            XMP_do_required = TRUE;
+            break;
+        }
+	  
         default:
             fatal("unknown XMP pragma");
     }
@@ -532,7 +546,8 @@ int check_for_XMP_pragma(int st_no, expr x)
 
     /* check DO directive, close it */
     if (CTL_TYPE(ctl_top) == CTL_XMP && (CTL_XMP_ARG_DIR(ctl_top) == XMP_LOOP ||
-					 CTL_XMP_ARG_DIR(ctl_top) == XMP_PARALLEL_FOR)) {
+					 CTL_XMP_ARG_DIR(ctl_top) == XMP_PARALLEL_FOR ||
+					 CTL_XMP_ARG_DIR(ctl_top) == XMP_PARALLEL_REDUCE)) {
         statements = CURRENT_STATEMENTS;
         if (EXPR_CODE(statements) == LIST) {
             list lp;
@@ -986,7 +1001,10 @@ expv XMP_compile_list(expr l)
 
     FOR_ITEMS_IN_LIST (lp, l) {
         x = LIST_ITEM(lp);
-        v = compile_expression(x);
+	if (x != NULL && EXPR_CODE(x) == LIST)
+	  v = XMP_compile_list(x);
+	else 
+	  v = compile_expression(x);
         ret_list = list_put_last(ret_list, v);
     }
 
