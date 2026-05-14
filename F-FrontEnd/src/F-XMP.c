@@ -452,7 +452,9 @@ void compile_XMP_directive(expr x)
             /* check arg: (index_list on_ref opt)  */
             x1 = XMP_compile_list(EXPR_ARG1(c));
             x2 = XMP_compile_list(EXPR_ARG2(c));
-            c = list2(LIST, x1, x2);
+	    x3 = EXPR_ARG3(c);
+	    if (x3) x3 = XMP_compile_list(x3);
+	    c = list3(LIST, x1, x2, x3);
             push_ctl(CTL_XMP);
             CTL_XMP_ARG(ctl_top) = XMP_pragma_list(XMP_PARALLEL_FOR, c, NULL);
             EXPR_LINE(CTL_OMP_ARG(ctl_top)) = current_line();
@@ -465,6 +467,7 @@ void compile_XMP_directive(expr x)
             x1 = XMP_compile_list(EXPR_ARG1(c));
             x2 = XMP_compile_list(EXPR_ARG2(c));
 	    x3 = EXPR_ARG3(c);
+	    if (x3) x3 = XMP_compile_list(x3);
 	    x4 = XMP_compile_list(EXPR_ARG4(c));
             c = list4(LIST, x1, x2, x3, x4);
             push_ctl(CTL_XMP);

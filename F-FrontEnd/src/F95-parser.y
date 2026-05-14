@@ -3193,8 +3193,8 @@ xmp_parallel_for_clause:
 	     { $$ = list3(LIST,$2,$6,$8); }
 
 xmp_parallel_reduce_clause:
-             '(' xmp_expr_list ')' xmp_ON '(' xmp_expr_list ')' xmp_reduction_opt
-	     { $$ = list4(LIST,$2,$6,NULL,$8); }
+             '(' xmp_expr_list ')' xmp_ON '(' xmp_expr_list ')' xmp_tile_opt xmp_reduction_opt
+	     { $$ = list4(LIST,$2,$6,$8,$9); }
 
 xmp_acc_opt:
 	/*null*/
