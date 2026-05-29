@@ -12,7 +12,11 @@ BINDIR  = @OMNI_HOME@/bin
 AWK     = @AWK@
 YACC    = @YACC@
 XMODDIR = @OMNI_HOME@/fincludes
-INTRMOD = fincludes/iso_fortran_env.xmod fincludes/iso_c_binding.xmod
+INTRMOD = fincludes/iso_fortran_env.xmod fincludes/iso_c_binding.xmod \
+          fincludes/flcl_dualview_mod.xmod fincludes/flcl_mod.xmod \
+          fincludes/flcl_ndarray_mod.xmod fincludes/flcl_types_f_mod.xmod \
+          fincludes/flcl_util_kokkos_mod.xmod fincludes/flcl_util_strings_mod.xmod \
+          fincludes/flcl_view_mod.xmod
 
 OBJECTS = F95-main.o C-expr-mem.o C-exprcode.o F-datatype.o F-ident.o \
 	  F95-parser.o F-mem.o F-compile.o F-compile-decl.o F-compile-expr.o \
@@ -74,6 +78,26 @@ fincludes/iso_c_binding.xmod: fincludes/iso_c_binding.f90 $(F_FRONT)
 
 fincludes/iso_fortran_env.xmod: fincludes/iso_fortran_env.f90 $(F_FRONT)
 	./$(F_FRONT) -module-compile $< > $@
+
+fincludes/flcl_util_kokkos_mod.xmod: fincludes/flcl-util-kokkos-f.f90
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
+fincludes/flcl_util_strings_mod.xmod: fincludes/flcl-util-strings-f.f90
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
+fincludes/flcl_types_f_mod.xmod: fincludes/flcl-types-f.f90 fincludes/flcl_util_strings_mod.xmod
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
+
+fincludes/flcl_dualview_mod.xmod: fincludes/flcl-dualview-f.f90 fincludes/flcl_types_f_mod.xmod fincludes/flcl_util_strings_mod.xmod
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
+fincludes/flcl_view_mod.xmod: fincludes/flcl-view-f.f90 fincludes/flcl_types_f_mod.xmod fincludes/flcl_util_strings_mod.xmod
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
+fincludes/flcl_ndarray_mod.xmod: fincludes/flcl-ndarray-f.f90 fincludes/flcl_types_f_mod.xmod
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
+
+fincludes/flcl_mod.xmod: fincludes/flcl-f.f90 fincludes/flcl_types_f_mod.xmod \
+                         fincludes/flcl_dualview_mod.xmod \
+			 fincludes/flcl_view_mod.xmod \
+			 fincludes/flcl_ndarray_mod.xmod
+	./$(F_FRONT) -module-compile -M fincludes $< > $@
 
 install: $(F_FRONT)
 	$(MKDIR_P) $(DESTDIR)$(BINDIR)
